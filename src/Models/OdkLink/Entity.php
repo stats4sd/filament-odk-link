@@ -2,7 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -12,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class Entity extends Model
 {
     protected $table = 'entities';
+
     protected $guarded = [];
 
     public function dataset(): BelongsTo
@@ -41,7 +41,6 @@ class Entity extends Model
             ->withPivot('value');
     }
 
-
     /*
      * Override getAttribute() to check the entity_values table first.
      */
@@ -52,7 +51,6 @@ class Entity extends Model
         if ($value = parent::getAttribute($key)) {
             return $value;
         }
-
 
         /*
          * If the requested attribute is in the dataset variables list, check the values() relationship
@@ -69,7 +67,4 @@ class Entity extends Model
         return $this->model->getAttribute($key);
 
     }
-
-
-
 }

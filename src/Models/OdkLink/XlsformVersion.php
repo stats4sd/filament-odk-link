@@ -3,7 +3,6 @@
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,13 +13,13 @@ class XlsformVersion extends Model implements HasMedia
 {
     use InteractsWithMedia;
 
-    protected $table = "xlsform_versions";
+    protected $table = 'xlsform_versions';
+
     protected $guarded = [];
 
     protected $casts = [
         'schema' => 'array',
     ];
-
 
     // **************** COMPUTED ATTRIBUTES ***********************
 
@@ -28,21 +27,21 @@ class XlsformVersion extends Model implements HasMedia
     public function title(): Attribute
     {
         return new Attribute(
-            get: fn (): string =>  $this->team ? $this->team->name.' - '.$this->xlsform->title : '',
+            get: fn (): string => $this->team ? $this->team->name . ' - ' . $this->xlsform->title : '',
         );
     }
 
     public function xlsfile(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->getFirstMediaPath('xlsform_file'),
+            get: fn (): string => $this->getFirstMediaPath('xlsform_file'),
         );
     }
 
     public function xlsfile_name(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->getFirstMedia('xlsform_file')->file_name,
+            get: fn (): string => $this->getFirstMedia('xlsform_file')->file_name,
         );
     }
 

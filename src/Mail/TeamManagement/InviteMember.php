@@ -2,10 +2,10 @@
 
 namespace Stats4sd\FilamentOdkLink\Mail\TeamManagement;
 
-use Stats4sd\FilamentOdkLink\Models\TeamManagement\TeamInvite;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Stats4sd\FilamentOdkLink\Models\TeamManagement\TeamInvite;
 
 class InviteMember extends Mailable
 {
@@ -32,7 +32,7 @@ class InviteMember extends Mailable
     public function build(): static
     {
         return $this->from(config('mail.from.address'))
-        ->subject(config('app.name'). ': Invitation To Join Team ' . $this->invite->team->name)
-        ->markdown('team-management::emails.invite');
+            ->subject(config('app.name') . ': Invitation To Join Team ' . $this->invite->team->name)
+            ->markdown('team-management::emails.invite');
     }
 }

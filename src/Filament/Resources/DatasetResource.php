@@ -2,19 +2,17 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources;
 
-use Stats4sd\FilamentOdkLink\Filament\Resources\DatasetResource\Pages;
-use Stats4sd\FilamentOdkLink\Filament\Resources\DatasetResource\RelationManagers;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\Section;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Stats4sd\FilamentOdkLink\Filament\Resources\DatasetResource\Pages;
+use Stats4sd\FilamentOdkLink\Filament\Resources\DatasetResource\RelationManagers;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
 
 class DatasetResource extends Resource
 {
@@ -74,11 +72,11 @@ class DatasetResource extends Resource
                         TextEntry::make('primary_key'),
                         TextEntry::make('description'),
                     ])
-                ->columns([
-                    'lg' => 3,
-                    'md' => 2,
-                    'sm' => 1,
-                ])
+                    ->columns([
+                        'lg' => 3,
+                        'md' => 2,
+                        'sm' => 1,
+                    ]),
             ]);
     }
 

@@ -2,9 +2,9 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
 
-use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
 
 class ListXlsformTemplates extends ListRecords
 {

@@ -18,11 +18,9 @@ return [
          *  - 'https://kobo.humanitarianresponse.info'
          *
          * If you use a custom installation of ODK Central or Kobotoolbox, it will be the base url to your service.
-         *
-         *
          */
         'url' => env('ODK_URL', ''),
-        'base_endpoint' => env('ODK_ENDPOINT', env('ODK_URL')."/v1"),
+        'base_endpoint' => env('ODK_ENDPOINT', env('ODK_URL') . '/v1'),
 
         /**
          * Username and password for the main platform account
