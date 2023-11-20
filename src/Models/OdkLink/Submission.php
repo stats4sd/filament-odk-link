@@ -22,10 +22,10 @@ class Submission extends Model
         'entries' => 'array',
     ];
 
-    protected static function booted()
+    protected static function booted(): void
     {
-        static::addGlobalScope('owned', function (Builder $query) {
-            if (Auth::check() && !Auth::user()->hasRole(config('odk-link.roles.xlsform-admin'))) {
+        static::addGlobalScope('owned', static function (Builder $query) {
+            if (Auth::check() && !Auth::user()?->hasRole(config('odk-link.roles.xlsform-admin'))) {
                 $query->where(function (Builder $query) {
                     $query->whereHas('xlsformVersion', function (Builder $query) {
                         $query->whereHas('xlsform', function (Builder $query) {

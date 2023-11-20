@@ -38,7 +38,7 @@ trait HasXlsFormDrafts
 
         $settings = [
             "general" => [
-                "server_url" => config('odk-link.odk.base_endpoint') . "/test/{$this->odk_draft_token}/projects/{$this->owner->odkProject->id}/forms/{$this->odk_id}/draft",
+                "server_url" => config('odk-link.odk.base_endpoint') . "/test/$this->odk_draft_token/projects/{$this->owner->odkProject->id}/forms/$this->odk_id/draft",
                 "form_update_mode" => "match_exactly",
             ],
             "project" => ["name" => "(DRAFT) " . $this->title, "icon" => "📝"],

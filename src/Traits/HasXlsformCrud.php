@@ -2,11 +2,14 @@
 
 namespace Stats4sd\FilamentOdkLink\Traits;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Application;
 
 trait HasXlsformCrud
 {
 
-    public function setupXlsformColumns()
+    public function setupXlsformColumns(): void
     {
         CRUD::column('odkProject')->limit(1000)->wrapper([
             'href' => function($crud, $column, $entry) {
@@ -40,7 +43,7 @@ trait HasXlsformCrud
     /**
      * Overwrite the default "show" method for CRUD panels to show a custom page that includes all the XLSform details of the selected owner.
      **/
-    public function show($id)
+    public function show($id): View|Application|Factory|\Illuminate\Contracts\Foundation\Application
     {
         $this->crud->hasAccessOrFail('show');
 
@@ -48,7 +51,7 @@ trait HasXlsformCrud
         $id = $this->crud->getCurrentEntryId() ?? $id;
 
         // get the info for that entry (include softDeleted items if the trait is used)
-        if ($this->crud->get('show.softDeletes') && in_array('Illuminate\Database\Eloquent\SoftDeletes', class_uses($this->crud->model))) {
+        if ($this->crud->get('show.softDeletes') && in_array('Illuminate\Database\Eloquent\SoftDeletes', class_uses($this->crud->model), true)) {
             $this->data['entry'] = $this->crud->getModel()->withTrashed()->findOrFail($id);
         } else {
             $this->data['entry'] = $this->crud->getEntryWithLocale($id);

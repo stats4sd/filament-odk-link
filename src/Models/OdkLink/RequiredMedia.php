@@ -15,23 +15,22 @@ class RequiredMedia extends Pivot implements HasMedia
     use InteractsWithMedia;
 
     protected $table = 'required_media';
-    protected $guarded = [];
     protected $casts = [
         'is_static' => 'boolean',
     ];
 
-    protected static function booted()
+    protected static function booted(): void
     {
 
         // when deleting, also delete any attached media;
-        static::deleting(function ($requiredMedia) {
+        static::deleting(static function ($requiredMedia) {
             $requiredMedia->getMedia()
                 ->each(fn($media) => $requiredMedia->deleteMedia($media));
         });
 
 
         // when updating, update the related xlsform template to set draft_needs_updating to true (to ensure the updated media is pushed to ODK Central for testing
-        static::saved(function (RequiredMedia $requiredMedia) {
+        static::saved(static function (RequiredMedia $requiredMedia) {
             $requiredMedia->xlsformTemplate->updateQuietly(
                 ['draft_needs_updating' => true,]
             );

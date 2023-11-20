@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Facade;
  */
 class FilamentOdkLink extends Facade
 {
-    protected static function getFacadeAccessor()
+    protected static function getFacadeAccessor(): string
     {
         return \Stats4sd\FilamentOdkLink\FilamentOdkLink::class;
     }

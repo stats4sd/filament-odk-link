@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
 
+use Illuminate\Database\Eloquent\Model;
 use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Forms\Components\InfoReview;
 use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
@@ -73,14 +74,17 @@ class CreateXlsformTemplate extends CreateRecord
      */
     protected function afterCreate(): void
     {
-        $this->processRecord($this->record);
+        $test = $this->getRecord();
+
+        assert($test instanceof XlsformTemplate);
+        $this->processRecord($test);
     }
 
     /**
      * @throws RequestException
      * @throws BindingResolutionException
      */
-    protected function processRecord(XlsformTemplate $record)
+    protected function processRecord(XlsformTemplate $record): XlsformTemplate
     {
         $odkLinkService = app()->make(OdkLinkService::class);
 
@@ -98,6 +102,7 @@ class CreateXlsformTemplate extends CreateRecord
 
         return $record;
     }
+
 
 
 }

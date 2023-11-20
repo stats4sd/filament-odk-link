@@ -17,7 +17,7 @@ class TeamInvite extends Model
 
     protected static function booted(): void
     {
-        static::addGlobalScope('unconfirmed', function (Builder $builder) {
+        static::addGlobalScope('unconfirmed', static function (Builder $builder) {
             $builder->where('is_confirmed', false);
         });
     }

@@ -9,12 +9,13 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use ParseError;
 use Stats4sd\FilamentOdkLink\Models\XlsformVersion;
 
 class SubmissionGenerator {
 
-    protected $faker;
-    private $xPathHandler;
+    protected Generator $faker;
+    private XPathExpressionHandler $xPathHandler;
     protected Collection $choiceNames;
 
 
@@ -154,7 +155,7 @@ class SubmissionGenerator {
                 })->first();
 
                 if(!$endRepeat) {
-                    throw new \ParseError('It looks like the repeat group ' . $variable['name'] . ' does not have a corresponding end repeat. Please check the XLS form definition.');
+                    throw new ParseError('It looks like the repeat group ' . $variable['name'] . ' does not have a corresponding end repeat. Please check the XLS form definition.');
                 }
 
                 $endRepeatIndex = $endRepeat['index'];
@@ -167,7 +168,7 @@ class SubmissionGenerator {
 
 
             // build up collection of repeat entries, ready to add to the core content;
-            $repeatEntries = collect([]);
+            $repeatEntries = collect();
 dump($repeatCount);
             // for each needed iteration, create a new SubmissionGenerator to handle the group.
             for($j = 0; $j < $repeatCount; $j++) {
@@ -177,7 +178,7 @@ dump($repeatCount);
                         xlsformVersion: $this->xlsformVersion,
                         variables: $this->variables,
                         choices: $this->choices,
-                        content: collect([]),
+                        content: collect(),
                         startIndex: $this->index,
                         index: $this->index,
                         root: $this->root,
@@ -306,8 +307,6 @@ dump($repeatCount);
 
     /**
      * @param array $variable - the variable properties from the survey sheet
-     * @param integer? $position - if the process is currently inside a repeat group, what is the pos(..)? (What number repeat is it?)
-     * @param Collection? $repeatSubmission - if the process is currently inside a repeat group, this is the data generated already for this current repeat.
      * @return mixed|string|void|null
      */
     private function generateValue(array $variable)
@@ -330,21 +329,20 @@ dump($repeatCount);
                     $this->faker->longitude . " " .
                     $this->faker->numberBetween(20, 2000) . " " .
                     $this->faker->numberBetween(5, 200);
-            case (bool)preg_match('/select_one /', $variable['type']):
+            case str_contains($variable['type'], 'select_one '):
 
                 $xlsChoiceList = $this->getChoicesList($variable);
 
                 // return a random entry from the list;
                 return $this->faker->randomElement($xlsChoiceList);
 
-            case (bool)preg_match('/select_multiple /', $variable['type']):
+            case str_contains($variable['type'], 'select_multiple '):
 
                 $xlsChoiceList = $this->getChoicesList($variable);
 
                 $variables = $this->faker->randomElements(
                     $xlsChoiceList,
-                    $this->faker->numberBetween(0, count($xlsChoiceList)),
-                    false
+                    $this->faker->numberBetween(0, count($xlsChoiceList))
                 );
 
                 return collect($variables)->join(' ');

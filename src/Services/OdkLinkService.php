@@ -2,28 +2,19 @@
 
 namespace Stats4sd\FilamentOdkLink\Services;
 
-use _PHPStan_9a6ded56a\React\Http\Message\ResponseException;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
-use Psr\SimpleCache\InvalidArgumentException;
-use SaintSystems\OData\ODataClient;
 use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
-use Stats4sd\FilamentOdkLink\Models\AppUser;
-use Stats4sd\FilamentOdkLink\Models\OdkProject;
-use Stats4sd\FilamentOdkLink\Models\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\XlsformVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\AppUser;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 
 
 /**
@@ -265,6 +256,7 @@ class OdkLinkService
             if ($exception->getCode() === 404) {
                 abort(500, 'The file ' . $fileName . ' is not an expected file name for this ODK form template. Please review the form and check which media files are expected');
             }
+            throw($exception);
         }
     }
 
@@ -345,15 +337,6 @@ class OdkLinkService
 
     }
 
-    /**
-     * Generates a lookup file for a specific xlsform.
-     * @param Xlsform $xlsform
-     * @param mixed $lookup
-     * @return void
-     */
-    private function generateLookupFile(Xlsform $xlsform, mixed $lookup)
-    {
-    }
 
     /**
      * Creates a new csv lookup file from the database;
@@ -390,7 +373,7 @@ class OdkLinkService
         return $filePath;
     }
 
-    public function test()
+    public function test(): string
     {
 
         $data = Http::withToken($this->authenticate())
@@ -428,7 +411,7 @@ class OdkLinkService
      * @param mixed $version
      * @return Model
      */
-    public function createNewVersion(Xlsform $xlsform, array $versionDetails): Model
+    public function createNewVersion(Xlsform $xlsform, array $versionDetails): XlsformVersion
     {
         $token = $this->authenticate();
 
@@ -451,20 +434,17 @@ class OdkLinkService
             ->json();
 
         // create new active version with latest version number;
-        $xlsformVersion = $xlsform->xlsformVersions()->create([
+        return $xlsform->xlsformVersions()->create([
             'version' => $versionDetails['version'],
             'xlsfile' => "xlsforms/{$xlsform->id}/versions/{$versionSlug}/{$fileName}",
             'odk_version' => $versionDetails['version'],
             'active' => true,
             'schema' => $schema,
         ]);
-
-
-        return $xlsformVersion;
     }
 
 
-    public function getSubmissions(Xlsform $xlsform)
+    public function getSubmissions(Xlsform $xlsform): void
     {
         $token = $this->authenticate();
         $oDataServiceUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}.svc";
@@ -511,7 +491,6 @@ class OdkLinkService
                     ->json();
 
 
-
                 foreach ($mediaPresent as $mediaItem) {
 
                     // download the attachment
@@ -525,7 +504,7 @@ class OdkLinkService
 
                     // link it to the submission via Media Library
                     $submission->addMediaFromDisk($mediaItem['name'], config('odk-link.storage.media'))
-                    ->toMediaLibrary();
+                        ->toMediaLibrary();
 
                 }
             }

@@ -28,7 +28,7 @@ class RoleInviteMember extends Mailable
      *
      * @return $this
      */
-    public function build()
+    public function build(): static
     {
         return $this->from(config('mail.from.address'))
         ->subject(config('app.name'). ': Invitation To Join with the  ' . $this->invite->role->name . ' User Role')

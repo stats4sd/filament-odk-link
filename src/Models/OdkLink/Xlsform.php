@@ -31,7 +31,7 @@ class Xlsform extends Model implements WithXlsFormDrafts, HasMedia
     protected $guarded = [];
 
 
-    protected static function booted()
+    protected static function booted(): void
     {
 
         // when the model is created;
@@ -91,7 +91,17 @@ class Xlsform extends Model implements WithXlsFormDrafts, HasMedia
     public function status(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->is_active ? 'LIVE' : ($this->odk_draft_token ? 'DRAFT' : 'NOT DEPLOYED'),
+            get: function () {
+                if ($this->is_active) {
+                    return 'LIVE';
+                }
+
+                if ($this->odk_draft_tokwn) {
+                    return 'DRAFT';
+                }
+
+                return 'NOT DEPLOYED';
+            },
         );
     }
 

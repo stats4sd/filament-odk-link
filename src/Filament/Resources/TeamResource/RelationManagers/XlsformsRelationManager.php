@@ -104,9 +104,9 @@ class XlsformsRelationManager extends RelationManager
             ]);
     }
 
-    public function infoList(Infolist $infoList): Infolist
+    public function infoList(Infolist $infolist): Infolist
     {
-        return $infoList
+        return $infolist
             ->columns([
                 Tables\Columns\TextColumn::make('title'),
                 Tables\Columns\TextColumn::make('status'),

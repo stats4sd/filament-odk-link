@@ -12,14 +12,14 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 trait HasXlsForms
 {
-    protected static function booted()
+    protected static function booted(): void
     {
         parent::booted();
 
         $odkLinkService = app()->make(OdkLinkService::class);
 
         // when the model is created; automatically create an associated project on ODK Central;
-        static::created(function ($owner) use ($odkLinkService) {
+        static::created(static function ($owner) use ($odkLinkService) {
             $owner->createLinkedOdkProject($odkLinkService, $owner);
         });
     }
@@ -47,11 +47,6 @@ trait HasXlsForms
     }
 
 
-    /**
-     * @param mixed $odkLinkService
-     * @param $owner
-     * @return void
-     */
     public function createLinkedOdkProject(OdkLinkService $odkLinkService): void
     {
         $odkProjectInfo = $odkLinkService->createProject($this->name);

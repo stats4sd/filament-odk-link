@@ -17,12 +17,12 @@ use Stats4sd\FilamentOdkLink\Models\TeamManagement\Team;
 trait HasTeamMemberships
 {
 
-    protected static function booted()
+    protected static function booted(): void
     {
         parent::booted();
 
         // handle newly created 'users' when they are created via an invite link
-        static::created(function ($member) {
+        static::created(static function ($member) {
 
             // if the user was invited to one or more teams, assign them to the team(s)
             $invites = TeamInvite::where('email', '=', $member->email)->get();

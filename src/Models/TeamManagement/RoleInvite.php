@@ -3,6 +3,7 @@
 namespace Stats4sd\FilamentOdkLink\Models\TeamManagement;
 
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Stats4sd\FilamentOdkLink\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -16,20 +17,20 @@ class RoleInvite extends Model
         'is_confirmed' => 'boolean',
     ];
 
-    protected static function booted()
+    protected static function booted(): void
     {
-        static::addGlobalScope('unconfirmed', function (Builder $builder) {
+        static::addGlobalScope('unconfirmed', static function (Builder $builder) {
             $builder->where('is_confirmed', false);
         });
     }
 
     // *********** RELATIONSHIPS ************ //
-    public function inviter()
+    public function inviter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'inviter_id');
     }
 
-    public function role()
+    public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
     }

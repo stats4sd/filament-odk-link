@@ -31,7 +31,7 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
         'schema' => 'collection',
     ];
 
-    protected static function booted()
+    protected static function booted(): void
     {
         static::deleting(static function (XlsformTemplate $xlsform) {
             $odkLinkService = app()->make(OdkLinkService::class);

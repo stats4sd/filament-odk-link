@@ -98,7 +98,7 @@ class XlsformTemplateResource extends Resource
                 ->schema([
 
                     HtmlBlock::make('name')
-                        ->content(fn(?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> {$record?->name}")
+                        ->content(fn(?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
                         ),
 
                     Forms\Components\SpatieMediaLibraryFileUpload::make('file')
@@ -109,7 +109,7 @@ class XlsformTemplateResource extends Resource
         ];
     }
 
-    public static function getDatasetMediaFields()
+    public static function getDatasetMediaFields(): array
     {
         return [
             Forms\Components\Repeater::make('requiredDataMedia')
@@ -130,7 +130,7 @@ class XlsformTemplateResource extends Resource
                 ->schema([
 
                     HtmlBlock::make('name')
-                        ->content(fn(?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> {$record?->name}")
+                        ->content(fn(?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
                         ),
                     Forms\Components\Toggle::make('is_static')
                         ->label('Is this a static media file?')
@@ -161,7 +161,7 @@ class XlsformTemplateResource extends Resource
 
             HtmlBlock::make('title')
             ->content(fn(?XlsformTemplate $record): HtmlString => new HtmlString("
-                <h3 class='text-xl'>{$record->title} - Form Structure</h3>
+                <h3 class='text-xl'>$record->title - Form Structure</h3>
                 <p>On this page, you can review the structure of the data that will come from form submissions. The 'main survey' section includes all the variables that are not in repeat groups. You should choose or create a dataset for the form submissions to populate.</p>
 
             ")),
@@ -209,7 +209,7 @@ class XlsformTemplateResource extends Resource
                     'sm' => 1
                 ])
                 ->label(function (?XlsformTemplate $record) {
-                    $label = "<h3 class='text-lg'>Repeat Groups</h3><p class='font-light'>This form also has {$record->repeatingSections()->count()} repeat groups within the form. The data from these repeat groups should be linked to a different dataset. For example, in a household survey, you may link the 'main' survey submission data to a dataset called 'Households', and a repeat group asking information from each member to a dataset called 'Household Members'.</p><br/>";
+                    $label = "<h3 class='text-lg'>Repeat Groups</h3><p class='font-light'>This form also has {$record?->repeatingSections()->count()} repeat groups within the form. The data from these repeat groups should be linked to a different dataset. For example, in a household survey, you may link the 'main' survey submission data to a dataset called 'Households', and a repeat group asking information from each member to a dataset called 'Household Members'.</p><br/>";
 
                     return new HtmlString($label);
                 })
@@ -228,7 +228,7 @@ class XlsformTemplateResource extends Resource
                                 ->form(function (?XlsformTemplateSection $record) {
                                     return [
                                         TableRepeater::make('schema')
-                                            ->label(fn(?XlsformTemplateSection $record) => "List of variables in the {$record->structure_item} repeat group")
+                                            ->label(fn(?XlsformTemplateSection $record) => "List of variables in the $record->structure_item repeat group")
                                             ->deletable(false)
                                             ->reorderable(false)
                                             ->addable(false)
@@ -344,7 +344,6 @@ class XlsformTemplateResource extends Resource
 
 
                 Section::make('Main Survey')
-                    ->columns(2)
                     ->schema([
                         RepeatableEntry::make('schema')
                             ->label('List of variables in the main survey')
@@ -375,7 +374,7 @@ class XlsformTemplateResource extends Resource
                                     })
                                     ->fillForm(function (?XlsformTemplate $record): array {
                                         return [
-                                            'schema' => $record->rootSection->schema,
+                                            'schema' => $record?->rootSection->schema,
                                         ];
                                     })
                                     ->modalSubmitAction(false)
@@ -437,7 +436,6 @@ class XlsformTemplateResource extends Resource
 
 
                 Section::make('Draft Testing')
-                    ->columns(2)
                     ->schema([
 
                         // show reminder text
@@ -457,13 +455,6 @@ class XlsformTemplateResource extends Resource
                     ])
 
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-
-        ];
     }
 
     public static function getPages(): array

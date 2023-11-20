@@ -11,11 +11,12 @@ use ParseError;
 use Stats4sd\FilamentOdkLink\Models\Xlsform;
 use Illuminate\Support\Facades\DB;
 use Stats4sd\FilamentOdkLink\Models\XlsformVersion;
+use Throwable;
 
 class XPathExpressionHandler
 {
 
-    protected $faker;
+    protected Generator $faker;
 
     /**
      * @throws BindingResolutionException
@@ -74,7 +75,7 @@ class XPathExpressionHandler
 
         $varsToReplace = $matches[1];
         foreach ($varsToReplace as $var) {
-            if($var == "species") {
+            if($var === "species") {
                 dump('SUBCHECK: ', $content, $referenceContent);
             }
             // first, check if the $var is in the full variables list. If not, there is a form syntax error:
@@ -94,7 +95,7 @@ class XPathExpressionHandler
 
                 $expression = $expression->replace('${' . $var . '}', $replacement);
 
-                if($previousProp == "trt_main/species") {
+                if($previousProp === "trt_main/species") {
                     dump('hello there', $expression);
                 }
                 continue;
@@ -222,7 +223,7 @@ class XPathExpressionHandler
                 // for now, return random string;
                 return $this->faker->words(1);
 
-            } catch (\Throwable $exception) {
+            } catch (Throwable $exception) {
                 return $this->faker->words(1);
             }
 
@@ -355,8 +356,6 @@ class XPathExpressionHandler
 
     /**
      * Check inside a completed repeat group collection to search for a variable name referenced in the form using ${varName}.
-     * @param Collection $repeatCollection
-     * @param string $varName
      */
     public function checkRepeatForVariableName(Collection $repeatCollection, string $varName): ?array
     {

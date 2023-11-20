@@ -17,14 +17,14 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
  */
 trait HasXlsforms
 {
-    protected static function booted()
+    protected static function booted(): void
     {
         parent::booted();
 
         $odkLinkService = app()->make(OdkLinkService::class);
 
         // when the model is created; automatically create an associated project on ODK Central;
-        static::created(function ($owner) use ($odkLinkService) {
+        static::created(static function ($owner) use ($odkLinkService) {
             $owner->createLinkedOdkProject($odkLinkService, $owner);
         });
     }
@@ -50,12 +50,7 @@ trait HasXlsforms
         return $this->morphOne(OdkProject::class, 'owner');
     }
 
-    /**
-     * @param mixed $odkLinkService
-     * @param $owner
-     * @return void
-     */
-    function createLinkedOdkProject(OdkLinkService $odkLinkService): void
+    public function createLinkedOdkProject(OdkLinkService $odkLinkService): void
     {
         $odkProjectInfo = $odkLinkService->createProject($this->name);
         $odkProject = $this->odkProject()->create([

@@ -13,7 +13,6 @@ class OdkProject extends Model
     protected $guarded = [];
     public $incrementing = false;
     public $keyType = 'integer';
-    protected $primaryKey = 'id';
     protected $table = 'odk_projects';
     protected $appends = [
         'odk_url',
