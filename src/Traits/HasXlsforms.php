@@ -4,7 +4,6 @@ namespace Stats4sd\FilamentOdkLink\Traits;
 
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Stats4sd\FilamentOdkLink\Models\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\XlsformTemplate;
@@ -70,6 +69,4 @@ trait HasXlsforms
             'can_access_all_forms' => true,
         ]);
     }
-
-
 }

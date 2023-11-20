@@ -4,19 +4,17 @@ namespace Stats4sd\FilamentOdkLink\Models\TeamManagement\Traits;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Stats4sd\FilamentOdkLink\Models\TeamManagement\TeamInvite;
 use Stats4sd\FilamentOdkLink\Models\TeamManagement\RoleInvite;
 use Stats4sd\FilamentOdkLink\Models\TeamManagement\Team;
+use Stats4sd\FilamentOdkLink\Models\TeamManagement\TeamInvite;
 
 /**
  * Add this trait to any class that can be a member of a team.
  *
  * Typically, this will be your Stats4sd\FilamentOdkLink\Models\User class, but it could in theory be anythng;
- *
  */
 trait HasTeamMemberships
 {
-
     protected static function booted(): void
     {
         parent::booted();
@@ -56,6 +54,4 @@ trait HasTeamMemberships
     {
         return $this->hasMany(RoleInvite::class, 'inviter_id');
     }
-
-
 }

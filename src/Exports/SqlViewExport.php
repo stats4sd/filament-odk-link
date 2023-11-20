@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Stats4sd\FilamentOdkLink\Exports;
 
 use Illuminate\Support\Collection;
@@ -49,7 +48,7 @@ class SqlViewExport implements FromCollection, WithHeadings, WithStrictNullCompa
         return collect($example->first())
             ->keys()
             ->filter(function ($heading) {
-                return $heading !== "owner_id" && $heading !== "owner_type" && $heading !== $this->ownerForeignKey;
+                return $heading !== 'owner_id' && $heading !== 'owner_type' && $heading !== $this->ownerForeignKey;
             })->toArray();
     }
 }

@@ -2,13 +2,12 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
 
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 trait HasXlsForms
 {
@@ -33,7 +32,6 @@ trait HasXlsForms
         return $this->morphMany(Xlsform::class, 'owner');
     }
 
-
     // Private templates are owned by a single form owner.
     // All owners have access to all public templates (templates where available = 1)
     public function xlsformTemplates(): MorphMany
@@ -45,7 +43,6 @@ trait HasXlsForms
     {
         return $this->morphOne(OdkProject::class, 'owner');
     }
-
 
     public function createLinkedOdkProject(OdkLinkService $odkLinkService): void
     {
@@ -67,6 +64,4 @@ trait HasXlsForms
             'can_access_all_forms' => true,
         ]);
     }
-
-
 }

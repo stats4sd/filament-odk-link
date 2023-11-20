@@ -2,27 +2,17 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
 
-use Illuminate\Database\Eloquent\Model;
-use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Forms\Components\InfoReview;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Filament\Actions;
-use Filament\Forms\Components\Actions\Action;
-use Filament\Forms\Components\Component;
-use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\View;
-use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
+use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Log;
-use Filament\Forms\Form;
-
+use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
+use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class CreateXlsformTemplate extends CreateRecord
 {
@@ -38,22 +28,22 @@ class CreateXlsformTemplate extends CreateRecord
                 ->schema(
                     XlsformTemplateResource::getCreateFields(),
                 )
-            ->afterValidation(function(Get $get) {
+                ->afterValidation(function (Get $get) {
 
-                $xlsformTemplate = XlsformTemplate::create([
-                    'title' => $get('title'),
-                ]);
+                    $xlsformTemplate = XlsformTemplate::create([
+                        'title' => $get('title'),
+                    ]);
 
-                $files = $get('xlsfile');
+                    $files = $get('xlsfile');
 
-                $xlsformTemplate->addMedia(collect($files)->first())->toMediaCollection('xlsform_file');
+                    $xlsformTemplate->addMedia(collect($files)->first())->toMediaCollection('xlsform_file');
 
-                // this was being triggered on afterCreate. Call it here instead/as well.
-                $this->processRecord($xlsformTemplate);
+                    // this was being triggered on afterCreate. Call it here instead/as well.
+                    $this->processRecord($xlsformTemplate);
 
-                return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
+                    return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
 
-            }),
+                }),
 
             Step::make('2. Add Media Files')
                 ->description('Add any static media required by the form')
@@ -66,7 +56,6 @@ class CreateXlsformTemplate extends CreateRecord
                 ->schema([]),
         ];
     }
-
 
     /**
      * @throws RequestException
@@ -102,7 +91,4 @@ class CreateXlsformTemplate extends CreateRecord
 
         return $record;
     }
-
-
-
 }

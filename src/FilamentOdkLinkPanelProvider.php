@@ -10,7 +10,6 @@ use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
 
 class FilamentOdkLinkPanelProvider extends PanelProvider
 {
-
     public function panel(Panel $panel): Panel
     {
         return $panel
