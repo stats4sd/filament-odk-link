@@ -2,16 +2,16 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources\TeamResource\Pages;
 
-use Stats4sd\FilamentOdkLink\Filament\Resources\TeamResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Contracts\Support\Htmlable;
+use Stats4sd\FilamentOdkLink\Filament\Resources\TeamResource;
 
 class ViewTeam extends ViewRecord
 {
     protected static string $resource = TeamResource::class;
 
-    public function getTitle(): string|Htmlable
+    public function getTitle(): string | Htmlable
     {
         return $this->getRecord()->name;
     }

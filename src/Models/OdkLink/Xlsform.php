@@ -2,34 +2,31 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsFormDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsFormDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
+use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
-class Xlsform extends Model implements WithXlsFormDrafts, HasMedia
+class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
 {
-    use HasXlsFormDrafts, InteractsWithMedia, PublishesToOdkCentral;
+    use HasXlsFormDrafts;
+    use InteractsWithMedia;
+    use PublishesToOdkCentral;
 
     protected $table = 'xlsforms';
-    protected $guarded = [];
 
+    protected $guarded = [];
 
     protected static function booted()
     {
@@ -38,7 +35,7 @@ class Xlsform extends Model implements WithXlsFormDrafts, HasMedia
         static::saved(static function (Xlsform $xlsform) {
 
             // copy the xlsfile from the template and update the title and id:
-            if (!$xlsform->xlsfile) {
+            if (! $xlsform->xlsfile) {
                 $xlsform->updateXlsfileFromTemplate();
             }
 
@@ -63,35 +60,34 @@ class Xlsform extends Model implements WithXlsFormDrafts, HasMedia
             ->useDisk(config('odk-link.storage.xlsforms'));
     }
 
-
     // ****************** COMPUTED ATTRIBUTES ************************
 
     // Get an xlsformId string that is both human-readable and guaranteed to be unique within the platform
     public function xlsformId(): Attribute
     {
         return new Attribute(
-            get: fn(): string => str($this->title)->slug() . '_' . $this->id,
+            get: fn (): string => str($this->title)->slug() . '_' . $this->id,
         );
     }
 
     public function ownedByName(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->owner->{$this->getOwnerIdentifierAttributeName()} ?? '',
+            get: fn (): string => $this->owner->{$this->getOwnerIdentifierAttributeName()} ?? '',
         );
     }
 
     public function currentVersion(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->xlsformVersions()->latest()->first()?->version ?? '',
+            get: fn (): string => $this->xlsformVersions()->latest()->first()?->version ?? '',
         );
     }
 
     public function status(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->is_active ? 'LIVE' : ($this->odk_draft_token ? 'DRAFT' : 'NOT DEPLOYED'),
+            get: fn () => $this->is_active ? 'LIVE' : ($this->odk_draft_token ? 'DRAFT' : 'NOT DEPLOYED'),
         );
     }
 
@@ -134,7 +130,6 @@ class Xlsform extends Model implements WithXlsFormDrafts, HasMedia
         return $this->xlsformTemplate->attachedDataMedia();
     }
 
-
     // *********************** FUNCTIONS ****************************
 
     /**
@@ -152,10 +147,8 @@ class Xlsform extends Model implements WithXlsFormDrafts, HasMedia
 
     public function getOdkLinkAttribute(): ?string
     {
-        $appends = !$this->is_active ? '/draft' : '';
+        $appends = ! $this->is_active ? '/draft' : '';
 
-        return config('odk-link.odk.url') . "/#/projects/" . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
+        return config('odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
     }
-
-
 }

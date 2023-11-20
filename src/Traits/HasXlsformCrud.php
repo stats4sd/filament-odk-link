@@ -1,17 +1,17 @@
 <?php
 
 namespace Stats4sd\FilamentOdkLink\Traits;
+
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 trait HasXlsformCrud
 {
-
     public function setupXlsformColumns()
     {
         CRUD::column('odkProject')->limit(1000)->wrapper([
-            'href' => function($crud, $column, $entry) {
-                return config('odk-link.odk.url')."/#/projects/".$entry->odkProject->id;
-            }
+            'href' => function ($crud, $column, $entry) {
+                return config('odk-link.odk.url') . '/#/projects/' . $entry->odkProject->id;
+            },
         ]);
         CRUD::column('xlsforms')->type('relationship_count')->suffix('');
 
@@ -21,20 +21,20 @@ trait HasXlsformCrud
     {
         CRUD::field('xlsforms')
             ->type('relationship')
-        ->subfields([
-            [
-                'name' => 'xlsformTemplate',
-                'type' => 'relationship',
-            ],
-            [
-                'name' => 'title',
-                'label' => 'If you want this form to have a custom title, add it here.',
-                'hint' => 'Leave empty to inherit the default title from the chosen template',
-                'type' => 'text',
-                //'type' => 'xlsform-title',
-                //'view_namespace' => 'stats4sd.odk-link::fields',
-            ],
-        ]);
+            ->subfields([
+                [
+                    'name' => 'xlsformTemplate',
+                    'type' => 'relationship',
+                ],
+                [
+                    'name' => 'title',
+                    'label' => 'If you want this form to have a custom title, add it here.',
+                    'hint' => 'Leave empty to inherit the default title from the chosen template',
+                    'type' => 'text',
+                    //'type' => 'xlsform-title',
+                    //'view_namespace' => 'stats4sd.odk-link::fields',
+                ],
+            ]);
     }
 
     /**
@@ -55,10 +55,9 @@ trait HasXlsformCrud
         }
 
         $this->data['crud'] = $this->crud;
-        $this->data['title'] = $this->crud->getTitle() ?? trans('backpack::crud.preview').' '.$this->crud->entity_name;
+        $this->data['title'] = $this->crud->getTitle() ?? trans('backpack::crud.preview') . ' ' . $this->crud->entity_name;
 
         // load the view from /resources/views/vendor/backpack/crud/ if it exists, otherwise load the one in the package
         return view($this->crud->getShowView(), $this->data);
     }
-
 }

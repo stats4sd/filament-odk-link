@@ -2,14 +2,14 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\TeamManagement;
 
-
-use Stats4sd\FilamentOdkLink\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Stats4sd\FilamentOdkLink\Models\User;
 
 class RoleInvite extends Model
 {
     protected $table = 'role_invites';
+
     protected $guarded = [];
 
     protected $casts = [

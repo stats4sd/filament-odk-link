@@ -8,7 +8,7 @@ use Illuminate\View\Component;
 class Qr extends Component
 {
     // $entry should be a model that uses the "HasXlsForms" trait
-    public function __construct(Public Model $entry)
+    public function __construct(public Model $entry)
     {
 
     }
@@ -18,8 +18,7 @@ class Qr extends Component
      *
      * @return \Illuminate\Contracts\View\View|\Closure|string
      */
-
-     public function render()
+    public function render()
     {
         return view('components.Qr');
     }

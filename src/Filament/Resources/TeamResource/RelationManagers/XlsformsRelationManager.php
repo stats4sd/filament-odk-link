@@ -3,19 +3,17 @@
 namespace Stats4sd\FilamentOdkLink\Filament\Resources\TeamResource\RelationManagers;
 
 use Filament\Forms;
-use Filament\Tables;
-use Filament\Forms\Form;
-use Filament\Tables\Table;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Filament\Actions\ViewAction;
-use Filament\Infolists\Infolist;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Filament\Forms\Components\ViewField;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Form;
+use Filament\Infolists\Infolist;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class XlsformsRelationManager extends RelationManager
 {
@@ -35,10 +33,10 @@ class XlsformsRelationManager extends RelationManager
                     ->relationship(
                         name: 'xlsformTemplate',
                         titleAttribute: 'title',
-                        modifyQueryUsing: fn(Builder $query) => $query->where('available', true)
+                        modifyQueryUsing: fn (Builder $query) => $query->where('available', true)
                     )
                     ->live()
-                    ->afterStateUpdated(fn(Forms\Set $set, $state) => $set('title', $state ? XlsformTemplate::find($state)->title : '')),
+                    ->afterStateUpdated(fn (Forms\Set $set, $state) => $set('title', $state ? XlsformTemplate::find($state)->title : '')),
 
                 Forms\Components\TextInput::make('title')
                     ->helperText('By default, this is the title of the Template you select. If you want multiple instances of the same form template, you should give each a unique title.')
@@ -54,7 +52,7 @@ class XlsformsRelationManager extends RelationManager
                 // show Enteko link as a clickable link
                 ViewField::make('enketo_draft_url')
                     ->label('Click below link to view ODK form in browser')
-                    ->view('filament.forms.components.clickable-link')
+                    ->view('filament.forms.components.clickable-link'),
             ]);
     }
 
@@ -69,7 +67,7 @@ class XlsformsRelationManager extends RelationManager
                 Tables\Columns\ViewColumn::make('team_datasets_required')
                     ->view('filament.tables.columns.team-datasets-required'),
                 Tables\Columns\TextColumn::make('submissions_count')->counts('submissions')
-                ->label('No. of Submissions'),
+                    ->label('No. of Submissions'),
             ])
             ->filters([
                 //
@@ -81,7 +79,7 @@ class XlsformsRelationManager extends RelationManager
 
                         $odkLinkService = app()->make(OdkLinkService::class);
 
-                        if (!$record->xlsfile) {
+                        if (! $record->xlsfile) {
                             $record->updateXlsfileFromTemplate();
                         }
 
@@ -111,7 +109,7 @@ class XlsformsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('title'),
                 Tables\Columns\TextColumn::make('status'),
                 Tables\Columns\TextColumn::make('submissions_count')->counts('submissions')
-                ->label('No. of Submissions'),
+                    ->label('No. of Submissions'),
             ]);
     }
 }

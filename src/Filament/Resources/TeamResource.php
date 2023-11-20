@@ -2,9 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources;
 
-use Stats4sd\FilamentOdkLink\Filament\Resources\TeamResource\Pages;
-use Stats4sd\FilamentOdkLink\Models\TeamManagement\Team;
-use Filament\Actions\ViewAction;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\ImageEntry;
@@ -15,10 +12,9 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\HtmlString;
-use PHPUnit\Event\Telemetry\Info;
+use Stats4sd\FilamentOdkLink\Filament\Resources\TeamResource\Pages;
+use Stats4sd\FilamentOdkLink\Models\TeamManagement\Team;
 
 class TeamResource extends Resource
 {
@@ -73,13 +69,13 @@ class TeamResource extends Resource
                     ->columns(6)
                     ->schema([
                         ImageEntry::make('avatar')
-                        ->label('')
-                        ->columnSpan(2),
+                            ->label('')
+                            ->columnSpan(2),
                         TextEntry::make('description')
                             ->getStateUsing(fn ($record) => new HtmlString(preg_replace('/\n/', '<br/>', $record->description)))
                             ->columnSpan(4),
                         ViewEntry::make('qr_code')
-                        ->view('filament.infolists.components.team-qr-code')
+                            ->view('filament.infolists.components.team-qr-code'),
 
                     ]),
             ]);

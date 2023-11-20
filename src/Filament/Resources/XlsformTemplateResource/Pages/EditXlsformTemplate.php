@@ -2,12 +2,10 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
 
-use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
 use Filament\Actions;
-use Filament\Forms\Components\View;
-use Filament\Forms\Components\ViewField;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Resources\Pages\EditRecord;
+use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
 
 class EditXlsformTemplate extends EditRecord
 {
@@ -17,7 +15,7 @@ class EditXlsformTemplate extends EditRecord
 
     public function getTitle(): string
     {
-        return "Edit " . self::getRecord()->title;
+        return 'Edit ' . self::getRecord()->title;
     }
 
     public function getSteps(): array

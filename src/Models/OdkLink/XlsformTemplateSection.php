@@ -2,15 +2,15 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class XlsformTemplateSection extends Pivot
 {
     protected $table = 'xlsform_template_sections';
+
     protected $guarded = [];
+
     protected $casts = [
         'schema' => 'collection',
     ];
@@ -24,6 +24,4 @@ class XlsformTemplateSection extends Pivot
     {
         return $this->belongsTo(Dataset::class);
     }
-
-
 }

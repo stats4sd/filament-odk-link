@@ -9,12 +9,16 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class OdkProject extends Model
 {
-
     protected $guarded = [];
+
     public $incrementing = false;
+
     public $keyType = 'integer';
+
     protected $primaryKey = 'id';
+
     protected $table = 'odk_projects';
+
     protected $appends = [
         'odk_url',
     ];
@@ -33,10 +37,9 @@ class OdkProject extends Model
     public function odkUrl(): Attribute
     {
         return new Attribute(
-            get: fn(): ?string => config('odk-link.odk.url') . "/#/projects/" . $this->id,
+            get: fn (): ?string => config('odk-link.odk.url') . '/#/projects/' . $this->id,
         );
     }
-
 
     // TODO: is this redundant? It's certainly not normalised SQL, as in theory we can get to Xlsforms via the owner, but we don't know the model type of the owner, so it's easier to add odk_project_id to the xlsforms table and add this relationship.
     public function xlsforms(): HasMany

@@ -2,14 +2,15 @@
 
 namespace Stats4sd\FilamentOdkLink\Mail\TeamManagement;
 
-use Stats4sd\FilamentOdkLink\Models\TeamManagement\RoleInvite;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Stats4sd\FilamentOdkLink\Models\TeamManagement\RoleInvite;
 
 class RoleInviteMember extends Mailable
 {
-    use Queueable, SerializesModels;
+    use Queueable;
+    use SerializesModels;
 
     public RoleInvite $invite;
 
@@ -31,7 +32,7 @@ class RoleInviteMember extends Mailable
     public function build()
     {
         return $this->from(config('mail.from.address'))
-        ->subject(config('app.name'). ': Invitation To Join with the  ' . $this->invite->role->name . ' User Role')
-        ->markdown('team-management::emails.role_invite');
+            ->subject(config('app.name') . ': Invitation To Join with the  ' . $this->invite->role->name . ' User Role')
+            ->markdown('team-management::emails.role_invite');
     }
 }

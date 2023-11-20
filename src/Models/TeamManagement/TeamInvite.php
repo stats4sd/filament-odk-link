@@ -2,15 +2,17 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\TeamManagement;
 
-use Stats4sd\FilamentOdkLink\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Stats4sd\FilamentOdkLink\Models\User;
 
 class TeamInvite extends Model
 {
     protected $table = 'team_invites';
+
     protected $guarded = [];
+
     protected $casts = [
         'is_confirmed' => 'boolean',
     ];

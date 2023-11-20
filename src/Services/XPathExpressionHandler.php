@@ -6,15 +6,13 @@ use Faker\Generator;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use ParseError;
-use Stats4sd\FilamentOdkLink\Models\Xlsform;
-use Illuminate\Support\Facades\DB;
 use Stats4sd\FilamentOdkLink\Models\XlsformVersion;
 
 class XPathExpressionHandler
 {
-
     protected $faker;
 
     /**
@@ -23,17 +21,14 @@ class XPathExpressionHandler
     public function __construct(
         protected Collection $variables,
         protected Collection $choices,
-        protected XlsformVersion    $xlsformVersion,
-    )
-    {
+        protected XlsformVersion $xlsformVersion,
+    ) {
         $this->faker = $this->withFaker();
     }
-
 
     /**
      * Get a new Faker instance.
      *
-     * @return Generator
      * @throws BindingResolutionException
      */
     protected function withFaker(): Generator
@@ -44,11 +39,10 @@ class XPathExpressionHandler
     public function evaluateXPathExpression($expression, $content, $position = null, $referenceContent = null)
     {
 
-         dump('start expression', $expression);
+        dump('start expression', $expression);
         // given we can't just "calculate the XPath expression", we need to convert the expression to something that PHP can evaluate.
         // Eventually, there should probably be an accompanying dictionary of things to handle...
         $expression = Str::of($expression);
-
 
         // leave the 2nd prop of a jr:choice-name() expression, as it's needed to find the correct choice list...
         $expression = $expression->replaceMatches('/jr:choice-name\((.+)\,\s*[\'\"]?\$\{(.+)\}[\'\"]?\)/', function ($matches) {
@@ -57,58 +51,58 @@ class XPathExpressionHandler
             // find the correct choice list...
             $varToFind = Str::of($matches[2])->replaceMatches('/[${}\']/', '')->trim();
 
-            $varFound = $this->variables->filter(fn($var) => $var['name'] === (string)$varToFind)->first();
+            $varFound = $this->variables->filter(fn ($var) => $var['name'] === (string) $varToFind)->first();
 
             // get the choice list...
             $choiceList = Str::of($varFound['type'])->replaceMatches('/(?:select_one|select_multiple)/', '')->trim();
 
             // return the original jr:choice-name for processing after some other replacements;
             // replace the 2nd property with the choice list to ease the later processing;
-            return "jr:choice-name(" . $matches[1] . ", " . $choiceList . ")";
+            return 'jr:choice-name(' . $matches[1] . ', ' . $choiceList . ')';
         });
 
         // ************** handle ${varname} references: ***************** //
         $matches = [];
         preg_match_all('/\$\{([A-z_-]+)\}/', $expression, $matches);
 
-
         $varsToReplace = $matches[1];
         foreach ($varsToReplace as $var) {
-            if($var == "species") {
+            if ($var == 'species') {
                 dump('SUBCHECK: ', $content, $referenceContent);
             }
             // first, check if the $var is in the full variables list. If not, there is a form syntax error:
-            if($this->variables->pluck('name')->doesntContain($var)) {
+            if ($this->variables->pluck('name')->doesntContain($var)) {
                 throw new ParseError('No variable with name ${' . $var . '} was found in the form.');
             }
 
             // find $var with any potential group prefix:
-            $previousProp = $content->keys()->filter(fn($key) => Str::of($key)->endsWith($var))->first();
+            $previousProp = $content->keys()->filter(fn ($key) => Str::of($key)->endsWith($var))->first();
             dump($previousProp);
             if ($previousProp) {
                 $replacement = $content[$previousProp];
                 dump($replacement);
-                if(!is_numeric($replacement)) {
+                if (! is_numeric($replacement)) {
                     $replacement = '"' . $replacement . '"';
                 }
 
                 $expression = $expression->replace('${' . $var . '}', $replacement);
 
-                if($previousProp == "trt_main/species") {
+                if ($previousProp == 'trt_main/species') {
                     dump('hello there', $expression);
                 }
+
                 continue;
             }
 
-
             // if the previousProp is not found in the main $content, check the $reference content...
-            $previousProp = $referenceContent?->keys()->filter(fn($key) => Str::of($key)->endsWith($var))->first();
+            $previousProp = $referenceContent?->keys()->filter(fn ($key) => Str::of($key)->endsWith($var))->first();
             if ($previousProp) {
                 $replacement = $referenceContent[$previousProp];
-                if(!is_numeric($replacement)) {
+                if (! is_numeric($replacement)) {
                     $replacement = '"' . $replacement . '"';
                 }
                 $expression = $expression->replace('${' . $var . '}', $replacement);
+
                 continue;
             }
 
@@ -120,20 +114,20 @@ class XPathExpressionHandler
             $innerRepeatValue = $this->checkContentForRepeats($content, $var);
 
             // if no inner repeat value is found in the main content, check the reference content;
-            if(!$innerRepeatValue && $referenceContent) {
+            if (! $innerRepeatValue && $referenceContent) {
                 $innerRepeatValue = $this->checkContentForRepeats($referenceContent, $var);
             }
 
-            if($innerRepeatValue) {
+            if ($innerRepeatValue) {
                 // prepare the array of content
                 // dump('inner repeat value found');
                 // dump('pre expression', $expression, $var);
 
-                $replacement = "[";
-                foreach($innerRepeatValue as $item) {
+                $replacement = '[';
+                foreach ($innerRepeatValue as $item) {
                     $replacement .= "'" . $item . "','";
                 }
-                $replacement .= "]";
+                $replacement .= ']';
                 $expression = $expression->replace('${' . $var . '}', $replacement);
 
                 // dump('post expression', $expression);
@@ -159,12 +153,12 @@ class XPathExpressionHandler
         $expression = $expression->replace('count-selected("")', 'count([])');
 
         $expression = $expression->replaceMatches('/count-selected\([\'\"]([A-z0-9\_\-\s]+)[\'\"]\)/', function ($matches) {
-            $output = "count([";
-            foreach (explode(" ", $matches[1]) as $item) {
+            $output = 'count([';
+            foreach (explode(' ', $matches[1]) as $item) {
                 $output .= "'" . $item . "',";
             }
 
-            $output .= "])";
+            $output .= '])';
 
             return $output;
         });
@@ -177,8 +171,9 @@ class XPathExpressionHandler
             // match 1 = variable;
             // match 2 = the position to get from;
 
-            $items = explode(" ", $matches[1]);
+            $items = explode(' ', $matches[1]);
             $index = eval('return ' . $matches[2] . ';');
+
             return '"' . $items[$index] . '"';
 
         });
@@ -188,11 +183,10 @@ class XPathExpressionHandler
             // match 1 = the name of the choice to find the label for
             // match 2 = name of the choice list;
             dump($matches, $this->choices);
-            $choices = $this->choices[(string)$matches[2]]->pluck('label', 'name');
+            $choices = $this->choices[(string) $matches[2]]->pluck('label', 'name');
 
             return '"' . $choices[$matches[1]] . '"';
         });
-
 
         // ************** handle if() function ***************** //
         // NOTE - does not handle situations where 1st or 2nd property of if() statement contains a comma, so pre-filter for that:[
@@ -205,7 +199,7 @@ class XPathExpressionHandler
             try {
 
                 // turn "=" into a php-friendly "=="
-                $statement = Str::of($matches[1])->replace('=', "==");
+                $statement = Str::of($matches[1])->replace('=', '==');
 
                 // dump('if-test', $statement);
                 $test = eval('return ' . $statement . ';');
@@ -231,7 +225,7 @@ class XPathExpressionHandler
         // ************** handle pulldata() function ***************** //
         // search for strings matching: pulldata('something', 'something', 'something', something)
         $test = false;
-        if($expression->contains('treatment_list')) {
+        if ($expression->contains('treatment_list')) {
             $test = true;
         }
         $expression = $expression->replaceMatches('/pulldata\([\'\"]+(.+)[\'\"]+\,\s*[\'\"]+(.+)[\'\"]+\,\s*[\'\"]+(.+)[\'\"]+\,\s*(.+)\)/', function ($matches) {
@@ -239,17 +233,16 @@ class XPathExpressionHandler
             // match 2 = column header to use for the return value
             // match 3 = column header to use for search
             // match 4 = the value to search
-            $csvName = (string)$matches[1];
-            $returnHeader = (string)$matches[2];
-            $searchHeader = (string)$matches[3];
-            $searchValue = (string)$matches[4]; // might be surrounded by quotes. Might not...
+            $csvName = (string) $matches[1];
+            $returnHeader = (string) $matches[2];
+            $searchHeader = (string) $matches[3];
+            $searchValue = (string) $matches[4]; // might be surrounded by quotes. Might not...
 
             // if the $searchValue is a string, unwrap it from quotes
             $searchValue = Str::of($searchValue);
-            if($searchValue->startsWith(["'", '"']) || $searchValue->endsWith(["'", '"'])) {
+            if ($searchValue->startsWith(["'", '"']) || $searchValue->endsWith(["'", '"'])) {
                 $searchValue = $searchValue->trim("'")->trim('"');
             }
-
 
             // find the db table that matches the csv file
             $lookups = collect($this->xlsform->xlsform->csv_lookups);
@@ -257,7 +250,7 @@ class XPathExpressionHandler
 
             $choiceQuery = DB::table($lookup['mysql_name']);
 
-            if ((integer)$lookup['per_team'] === 1) {
+            if ((int) $lookup['per_team'] === 1) {
                 $choiceQuery = $choiceQuery->where('team_id', $this->xlsform->team->id);
             }
             $choiceList = $choiceQuery->get();
@@ -306,14 +299,13 @@ class XPathExpressionHandler
                 return '"';
             });
 
-            $quotesFound = preg_match('/\"[\s]*\"/', (string)$expression);
+            $quotesFound = preg_match('/\"[\s]*\"/', (string) $expression);
 
         } while ($quotesFound === 1);
 
-
         // HANDLE RESULT Calculation
-         dump('result calc');
-         dump((string)$expression);
+        dump('result calc');
+        dump((string) $expression);
 
         try {
             $result = eval('return  ' . $expression . ';');
@@ -328,7 +320,6 @@ class XPathExpressionHandler
 
     }
 
-
     public function checkContentForRepeats(Collection $content, string $varName): ?array
     {
         // start off with null;
@@ -336,27 +327,26 @@ class XPathExpressionHandler
 
         dump('checking content for repeats');
 
-        foreach($content as $index => $value) {
-           if($value instanceof Collection) {
+        foreach ($content as $index => $value) {
+            if ($value instanceof Collection) {
                 // check inside the collection...
 
-               // dump('found repeat: ' . $index);
+                // dump('found repeat: ' . $index);
                 $previousProp = $this->checkRepeatForVariableName($value, $varName);
 
                 // if the prop has been found inside a repeat collection, stop checking other repeat collections;
-                if($previousProp) {
+                if ($previousProp) {
                     break;
                 }
             }
         }
         dump('returning value from checkContentForRepeats', $previousProp);
+
         return $previousProp;
     }
 
     /**
      * Check inside a completed repeat group collection to search for a variable name referenced in the form using ${varName}.
-     * @param Collection $repeatCollection
-     * @param string $varName
      */
     public function checkRepeatForVariableName(Collection $repeatCollection, string $varName): ?array
     {
@@ -369,19 +359,20 @@ class XPathExpressionHandler
         dump('checking repeat for variable name', $repeatCollection);
         // when outside of a repeat, ${innerRepeatVarName} will return the entire nodeset of values.
         // This means, if there are 5 repeats and ${varName} has a non-null value in 4 of them, the expression ${varName} should be replaced by all the values.
-        foreach($repeatCollection as $repeatInstance) {
-            $previousProp = $repeatInstance->keys()->filter(fn($key) => Str::of($key)->endsWith($varName))->first();
+        foreach ($repeatCollection as $repeatInstance) {
+            $previousProp = $repeatInstance->keys()->filter(fn ($key) => Str::of($key)->endsWith($varName))->first();
 
-            if($previousProp) {
-            dump('prop found', $repeatInstance[$previousProp]);
+            if ($previousProp) {
+                dump('prop found', $repeatInstance[$previousProp]);
                 $returnValue[] = $repeatInstance[$previousProp];
             }
         }
 
-        if($previousProp) {
+        if ($previousProp) {
             // dump('returning value from checkRepeatForVariableName...', $returnValue);
             return $returnValue;
         }
+
         return null;
 
     }

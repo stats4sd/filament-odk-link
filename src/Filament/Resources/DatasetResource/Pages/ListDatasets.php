@@ -2,9 +2,9 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources\DatasetResource\Pages;
 
-use Stats4sd\FilamentOdkLink\Filament\Resources\DatasetResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Stats4sd\FilamentOdkLink\Filament\Resources\DatasetResource;
 
 class ListDatasets extends ListRecords
 {

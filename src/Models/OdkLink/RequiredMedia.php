@@ -3,8 +3,6 @@
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Spatie\MediaLibrary\HasMedia;
@@ -15,7 +13,9 @@ class RequiredMedia extends Pivot implements HasMedia
     use InteractsWithMedia;
 
     protected $table = 'required_media';
+
     protected $guarded = [];
+
     protected $casts = [
         'is_static' => 'boolean',
     ];
@@ -26,14 +26,13 @@ class RequiredMedia extends Pivot implements HasMedia
         // when deleting, also delete any attached media;
         static::deleting(function ($requiredMedia) {
             $requiredMedia->getMedia()
-                ->each(fn($media) => $requiredMedia->deleteMedia($media));
+                ->each(fn ($media) => $requiredMedia->deleteMedia($media));
         });
-
 
         // when updating, update the related xlsform template to set draft_needs_updating to true (to ensure the updated media is pushed to ODK Central for testing
         static::saved(function (RequiredMedia $requiredMedia) {
             $requiredMedia->xlsformTemplate->updateQuietly(
-                ['draft_needs_updating' => true,]
+                ['draft_needs_updating' => true]
             );
 
         });
@@ -42,14 +41,14 @@ class RequiredMedia extends Pivot implements HasMedia
     public function status(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->dataset_id || $this->hasMedia() ? 1 : 0,
+            get: fn (): string => $this->dataset_id || $this->hasMedia() ? 1 : 0,
         );
     }
 
     public function fullType(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->is_static ? $this->type : 'dataset',
+            get: fn (): string => $this->is_static ? $this->type : 'dataset',
         );
     }
 
@@ -64,6 +63,5 @@ class RequiredMedia extends Pivot implements HasMedia
     }
 
     // maybe need to get imageUrl (for media attachments) and/or dataset attachment...
-
 
 }

@@ -2,27 +2,25 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\TeamManagement;
 
-
-use Stats4sd\FilamentOdkLink\Mail\TeamManagement\InviteMember;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsForms;
-use Stats4sd\FilamentOdkLink\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Stats4sd\FilamentOdkLink\Mail\TeamManagement\InviteMember;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsForms;
+use Stats4sd\FilamentOdkLink\Models\User;
 
 class Team extends Model
 {
     use HasXlsForms;
 
     protected $table = 'teams';
-    protected $guarded = [];
 
+    protected $guarded = [];
 
     /**
      * Generate an invitation to join this team for each of the provided email addresses
-     * @param array $emails
      */
     public function sendInvites(array $emails): void
     {
@@ -62,5 +60,4 @@ class Team extends Model
     {
         return $this->hasMany(TeamInvite::class);
     }
-
 }

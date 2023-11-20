@@ -2,15 +2,13 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources\DatasetResource\RelationManagers;
 
-use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
 
 class XlsformTemplateSourcesRelationManager extends RelationManager
 {
@@ -37,10 +35,10 @@ class XlsformTemplateSourcesRelationManager extends RelationManager
             ->recordTitleAttribute('title')
             ->columns([
                 Tables\Columns\TextColumn::make('title')
-                ->label('Xlsform Template')
-                ->url(fn (Model $record) => XlsformTemplateResource::getUrl('view', ['record' => $record])),
+                    ->label('Xlsform Template')
+                    ->url(fn (Model $record) => XlsformTemplateResource::getUrl('view', ['record' => $record])),
                 Tables\Columns\TextColumn::make('active_xlsforms_count')->counts('xlsforms')
-                ->label('# of Active XLsforms')
+                    ->label('# of Active XLsforms'),
             ])
             ->filters([
                 //
