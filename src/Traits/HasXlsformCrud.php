@@ -13,7 +13,7 @@ trait HasXlsformCrud
     {
         CRUD::column('odkProject')->limit(1000)->wrapper([
             'href' => function ($crud, $column, $entry) {
-                return config('odk-link.odk.url') . '/#/projects/' . $entry->odkProject->id;
+                return config('filament-odk-link.odk.url') . '/#/projects/' . $entry->odkProject->id;
             },
         ]);
         CRUD::column('xlsforms')->type('relationship_count')->suffix('');

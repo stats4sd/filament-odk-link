@@ -36,8 +36,8 @@ class OdkLinkService
         return Cache::remember('odk-token', now()->addHours(20), function () {
 
             $response = Http::post("{$this->endpoint}/sessions", [
-                'email' => config('odk-link.odk.username'),
-                'password' => config('odk-link.odk.password'),
+                'email' => config('filament-odk-link.odk.username'),
+                'password' => config('filament-odk-link.odk.password'),
             ])
                 ->throw()
                 ->json();
@@ -145,7 +145,7 @@ class OdkLinkService
     {
         $token = $this->authenticate();
 
-        $file = file_get_contents(Storage::disk(config('odk-link.storage.xlsforms'))->path($xlsform->xlsfile));
+        $file = file_get_contents(Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($xlsform->xlsfile));
 
         $url = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms?ignoreWarnings=true&publish=false";
 
@@ -236,9 +236,9 @@ class OdkLinkService
     public function uploadSingleMediaFile(Xlsform $xlsform, string $filePath): array
     {
         $token = $this->authenticate();
-        $file = file_get_contents(Storage::disk(config('odk-link.storage.xlsforms'))->path($filePath));
+        $file = file_get_contents(Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($filePath));
 
-        $mimeType = mime_content_type(Storage::disk(config('odk-link.storage.xlsforms'))->path($filePath));
+        $mimeType = mime_content_type(Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($filePath));
         $fileName = collect(explode('/', $filePath))->last();
 
         try {
@@ -351,15 +351,15 @@ class OdkLinkService
         Excel::store(
             new SqlViewExport($lookup['mysql_name'], $owner, $lookup['owner_foreign_key']),
             $filePath,
-            config('odk-link.storage.xlsforms')
+            config('filament-odk-link.storage.xlsforms')
         );
 
         // If the csv file is used with "select_one_from_external_file" (or multiple) it must not have any enclosure characters:
         if (isset($lookup['external_file']) && $lookup['external_file'] === '1') {
-            $contents = Storage::disk(config('odk-link.storage.xlsforms'))->get($filePath);
+            $contents = Storage::disk(config('filament-odk-link.storage.xlsforms'))->get($filePath);
             $contents = Str::of($contents)->replace('"', '');
 
-            Storage::disk(config('odk-link.storage.xlsforms'))->put($filePath, $contents);
+            Storage::disk(config('filament-odk-link.storage.xlsforms'))->put($filePath, $contents);
         }
 
         return $filePath;
@@ -411,7 +411,7 @@ class OdkLinkService
         $versionSlug = Str::slug($versionDetails['version']);
 
         // copy xlsform file to store linked to this version forever
-        Storage::disk(config('odk-link.storage.xlsforms'))
+        Storage::disk(config('filament-odk-link.storage.xlsforms'))
             ->copy(
                 $xlsform->xlsfile,
                 "xlsforms/{$xlsform->id}/versions/{$versionSlug}/{$fileName}"
@@ -464,8 +464,8 @@ class OdkLinkService
             ]);
 
             // if app developer has defined a method of processing submission content, call that method:
-            $class = config('odk-link.submission.process_method.class');
-            $method = config('odk-link.submission.process_method.method');
+            $class = config('filament-odk-link.submission.process_method.class');
+            $method = config('filament-odk-link.submission.process_method.method');
 
             //check if media is expected
             if ($entry['__system']['attachmentsPresent'] > 0) {
@@ -482,11 +482,11 @@ class OdkLinkService
                         ->throw();
 
                     // store the attachment locally
-                    Storage::disk(config('odk-link.storage.media'))
+                    Storage::disk(config('filament-odk-link.storage.media'))
                         ->put($mediaItem['name'], $result->body());
 
                     // link it to the submission via Media Library
-                    $submission->addMediaFromDisk($mediaItem['name'], config('odk-link.storage.media'))
+                    $submission->addMediaFromDisk($mediaItem['name'], config('filament-odk-link.storage.media'))
                         ->toMediaLibrary();
 
                 }

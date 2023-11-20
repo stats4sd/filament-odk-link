@@ -35,7 +35,7 @@ class UpdateXlsformTitleInFile implements ShouldQueue
     public function handle(): void
     {
 
-        $filePath = Storage::disk(config('odk-link.storage.xlsforms'))->path($this->xlsform->xlsfile);
+        $filePath = Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($this->xlsform->xlsfile);
         $spreadsheet = IOFactory::load($filePath);
 
         $worksheet = $spreadsheet->getSheetByName('settings');

@@ -14,6 +14,7 @@ use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Stats4sd\FilamentOdkLink\Commands\FilamentOdkLinkCommand;
+use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Stats4sd\FilamentOdkLink\Testing\TestsFilamentOdkLink;
 
 class FilamentOdkLinkServiceProvider extends PackageServiceProvider
@@ -56,6 +57,13 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
         if (file_exists($package->basePath('/../resources/views'))) {
             $package->hasViews(static::$viewNamespace);
         }
+    }
+
+    public function registeringPackage()
+    {
+        $this->app->singleton(OdkLinkService::class, function ($app) {
+            return new OdkLinkService(config('filament-odk-link.odk.base_endpoint'));
+        });
     }
 
     public function packageRegistered(): void
@@ -148,7 +156,27 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
     protected function getMigrations(): array
     {
         return [
-            'create_filament-odk-link_table',
+            "1_create_datasets_table",
+            "2_create_xlsform_templates_table",
+            "3_create_xlsforms_table",
+            "4_create_xlsform_versions_table",
+            "5_create_submissions_table",
+            "6_create_required_media_table",
+            "7_create_odk_datasets_table",
+            "8_create_odk_projects_table",
+            "9_create_app_users_table",
+            "10_create_entities_table",
+            "11_create_entity_values_table",
+            "12_create_dataset_variables_table",
+            "13_create_platforms_table",
+            "14_create_xlsform_template_sections_table",
+            "15_create_app_user_assignments_table",
+            "16_create_media_table",
+            "17_create_permission_tables",
+            "18_create_teams_table",
+            "19_create_role_invites_table",
+            "20_create_team_invites_table",
+            "21_create_team_members_table",
         ];
     }
 }

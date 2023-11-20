@@ -26,7 +26,7 @@ class Submission extends Model
     protected static function booted(): void
     {
         static::addGlobalScope('owned', static function (Builder $query) {
-            if (Auth::check() && ! Auth::user()?->hasRole(config('odk-link.roles.xlsform-admin'))) {
+            if (Auth::check() && ! Auth::user()?->hasRole(config('filament-odk-link.roles.xlsform-admin'))) {
                 $query->where(function (Builder $query) {
                     $query->whereHas('xlsformVersion', function (Builder $query) {
                         $query->whereHas('xlsform', function (Builder $query) {

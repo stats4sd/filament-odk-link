@@ -31,7 +31,7 @@ trait PublishesToOdkCentral
                     $this->updateDraftFormDetails(app()->make(OdkLinkService::class));
                 }
 
-                return config('odk-link.odk.url') . '/-/' . $this->enketo_draft_id;
+                return config('filament-odk-link.odk.url') . '/-/' . $this->enketo_draft_id;
 
             },
         );

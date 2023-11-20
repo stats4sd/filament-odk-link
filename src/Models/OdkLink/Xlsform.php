@@ -54,10 +54,10 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
     {
         $this->addMediaCollection('xlsform_file')
             ->singleFile()
-            ->useDisk(config('odk-link.storage.xlsforms'));
+            ->useDisk(config('filament-odk-link.storage.xlsforms'));
 
         $this->addMediaCollection('attached_media')
-            ->useDisk(config('odk-link.storage.xlsforms'));
+            ->useDisk(config('filament-odk-link.storage.xlsforms'));
     }
 
     // ****************** COMPUTED ATTRIBUTES ************************
@@ -159,6 +159,6 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
     {
         $appends = ! $this->is_active ? '/draft' : '';
 
-        return config('odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
+        return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
     }
 }

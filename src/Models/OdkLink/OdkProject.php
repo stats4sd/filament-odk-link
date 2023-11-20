@@ -35,7 +35,7 @@ class OdkProject extends Model
     public function odkUrl(): Attribute
     {
         return new Attribute(
-            get: fn (): ?string => config('odk-link.odk.url') . '/#/projects/' . $this->id,
+            get: fn (): ?string => config('filament-odk-link.odk.url') . '/#/projects/' . $this->id,
         );
     }
 
