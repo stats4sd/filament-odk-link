@@ -2,8 +2,17 @@ name: "Fix PHP Code Styling"
 
 on:
   push:
+    branches: [main]
     paths:
       - '**.php'
+      - 'phpstan.neon.dist'
+
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.php'
+      - 'phpstan.neon.dist'
+
 
 permissions:
   contents: write
