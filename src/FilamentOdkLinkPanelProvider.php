@@ -4,6 +4,7 @@ namespace Stats4sd\FilamentOdkLink;
 
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -32,6 +33,12 @@ class FilamentOdkLinkPanelProvider extends PanelProvider
             ->discoverPages(in: __DIR__ . "./Filament/Pages", for: 'Stats4sd\\FilamentOdkLink\\Filament\\Pages')
             ->pages([
                 Dashboard::class,
+            ])
+            ->userMenuItems([
+                MenuItem::make('Home')
+                ->label('Back to main site')
+                ->url(url('/'))
+                ->icon('heroicon-o-home')
             ])
             ->middleware([
                 EncryptCookies::class,
