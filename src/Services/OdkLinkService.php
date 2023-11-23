@@ -15,6 +15,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\AppUser;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
 
 /**
  * All ODK Aggregation services should be able to handle ODK forms, so this interface should always be used.
@@ -141,11 +142,11 @@ class OdkLinkService
      *
      * @throws RequestException
      */
-    public function createDraftForm(Xlsform $xlsform): array
+    public function createDraftForm(WithXlsFormDrafts $xlsform): array
     {
         $token = $this->authenticate();
 
-        $file = file_get_contents(Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($xlsform->xlsfile));
+        $file = file_get_contents($xlsform->xlsfile);
 
         $url = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms?ignoreWarnings=true&publish=false";
 
@@ -180,7 +181,7 @@ class OdkLinkService
      *
      * @throws RequestException
      */
-    public function getDraftFormDetails(Xlsform $xlsform): array
+    public function getDraftFormDetails(WithXlsFormDrafts $xlsform): array
     {
         $token = $this->authenticate();
 
@@ -191,35 +192,97 @@ class OdkLinkService
     }
 
     /**
-     * Uploads all media files for an XLSform to ODK Central - both static files and dyncsv files
-     *
-     * @return bool $success
-     *
+     * Gets the expected media items for a given draft form template
      * @throws RequestException
      */
-    public function uploadMediaFileAttachments(Xlsform $xlsform): bool
+    public function getRequiredMedia(WithXlsFormDrafts $xlsformTemplate): array
+    {
+        $token = $this->authenticate();
+
+        return Http::withToken($token)
+            ->get("{$this->endpoint}/projects/{$xlsformTemplate->owner->odkProject->id}/forms/{$xlsformTemplate->odk_id}/attachments")
+            ->throw()
+            ->json();
+
+    }    
+
+    // /**
+    //  * Uploads all media files for an XLSform to ODK Central - both static files and dyncsv files
+    //  *
+    //  * @return bool $success
+    //  *
+    //  * @throws RequestException
+    //  */
+    // public function uploadMediaFileAttachments(WithXlsFormDrafts $xlsform): bool
+    // {
+    //     // static files
+    //     $files = $xlsform->xlsformTemplate->media;
+
+    //     if ($files && count($files) > 0) {
+
+    //         foreach ($files as $file) {
+    //             $this->uploadSingleMediaFile($xlsform, $file);
+    //         }
+
+    //     }
+    //     // dynamic files
+    //     $csv_lookups = $xlsform->xlsformTemplate->csv_lookups;
+
+    //     if ($csv_lookups && count($csv_lookups) > 0) {
+
+    //         foreach ($csv_lookups as $lookup) {
+
+    //             $this->uploadSingleMediaFile(
+    //                 $xlsform,
+    //                 $this->createCsvLookupFile($xlsform, $lookup),
+    //             );
+
+    //         }
+    //     }
+
+    //     return true;
+
+    // }
+
+
+    #########################################################
+    ### FORM MEDIA ATTACHMENTS
+    #########################################################
+
+    /**
+     * Uploads all media files for an XLSform to ODK Central - both static files and dyncsv files
+     * @throws RequestException
+     */
+    public function uploadMediaFileAttachments(WithXlsFormDrafts $xlsform): bool
     {
         // static files
-        $files = $xlsform->xlsformTemplate->media;
+        $requiredFixedMedia = $xlsform->attachedFixedMedia()->get();
 
-        if ($files && count($files) > 0) {
+        if ($requiredFixedMedia && count($requiredFixedMedia) > 0) {
 
-            foreach ($files as $file) {
-                $this->uploadSingleMediaFile($xlsform, $file);
+            foreach ($requiredFixedMedia as $requiredMediaItem) {
+                $this->uploadSingleMediaFile($xlsform, $requiredMediaItem);
             }
 
         }
+
+
         // dynamic files
-        $csv_lookups = $xlsform->xlsformTemplate->csv_lookups;
+        $requiredDataMedia = $xlsform->attachedDataMedia()->get();
 
-        if ($csv_lookups && count($csv_lookups) > 0) {
+        if($requiredDataMedia && count($requiredDataMedia)  > 0) {
+            foreach ($requiredDataMedia as $requiredMediaItem) {
 
-            foreach ($csv_lookups as $lookup) {
+                // if there is a static upload, use it;
+                $media = $requiredDataMedia->getFirstMedia();
+                if($media) {
+                    $this->uploadSingleMediaFile($xlsform, $requiredMediaItem);
+                }
 
-                $this->uploadSingleMediaFile(
-                    $xlsform,
-                    $this->createCsvLookupFile($xlsform, $lookup),
-                );
+                else {
+                    // handle csv file generation...
+
+                }
 
             }
         }
