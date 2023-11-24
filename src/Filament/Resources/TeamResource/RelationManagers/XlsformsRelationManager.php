@@ -3,17 +3,18 @@
 namespace Stats4sd\FilamentOdkLink\Filament\Resources\TeamResource\RelationManagers;
 
 use Filament\Forms;
-use Filament\Forms\Components\ViewField;
-use Filament\Forms\Form;
-use Filament\Infolists\Infolist;
-use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Infolists\Infolist;
+use Filament\Forms\Components\ViewField;
 use Illuminate\Database\Eloquent\Builder;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
+use Filament\Resources\RelationManagers\RelationManager;
+use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 class XlsformsRelationManager extends RelationManager
 {
@@ -113,7 +114,6 @@ class XlsformsRelationManager extends RelationManager
                 Tables\Actions\Action::make('pull_submissions')
                 ->label('Pull Submissions')
                 ->icon('heroicon-m-arrow-down-tray')
-                ->requiresConfirmation()
                 ->action(function (Xlsform $record) {
                     $odkLinkService = app()->make(OdkLinkService::class);
 
