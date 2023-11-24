@@ -206,44 +206,6 @@ class OdkLinkService
 
     }    
 
-    // /**
-    //  * Uploads all media files for an XLSform to ODK Central - both static files and dyncsv files
-    //  *
-    //  * @return bool $success
-    //  *
-    //  * @throws RequestException
-    //  */
-    // public function uploadMediaFileAttachments(WithXlsFormDrafts $xlsform): bool
-    // {
-    //     // static files
-    //     $files = $xlsform->xlsformTemplate->media;
-
-    //     if ($files && count($files) > 0) {
-
-    //         foreach ($files as $file) {
-    //             $this->uploadSingleMediaFile($xlsform, $file);
-    //         }
-
-    //     }
-    //     // dynamic files
-    //     $csv_lookups = $xlsform->xlsformTemplate->csv_lookups;
-
-    //     if ($csv_lookups && count($csv_lookups) > 0) {
-
-    //         foreach ($csv_lookups as $lookup) {
-
-    //             $this->uploadSingleMediaFile(
-    //                 $xlsform,
-    //                 $this->createCsvLookupFile($xlsform, $lookup),
-    //             );
-
-    //         }
-    //     }
-
-    //     return true;
-
-    // }
-
 
     #########################################################
     ### FORM MEDIA ATTACHMENTS
