@@ -6,5 +6,5 @@ use Filament\Forms\Components\Field;
 
 class DraftTestingQrCode extends Field
 {
-    protected string $view = 'forms.components.draft-testing-qr-code';
+    protected string $view = 'filament-odk-link::filament.forms.components.draft-testing-qr-code';
 }

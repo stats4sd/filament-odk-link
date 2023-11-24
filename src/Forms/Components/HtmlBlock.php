@@ -9,7 +9,7 @@ class HtmlBlock  extends Component
 {
     use HasName;
 
-    protected string $view = 'forms.components.html-block';
+    protected string $view = 'filament-odk-link::filament.forms.components.html-block';
     protected mixed $content = null;
 
     final public function __construct(string $name)
