@@ -170,6 +170,14 @@ class OdkLinkService
             $xlsform->update(['odk_id' => $response['xmlFormId']]);
         }
 
+        // upddate the stored schema with the new draft;
+        $schema = Http::withToken($token)
+            ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/fields?odata=true")
+            ->throw()
+            ->json();
+
+        $xlsform->updateQuietly(['schema' => $schema]);
+
         // deploy media files
         $this->uploadMediaFileAttachments($xlsform);
 
