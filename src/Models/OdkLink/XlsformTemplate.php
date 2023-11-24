@@ -172,13 +172,6 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
 
         //***  extract structure into 'sections'
 
-        // create or find the 'root' section
-        $this->xlsformTemplateSections()->updateOrCreate([
-            'structure_item' => 'root',
-        ], [
-            'is_repeat' => false,
-            'schema' => $this->schema->filter(fn ($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && $item['path'] === "/{$item['name']}"),
-        ]);
 
         // create or find the repeat sections
         $this->schema->filter(fn ($item) => $item['type'] === 'repeat')
@@ -222,6 +215,26 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
 
             });
         });
+
+        
+
+        // TODO
+        $this->repeatingSections->filter(fn ($item) => $item->structure_item !== 'root')
+            ->map(function (int $item, int $key) {
+
+                dd($item);
+        });
+
+
+        // create or find the 'root' section
+        $this->xlsformTemplateSections()->updateOrCreate([
+            'structure_item' => 'root',
+        ], [
+            'is_repeat' => false,
+            // 'schema' => $this->schema->filter(fn ($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && $item['path'] === "/{$item['name']}"),
+            'schema' => $this->schema->filter(fn ($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat'),
+        ]);
+
 
         //        dd('ok');
 
