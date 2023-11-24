@@ -161,7 +161,7 @@ class XlsformTemplateResource extends Resource
                 ->relationship('rootSection')
                 ->schema([
                     Forms\Components\ViewField::make('schema')
-                        ->view('filament.forms.components.xlsform-section-schema-modal-link')
+                        ->view('filament-odk-link::filament.forms.components.xlsform-section-schema-modal-link')
                         ->registerActions([
                             Action::make('viewSchema')
                                 ->label('View variable list')
@@ -211,7 +211,7 @@ class XlsformTemplateResource extends Resource
                 ->deletable(false)
                 ->schema([
                     Forms\Components\ViewField::make('schema')
-                        ->view('filament.forms.components.xlsform-section-schema-modal-link')
+                        ->view('filament-odk-link::filament.forms.components.xlsform-section-schema-modal-link')
                         ->registerActions([
                             Action::make('viewSchema')
                                 ->label('View variable list')
@@ -250,10 +250,10 @@ class XlsformTemplateResource extends Resource
                 Tables\Columns\TextColumn::make('title'),
                 Tables\Columns\ViewColumn::make('required_fixed_media_count')
                     ->label('Fixed Media')
-                    ->view('filament.tables.columns.required-fixed-media-count'),
+                    ->view('filament-odk-link::filament.tables.columns.required-fixed-media-count'),
                 Tables\Columns\ViewColumn::make('required_data_media_count')
                     ->label('Datasets')
-                    ->view('filament.tables.columns.required-data-media-count'),
+                    ->view('filament-odk-link::filament.tables.columns.required-data-media-count'),
                 Tables\Columns\CheckboxColumn::make('available')
                     ->label('Available for use?'),
             ])
@@ -344,7 +344,7 @@ class XlsformTemplateResource extends Resource
                             ->visible(fn (?XlsformTemplate $record): bool => $record->rootSection->schema->count() < 5),
 
                         ViewEntry::make('schema')
-                            ->view('filament.infolists.components.xlsform-section-schema-modal-link')
+                            ->view('filament-odk-link::filament.infolists.components.xlsform-section-schema-modal-link')
                             ->registerActions([
                                 \Filament\Infolists\Components\Actions\Action::make('viewSchema')
                                     ->label('View variable list')
@@ -391,7 +391,7 @@ class XlsformTemplateResource extends Resource
                                     TextEntry::make('structure_item')->label('Repeat Name'),
 
                                     ViewEntry::make('schema')
-                                        ->view('filament.forms.components.xlsform-section-schema-modal-link')
+                                        ->view('filament-odk-link::filament.forms.components.xlsform-section-schema-modal-link')
                                         ->registerActions([
                                             \Filament\Infolists\Components\Actions\Action::make('viewSchema')
                                                 ->label('View variable list')
@@ -433,7 +433,7 @@ class XlsformTemplateResource extends Resource
                         // show QR code of ODK form draft version
                         ViewEntry::make('qr_code')
                             ->label('Scan the QR code below in ODK Collect to view the test form.')
-                            ->view('filament.infolists.entries.draft-testing-qr-code'),
+                            ->view('filament-odk-link::filament.infolists.entries.draft-testing-qr-code'),
 
                         // open URL in browser new tab
                         TextEntry::make('enketo_draft_url')->label('Click below link to view ODK form in browser')

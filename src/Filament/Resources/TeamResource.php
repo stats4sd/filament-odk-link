@@ -75,7 +75,7 @@ class TeamResource extends Resource
                             ->getStateUsing(fn ($record) => new HtmlString(preg_replace('/\n/', '<br/>', $record->description)))
                             ->columnSpan(4),
                         ViewEntry::make('qr_code')
-                            ->view('filament.infolists.components.team-qr-code'),
+                            ->view('filament-odk-link::filament.infolists.components.team-qr-code'),
 
                     ]),
             ]);
