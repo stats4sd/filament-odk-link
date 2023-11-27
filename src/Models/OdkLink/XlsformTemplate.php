@@ -217,13 +217,16 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
         });
 
         
+        // find all ODK variable names of all repeating sections
+        $repeatingSectionItemNames = [];
 
-        // TODO
-        $this->repeatingSections->filter(fn ($item) => $item->structure_item !== 'root')
-            ->map(function (int $item, int $key) {
+        foreach ($this->repeatingSections as $repeatingSection) {
+            $variableNames = $repeatingSection->schema->pluck('name');
 
-                dd($item);
-        });
+            foreach ($variableNames as $variableName) {
+                array_push($repeatingSectionItemNames, $variableName);
+            }
+        }
 
 
         // create or find the 'root' section
@@ -231,8 +234,12 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
             'structure_item' => 'root',
         ], [
             'is_repeat' => false,
-            // 'schema' => $this->schema->filter(fn ($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && $item['path'] === "/{$item['name']}"),
-            'schema' => $this->schema->filter(fn ($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat'),
+            
+            // to exclude below items:
+            // 1. structure type item
+            // 2. repeat type item
+            // 3. item names belong to ODK variable names of all repeating sections
+            'schema' => $this->schema->filter(fn ($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && !in_array($item['name'], $repeatingSectionItemNames)),
         ]);
 
 
