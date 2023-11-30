@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EntityValue extends Model
 {
-    protected $table = 'datasets';
+    protected $table = 'entity_values';
 
     protected $guarded = [];
 
