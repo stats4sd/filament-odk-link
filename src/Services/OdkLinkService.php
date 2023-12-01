@@ -492,29 +492,8 @@ class OdkLinkService
 
 
 
-            dump('all datasets belong to this xlsform template');
-
-            // find all datasets belong to xlsform
-            $mainSurveyDataset = null;
-            $datasets = [];
-            foreach ($xlsform->xlsformTemplate->xlsformTemplateSections as $xlsformTemplateSection) {
-                dump($xlsformTemplateSection->dataset->name . ' : ' . $xlsformTemplateSection->dataset->primary_key . '(' . $xlsformTemplateSection->dataset->for_repeat_group . ')');
-
-                if ($xlsformTemplateSection->dataset->for_repeat_group == 1) {
-                    array_push($datasets, $xlsformTemplateSection->dataset);
-                } else {
-                    $mainSurveyDataset = $xlsformTemplateSection->dataset;
-                }
-            }
-
-            dump('mainSurveyDataset');
-            dump($mainSurveyDataset->name . ' : ' . $mainSurveyDataset->primary_key . '(' . $mainSurveyDataset->for_repeat_group . ')');
-
-            dump('datasets');
-            dump($datasets);
-
             // pass 0 as mainSurveyEntityId at the very beginning
-            $entryToStore = $this->processEntry($entry, $schema, $xlsform, 0, 'root', $mainSurveyDataset, $datasets);
+            $entryToStore = $this->processEntry('root', $entry, $schema, $xlsform, 0);
 
 
 
@@ -563,91 +542,68 @@ class OdkLinkService
     }
 
     // WIP
-    public function processEntry($entry, $schema, $xlsform, $mainSurveyEntityId, $entityName, $mainSurveyDataset, $datasets)
+    public function processEntry($entryName, $entry, $schema, $xlsform, $mainSurveyEntityId)
     {
         dump("     *****************************************");
         dump("     ***** OdkLinkService.processEntry() *****");
         dump("     *****************************************");
 
         dump('     ***** $mainSurveyEntityId: ' . $mainSurveyEntityId);
-        dump('     ***** $entityName: ' . $entityName);
+        dump('     ***** $entryName: ' . $entryName);
 
         dump('     ***** $entry');
         dump($entry);
         dump('     *****');
 
-        // check whether this entry belongs to a repeating group
-        $matchedDataset = null;
-        foreach ($datasets as $dataset) {
-            if (Arr::exists($entry, $dataset->primary_key)) {
-                $matchedDataset = $dataset;
 
-                dump('Found a matched dataset for repeating group.');
-                break;
-            }
+        // find xlsform template section for root and repeat group
+        $xlsformTemplateSection = $xlsform->xlsformTemplate->xlsformTemplateSections->firstWhere('structure_item', $entryName);
+
+        // in "flatten" approach, use root for all other structure items
+        if ($xlsformTemplateSection != null) {
+            dump("This is root or repeat group");
+        } else {
+            dump("This is not root or repeat group, it should be a structure item. Treat it as root");
+            $xlsformTemplateSection = $xlsform->xlsformTemplate->xlsformTemplateSections->firstWhere('is_repeat', 0);
         }
 
-        if ($matchedDataset == null) {
-            // Question: how to find the main survey dataset of a xlsform?
-            // Can we add a boolean column to indicate whether dataset is defined for a repeating group?
-            // Suppose main survey dataset is not defined for a repeating group
-            dump('Cannot find a matched dataset for repeating group. Use main survey (root) dataset');
 
-            $matchedDataset = $mainSurveyDataset;
-        }
+        // create entity if $entryName is "root" or repeat group
+        // otherwise, retrieve main survey entity
+        if ($entryName == 'root' || $xlsformTemplateSection->is_repeat == 1) {
 
-        dump($matchedDataset->name . ' : ' . $matchedDataset->primary_key);
-
-        // TODO: create entities record
-        if ($matchedDataset->for_repeat_group == 1) {
-            dump('Create entities record for repeat group dataset');
-
-            // create entities record
             $entity = Entity::create([
-                'dataset_id' => $matchedDataset->id,
+                'dataset_id' => $xlsformTemplateSection->dataset->id,
 
                 // Question: "name" column has a unique constraint. What should be filled in? 
-                'name' => $entityName . '-' . Str::random(30),
+                'name' => $entryName . '-' . Str::random(30),
             ]);
 
-        } else {
-            
-            if ($mainSurveyEntityId == 0) {
-                // only create main survey entity when it is called first time
+            // add polymorphic relationship
+            // Question: it throws error "Call to undefined method Stats4sd\FilamentOdkLink\Models\OdkLink\Entity::getVariableList()"
+            $entity->owner()->associate($xlsform->owner)->save();
 
-                $entity = Entity::create([
-                    'dataset_id' => $matchedDataset->id,
-
-                    // Question: "name" column has a unique constraint. What should be filled in? 
-                    'name' => $entityName . '-' . Str::random(30),
-                ]);
-
+            if ($entryName == 'root') {
                 $mainSurveyEntityId = $entity->id;
-
-            } else {
-
-                // re-use the created main survey entity               
-                $entity = Entity::find($mainSurveyEntityId);
-
             }
+
+        } else {
+
+            // re-use the created main survey entity
+            $entity = Entity::find($mainSurveyEntityId);
 
         }
 
 
-        // add polymorphic relationship
-        // Question: it throws error "Call to undefined method Stats4sd\FilamentOdkLink\Models\OdkLink\Entity::getVariableList()"
-        $entity->owner()->associate($xlsform->owner)->save();
-
-
-        if ($matchedDataset->for_repeat_group == 1) {
-            dump('for repeating group, use newly created entity id');
+        // log message
+        if ($xlsformTemplateSection->is_repeat == 1) {
+            dump('for repeating group, use newly created entity id for entity_values record');
         } else {
-            dump('for NON repeating group, use main survey entity id');
+            dump('for NON repeating group, use main survey entity id for entity_values record');
         }
 
 
         foreach ($entry as $key => $value) {
-            // dump("key value pair");
 
             if (is_array($value)) {
                 dump($key . ' is an array');
@@ -656,8 +612,7 @@ class OdkLinkService
             // search for structure groups to flatten
             $schemaEntry = $schema->firstWhere('name', '=', $key);
 
-            // TODO: create entity_values record
-            // TODO: check value, it cannot be an array
+            // create entity_values record for key value pair
             if ($schemaEntry != null && 
                 $schemaEntry['type'] != 'structure' && 
                 $schemaEntry['type'] != 'repeat' && 
@@ -666,13 +621,13 @@ class OdkLinkService
                 !is_array($value)) {
 
                 // determine final entity ID
-                if ($matchedDataset->for_repeat_group == 1) {
+                if ($xlsformTemplateSection->is_repeat == 1) {
                     $finalEntityId = $entity->id;
                 } else {
                     $finalEntityId = $mainSurveyEntityId;
                 }
 
-                dump('create entity_value record for ' . '(' . $key . ' => ' . $value . ') with entity_id ' . $finalEntityId);
+                dump('==> create entity_value record for ' . '(' . $key . ' => ' . $value . ') with entity_id ' . $finalEntityId);
 
                 EntityValue::create([
                     'entity_id' => $finalEntityId,
@@ -689,34 +644,26 @@ class OdkLinkService
                 dump('     SSSSS');
                 dump('     SSSSS ' . $key . ' is a structure item or array, call processEntry() to handle');
                 dump('     SSSSS');
-                $entry = array_merge($this->processEntry($value, $schema, $xlsform, $mainSurveyEntityId, $key, $mainSurveyDataset, $datasets), $entry);
+                $entry = array_merge($this->processEntry($key, $value, $schema, $xlsform, $mainSurveyEntityId), $entry);
                 unset($entry[$key]);
             }
 
             if ($schemaEntry['type'] === 'repeat') {
                 dump('     RRRRR');
-                dump("     RRRRR This is a repeating group, call processEntry() to handle");
+                dump('     RRRRR ' . $key . ' is a repeat group, call processEntry() to handle');
                 dump('     RRRRR');
 
                 // $entry[$key] = collect($entry[$key])->map(function ($repeatEntry) use ($schema, $xlsform, $datasets) {
                 //     return $this->processEntry($repeatEntry, $schema, $xlsform, $datasets);
                 // })->toArray();
 
-                // TODO: handle array element of repeating group
-                // write a loop to call processEntry(), to handle each array element
-                dump('key');
-                dump($key);
-
-                dump('entry');
-                dump($entry);
-                
-                // only need to handle 
+                // handle each array element of repeating group
                 foreach ($entry as $arrayElement) {
                     if ($arrayElement != null && is_array($arrayElement)) {
                         dump('arrayElement');
                         dump($arrayElement);
 
-                        $this->processEntry($arrayElement, $schema, $xlsform, $mainSurveyEntityId, $key, $mainSurveyDataset, $datasets);
+                        $this->processEntry($key, $arrayElement, $schema, $xlsform, $mainSurveyEntityId);
                     }
                 }
             }
@@ -725,7 +672,7 @@ class OdkLinkService
 
 
         dump('     ///// $mainSurveyEntityId: ' . $mainSurveyEntityId);
-        dump('     ///// $entityName: ' . $entityName);
+        dump('     ///// $entryName: ' . $entryName);
 
         dump("     ////////////////////////////////////////////////");
         dump("     ///// END OF OdkLinkService.processEntry() /////");
