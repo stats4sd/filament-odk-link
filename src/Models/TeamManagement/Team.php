@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Mail\TeamManagement\InviteMember;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsForms;
-use Stats4sd\FilamentOdkLink\Models\User;
+use App\Models\User;
 
 class Team extends Model
 {

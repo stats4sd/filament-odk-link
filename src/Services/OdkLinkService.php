@@ -576,7 +576,7 @@ class OdkLinkService
                 'dataset_id' => $xlsformTemplateSection->dataset->id,
 
                 // Question: "name" column has a unique constraint. What should be filled in? 
-                'name' => $entryName . '-' . Str::random(30),
+                // 'name' => $entryName . '-' . Str::random(30),
             ]);
 
             // add polymorphic relationship

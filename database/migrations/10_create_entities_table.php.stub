@@ -12,7 +12,7 @@ return new class extends Migration {
             $table->foreignId('dataset_id')->constrained('datasets');
             $table->nullableMorphs('owner');
             $table->nullableMorphs('model');
-            $table->string('name')->unique();
+            $table->foreignId('submission_id')->constrained('submissions')->cascadeOnDelete()->cascadeOnUpdate();
             $table->timestamps();
         });
 
