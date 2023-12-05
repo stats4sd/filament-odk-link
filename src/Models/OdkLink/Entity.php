@@ -14,6 +14,11 @@ class Entity extends Model
 
     protected $guarded = [];
 
+    public function submission(): BelongsTo
+    {
+        return $this->belongsTo(Submission::class);
+    }
+
     public function dataset(): BelongsTo
     {
         return $this->belongsTo(Dataset::class);
