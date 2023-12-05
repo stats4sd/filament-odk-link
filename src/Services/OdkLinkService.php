@@ -486,23 +486,23 @@ class OdkLinkService
 
             $xlsformVersion = $xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
 
-            // GET schema information for the specific version
-            // TODO: hook this into the select variables work from the other branch...
-            $schema = collect($xlsformVersion->schema);
-
-
-
-            // pass 0 as mainSurveyEntityId at the very beginning
-            $entryToStore = $this->processEntry('root', $entry, $schema, $xlsform, 0);
-
-
-
+            // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
             $submission = $xlsformVersion?->submissions()->create([
                 'odk_id' => $entry['__id'],
                 'submitted_at' => (new Carbon($entry['__system']['submissionDate']))->toDateTimeString(),
                 'submitted_by' => $entry['__system']['submitterName'],
-                'content' => $entryToStore,
+                'content' => $entry,
             ]);
+
+
+            // GET schema information for the specific version
+            // TODO: hook this into the select variables work from the other branch...
+            // $schema = collect($xlsformVersion->schema);
+
+
+            // pass 0 as mainSurveyEntityId at the very beginning
+            $entryToStore = $this->processEntry($xlsform, $entry, 'root', 0, $submission->id);
+
 
             // if app developer has defined a method of processing submission content, call that method:
             $class = config('filament-odk-link.submission.process_method.class');
@@ -542,7 +542,7 @@ class OdkLinkService
     }
 
     // WIP
-    public function processEntry($entryName, $entry, $schema, $xlsform, $mainSurveyEntityId)
+    public function processEntry($xlsform, $entry, $entryName, $mainSurveyEntityId, $submissionId)
     {
         dump("     *****************************************");
         dump("     ***** OdkLinkService.processEntry() *****");
@@ -574,9 +574,7 @@ class OdkLinkService
 
             $entity = Entity::create([
                 'dataset_id' => $xlsformTemplateSection->dataset->id,
-
-                // Question: "name" column has a unique constraint. What should be filled in? 
-                // 'name' => $entryName . '-' . Str::random(30),
+                'submission_id' => $submissionId,
             ]);
 
             // add polymorphic relationship
@@ -601,6 +599,10 @@ class OdkLinkService
         } else {
             dump('for NON repeating group, use main survey entity id for entity_values record');
         }
+
+
+        // use schema in xlsform template section
+        $schema = $xlsformTemplateSection->schema;
 
 
         foreach ($entry as $key => $value) {
@@ -644,7 +646,7 @@ class OdkLinkService
                 dump('     SSSSS');
                 dump('     SSSSS ' . $key . ' is a structure item or array, call processEntry() to handle');
                 dump('     SSSSS');
-                $entry = array_merge($this->processEntry($key, $value, $schema, $xlsform, $mainSurveyEntityId), $entry);
+                $entry = array_merge($this->processEntry($xlsform, $value, $key, $mainSurveyEntityId, $submissionId), $entry);
                 unset($entry[$key]);
             }
 
@@ -663,7 +665,7 @@ class OdkLinkService
                         dump('arrayElement');
                         dump($arrayElement);
 
-                        $this->processEntry($key, $arrayElement, $schema, $xlsform, $mainSurveyEntityId);
+                        $this->processEntry($xlsform, $arrayElement, $key, $mainSurveyEntityId, $submissionId);
                     }
                 }
             }
