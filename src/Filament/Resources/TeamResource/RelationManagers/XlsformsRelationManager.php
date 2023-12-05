@@ -121,6 +121,18 @@ class XlsformsRelationManager extends RelationManager
                     $odkLinkService->getSubmissions($record);
                 }),
 
+                // add Pull Submissions button
+                Tables\Actions\Action::make('export')
+                ->label('Export')
+                ->icon('heroicon-m-document-arrow-down')
+                ->action(function (Xlsform $record) {
+                    $odkLinkService = app()->make(OdkLinkService::class);
+
+                    // call API to pull submissions from ODK central
+                    $odkLinkService->exportAsExcelFile($record);
+
+                }),
+
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

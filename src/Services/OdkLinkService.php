@@ -19,6 +19,8 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
+use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
+use Stats4sd\FilamentOdkLink\Exports\UsersExport;
 
 /**
  * All ODK Aggregation services should be able to handle ODK forms, so this interface should always be used.
@@ -684,6 +686,14 @@ class OdkLinkService
     }
 
 
+    public function exportAsExcelFile(Xlsform $xlsform)
+    {
+        // TODO: Why it does not trigger a file download in browser?
+        return Excel::download(new SurveyExport($xlsform), 'survey.xlsx');
+
+        // Laravel excel package example for testing
+        // return Excel::download(new UsersExport, 'users.xlsx');
+    }
 
     //
     //    public function processEntryNOPE(array $entryToStore, array $entry, Collection $schema, array $repeatPath = []): array
