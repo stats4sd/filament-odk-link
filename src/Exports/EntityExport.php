@@ -36,27 +36,43 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
         // for each submission
         foreach ($this->submissionIds as $submissionId) {
             // find entity for root
-            $rootEntity = Entity::where('submission_id', $submissionId)->where('dataset_id', $this->xlsformTemplateSection->dataset_id)->first();
-            $record = [];
+            $entities = Entity::where('submission_id', $submissionId)->where('dataset_id', $this->xlsformTemplateSection->dataset_id)->get()->all();
 
-            // find value for each ODK variable
-            foreach ($this->headings() as $heading) {
-                // dump($heading);
-                $entityValue = EntityValue::select('value')->where('entity_id', $rootEntity->id)->where('dataset_variable_id', $heading)->first();
-                
-                if ($entityValue == null) {
-                    // add null to record
-                    // dump('add null to array');
-                    array_push($record, null);
-                } else {
-                    // dump($entityValue->value);
-                    array_push($record, $entityValue->value);
+            foreach ($entities as $entity) {
+
+                // dump('entity->id: ' . $entity->id);
+                // logger('entity->id: ' . $entity->id);
+
+                // initialisation
+                $record = [];
+                $isEmptyRecord = true;
+
+                // find value for each ODK variable
+                foreach ($this->headings() as $heading) {
+                    // dump($heading);
+
+                    // assume there is only one value for one ODK variable
+                    $entityValue = EntityValue::select('value')->where('entity_id', $entity->id)->where('dataset_variable_id', $heading)->first();
+                    
+                    if ($entityValue == null) {
+                        // dump($heading . ' : null');
+                        array_push($record, null);
+                    } else {
+                        // dump($heading . ' : ' . $entityValue->value);
+                        array_push($record, $entityValue->value);
+                        $isEmptyRecord = false;
+                    }
+
+                }
+
+                // dump($record);
+
+                // no need to export entity record if it does not have any entity_value record
+                if (!$isEmptyRecord) {
+                    array_push($records, $record);
                 }
 
             }
-
-            // dump($record);
-            array_push($records, $record);
 
         }
 

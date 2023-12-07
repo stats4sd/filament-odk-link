@@ -31,7 +31,7 @@ class SurveyExport implements WithMultipleSheets
         $sheets = [];
 
         // handle main survey
-        $sheets[] = new EntityExport($this->xlsform, $this->submissionIds, $this->mainSurveySection->structure_item, $this->mainSurveySection);
+        $sheets[] = new EntityExport($this->xlsform, $this->submissionIds, 'Main Survey', $this->mainSurveySection);
 
         // handle repeat groups
         foreach ($this->xlsform->xlsformTemplate->xlsformTemplateSections as $section) {

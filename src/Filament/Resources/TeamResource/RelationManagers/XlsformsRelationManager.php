@@ -7,6 +7,7 @@ use Filament\Tables;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Infolists\Infolist;
+use Maatwebsite\Excel\Facades\Excel;
 use Filament\Forms\Components\ViewField;
 use Illuminate\Database\Eloquent\Builder;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
@@ -128,9 +129,9 @@ class XlsformsRelationManager extends RelationManager
                 ->action(function (Xlsform $record) {
                     $odkLinkService = app()->make(OdkLinkService::class);
 
-                    // call API to pull submissions from ODK central
-                    $odkLinkService->exportAsExcelFile($record);
-
+                    // call API to export data as excel file
+                    // P.S. use return to trigger file download in browser
+                    return $odkLinkService->exportAsExcelFile($record);
                 }),
 
                 Tables\Actions\ViewAction::make(),

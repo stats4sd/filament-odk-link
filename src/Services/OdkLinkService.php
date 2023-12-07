@@ -20,7 +20,6 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
-use Stats4sd\FilamentOdkLink\Exports\UsersExport;
 
 /**
  * All ODK Aggregation services should be able to handle ODK forms, so this interface should always be used.
@@ -499,11 +498,11 @@ class OdkLinkService
 
             // GET schema information for the specific version
             // TODO: hook this into the select variables work from the other branch...
-            // $schema = collect($xlsformVersion->schema);
+            $schema = collect($xlsformVersion->schema);
 
 
             // pass 0 as mainSurveyEntityId at the very beginning
-            $entryToStore = $this->processEntry($xlsform, $entry, 'root', 0, $submission->id);
+            $entryToStore = $this->processEntry($xlsform, $entry, $schema, 'root', 0, $submission->id);
 
 
             // if app developer has defined a method of processing submission content, call that method:
@@ -544,18 +543,18 @@ class OdkLinkService
     }
 
     // WIP
-    public function processEntry($xlsform, $entry, $entryName, $mainSurveyEntityId, $submissionId)
+    public function processEntry($xlsform, $entry, $schema, $entryName, $mainSurveyEntityId, $submissionId)
     {
-        dump("     *****************************************");
-        dump("     ***** OdkLinkService.processEntry() *****");
-        dump("     *****************************************");
+        // dump("     *****************************************");
+        // dump("     ***** OdkLinkService.processEntry() *****");
+        // dump("     *****************************************");
 
-        dump('     ***** $mainSurveyEntityId: ' . $mainSurveyEntityId);
+        // dump('     ***** $mainSurveyEntityId: ' . $mainSurveyEntityId);
         dump('     ***** $entryName: ' . $entryName);
 
-        dump('     ***** $entry');
-        dump($entry);
-        dump('     *****');
+        // dump('     ***** $entry');
+        // dump($entry);
+        // dump('     *****');
 
 
         // find xlsform template section for root and repeat group
@@ -604,7 +603,8 @@ class OdkLinkService
 
 
         // use schema in xlsform template section
-        $schema = $xlsformTemplateSection->schema;
+        // should need to use the schema of the entire xlsform, becasue key is not existed in schema of a xlsform template section
+        // $schema = $xlsformTemplateSection->schema;
 
 
         foreach ($entry as $key => $value) {
@@ -640,22 +640,24 @@ class OdkLinkService
                 ]);
             }
 
+            // do not need this checking anymore. We use the schema of a xlsform template section instead of the schema of the entity xlsform
+            // need this checking when we use schema of the entire xlsform
             if (! $schemaEntry) {
                 continue;
             }
 
             if ($schemaEntry['type'] === 'structure' || is_array($value)) {
-                dump('     SSSSS');
+                // dump('     SSSSS');
                 dump('     SSSSS ' . $key . ' is a structure item or array, call processEntry() to handle');
-                dump('     SSSSS');
-                $entry = array_merge($this->processEntry($xlsform, $value, $key, $mainSurveyEntityId, $submissionId), $entry);
+                // dump('     SSSSS');
+                $entry = array_merge($this->processEntry($xlsform, $value, $schema, $key, $mainSurveyEntityId, $submissionId), $entry);
                 unset($entry[$key]);
             }
 
             if ($schemaEntry['type'] === 'repeat') {
-                dump('     RRRRR');
+                // dump('     RRRRR');
                 dump('     RRRRR ' . $key . ' is a repeat group, call processEntry() to handle');
-                dump('     RRRRR');
+                // dump('     RRRRR');
 
                 // $entry[$key] = collect($entry[$key])->map(function ($repeatEntry) use ($schema, $xlsform, $datasets) {
                 //     return $this->processEntry($repeatEntry, $schema, $xlsform, $datasets);
@@ -664,10 +666,10 @@ class OdkLinkService
                 // handle each array element of repeating group
                 foreach ($entry as $arrayElement) {
                     if ($arrayElement != null && is_array($arrayElement)) {
-                        dump('arrayElement');
-                        dump($arrayElement);
+                        // dump('arrayElement');
+                        // dump($arrayElement);
 
-                        $this->processEntry($xlsform, $arrayElement, $key, $mainSurveyEntityId, $submissionId);
+                        $this->processEntry($xlsform, $arrayElement, $schema, $key, $mainSurveyEntityId, $submissionId);
                     }
                 }
             }
@@ -678,9 +680,9 @@ class OdkLinkService
         dump('     ///// $mainSurveyEntityId: ' . $mainSurveyEntityId);
         dump('     ///// $entryName: ' . $entryName);
 
-        dump("     ////////////////////////////////////////////////");
-        dump("     ///// END OF OdkLinkService.processEntry() /////");
-        dump("     ////////////////////////////////////////////////");
+        // dump("     ////////////////////////////////////////////////");
+        // dump("     ///// END OF OdkLinkService.processEntry() /////");
+        // dump("     ////////////////////////////////////////////////");
 
         return $entry;
     }
@@ -688,11 +690,7 @@ class OdkLinkService
 
     public function exportAsExcelFile(Xlsform $xlsform)
     {
-        // TODO: Why it does not trigger a file download in browser?
         return Excel::download(new SurveyExport($xlsform), 'survey.xlsx');
-
-        // Laravel excel package example for testing
-        // return Excel::download(new UsersExport, 'users.xlsx');
     }
 
     //
