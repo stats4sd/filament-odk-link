@@ -502,7 +502,7 @@ class OdkLinkService
 
 
             // pass 0 as mainSurveyEntityId at the very beginning
-            $entryToStore = $this->processEntry($xlsform, $entry, $schema, 'root', 0, $submission->id);
+            $entryToStore = $this->processEntry($xlsform, $entry, $schema, $submission->id, 'root', null);
 
 
             // if app developer has defined a method of processing submission content, call that method:
@@ -542,78 +542,68 @@ class OdkLinkService
 
     }
 
+
     // WIP
-    public function processEntry($xlsform, $entry, $schema, $entryName, $mainSurveyEntityId, $submissionId)
+    public function processEntry($xlsform, $entry, $schema, $submissionId, $entryName, $entityId)
     {
-        // dump("     *****************************************");
-        // dump("     ***** OdkLinkService.processEntry() *****");
-        // dump("     *****************************************");
-
-        // dump('     ***** $mainSurveyEntityId: ' . $mainSurveyEntityId);
-        dump('     ***** $entryName: ' . $entryName);
-
-        // dump('     ***** $entry');
+        // dump('     ***** $entryName: ' . $entryName);
+        // dump('     ***** $entityId: ' . $entityId);
+        // dump('     ***** $entry: ');
         // dump($entry);
-        // dump('     *****');
-
+        // dump('     ***** $schema: ');
+        // dump($schema);
 
         // find xlsform template section for root and repeat group
         $xlsformTemplateSection = $xlsform->xlsformTemplate->xlsformTemplateSections->firstWhere('structure_item', $entryName);
 
-        // in "flatten" approach, use root for all other structure items
         if ($xlsformTemplateSection != null) {
-            dump("This is root or repeat group");
+            // dump('Xlsform template section found, it is either root or repeat group');
+
+            // for repeat group (i.e. non root section), use schema of xlsform template section
+            if ($entryName != 'root') {
+                $schema = $xlsformTemplateSection->schema;
+            }
+
         } else {
-            dump("This is not root or repeat group, it should be a structure item. Treat it as root");
+            // dump('Xlsform template section not found, it is not root or repeat group');
             $xlsformTemplateSection = $xlsform->xlsformTemplate->xlsformTemplateSections->firstWhere('is_repeat', 0);
         }
 
+        
+        // prepare entity
+        if (($entryName == 'root') || ($xlsformTemplateSection->is_repeat == 1)) {
 
-        // create entity if $entryName is "root" or repeat group
-        // otherwise, retrieve main survey entity
-        if ($entryName == 'root' || $xlsformTemplateSection->is_repeat == 1) {
-
+            // create new entity for root or repeat group
             $entity = Entity::create([
                 'dataset_id' => $xlsformTemplateSection->dataset->id,
                 'submission_id' => $submissionId,
             ]);
 
             // add polymorphic relationship
-            // Question: it throws error "Call to undefined method Stats4sd\FilamentOdkLink\Models\OdkLink\Entity::getVariableList()"
             $entity->owner()->associate($xlsform->owner)->save();
 
-            if ($entryName == 'root') {
-                $mainSurveyEntityId = $entity->id;
-            }
+            $entityId = $entity->id;
 
         } else {
 
-            // re-use the created main survey entity
-            $entity = Entity::find($mainSurveyEntityId);
+            // This is not root or repeat group. It can be:
+            // 1. Structure item under root
+            // 2. Structture item under repeat group
+
+            // Get existing entity. It is either root entity or repeat group entity
+            $entity = Entity::find($entityId);
 
         }
 
 
-        // log message
-        if ($xlsformTemplateSection->is_repeat == 1) {
-            dump('for repeating group, use newly created entity id for entity_values record');
-        } else {
-            dump('for NON repeating group, use main survey entity id for entity_values record');
-        }
-
-
-        // use schema in xlsform template section
-        // should need to use the schema of the entire xlsform, becasue key is not existed in schema of a xlsform template section
-        // $schema = $xlsformTemplateSection->schema;
-
-
+        // store attributes as entity_value record, call processEntry() for repeat group or structure item
         foreach ($entry as $key => $value) {
 
-            if (is_array($value)) {
-                dump($key . ' is an array');
-            }
+            // if (is_array($value)) {
+            //     dump($key . ' is an array');
+            // }
 
-            // search for structure groups to flatten
+            // check whether attribute key exist in schema
             $schemaEntry = $schema->firstWhere('name', '=', $key);
 
             // create entity_values record for key value pair
@@ -624,17 +614,10 @@ class OdkLinkService
                 $value != null &&
                 !is_array($value)) {
 
-                // determine final entity ID
-                if ($xlsformTemplateSection->is_repeat == 1) {
-                    $finalEntityId = $entity->id;
-                } else {
-                    $finalEntityId = $mainSurveyEntityId;
-                }
-
-                dump('==> create entity_value record for ' . '(' . $key . ' => ' . $value . ') with entity_id ' . $finalEntityId);
+                // dump('==> create entity_value record for ' . '(' . $key . ' => ' . $value . ') with entity_id ' . $entityId);
 
                 EntityValue::create([
-                    'entity_id' => $finalEntityId,
+                    'entity_id' => $entityId,
                     'dataset_variable_id' => $key,
                     'value' => $value,
                 ]);
@@ -647,17 +630,13 @@ class OdkLinkService
             }
 
             if ($schemaEntry['type'] === 'structure' || is_array($value)) {
-                // dump('     SSSSS');
-                dump('     SSSSS ' . $key . ' is a structure item or array, call processEntry() to handle');
-                // dump('     SSSSS');
-                $entry = array_merge($this->processEntry($xlsform, $value, $schema, $key, $mainSurveyEntityId, $submissionId), $entry);
+                // dump('     SSSSS ' . $key . ' is a structure item or array, call processEntry() to handle');
+                $entry = array_merge($this->processEntry($xlsform, $value, $schema, $submissionId, $key, $entityId), $entry);
                 unset($entry[$key]);
             }
 
             if ($schemaEntry['type'] === 'repeat') {
-                // dump('     RRRRR');
-                dump('     RRRRR ' . $key . ' is a repeat group, call processEntry() to handle');
-                // dump('     RRRRR');
+                // dump('     RRRRR ' . $key . ' is a repeat group, call processEntry() to handle');
 
                 // $entry[$key] = collect($entry[$key])->map(function ($repeatEntry) use ($schema, $xlsform, $datasets) {
                 //     return $this->processEntry($repeatEntry, $schema, $xlsform, $datasets);
@@ -669,7 +648,7 @@ class OdkLinkService
                         // dump('arrayElement');
                         // dump($arrayElement);
 
-                        $this->processEntry($xlsform, $arrayElement, $schema, $key, $mainSurveyEntityId, $submissionId);
+                        $this->processEntry($xlsform, $arrayElement, $schema, $submissionId, $key, $entityId);
                     }
                 }
             }
@@ -677,12 +656,8 @@ class OdkLinkService
         }
 
 
-        dump('     ///// $mainSurveyEntityId: ' . $mainSurveyEntityId);
-        dump('     ///// $entryName: ' . $entryName);
-
-        // dump("     ////////////////////////////////////////////////");
-        // dump("     ///// END OF OdkLinkService.processEntry() /////");
-        // dump("     ////////////////////////////////////////////////");
+        // dump('     ///// $entityId: ' . $entityId);
+        // dump('     ///// $entryName: ' . $entryName);
 
         return $entry;
     }
@@ -690,8 +665,9 @@ class OdkLinkService
 
     public function exportAsExcelFile(Xlsform $xlsform)
     {
-        return Excel::download(new SurveyExport($xlsform), 'survey.xlsx');
+        return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
     }
+
 
     //
     //    public function processEntryNOPE(array $entryToStore, array $entry, Collection $schema, array $repeatPath = []): array
