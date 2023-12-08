@@ -35,7 +35,6 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
 
                 // initialisation
                 $record = [];
-                $isEmptyRecord = true;
 
                 // find value for each ODK variable
                 foreach ($this->headings() as $heading) {
@@ -47,16 +46,11 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
                         array_push($record, null);
                     } else {
                         array_push($record, $entityValue->value);
-                        $isEmptyRecord = false;
                     }
 
                 }
 
-                // no need to export entity record if it does not have any entity_value record
-                if (!$isEmptyRecord) {
-                    array_push($records, $record);
-                }
-
+                array_push($records, $record);
             }
 
         }
@@ -74,12 +68,9 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
 
     public function headings(): array
     {
-        // get all column names from schema
-        // Question: should we exclude structure item, repeat group, binary, etc?
-        $schema = $this->xlsformTemplateSection->schema;
-        $columnNames = $schema->pluck('name')
-            ->filter(fn($item) => $item['type'] !== 'structure')
-            ->toArray();
+        // get all column names from schema, exclude structure item as they do not have entity_value record
+        $schema = $this->xlsformTemplateSection->schema->where('type', '!=', 'structure');
+        $columnNames = $schema->pluck('name')->toArray();
 
         return $columnNames;
     }
