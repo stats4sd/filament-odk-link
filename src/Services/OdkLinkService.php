@@ -486,6 +486,8 @@ class OdkLinkService
 
         foreach ($resultsToAdd as $entry) {
 
+            ray($entry);
+
             $xlsformVersion = $xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
