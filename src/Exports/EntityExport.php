@@ -42,7 +42,7 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
 
                     // assume there is only one value for one ODK variable
                     $entityValue = EntityValue::select('value')->where('entity_id', $entity->id)->where('dataset_variable_id', $heading)->first();
-                    
+
                     if ($entityValue == null) {
                         array_push($record, null);
                     } else {
@@ -60,7 +60,7 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
             }
 
         }
-       
+
         return $records;
     }
 
@@ -77,7 +77,9 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
         // get all column names from schema
         // Question: should we exclude structure item, repeat group, binary, etc?
         $schema = $this->xlsformTemplateSection->schema;
-        $columnNames = $schema->pluck('name')->toArray();
+        $columnNames = $schema->pluck('name')
+            ->filter(fn($item) => $item['type'] !== 'structure')
+            ->toArray();
 
         return $columnNames;
     }

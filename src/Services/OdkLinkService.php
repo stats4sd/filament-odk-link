@@ -17,6 +17,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\AppUser;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
@@ -216,7 +217,7 @@ class OdkLinkService
             ->throw()
             ->json();
 
-    }    
+    }
 
 
     #########################################################
@@ -498,11 +499,19 @@ class OdkLinkService
 
             // GET schema information for the specific version
             // TODO: hook this into the select variables work from the other branch...
+
             $schema = collect($xlsformVersion->schema);
 
 
             // pass 0 as mainSurveyEntityId at the very beginning
-            $entryToStore = $this->processEntry($xlsform, $entry, $schema, $submission->id, 'root', null);
+
+            $sections = $xlsform->xlsformTemplate->xlsformTemplateSections;
+
+            foreach($sections as $section) {
+                $this->processEntryFromSection($entry, $section);
+            }
+
+//            $entryToStore = $this->processEntry($xlsform, $entry, $schema, $submission->id, 'root', null);
 
 
             // if app developer has defined a method of processing submission content, call that method:
@@ -569,7 +578,7 @@ class OdkLinkService
             $xlsformTemplateSection = $xlsform->xlsformTemplate->xlsformTemplateSections->firstWhere('is_repeat', 0);
         }
 
-        
+
         // prepare entity
         if (($entryName == 'root') || ($xlsformTemplateSection->is_repeat == 1)) {
 
@@ -607,10 +616,10 @@ class OdkLinkService
             $schemaEntry = $schema->firstWhere('name', '=', $key);
 
             // create entity_values record for key value pair
-            if ($schemaEntry != null && 
-                $schemaEntry['type'] != 'structure' && 
-                $schemaEntry['type'] != 'repeat' && 
-                $key != null && 
+            if ($schemaEntry != null &&
+                $schemaEntry['type'] != 'structure' &&
+                $schemaEntry['type'] != 'repeat' &&
+                $key != null &&
                 $value != null &&
                 !is_array($value)) {
 
@@ -725,5 +734,16 @@ class OdkLinkService
     //        }
     //        return $entryToStore;
     //    }
+
+
+    private function processEntryFromSection($entry, XlsformTemplateSection $section)
+    {
+        // get the section schema and the dataset it is linked to;
+
+        // create new dataset entity;
+
+        // use the schema to populate the entity with variables from the $entry (flattened entry);
+
+    }
 
 }

@@ -5,12 +5,13 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Submission extends Model
+class Submission extends Model implements HasMedia
 {
     use InteractsWithMedia;
 
@@ -82,5 +83,5 @@ class Submission extends Model
     {
         return $this->hasMany(Entity::class);
     }
-    
+
 }
