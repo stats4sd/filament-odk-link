@@ -702,20 +702,7 @@ class OdkLinkService
 
                 // dump($schemaItem['name'] . ' : ' . $value);
 
-                // special handling for integer type ODK variable with numeric value 0
-                // it needs to be stored separately, as $value will be considered as null, which throws error when creating entity value record
-                if ($schemaItem['type'] == 'int' && $value === 0 && !is_array($value)) {
-                    EntityValue::create([
-                        'entity_id' => $entity->id,
-                        'dataset_variable_id' => $schemaItem['name'],
-                        'value' => 0,
-                    ]);
-
-                    // this schema item has been handled, continue to handle next schema item
-                    continue;
-                }
-                
-                if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
+                if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
                     // store ODK variable value as entity value record
                     EntityValue::create([
                         'entity_id' => $entity->id,
