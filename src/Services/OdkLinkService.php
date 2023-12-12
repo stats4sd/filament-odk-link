@@ -486,8 +486,8 @@ class OdkLinkService
 
         foreach ($resultsToAdd as $entry) {
 
-            ray($entry);
 
+            // ******* CREATE SUBMISSION RECORD ******* //
             $xlsformVersion = $xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
@@ -498,16 +498,7 @@ class OdkLinkService
                 'content' => $entry,
             ]);
 
-
-            // GET schema information for the specific version
-            // TODO: hook this into the select variables work from the other branch...
-
-            $schema = collect($xlsformVersion->schema);
-
-
-            // pass 0 as mainSurveyEntityId at the very beginning
-            // $entryToStore = $this->processEntry($xlsform, $entry, $schema, $submission->id, 'root', null);
-
+            // ******** PROCESS DATA INTO DATASETS ******** //
             $sections = $xlsform->xlsformTemplate->xlsformTemplateSections;
 
             // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
@@ -518,10 +509,7 @@ class OdkLinkService
             }
 
 
-            // if app developer has defined a method of processing submission content, call that method:
-            $class = config('filament-odk-link.submission.process_method.class');
-            $method = config('filament-odk-link.submission.process_method.method');
-
+            // ******** PROCESS MEDIA ******** //
             //check if media is expected
             if ($entry['__system']['attachmentsPresent'] > 0) {
                 $mediaPresent = Http::withToken($token)
@@ -547,6 +535,11 @@ class OdkLinkService
                 }
             }
 
+            // ******** CALL APP-SPECIFIC PROCESSING ******** //
+            // if app developer has defined a method of processing submission content, call that method:
+            $class = config('filament-odk-link.submission.process_method.class');
+            $method = config('filament-odk-link.submission.process_method.method');
+
             if ($class && $method) {
                 $class::$method($submission);
             }
@@ -554,127 +547,6 @@ class OdkLinkService
         }
 
     }
-
-
-    // WIP
-    public function processEntry($xlsform, $entry, $schema, $submissionId, $entryName, $entityId)
-    {
-        // dump('     ***** $entryName: ' . $entryName);
-        // dump('     ***** $entityId: ' . $entityId);
-        // dump('     ***** $entry: ');
-        // dump($entry);
-        // dump('     ***** $schema: ');
-        // dump($schema);
-
-        // find xlsform template section for root and repeat group
-        $xlsformTemplateSection = $xlsform->xlsformTemplate->xlsformTemplateSections->firstWhere('structure_item', $entryName);
-
-        if ($xlsformTemplateSection != null) {
-            // dump('Xlsform template section found, it is either root or repeat group');
-
-            // for repeat group (i.e. non root section), use schema of xlsform template section
-            if ($entryName != 'root') {
-                $schema = $xlsformTemplateSection->schema;
-            }
-
-        } else {
-            // dump('Xlsform template section not found, it is not root or repeat group');
-            $xlsformTemplateSection = $xlsform->xlsformTemplate->xlsformTemplateSections->firstWhere('is_repeat', 0);
-        }
-
-
-        // prepare entity
-        if (($entryName == 'root') || ($xlsformTemplateSection->is_repeat == 1)) {
-
-            // create new entity for root or repeat group
-            $entity = Entity::create([
-                'dataset_id' => $xlsformTemplateSection->dataset->id,
-                'submission_id' => $submissionId,
-            ]);
-
-            // add polymorphic relationship
-            $entity->owner()->associate($xlsform->owner)->save();
-
-            $entityId = $entity->id;
-
-        } else {
-
-            // This is not root or repeat group. It can be:
-            // 1. Structure item under root
-            // 2. Structture item under repeat group
-
-            // Get existing entity. It is either root entity or repeat group entity
-            $entity = Entity::find($entityId);
-
-        }
-
-
-        // store attributes as entity_value record, call processEntry() for repeat group or structure item
-        foreach ($entry as $key => $value) {
-
-            // if (is_array($value)) {
-            //     dump($key . ' is an array');
-            // }
-
-            // check whether attribute key exist in schema
-            $schemaEntry = $schema->firstWhere('name', '=', $key);
-
-            // create entity_values record for key value pair
-            if ($schemaEntry != null &&
-                $schemaEntry['type'] != 'structure' &&
-                $schemaEntry['type'] != 'repeat' &&
-                $key != null &&
-                $value != null &&
-                !is_array($value)) {
-
-                // dump('==> create entity_value record for ' . '(' . $key . ' => ' . $value . ') with entity_id ' . $entityId);
-
-                EntityValue::create([
-                    'entity_id' => $entityId,
-                    'dataset_variable_id' => $key,
-                    'value' => $value,
-                ]);
-            }
-
-            // do not need this checking anymore. We use the schema of a xlsform template section instead of the schema of the entity xlsform
-            // need this checking when we use schema of the entire xlsform
-            if (! $schemaEntry) {
-                continue;
-            }
-
-            if ($schemaEntry['type'] === 'structure' || is_array($value)) {
-                // dump('     SSSSS ' . $key . ' is a structure item or array, call processEntry() to handle');
-                $entry = array_merge($this->processEntry($xlsform, $value, $schema, $submissionId, $key, $entityId), $entry);
-                unset($entry[$key]);
-            }
-
-            if ($schemaEntry['type'] === 'repeat') {
-                // dump('     RRRRR ' . $key . ' is a repeat group, call processEntry() to handle');
-
-                // $entry[$key] = collect($entry[$key])->map(function ($repeatEntry) use ($schema, $xlsform, $datasets) {
-                //     return $this->processEntry($repeatEntry, $schema, $xlsform, $datasets);
-                // })->toArray();
-
-                // handle each array element of repeating group
-                foreach ($entry as $arrayElement) {
-                    if ($arrayElement != null && is_array($arrayElement)) {
-                        // dump('arrayElement');
-                        // dump($arrayElement);
-
-                        $this->processEntry($xlsform, $arrayElement, $schema, $submissionId, $key, $entityId);
-                    }
-                }
-            }
-
-        }
-
-
-        // dump('     ///// $entityId: ' . $entityId);
-        // dump('     ///// $entryName: ' . $entryName);
-
-        return $entry;
-    }
-
 
     private function processEntryFromSection($entry, XlsformTemplateSection $section, $submissionId)
     {
@@ -780,7 +652,7 @@ class OdkLinkService
             } else {
                 // dump("This is NOT an array");
             }
-            
+
         }
 
     }
