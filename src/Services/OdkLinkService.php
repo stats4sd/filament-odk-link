@@ -506,14 +506,16 @@ class OdkLinkService
 
 
             // pass 0 as mainSurveyEntityId at the very beginning
+            // $entryToStore = $this->processEntry($xlsform, $entry, $schema, $submission->id, 'root', null);
 
             $sections = $xlsform->xlsformTemplate->xlsformTemplateSections;
 
-            foreach($sections as $section) {
-                $this->processEntryFromSection($entry, $section);
-            }
+            // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
+            $rootEntry = ['root' => $entry];
 
-//            $entryToStore = $this->processEntry($xlsform, $entry, $schema, $submission->id, 'root', null);
+            foreach($sections as $section) {
+                $this->processEntryFromSection($rootEntry, $section, $submission->id);
+            }
 
 
             // if app developer has defined a method of processing submission content, call that method:
@@ -674,6 +676,116 @@ class OdkLinkService
     }
 
 
+    private function processEntryFromSection($entry, XlsformTemplateSection $section, $submissionId)
+    {
+        // get the section schema and the dataset it is linked to;
+
+        // create new dataset entity;
+
+        // use the schema to populate the entity with variables from the $entry (flattened entry);
+
+
+        // handle main survey (root)
+        if ($section->is_repeat == 0) {
+
+            // exclude structure items from section schema, as there is no value to be stored for a structure item
+            $schema = $section->schema->where('type', '!=', 'structure');
+
+            // create entity record for main survey (root)
+            $entity = Entity::create([
+                'dataset_id' => $section->dataset->id,
+                'submission_id' => $submissionId,
+            ]);
+
+            // access the value of each ODK variable from a deeply nested array using "dot" notation
+            foreach ($schema as $schemaItem) {
+                $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+                $value = Arr::get($entry, $itemPath);
+
+                // dump($schemaItem['name'] . ' : ' . $value);
+
+                if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
+                    // store ODK variable value as entity value record
+                    EntityValue::create([
+                        'entity_id' => $entity->id,
+                        'dataset_variable_id' => $schemaItem['name'],
+                        'value' => $value,
+                    ]);
+                }
+            }
+
+        // handle repeat group
+        } else {
+
+            // exclude structure items from section schema, as there is no value to be stored for a structure item
+            $schema = $section->schema->where('type', '!=', 'structure');
+
+            // find the path of repeat group first item
+            $schemaPaths = $schema->pluck('path')->toArray();
+            // dump($schemaPaths[0]);
+
+            $position = Str::position($schemaPaths[0], $section->structure_item);
+
+            // construct the path for getting an array of repeat group
+            $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . $section->structure_item;
+            // dump($repeatGroupArrayPath);
+
+            // get the array for repeat group
+            $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
+            // dump($repeatGroupArray);
+
+            // it should be an array containing records for a repeat group
+            if (is_array($repeatGroupArray)) {
+                // dump("This is an array");
+
+                // handle each record in repeat group
+                foreach ($repeatGroupArray as $repeatGroupRecord) {
+                    // dump($repeatGroupRecord);
+
+                    // create entity record for each repeat group record
+                    $entity = Entity::create([
+                        'dataset_id' => $section->dataset->id,
+                        'submission_id' => $submissionId,
+                    ]);
+
+                    // get array element as record
+                    $repeatGroupEntry = ['rg' => $repeatGroupRecord];
+
+                    foreach ($schema as $schemaItem) {
+                        $pathLength = Str::length($schemaItem['path']);
+                        $position = Str::position($schemaItem['path'], $section->structure_item);
+                        $lengthToCut = $pathLength - $position;
+
+                        $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
+                        // dump('$itemPath : ' . $itemPath);
+
+                        $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+                        // dump('$fullItemPath : ' . $fullItemPath);
+
+                        $value = Arr::get($repeatGroupEntry, $fullItemPath);
+                        // dump($schemaItem['name'] . ' : ' . $value);
+
+                        if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
+                            // store ODK variable value as entity value record
+                            EntityValue::create([
+                                'entity_id' => $entity->id,
+                                'dataset_variable_id' => $schemaItem['name'],
+                                'value' => $value,
+                            ]);
+                        }
+                    }
+
+                }
+
+            } else {
+                // dump("This is NOT an array");
+            }
+            
+        }
+
+    }
+
+
     public function exportAsExcelFile(Xlsform $xlsform)
     {
         return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
@@ -737,15 +849,5 @@ class OdkLinkService
     //        return $entryToStore;
     //    }
 
-
-    private function processEntryFromSection($entry, XlsformTemplateSection $section)
-    {
-        // get the section schema and the dataset it is linked to;
-
-        // create new dataset entity;
-
-        // use the schema to populate the entity with variables from the $entry (flattened entry);
-
-    }
 
 }
