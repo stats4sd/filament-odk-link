@@ -64,22 +64,6 @@ class TeamResource extends Resource
             ]);
     }
 
-
-    public static function getEntityValue($entityValues, $datasetVariableId) {
-        $result = '';
-
-        // find the coresponding value for a provided key
-        $values = $entityValues->where('dataset_variable_id', $datasetVariableId)->pluck('value');
-
-        // suppose there should be one record, or there is no record
-        foreach ($values as $value) {
-            $result = $value;
-        }
-
-        return $result;
-    }
-
-
     public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist
