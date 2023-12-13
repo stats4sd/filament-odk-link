@@ -14,6 +14,7 @@ use Illuminate\Http\Client\RequestException;
 use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\AppUser;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
@@ -245,16 +246,14 @@ class OdkLinkService
         // dynamic files
         $requiredDataMedia = $xlsform->attachedDataMedia()->get();
 
-        if($requiredDataMedia && count($requiredDataMedia)  > 0) {
+        if ($requiredDataMedia && count($requiredDataMedia) > 0) {
             foreach ($requiredDataMedia as $requiredMediaItem) {
 
                 // if there is a static upload, use it;
                 $media = $requiredDataMedia->getFirstMedia();
-                if($media) {
+                if ($media) {
                     $this->uploadSingleMediaFile($xlsform, $requiredMediaItem);
-                }
-
-                else {
+                } else {
                     // handle csv file generation...
 
                 }
@@ -372,6 +371,35 @@ class OdkLinkService
 
     }
 
+    public function getAttachedMedia($entry, string $token, Xlsform $xlsform, Model|Submission|null $submission): void
+    {
+        // ******** PROCESS MEDIA ******** //
+        //check if media is expected
+        if ($entry['__system']['attachmentsPresent'] > 0) {
+            $mediaPresent = Http::withToken($token)
+                ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments")
+                ->throw()
+                ->json();
+
+            foreach ($mediaPresent as $mediaItem) {
+
+                // download the attachment
+                $result = Http::withToken($token)
+                    ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments/${mediaItem['name']}")
+                    ->throw();
+
+                // store the attachment locally
+                Storage::disk(config('filament-odk-link.storage.media'))
+                    ->put($mediaItem['name'], $result->body());
+
+                // link it to the submission via Media Library
+                $submission->addMediaFromDisk($mediaItem['name'], config('filament-odk-link.storage.media'))
+                    ->toMediaLibrary();
+
+            }
+        }
+    }
+
     /**
      * Creates a new csv lookup file from the database;
      */
@@ -437,7 +465,7 @@ class OdkLinkService
     }
 
     /**
-     * @param  mixed  $version
+     * @param mixed $version
      * @return Model
      */
     public function createNewVersion(Xlsform $xlsform, array $versionDetails): XlsformVersion
@@ -490,6 +518,8 @@ class OdkLinkService
             // ******* CREATE SUBMISSION RECORD ******* //
             $xlsformVersion = $xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
 
+            // TODO: handle case where xlsformversion is not found
+
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
             $submission = $xlsformVersion?->submissions()->create([
                 'odk_id' => $entry['__id'],
@@ -498,42 +528,8 @@ class OdkLinkService
                 'content' => $entry,
             ]);
 
-            // ******** PROCESS DATA INTO DATASETS ******** //
-            $sections = $xlsform->xlsformTemplate->xlsformTemplateSections;
-
-            // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
-            $rootEntry = ['root' => $entry];
-
-            foreach($sections as $section) {
-                $this->processEntryFromSection($rootEntry, $section, $submission->id);
-            }
-
-
-            // ******** PROCESS MEDIA ******** //
-            //check if media is expected
-            if ($entry['__system']['attachmentsPresent'] > 0) {
-                $mediaPresent = Http::withToken($token)
-                    ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments")
-                    ->throw()
-                    ->json();
-
-                foreach ($mediaPresent as $mediaItem) {
-
-                    // download the attachment
-                    $result = Http::withToken($token)
-                        ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments/${mediaItem['name']}")
-                        ->throw();
-
-                    // store the attachment locally
-                    Storage::disk(config('filament-odk-link.storage.media'))
-                        ->put($mediaItem['name'], $result->body());
-
-                    // link it to the submission via Media Library
-                    $submission->addMediaFromDisk($mediaItem['name'], config('filament-odk-link.storage.media'))
-                        ->toMediaLibrary();
-
-                }
-            }
+            $this->processEntry($submission, $entry, $xlsformVersion);
+            $this->getAttachedMedia($entry, $token, $xlsform, $submission);
 
             // ******** CALL APP-SPECIFIC PROCESSING ******** //
             // if app developer has defined a method of processing submission content, call that method:
@@ -546,6 +542,19 @@ class OdkLinkService
 
         }
 
+    }
+
+    public function processEntry(Submission $submission, array $entry, XlsformVersion $xlsformVersion): void
+    {
+        // ******** PROCESS DATA INTO DATASETS ******** //
+        $sections = $xlsformVersion->xlsform->xlsformTemplate->xlsformTemplateSections;
+
+        // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
+        $rootEntry = ['root' => $entry];
+
+        foreach ($sections as $section) {
+            $this->processEntryFromSection($rootEntry, $section, $submission->id);
+        }
     }
 
     private function processEntryFromSection($entry, XlsformTemplateSection $section, $submissionId)
@@ -586,7 +595,7 @@ class OdkLinkService
                 }
             }
 
-        // handle repeat group
+            // handle repeat group
         } else {
 
             // exclude structure items from section schema, as there is no value to be stored for a structure item
