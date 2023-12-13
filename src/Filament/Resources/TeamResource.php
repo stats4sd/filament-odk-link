@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use App\Models\MentalHealthAlert;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\MentalHealthFollowUpRequired;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
@@ -53,19 +54,19 @@ class TeamResource extends Resource
         
         // find dataset ID of main survey template section
         $mainSurveyTemplateSections = $submission->xlsformVersion->xlsform->xlsformTemplate->xlsformTemplateSections->where('is_repeat', 0);
-        dump($mainSurveyTemplateSections);
+        // dump($mainSurveyTemplateSections);
 
         foreach ($mainSurveyTemplateSections as $mainSurveyTemplateSection) {
             $mainSurveyDatasetId = $mainSurveyTemplateSection->dataset_id;
         }
-        dump($mainSurveyDatasetId);
+        // dump($mainSurveyDatasetId);
 
         // find main survey entity
         $mainSurveyEntities = $submission->entities->where('dataset_id', $mainSurveyDatasetId);
-        dump($mainSurveyEntities);
+        // dump($mainSurveyEntities);
 
         foreach ($mainSurveyEntities as $mainSurveyEntity) {
-            dump($mainSurveyEntity->id);
+            // dump($mainSurveyEntity->id);
 
             $indPhq9HurtThoughts = TeamResource::getEntityValue($mainSurveyEntity->values, 'ind_phq9_hurt_thoughts');
 
@@ -94,27 +95,27 @@ class TeamResource extends Resource
                 $contactBestTime = TeamResource::getEntityValue($mainSurveyEntity->values, 'contact_best_time');
                 $contactAddress = TeamResource::getEntityValue($mainSurveyEntity->values, 'contact_address');
 
-                dump($indPhq9HurtThoughts);
-                dump($hhRespSex);
+                // dump($indPhq9HurtThoughts);
+                // dump($hhRespSex);
 
-                dump($hhRespName);
-                dump($sumPhq9);
-                dump($start);
-                dump($end);
+                // dump($hhRespName);
+                // dump($sumPhq9);
+                // dump($start);
+                // dump($end);
 
-                dump($subDistId);
-                dump($villageId);
-                dump($fkey);
+                // dump($subDistId);
+                // dump($villageId);
+                // dump($fkey);
 
-                dump($interviewerId);
-                dump($supervisorId);
-                dump($hhList);
-                dump($migrantList);
+                // dump($interviewerId);
+                // dump($supervisorId);
+                // dump($hhList);
+                // dump($migrantList);
 
-                dump($followUpConsent);
-                dump($contactPhoneNumber);
-                dump($contactBestTime);
-                dump($contactAddress);
+                // dump($followUpConsent);
+                // dump($contactPhoneNumber);
+                // dump($contactBestTime);
+                // dump($contactAddress);
 
                 // create a new record for mental health alert
                 $mentalHealthAlert = MentalHealthAlert::create([
@@ -141,21 +142,12 @@ class TeamResource extends Resource
                     'contact_address' => $contactAddress,
                 ]);
 
-                // send email alert
-                if ($hhRespSex == 1) {
-                    // male respondent
+                // send mental health alert email to multiple recipients by sending a separate email to each recipient individually
+                $recipients = config('mail.mental_health_alert_recipients');
+                $recipientsArray = explode (",", $recipients); 
 
-                    // send mental health alert email to multiple recipients by sending a separate email to each recipient individually
-                    $recipients = config('mail.mental_health_alert_recipients');
-                    $recipientsArray = explode (",", $recipients); 
-
-                    foreach ($recipientsArray as $recipient) {
-                        Mail::to($recipient)->send(new MaleMentalHealthFollowUpRequired($mentalHealthAlert));
-                    }
-
-                } else if ($hhRespSex == 2) {
-                    // female respondent
-
+                foreach ($recipientsArray as $recipient) {
+                    Mail::to($recipient)->send(new MentalHealthFollowUpRequired($mentalHealthAlert));
                 }
 
             }
