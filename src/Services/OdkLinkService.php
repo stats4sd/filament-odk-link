@@ -552,12 +552,14 @@ class OdkLinkService
         // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
         $rootEntry = ['root' => $entry];
 
+        $xlsform = $xlsformVersion->xlsform;
+
         foreach ($sections as $section) {
-            $this->processEntryFromSection($rootEntry, $section, $submission->id);
+            $this->processEntryFromSection($xlsform, $rootEntry, $section, $submission->id);
         }
     }
 
-    private function processEntryFromSection($entry, XlsformTemplateSection $section, $submissionId)
+    private function processEntryFromSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
     {
         // get the section schema and the dataset it is linked to;
 
@@ -577,6 +579,9 @@ class OdkLinkService
                 'dataset_id' => $section->dataset->id,
                 'submission_id' => $submissionId,
             ]);
+
+            // add polymorphic relationship
+            $entity->owner()->associate($xlsform->owner)->save();
 
             // access the value of each ODK variable from a deeply nested array using "dot" notation
             foreach ($schema as $schemaItem) {
@@ -628,6 +633,9 @@ class OdkLinkService
                         'dataset_id' => $section->dataset->id,
                         'submission_id' => $submissionId,
                     ]);
+
+                    // add polymorphic relationship
+                    $entity->owner()->associate($xlsform->owner)->save();
 
                     // get array element as record
                     $repeatGroupEntry = ['rg' => $repeatGroupRecord];
