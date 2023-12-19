@@ -305,14 +305,6 @@ class OdkLinkService
 
         $token = $this->authenticate();
 
-        //        // create a new version locally
-        //        $version = 1;
-        //
-        //        // if there is an existing version; increment the version number;
-        //        if ($xlsform->xlsformVersions()->count() > 0) {
-        //            $version = $xlsform->xlsformVersions()->orderBy('version', 'desc')->first()->version + 1;
-        //        }
-
         Http::withToken($token)
             ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=" . Carbon::now()->toDateTimeString())
             ->throw()
@@ -464,10 +456,8 @@ class OdkLinkService
             ->json();
     }
 
-    /**
-     * @param mixed $version
-     * @return Model
-     */
+
+    // create a new xlsformVersion from an existing xlsform.
     public function createNewVersion(Xlsform $xlsform, array $versionDetails): XlsformVersion
     {
         $token = $this->authenticate();
@@ -477,11 +467,7 @@ class OdkLinkService
         $versionSlug = Str::slug($versionDetails['version']);
 
         // copy xlsform file to store linked to this version forever
-        Storage::disk(config('filament-odk-link.storage.xlsforms'))
-            ->copy(
-                $xlsform->xlsfile,
-                "xlsforms/{$xlsform->id}/versions/{$versionSlug}/{$fileName}"
-            );
+
 
         // get schema from ODK Central;
         $schema = Http::withToken($token)
@@ -490,13 +476,20 @@ class OdkLinkService
             ->json();
 
         // create new active version with latest version number;
-        return $xlsform->xlsformVersions()->create([
+        $xlsformVersion = $xlsform->xlsformVersions()->create([
             'version' => $versionDetails['version'],
-            'xlsfile' => "xlsforms/{$xlsform->id}/versions/{$versionSlug}/{$fileName}",
             'odk_version' => $versionDetails['version'],
             'active' => true,
             'schema' => $schema,
         ]);
+
+        // copy xlsform file to store linked to this version forever
+        $xlsform->getMedia('xlsform_file')->first()->copy($xlsformVersion, 'xlsform_file');
+
+        // copy any attached media
+        $xlsform->getMedia('attached_media')->each(fn($media) => $media->copy($xlsformVersion, 'attached_media'));
+
+        return $xlsformVersion;
     }
 
     public function getSubmissions(Xlsform $xlsform): void

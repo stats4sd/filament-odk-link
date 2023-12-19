@@ -170,7 +170,8 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
     public function extractSections()
     {
 
-        //***  extract structure into 'sections'
+        // set all existing sections to not current.
+        $this->repeatingSections()->each(fn ($section) => $section->is_current = false);
 
 
         // create or find the repeat sections
@@ -180,6 +181,7 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
                     'structure_item' => $item['name'],
                 ], [
                     'is_repeat' => true,
+                    'is_current' => true,
                     'schema' => $this->schema->filter(
                         fn ($subItem) => Str::contains($subItem['path'], $item['path'] . '/')
                         && $subItem['path'] !== $item['path']
@@ -216,7 +218,7 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
             });
         });
 
-        
+
         // find all ODK variable names of all repeating sections
         $repeatingSectionItemNames = [];
 
@@ -234,7 +236,7 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
             'structure_item' => 'root',
         ], [
             'is_repeat' => false,
-            
+            'is_current' => true,
             // to exclude below items:
             // 1. structure type item
             // 2. repeat type item
