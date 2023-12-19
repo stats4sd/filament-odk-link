@@ -574,14 +574,15 @@ class OdkLinkService
         // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
         $rootEntry = ['root' => $entry];
 
+        $xlsform = $xlsformVersion->xlsform;
+
         foreach ($sections as $section) {
-            $this->processEntryFromSection($rootEntry, $section, $submission->id);
+            $this->processEntryFromSection($xlsform, $rootEntry, $section, $submission->id);
         }
     }
 
 
-    private function processEntryFromSection($xlsform, $entry, XlsformTemplateSection $section, $submissionId)
-
+    private function processEntryFromSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
     {
         // get the section schema and the dataset it is linked to;
 
