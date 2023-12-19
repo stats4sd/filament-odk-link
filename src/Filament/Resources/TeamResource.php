@@ -3,16 +3,16 @@
 namespace Stats4sd\FilamentOdkLink\Filament\Resources;
 
 use Filament\Forms;
+use Filament\Tables;
 use Filament\Forms\Form;
-use Filament\Infolists\Components\ImageEntry;
+use Filament\Tables\Table;
+use Filament\Infolists\Infolist;
+use Filament\Resources\Resource;
+use Illuminate\Support\HtmlString;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
-use Filament\Infolists\Infolist;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Support\HtmlString;
+use Filament\Infolists\Components\ImageEntry;
 use Stats4sd\FilamentOdkLink\Filament\Resources\TeamResource\Pages;
 
 class TeamResource extends Resource

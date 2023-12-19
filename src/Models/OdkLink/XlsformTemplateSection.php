@@ -9,6 +9,8 @@ class XlsformTemplateSection extends Pivot
 {
     protected $table = 'xlsform_template_sections';
 
+    protected $guarded = [];
+
     protected $casts = [
         'schema' => 'collection',
     ];
