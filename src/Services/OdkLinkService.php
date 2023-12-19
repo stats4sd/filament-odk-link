@@ -531,7 +531,29 @@ class OdkLinkService
             $this->processEntry($submission, $entry, $xlsformVersion);
             $this->getAttachedMedia($entry, $token, $xlsform, $submission);
 
+
+            // GET schema information for the specific version
+            // TODO: hook this into the select variables work from the other branch...
+
+            $schema = collect($xlsformVersion->schema);
+
+
+            // pass 0 as mainSurveyEntityId at the very beginning
+            // $entryToStore = $this->processEntry($xlsform, $entry, $schema, $submission->id, 'root', null);
+
+            $sections = $xlsform->xlsformTemplate->xlsformTemplateSections;
+
+            // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
+            $rootEntry = ['root' => $entry];
+
+            foreach($sections as $section) {
+                $this->processEntryFromSection($xlsform, $rootEntry, $section, $submission->id);
+            }
+
+
+
             // ******** CALL APP-SPECIFIC PROCESSING ******** //
+
             // if app developer has defined a method of processing submission content, call that method:
             $class = config('filament-odk-link.submission.process_method.class');
             $method = config('filament-odk-link.submission.process_method.method');
@@ -557,7 +579,9 @@ class OdkLinkService
         }
     }
 
-    private function processEntryFromSection($entry, XlsformTemplateSection $section, $submissionId)
+
+    private function processEntryFromSection($xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+
     {
         // get the section schema and the dataset it is linked to;
 
@@ -577,6 +601,9 @@ class OdkLinkService
                 'dataset_id' => $section->dataset->id,
                 'submission_id' => $submissionId,
             ]);
+
+            // add polymorphic relationship
+            $entity->owner()->associate($xlsform->owner)->save();
 
             // access the value of each ODK variable from a deeply nested array using "dot" notation
             foreach ($schema as $schemaItem) {
@@ -628,6 +655,9 @@ class OdkLinkService
                         'dataset_id' => $section->dataset->id,
                         'submission_id' => $submissionId,
                     ]);
+
+                    // add polymorphic relationship
+                    $entity->owner()->associate($xlsform->owner)->save();
 
                     // get array element as record
                     $repeatGroupEntry = ['rg' => $repeatGroupRecord];
