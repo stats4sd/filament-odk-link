@@ -172,13 +172,6 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
 
         //***  extract structure into 'sections'
 
-        // create or find the 'root' section
-        $this->xlsformTemplateSections()->updateOrCreate([
-            'structure_item' => 'root',
-        ], [
-            'is_repeat' => false,
-            'schema' => $this->schema->filter(fn ($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && $item['path'] === "/{$item['name']}"),
-        ]);
 
         // create or find the repeat sections
         $this->schema->filter(fn ($item) => $item['type'] === 'repeat')
@@ -222,6 +215,33 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
 
             });
         });
+
+        
+        // find all ODK variable names of all repeating sections
+        $repeatingSectionItemNames = [];
+
+        foreach ($this->repeatingSections as $repeatingSection) {
+            $variableNames = $repeatingSection->schema->pluck('name');
+
+            foreach ($variableNames as $variableName) {
+                array_push($repeatingSectionItemNames, $variableName);
+            }
+        }
+
+
+        // create or find the 'root' section
+        $this->xlsformTemplateSections()->updateOrCreate([
+            'structure_item' => 'root',
+        ], [
+            'is_repeat' => false,
+            
+            // to exclude below items:
+            // 1. structure type item
+            // 2. repeat type item
+            // 3. item names belong to ODK variable names of all repeating sections
+            'schema' => $this->schema->filter(fn ($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && !in_array($item['name'], $repeatingSectionItemNames)),
+        ]);
+
 
         //        dd('ok');
 

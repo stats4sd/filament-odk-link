@@ -13,6 +13,7 @@ use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 use Stats4sd\FilamentOdkLink\Models\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
 
 /**
  * This job opens up the actual XLS file for a given Xlsform and updates the form_id and form_title fields.
@@ -25,7 +26,7 @@ class UpdateXlsformTitleInFile implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public function __construct(public Xlsform $xlsform)
+    public function __construct(public WithXlsFormDrafts $xlsform)
     {
     }
 
@@ -34,8 +35,7 @@ class UpdateXlsformTitleInFile implements ShouldQueue
      */
     public function handle(): void
     {
-
-        $filePath = Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($this->xlsform->xlsfile);
+        $filePath = $this->xlsform->xlsfile;
         $spreadsheet = IOFactory::load($filePath);
 
         $worksheet = $spreadsheet->getSheetByName('settings');

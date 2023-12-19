@@ -14,13 +14,16 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 use Stats4sd\FilamentOdkLink\Filament\Resources\TeamResource\Pages;
-use Stats4sd\FilamentOdkLink\Models\TeamManagement\Team;
 
 class TeamResource extends Resource
 {
-    protected static ?string $model = Team::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    // get custom team model
+    public static function getModel(): string
+    {
+        return config('filament-odk-link.models.team_model');
+    }
 
     public static function form(Form $form): Form
     {
@@ -75,7 +78,7 @@ class TeamResource extends Resource
                             ->getStateUsing(fn ($record) => new HtmlString(preg_replace('/\n/', '<br/>', $record->description)))
                             ->columnSpan(4),
                         ViewEntry::make('qr_code')
-                            ->view('filament.infolists.components.team-qr-code'),
+                            ->view('filament-odk-link::filament.infolists.components.team-qr-code'),
 
                     ]),
             ]);

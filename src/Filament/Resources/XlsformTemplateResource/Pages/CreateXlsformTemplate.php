@@ -87,6 +87,7 @@ class CreateXlsformTemplate extends CreateRecord
         $record->deployDraft($odkLinkService);
         $record->getRequiredMedia($odkLinkService);
 
+        // TODO: We need to do the extract section when create and edit
         $record->extractSections();
 
         return $record;

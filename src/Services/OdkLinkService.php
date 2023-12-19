@@ -3,18 +3,25 @@
 namespace Stats4sd\FilamentOdkLink\Services;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Client\RequestException;
 use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\AppUser;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
+use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
 
 /**
  * All ODK Aggregation services should be able to handle ODK forms, so this interface should always be used.
@@ -141,11 +148,11 @@ class OdkLinkService
      *
      * @throws RequestException
      */
-    public function createDraftForm(Xlsform $xlsform): array
+    public function createDraftForm(WithXlsFormDrafts $xlsform): array
     {
         $token = $this->authenticate();
 
-        $file = file_get_contents(Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($xlsform->xlsfile));
+        $file = file_get_contents($xlsform->xlsfile);
 
         $url = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms?ignoreWarnings=true&publish=false";
 
@@ -169,6 +176,14 @@ class OdkLinkService
             $xlsform->update(['odk_id' => $response['xmlFormId']]);
         }
 
+        // upddate the stored schema with the new draft;
+        $schema = Http::withToken($token)
+            ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/fields?odata=true")
+            ->throw()
+            ->json();
+
+        $xlsform->updateQuietly(['schema' => $schema]);
+
         // deploy media files
         $this->uploadMediaFileAttachments($xlsform);
 
@@ -180,7 +195,7 @@ class OdkLinkService
      *
      * @throws RequestException
      */
-    public function getDraftFormDetails(Xlsform $xlsform): array
+    public function getDraftFormDetails(WithXlsFormDrafts $xlsform): array
     {
         $token = $this->authenticate();
 
@@ -191,35 +206,57 @@ class OdkLinkService
     }
 
     /**
-     * Uploads all media files for an XLSform to ODK Central - both static files and dyncsv files
-     *
-     * @return bool $success
-     *
+     * Gets the expected media items for a given draft form template
      * @throws RequestException
      */
-    public function uploadMediaFileAttachments(Xlsform $xlsform): bool
+    public function getRequiredMedia(WithXlsFormDrafts $xlsformTemplate): array
+    {
+        $token = $this->authenticate();
+
+        return Http::withToken($token)
+            ->get("{$this->endpoint}/projects/{$xlsformTemplate->owner->odkProject->id}/forms/{$xlsformTemplate->odk_id}/attachments")
+            ->throw()
+            ->json();
+
+    }
+
+
+    #########################################################
+    ### FORM MEDIA ATTACHMENTS
+    #########################################################
+
+    /**
+     * Uploads all media files for an XLSform to ODK Central - both static files and dyncsv files
+     * @throws RequestException
+     */
+    public function uploadMediaFileAttachments(WithXlsFormDrafts $xlsform): bool
     {
         // static files
-        $files = $xlsform->xlsformTemplate->media;
+        $requiredFixedMedia = $xlsform->attachedFixedMedia()->get();
 
-        if ($files && count($files) > 0) {
+        if ($requiredFixedMedia && count($requiredFixedMedia) > 0) {
 
-            foreach ($files as $file) {
-                $this->uploadSingleMediaFile($xlsform, $file);
+            foreach ($requiredFixedMedia as $requiredMediaItem) {
+                $this->uploadSingleMediaFile($xlsform, $requiredMediaItem);
             }
 
         }
+
+
         // dynamic files
-        $csv_lookups = $xlsform->xlsformTemplate->csv_lookups;
+        $requiredDataMedia = $xlsform->attachedDataMedia()->get();
 
-        if ($csv_lookups && count($csv_lookups) > 0) {
+        if ($requiredDataMedia && count($requiredDataMedia) > 0) {
+            foreach ($requiredDataMedia as $requiredMediaItem) {
 
-            foreach ($csv_lookups as $lookup) {
+                // if there is a static upload, use it;
+                $media = $requiredDataMedia->getFirstMedia();
+                if ($media) {
+                    $this->uploadSingleMediaFile($xlsform, $requiredMediaItem);
+                } else {
+                    // handle csv file generation...
 
-                $this->uploadSingleMediaFile(
-                    $xlsform,
-                    $this->createCsvLookupFile($xlsform, $lookup),
-                );
+                }
 
             }
         }
@@ -334,6 +371,35 @@ class OdkLinkService
 
     }
 
+    public function getAttachedMedia($entry, string $token, Xlsform $xlsform, Model|Submission|null $submission): void
+    {
+        // ******** PROCESS MEDIA ******** //
+        //check if media is expected
+        if ($entry['__system']['attachmentsPresent'] > 0) {
+            $mediaPresent = Http::withToken($token)
+                ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments")
+                ->throw()
+                ->json();
+
+            foreach ($mediaPresent as $mediaItem) {
+
+                // download the attachment
+                $result = Http::withToken($token)
+                    ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments/${mediaItem['name']}")
+                    ->throw();
+
+                // store the attachment locally
+                Storage::disk(config('filament-odk-link.storage.media'))
+                    ->put($mediaItem['name'], $result->body());
+
+                // link it to the submission via Media Library
+                $submission->addMediaFromDisk($mediaItem['name'], config('filament-odk-link.storage.media'))
+                    ->toMediaLibrary();
+
+            }
+        }
+    }
+
     /**
      * Creates a new csv lookup file from the database;
      */
@@ -399,7 +465,7 @@ class OdkLinkService
     }
 
     /**
-     * @param  mixed  $version
+     * @param mixed $version
      * @return Model
      */
     public function createNewVersion(Xlsform $xlsform, array $versionDetails): XlsformVersion
@@ -448,49 +514,27 @@ class OdkLinkService
 
         foreach ($resultsToAdd as $entry) {
 
+
+            // ******* CREATE SUBMISSION RECORD ******* //
             $xlsformVersion = $xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
 
-            // GET schema information for the specific version
-            // TODO: hook this into the select variables work from the other branch...
-            $schema = collect($xlsformVersion->schema);
+            // TODO: handle case where xlsformversion is not found
 
-            $entryToStore = $this->processEntry($entry, $schema);
-
+            // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
             $submission = $xlsformVersion?->submissions()->create([
                 'odk_id' => $entry['__id'],
                 'submitted_at' => (new Carbon($entry['__system']['submissionDate']))->toDateTimeString(),
                 'submitted_by' => $entry['__system']['submitterName'],
-                'content' => $entryToStore,
+                'content' => $entry,
             ]);
 
+            $this->processEntry($submission, $entry, $xlsformVersion);
+            $this->getAttachedMedia($entry, $token, $xlsform, $submission);
+
+            // ******** CALL APP-SPECIFIC PROCESSING ******** //
             // if app developer has defined a method of processing submission content, call that method:
             $class = config('filament-odk-link.submission.process_method.class');
             $method = config('filament-odk-link.submission.process_method.method');
-
-            //check if media is expected
-            if ($entry['__system']['attachmentsPresent'] > 0) {
-                $mediaPresent = Http::withToken($token)
-                    ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments")
-                    ->throw()
-                    ->json();
-
-                foreach ($mediaPresent as $mediaItem) {
-
-                    // download the attachment
-                    $result = Http::withToken($token)
-                        ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments/${mediaItem['name']}")
-                        ->throw();
-
-                    // store the attachment locally
-                    Storage::disk(config('filament-odk-link.storage.media'))
-                        ->put($mediaItem['name'], $result->body());
-
-                    // link it to the submission via Media Library
-                    $submission->addMediaFromDisk($mediaItem['name'], config('filament-odk-link.storage.media'))
-                        ->toMediaLibrary();
-
-                }
-            }
 
             if ($class && $method) {
                 $class::$method($submission);
@@ -500,30 +544,135 @@ class OdkLinkService
 
     }
 
-    // WIP
-    public function processEntry($entry, $schema)
+    public function processEntry(Submission $submission, array $entry, XlsformVersion $xlsformVersion): void
     {
-        foreach ($entry as $key => $value) {
-            // search for structure groups to flatten
-            $schemaEntry = $schema->firstWhere('name', '=', $key);
+        // ******** PROCESS DATA INTO DATASETS ******** //
+        $sections = $xlsformVersion->xlsform->xlsformTemplate->xlsformTemplateSections;
 
-            if (! $schemaEntry) {
-                continue;
-            }
-            if ($schemaEntry['type'] === 'structure') {
-                $entry = array_merge($this->processEntry($value, $schema), $entry);
-                unset($entry[$key]);
+        // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
+        $rootEntry = ['root' => $entry];
+
+        foreach ($sections as $section) {
+            $this->processEntryFromSection($rootEntry, $section, $submission->id);
+        }
+    }
+
+    private function processEntryFromSection($entry, XlsformTemplateSection $section, $submissionId)
+    {
+        // get the section schema and the dataset it is linked to;
+
+        // create new dataset entity;
+
+        // use the schema to populate the entity with variables from the $entry (flattened entry);
+
+
+        // handle main survey (root)
+        if ($section->is_repeat == 0) {
+
+            // exclude structure items from section schema, as there is no value to be stored for a structure item
+            $schema = $section->schema->where('type', '!=', 'structure');
+
+            // create entity record for main survey (root)
+            $entity = Entity::create([
+                'dataset_id' => $section->dataset->id,
+                'submission_id' => $submissionId,
+            ]);
+
+            // access the value of each ODK variable from a deeply nested array using "dot" notation
+            foreach ($schema as $schemaItem) {
+                $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+                $value = Arr::get($entry, $itemPath);
+
+                // dump($schemaItem['name'] . ' : ' . $value);
+
+                if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
+                    // store ODK variable value as entity value record
+                    EntityValue::create([
+                        'entity_id' => $entity->id,
+                        'dataset_variable_id' => $schemaItem['name'],
+                        'value' => $value,
+                    ]);
+                }
             }
 
-            if ($schemaEntry['type'] === 'repeat') {
-                $entry[$key] = collect($entry[$key])->map(function ($repeatEntry) use ($schema) {
-                    return $this->processEntry($repeatEntry, $schema);
-                })->toArray();
+            // handle repeat group
+        } else {
+
+            // exclude structure items from section schema, as there is no value to be stored for a structure item
+            $schema = $section->schema->where('type', '!=', 'structure');
+
+            // find the path of repeat group first item
+            $schemaPaths = $schema->pluck('path')->toArray();
+            // dump($schemaPaths[0]);
+
+            $position = Str::position($schemaPaths[0], $section->structure_item);
+
+            // construct the path for getting an array of repeat group
+            $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . $section->structure_item;
+            // dump($repeatGroupArrayPath);
+
+            // get the array for repeat group
+            $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
+            // dump($repeatGroupArray);
+
+            // it should be an array containing records for a repeat group
+            if (is_array($repeatGroupArray)) {
+                // dump("This is an array");
+
+                // handle each record in repeat group
+                foreach ($repeatGroupArray as $repeatGroupRecord) {
+                    // dump($repeatGroupRecord);
+
+                    // create entity record for each repeat group record
+                    $entity = Entity::create([
+                        'dataset_id' => $section->dataset->id,
+                        'submission_id' => $submissionId,
+                    ]);
+
+                    // get array element as record
+                    $repeatGroupEntry = ['rg' => $repeatGroupRecord];
+
+                    foreach ($schema as $schemaItem) {
+                        $pathLength = Str::length($schemaItem['path']);
+                        $position = Str::position($schemaItem['path'], $section->structure_item);
+                        $lengthToCut = $pathLength - $position;
+
+                        $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
+                        // dump('$itemPath : ' . $itemPath);
+
+                        $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+                        // dump('$fullItemPath : ' . $fullItemPath);
+
+                        $value = Arr::get($repeatGroupEntry, $fullItemPath);
+                        // dump($schemaItem['name'] . ' : ' . $value);
+
+                        if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
+                            // store ODK variable value as entity value record
+                            EntityValue::create([
+                                'entity_id' => $entity->id,
+                                'dataset_variable_id' => $schemaItem['name'],
+                                'value' => $value,
+                            ]);
+                        }
+                    }
+
+                }
+
+            } else {
+                // dump("This is NOT an array");
             }
+
         }
 
-        return $entry;
     }
+
+
+    public function exportAsExcelFile(Xlsform $xlsform)
+    {
+        return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
+    }
+
+
     //
     //    public function processEntryNOPE(array $entryToStore, array $entry, Collection $schema, array $repeatPath = []): array
     //    {
@@ -580,5 +729,6 @@ class OdkLinkService
     //        }
     //        return $entryToStore;
     //    }
+
 
 }

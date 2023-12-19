@@ -3,17 +3,19 @@
 namespace Stats4sd\FilamentOdkLink\Filament\Resources\TeamResource\RelationManagers;
 
 use Filament\Forms;
-use Filament\Forms\Components\ViewField;
-use Filament\Forms\Form;
-use Filament\Infolists\Infolist;
-use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Infolists\Infolist;
+use Maatwebsite\Excel\Facades\Excel;
+use Filament\Forms\Components\ViewField;
 use Illuminate\Database\Eloquent\Builder;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
+use Filament\Resources\RelationManagers\RelationManager;
+use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 class XlsformsRelationManager extends RelationManager
 {
@@ -44,15 +46,15 @@ class XlsformsRelationManager extends RelationManager
                     ->maxLength(255)
                     ->unique(ignoreRecord: true),
 
-                // show QR code
-                ViewField::make('qr_code')
-                    ->label('Scan the QR code below in ODK Collect to view the test form.')
-                    ->view('filament.forms.components.draft-testing-qr-code'),
+                // // show QR code
+                // ViewField::make('qr_code')
+                //     ->label('Scan the QR code below in ODK Collect to view the test form.')
+                //     ->view('filament-odk-link::filament.forms.components.draft-testing-qr-code'),
 
-                // show Enteko link as a clickable link
-                ViewField::make('enketo_draft_url')
-                    ->label('Click below link to view ODK form in browser')
-                    ->view('filament.forms.components.clickable-link'),
+                // // show Enteko link as a clickable link
+                // ViewField::make('enketo_draft_url')
+                //     ->label('Click below link to view ODK form in browser')
+                //     ->view('filament-odk-link::filament.forms.components.clickable-link'),
             ]);
     }
 
@@ -65,7 +67,7 @@ class XlsformsRelationManager extends RelationManager
                     ->grow(false),
                 Tables\Columns\TextColumn::make('status'),
                 Tables\Columns\ViewColumn::make('team_datasets_required')
-                    ->view('filament.tables.columns.team-datasets-required'),
+                    ->view('filament-odk-link::filament.tables.columns.team-datasets-required'),
                 Tables\Columns\TextColumn::make('submissions_count')->counts('submissions')
                     ->label('No. of Submissions'),
             ])
@@ -91,6 +93,47 @@ class XlsformsRelationManager extends RelationManager
                     }),
             ])
             ->actions([
+
+                // add Publish button
+                Tables\Actions\Action::make('publish')
+                ->label('Publish')
+                ->icon('heroicon-m-arrow-up-tray')
+                ->requiresConfirmation()
+                ->action(function (Xlsform $record) {
+                    $odkLinkService = app()->make(OdkLinkService::class);
+
+                    // create draft if there is no draft yet
+                    if (!$record->has_draft) {
+                        $odkLinkService->createDraftForm($record);
+                    }
+
+                    // call API to publish form in ODK central
+                    $odkLinkService->publishForm($record);
+                }),
+
+                // add Pull Submissions button
+                Tables\Actions\Action::make('pull_submissions')
+                ->label('Pull Submissions')
+                ->icon('heroicon-m-arrow-down-tray')
+                ->action(function (Xlsform $record) {
+                    $odkLinkService = app()->make(OdkLinkService::class);
+
+                    // call API to pull submissions from ODK central
+                    $odkLinkService->getSubmissions($record);
+                }),
+
+                // add Pull Submissions button
+                Tables\Actions\Action::make('export')
+                ->label('Export')
+                ->icon('heroicon-m-document-arrow-down')
+                ->action(function (Xlsform $record) {
+                    $odkLinkService = app()->make(OdkLinkService::class);
+
+                    // call API to export data as excel file
+                    // P.S. use return to trigger file download in browser
+                    return $odkLinkService->exportAsExcelFile($record);
+                }),
+
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

@@ -14,6 +14,11 @@ class Entity extends Model
 
     protected $guarded = [];
 
+    public function submission(): BelongsTo
+    {
+        return $this->belongsTo(Submission::class);
+    }
+
     public function dataset(): BelongsTo
     {
         return $this->belongsTo(Dataset::class);
@@ -41,30 +46,34 @@ class Entity extends Model
             ->withPivot('value');
     }
 
-    /*
-     * Override getAttribute() to check the entity_values table first.
-     */
-    public function getAttribute($key)
-    {
 
-        // if the default getAttribute() returns something, great! Do that
-        if ($value = parent::getAttribute($key)) {
-            return $value;
-        }
+    // Dan: comment getAttribute() function temporary to avoid throwing error when adding polymorphic relationship
 
-        /*
-         * If the requested attribute is in the dataset variables list, check the values() relationship
-         */
-        if ($this->getVariableList()->contains($key)) {
-            return $this->values()->whereHas('datasetVariable', function (Builder $query) use ($key) {
-                $query->where('dataset_variables.name', $key);
-            })->first()?->value;
-        }
+    // /*
+    //  * Override getAttribute() to check the entity_values table first.
+    //  */
+    // public function getAttribute($key)
+    // {
 
-        /*
-         * Otherwise, attempt to defer to the linked model:
-         */
-        return $this->model->getAttribute($key);
+    //     // if the default getAttribute() returns something, great! Do that
+    //     if ($value = parent::getAttribute($key)) {
+    //         return $value;
+    //     }
 
-    }
+    //     /*
+    //      * If the requested attribute is in the dataset variables list, check the values() relationship
+    //      */
+    //     if ($this->getVariableList()->contains($key)) {
+    //         return $this->values()->whereHas('datasetVariable', function (Builder $query) use ($key) {
+    //             $query->where('dataset_variables.name', $key);
+    //         })->first()?->value;
+    //     }
+
+    //     /*
+    //      * Otherwise, attempt to defer to the linked model:
+    //      */
+    //     return $this->model->getAttribute($key);
+
+    // }
+
 }

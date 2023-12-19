@@ -30,15 +30,15 @@ class AppUser extends Model
      */
     public function getQrCodeStringAttribute(): ?string
     {
+        // Question: After scanning QR code, it does not show the published ODK form.
+        // It is different from scanning QR code in ODK central...
         $settings = [
-            'general' => [
-                'server_url' => 'https://kc.kobotoolbox.org',
-                'form_update_mode' => 'match_exactly',
-                'username' => 'crown_agents_demo',
-                'password' => 'zmk9kqu-YXV*vqn2npa',
+            "general" => [
+                "server_url" => config('odk-link.odk.base_endpoint') . "/key/{$this->token}/projects/{$this->odkProject->id}",
+                "form_update_mode" => "match_exactly",
             ],
-            'project' => ['name' => 'Crown Agents Demo Project'],
-            'admin' => ['automatic_update' => true],
+            "project" => ["name" => $this->odkProject->name],
+            "admin" => ["automatic_update" => true],
         ];
 
         $json = json_encode($settings, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
