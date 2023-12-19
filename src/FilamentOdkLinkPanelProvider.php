@@ -33,9 +33,9 @@ class FilamentOdkLinkPanelProvider extends PanelProvider
             ])
             ->userMenuItems([
                 MenuItem::make('Home')
-                ->label('Back to main site')
-                ->url(url('/'))
-                ->icon('heroicon-o-home')
+                    ->label('Back to main site')
+                    ->url(url('/'))
+                    ->icon('heroicon-o-home'),
             ])
             ->middleware([
                 EncryptCookies::class,

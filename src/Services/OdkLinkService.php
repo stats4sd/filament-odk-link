@@ -14,6 +14,7 @@ use Illuminate\Http\Client\RequestException;
 use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\AppUser;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
@@ -245,16 +246,14 @@ class OdkLinkService
         // dynamic files
         $requiredDataMedia = $xlsform->attachedDataMedia()->get();
 
-        if($requiredDataMedia && count($requiredDataMedia)  > 0) {
+        if ($requiredDataMedia && count($requiredDataMedia) > 0) {
             foreach ($requiredDataMedia as $requiredMediaItem) {
 
                 // if there is a static upload, use it;
                 $media = $requiredDataMedia->getFirstMedia();
-                if($media) {
+                if ($media) {
                     $this->uploadSingleMediaFile($xlsform, $requiredMediaItem);
-                }
-
-                else {
+                } else {
                     // handle csv file generation...
 
                 }
@@ -372,6 +371,35 @@ class OdkLinkService
 
     }
 
+    public function getAttachedMedia($entry, string $token, Xlsform $xlsform, Model|Submission|null $submission): void
+    {
+        // ******** PROCESS MEDIA ******** //
+        //check if media is expected
+        if ($entry['__system']['attachmentsPresent'] > 0) {
+            $mediaPresent = Http::withToken($token)
+                ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments")
+                ->throw()
+                ->json();
+
+            foreach ($mediaPresent as $mediaItem) {
+
+                // download the attachment
+                $result = Http::withToken($token)
+                    ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments/${mediaItem['name']}")
+                    ->throw();
+
+                // store the attachment locally
+                Storage::disk(config('filament-odk-link.storage.media'))
+                    ->put($mediaItem['name'], $result->body());
+
+                // link it to the submission via Media Library
+                $submission->addMediaFromDisk($mediaItem['name'], config('filament-odk-link.storage.media'))
+                    ->toMediaLibrary();
+
+            }
+        }
+    }
+
     /**
      * Creates a new csv lookup file from the database;
      */
@@ -437,7 +465,7 @@ class OdkLinkService
     }
 
     /**
-     * @param  mixed  $version
+     * @param mixed $version
      * @return Model
      */
     public function createNewVersion(Xlsform $xlsform, array $versionDetails): XlsformVersion
@@ -486,7 +514,11 @@ class OdkLinkService
 
         foreach ($resultsToAdd as $entry) {
 
+
+            // ******* CREATE SUBMISSION RECORD ******* //
             $xlsformVersion = $xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
+
+            // TODO: handle case where xlsformversion is not found
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
             $submission = $xlsformVersion?->submissions()->create([
@@ -495,6 +527,9 @@ class OdkLinkService
                 'submitted_by' => $entry['__system']['submitterName'],
                 'content' => $entry,
             ]);
+
+            $this->processEntry($submission, $entry, $xlsformVersion);
+            $this->getAttachedMedia($entry, $token, $xlsform, $submission);
 
 
             // GET schema information for the specific version
@@ -516,34 +551,12 @@ class OdkLinkService
             }
 
 
+
+            // ******** CALL APP-SPECIFIC PROCESSING ******** //
+
             // if app developer has defined a method of processing submission content, call that method:
             $class = config('filament-odk-link.submission.process_method.class');
             $method = config('filament-odk-link.submission.process_method.method');
-
-            //check if media is expected
-            if ($entry['__system']['attachmentsPresent'] > 0) {
-                $mediaPresent = Http::withToken($token)
-                    ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments")
-                    ->throw()
-                    ->json();
-
-                foreach ($mediaPresent as $mediaItem) {
-
-                    // download the attachment
-                    $result = Http::withToken($token)
-                        ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments/${mediaItem['name']}")
-                        ->throw();
-
-                    // store the attachment locally
-                    Storage::disk(config('filament-odk-link.storage.media'))
-                        ->put($mediaItem['name'], $result->body());
-
-                    // link it to the submission via Media Library
-                    $submission->addMediaFromDisk($mediaItem['name'], config('filament-odk-link.storage.media'))
-                        ->toMediaLibrary();
-
-                }
-            }
 
             if ($class && $method) {
                 $class::$method($submission);
@@ -553,128 +566,22 @@ class OdkLinkService
 
     }
 
-
-    // WIP
-    public function processEntry($xlsform, $entry, $schema, $submissionId, $entryName, $entityId)
+    public function processEntry(Submission $submission, array $entry, XlsformVersion $xlsformVersion): void
     {
-        // dump('     ***** $entryName: ' . $entryName);
-        // dump('     ***** $entityId: ' . $entityId);
-        // dump('     ***** $entry: ');
-        // dump($entry);
-        // dump('     ***** $schema: ');
-        // dump($schema);
+        // ******** PROCESS DATA INTO DATASETS ******** //
+        $sections = $xlsformVersion->xlsform->xlsformTemplate->xlsformTemplateSections;
 
-        // find xlsform template section for root and repeat group
-        $xlsformTemplateSection = $xlsform->xlsformTemplate->xlsformTemplateSections->firstWhere('structure_item', $entryName);
+        // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
+        $rootEntry = ['root' => $entry];
 
-        if ($xlsformTemplateSection != null) {
-            // dump('Xlsform template section found, it is either root or repeat group');
-
-            // for repeat group (i.e. non root section), use schema of xlsform template section
-            if ($entryName != 'root') {
-                $schema = $xlsformTemplateSection->schema;
-            }
-
-        } else {
-            // dump('Xlsform template section not found, it is not root or repeat group');
-            $xlsformTemplateSection = $xlsform->xlsformTemplate->xlsformTemplateSections->firstWhere('is_repeat', 0);
+        foreach ($sections as $section) {
+            $this->processEntryFromSection($rootEntry, $section, $submission->id);
         }
-
-
-        // prepare entity
-        if (($entryName == 'root') || ($xlsformTemplateSection->is_repeat == 1)) {
-
-            // create new entity for root or repeat group
-            $entity = Entity::create([
-                'dataset_id' => $xlsformTemplateSection->dataset->id,
-                'submission_id' => $submissionId,
-            ]);
-
-            // add polymorphic relationship
-            $entity->owner()->associate($xlsform->owner)->save();
-
-            $entityId = $entity->id;
-
-        } else {
-
-            // This is not root or repeat group. It can be:
-            // 1. Structure item under root
-            // 2. Structture item under repeat group
-
-            // Get existing entity. It is either root entity or repeat group entity
-            $entity = Entity::find($entityId);
-
-        }
-
-
-        // store attributes as entity_value record, call processEntry() for repeat group or structure item
-        foreach ($entry as $key => $value) {
-
-            // if (is_array($value)) {
-            //     dump($key . ' is an array');
-            // }
-
-            // check whether attribute key exist in schema
-            $schemaEntry = $schema->firstWhere('name', '=', $key);
-
-            // create entity_values record for key value pair
-            if ($schemaEntry != null &&
-                $schemaEntry['type'] != 'structure' &&
-                $schemaEntry['type'] != 'repeat' &&
-                $key != null &&
-                $value != null &&
-                !is_array($value)) {
-
-                // dump('==> create entity_value record for ' . '(' . $key . ' => ' . $value . ') with entity_id ' . $entityId);
-
-                EntityValue::create([
-                    'entity_id' => $entityId,
-                    'dataset_variable_id' => $key,
-                    'value' => $value,
-                ]);
-            }
-
-            // do not need this checking anymore. We use the schema of a xlsform template section instead of the schema of the entity xlsform
-            // need this checking when we use schema of the entire xlsform
-            if (! $schemaEntry) {
-                continue;
-            }
-
-            if ($schemaEntry['type'] === 'structure' || is_array($value)) {
-                // dump('     SSSSS ' . $key . ' is a structure item or array, call processEntry() to handle');
-                $entry = array_merge($this->processEntry($xlsform, $value, $schema, $submissionId, $key, $entityId), $entry);
-                unset($entry[$key]);
-            }
-
-            if ($schemaEntry['type'] === 'repeat') {
-                // dump('     RRRRR ' . $key . ' is a repeat group, call processEntry() to handle');
-
-                // $entry[$key] = collect($entry[$key])->map(function ($repeatEntry) use ($schema, $xlsform, $datasets) {
-                //     return $this->processEntry($repeatEntry, $schema, $xlsform, $datasets);
-                // })->toArray();
-
-                // handle each array element of repeating group
-                foreach ($entry as $arrayElement) {
-                    if ($arrayElement != null && is_array($arrayElement)) {
-                        // dump('arrayElement');
-                        // dump($arrayElement);
-
-                        $this->processEntry($xlsform, $arrayElement, $schema, $submissionId, $key, $entityId);
-                    }
-                }
-            }
-
-        }
-
-
-        // dump('     ///// $entityId: ' . $entityId);
-        // dump('     ///// $entryName: ' . $entryName);
-
-        return $entry;
     }
 
 
     private function processEntryFromSection($xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+
     {
         // get the section schema and the dataset it is linked to;
 
@@ -715,7 +622,7 @@ class OdkLinkService
                 }
             }
 
-        // handle repeat group
+            // handle repeat group
         } else {
 
             // exclude structure items from section schema, as there is no value to be stored for a structure item
@@ -784,7 +691,7 @@ class OdkLinkService
             } else {
                 // dump("This is NOT an array");
             }
-            
+
         }
 
     }

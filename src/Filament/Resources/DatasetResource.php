@@ -35,7 +35,7 @@ class DatasetResource extends Resource
             Forms\Components\TextInput::make('primary_key')
                 ->hint('If this dataset is being populated by and ODK form, this field should be present in the form.')
                 ->required(),
-            Forms\Components\TextArea::make('description'),
+            Forms\Components\Textarea::make('description'),
         ];
     }
 
