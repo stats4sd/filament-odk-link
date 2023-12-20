@@ -402,7 +402,7 @@ class OdkLinkService
 
         // TODO: update this to work with any default language
         $schema = collect($schema)->map(function (array $item) use ($surveyExcel): array {
-            if($row = $surveyExcel->where('name', $item['name'])->first()) {
+            if ($row = $surveyExcel->where('name', $item['name'])->first()) {
                 $item['value_type'] = $row['type'];
                 $item['label_english'] = $row['labelenglish'];
                 $item['hint_english'] = $row['hintenglish'];
@@ -660,6 +660,7 @@ class OdkLinkService
                     $entity = Entity::create([
                         'dataset_id' => $section->dataset->id,
                         'submission_id' => $submissionId,
+                        'parent_id' => Entity::where('submission_id', $submissionId)->where('dataset_id', $section->parent->dataset->id)->first()->id,
                     ]);
 
                     // add polymorphic relationship
@@ -705,66 +706,10 @@ class OdkLinkService
 
     public function exportAsExcelFile(Xlsform $xlsform)
     {
+        ray()->showQueries();
         return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
+
     }
-
-
-    //
-    //    public function processEntryNOPE(array $entryToStore, array $entry, Collection $schema, array $repeatPath = []): array
-    //    {
-    //        // get reference to correct nested part of the $entryToStore (e.g. if we are inside a repeat, we will want to add keys/values to the current level in the repeat;
-    //
-    //
-    //        if (count($repeatPath) > 0) {
-    //            $ref = &$entryToStore;
-    //            foreach ($repeatPath as $path) {
-    //
-    //                // check if there is already a path to here
-    //                if (!isset($ref[$path])) {
-    //                    $ref[$path] = [];
-    //                }
-    //                $ref = &$ref[$path];
-    //            }
-    //            dump($ref, $repeatPath);
-    //        }
-    //
-    //
-    //        foreach ($entry as $key => $value) {
-    //            $schemaEntry = $schema->firstWhere('name', '=', $key);
-    //
-    //            if (!$schemaEntry) {
-    //                $ref[$key] = $value;
-    //                continue;
-    //            }
-    //
-    //            switch ($schemaEntry['type']) {
-    //                case 'repeat':
-    //
-    //                    $repeatPath[] = $key;
-    //                    $loop = 0;
-    //
-    //                    foreach ($value as $repeatItem) {
-    //                        array_pop($repeatPath);
-    //                        $repeatPath[] = $loop;
-    //                        $ref = $this->processEntry($entryToStore, $repeatItem, $schema, $repeatPath);
-    //
-    //                        $loop++;
-    //                    }
-    //                    break;
-    //
-    //                case 'structure':
-    //                    $ref = $this->processEntry($entryToStore, $value, $schema, $repeatPath);
-    //                    break;
-    //
-    //                default:
-    //                    $ref[$key] = $value;
-    //
-    //                    break;
-    //            }
-    //
-    //        }
-    //        return $entryToStore;
-    //    }
 
 
 }

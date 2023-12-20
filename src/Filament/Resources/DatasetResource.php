@@ -10,6 +10,7 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Stats4sd\FilamentOdkLink\Filament\Resources\DatasetResource\Pages;
 use Stats4sd\FilamentOdkLink\Filament\Resources\DatasetResource\RelationManagers;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
@@ -23,10 +24,10 @@ class DatasetResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->schema(self::getCreateFormFields());
+            ->schema(fn(Dataset $record) => self::getCreateFormFields($record));
     }
 
-    public static function getCreateFormFields(): array
+    public static function getCreateFormFields($record): array
     {
         return [
             Forms\Components\TextInput::make('name')
@@ -34,10 +35,15 @@ class DatasetResource extends Resource
                 ->unique(ignoreRecord: true),
             Forms\Components\TextInput::make('primary_key')
                 ->hint('If this dataset is being populated by and ODK form, this field should be present in the form.')
-                ->required(),
-            Forms\Components\Textarea::make('description'),
+                ->helperText('ignored for now...')
+                ->default('id'),
+            Forms\Components\Select::make('parent_id')
+                ->relationship('parent', 'name', function (Builder $query) use ($record) {
+                    $query->where('id', '!=', $record->id);
+                }),
         ];
     }
+
 
     public static function table(Table $table): Table
     {

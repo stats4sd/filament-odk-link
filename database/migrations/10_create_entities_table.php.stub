@@ -10,6 +10,7 @@ return new class extends Migration {
         Schema::create('entities', function (Blueprint $table) {
             $table->id();
             $table->foreignId('dataset_id')->constrained('datasets');
+            $table->foreignId('parent_id')->constrained('entities')->cascadeOnDelete()->cascadeOnUpdate();
             $table->nullableMorphs('owner');
             $table->nullableMorphs('model');
             $table->foreignId('submission_id')->constrained('submissions')->cascadeOnDelete()->cascadeOnUpdate();

@@ -232,7 +232,7 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
 
 
         // create or find the 'root' section
-        $this->xlsformTemplateSections()->updateOrCreate([
+        $rootSection = $this->xlsformTemplateSections()->updateOrCreate([
             'structure_item' => 'root',
         ], [
             'is_repeat' => false,
@@ -245,7 +245,11 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
         ]);
 
 
-        //        dd('ok');
+        // add the root as the parent of the repeating sections
+        // TODO: update to handle nested repeats
+        $this->repeatingSections()->update([
+            'parent_id' => $rootSection->id,
+        ]);
 
         return $this->xlsformTemplateSections;
     }
