@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('dataset_id')->nullable()->constrained('datasets')->nullOnDelete()->cascadeOnUpdate();
             $table->foreignId('xlsform_template_id')->constrained('xlsform_templates')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('parent_id')->nullable()->constrained('xlsform_template_sections')->nullOnDelete()->cascadeOnUpdate();
             $table->string('structure_item')->comment('which schema structure item (group or repeat / root) is this dataset linked to in the form?');
             $table->boolean('is_repeat')->default(false)->comment('Is this dataset linked to a repeat_group structure item?');
             $table->json('schema')->nullable();

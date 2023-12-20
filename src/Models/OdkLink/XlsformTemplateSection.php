@@ -3,6 +3,7 @@
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class XlsformTemplateSection extends Pivot
@@ -21,6 +22,16 @@ class XlsformTemplateSection extends Pivot
         static::addGlobalScope('sort', function ($query) {
             $query->orderBy('is_repeat', 'asc')->orderBy('id', 'asc');
         });
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
     }
 
     public function xlsformTemplate(): BelongsTo

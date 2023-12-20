@@ -14,6 +14,18 @@ class Entity extends Model
 
     protected $guarded = [];
 
+    // e.g. for an entity created from a repeat group item, the parent entity will be the entity created from the repeat group's parent (the main form or, if it's a nested repeat group, the parent group).
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
+
     public function submission(): BelongsTo
     {
         return $this->belongsTo(Submission::class);
