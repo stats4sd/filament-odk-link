@@ -28,6 +28,10 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
 
     protected $guarded = [];
 
+    protected $casts = [
+        'schema' => 'collection',
+    ];
+
     protected static function booted(): void
     {
 
@@ -35,7 +39,7 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
         static::saved(static function (Xlsform $xlsform) {
 
             // copy the xlsfile from the template and update the title and id:
-            if (! $xlsform->xlsfile) {
+            if (!$xlsform->xlsfile) {
                 $xlsform->updateXlsfileFromTemplate();
             }
 
@@ -66,21 +70,21 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
     public function xlsformId(): Attribute
     {
         return new Attribute(
-            get: fn (): string => str($this->title)->slug() . '_' . $this->id,
+            get: fn(): string => str($this->title)->slug() . '_' . $this->id,
         );
     }
 
     public function ownedByName(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->owner->{$this->getOwnerIdentifierAttributeName()} ?? '',
+            get: fn(): string => $this->owner->{$this->getOwnerIdentifierAttributeName()} ?? '',
         );
     }
 
     public function currentVersion(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->xlsformVersions()->latest()->first()?->version ?? '',
+            get: fn(): string => $this->xlsformVersions()->latest()->first()?->version ?? '',
         );
     }
 
@@ -157,7 +161,7 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
 
     public function getOdkLinkAttribute(): ?string
     {
-        $appends = ! $this->is_active ? '/draft' : '';
+        $appends = !$this->is_active ? '/draft' : '';
 
         return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
     }

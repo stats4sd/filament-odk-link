@@ -18,7 +18,7 @@ class XlsformVersion extends Model implements HasMedia
     protected $guarded = [];
 
     protected $casts = [
-        'schema' => 'array',
+        'schema' => 'collection',
     ];
 
     public function registerMediaCollections(): void

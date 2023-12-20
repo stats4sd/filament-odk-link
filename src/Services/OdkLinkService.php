@@ -403,6 +403,7 @@ class OdkLinkService
         // TODO: update this to work with any default language
         $schema = collect($schema)->map(function (array $item) use ($surveyExcel): array {
             if($row = $surveyExcel->where('name', $item['name'])->first()) {
+                $item['value_type'] = $row['type'];
                 $item['label_english'] = $row['labelenglish'];
                 $item['hint_english'] = $row['hintenglish'];
             }
