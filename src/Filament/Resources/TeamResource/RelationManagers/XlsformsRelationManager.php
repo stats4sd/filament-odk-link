@@ -3,6 +3,7 @@
 namespace Stats4sd\FilamentOdkLink\Filament\Resources\TeamResource\RelationManagers;
 
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Tables;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
@@ -35,10 +36,10 @@ class XlsformsRelationManager extends RelationManager
                     ->relationship(
                         name: 'xlsformTemplate',
                         titleAttribute: 'title',
-                        modifyQueryUsing: fn (Builder $query) => $query->where('available', true)
+                        modifyQueryUsing: fn(Builder $query) => $query->where('available', true)
                     )
                     ->live()
-                    ->afterStateUpdated(fn (Forms\Set $set, $state) => $set('title', $state ? XlsformTemplate::find($state)->title : '')),
+                    ->afterStateUpdated(fn(Forms\Set $set, $state) => $set('title', $state ? XlsformTemplate::find($state)->title : '')),
 
                 Forms\Components\TextInput::make('title')
                     ->helperText('By default, this is the title of the Template you select. If you want multiple instances of the same form template, you should give each a unique title.')
@@ -81,7 +82,7 @@ class XlsformsRelationManager extends RelationManager
 
                         $odkLinkService = app()->make(OdkLinkService::class);
 
-                        if (! $record->xlsfile) {
+                        if (!$record->xlsfile) {
                             $record->updateXlsfileFromTemplate();
                         }
 
@@ -96,43 +97,56 @@ class XlsformsRelationManager extends RelationManager
 
                 // add Publish button
                 Tables\Actions\Action::make('publish')
-                ->label('Publish')
-                ->icon('heroicon-m-arrow-up-tray')
-                ->requiresConfirmation()
-                ->action(function (Xlsform $record) {
-                    $odkLinkService = app()->make(OdkLinkService::class);
+                    ->label('Publish')
+                    ->icon('heroicon-m-arrow-up-tray')
+                    ->requiresConfirmation()
+                    ->action(function (Xlsform $record) {
+                        $odkLinkService = app()->make(OdkLinkService::class);
 
-                    // create draft if there is no draft yet
-                    if (!$record->has_draft) {
-                        $odkLinkService->createDraftForm($record);
-                    }
+                        // create draft if there is no draft yet
+                        if (!$record->has_draft) {
+                            $odkLinkService->createDraftForm($record);
+                        }
 
-                    // call API to publish form in ODK central
-                    $odkLinkService->publishForm($record);
-                }),
+                        // call API to publish form in ODK central
+                        $odkLinkService->publishForm($record);
+                    }),
 
                 // add Pull Submissions button
                 Tables\Actions\Action::make('pull_submissions')
-                ->label('Pull Submissions')
-                ->icon('heroicon-m-arrow-down-tray')
-                ->action(function (Xlsform $record) {
-                    $odkLinkService = app()->make(OdkLinkService::class);
+                    ->label('Pull Submissions')
+                    ->icon('heroicon-m-arrow-down-tray')
+                    ->action(function (Xlsform $record) {
+                        $odkLinkService = app()->make(OdkLinkService::class);
 
-                    // call API to pull submissions from ODK central
-                    $odkLinkService->getSubmissions($record);
-                }),
+                        // call API to pull submissions from ODK central
+                        $odkLinkService->getSubmissions($record);
+                    }),
+
+                Tables\Actions\Action::make('update_to_latest_template_version')
+                    ->label('Update The form definition')
+                    ->action(function (Xlsform $record) {
+                        $record->updateXlsfileFromTemplate();
+                        $record->refresh();
+
+                        Notification::make('update_success')
+                            ->title('Success!')
+                            ->body("The form {$record->title} is now using the latest xlsform uploaded to this platform")
+                            ->color('success')
+                            ->send();
+                    }),
 
                 // add Pull Submissions button
                 Tables\Actions\Action::make('export')
-                ->label('Export')
-                ->icon('heroicon-m-document-arrow-down')
-                ->action(function (Xlsform $record) {
-                    $odkLinkService = app()->make(OdkLinkService::class);
+                    ->label('Export')
+                    ->icon('heroicon-m-document-arrow-down')
+                    ->action(function (Xlsform $record) {
+                        $odkLinkService = app()->make(OdkLinkService::class);
 
-                    // call API to export data as excel file
-                    // P.S. use return to trigger file download in browser
-                    return $odkLinkService->exportAsExcelFile($record);
-                }),
+                        // call API to export data as excel file
+                        // P.S. use return to trigger file download in browser
+                        return $odkLinkService->exportAsExcelFile($record);
+                    }),
 
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),

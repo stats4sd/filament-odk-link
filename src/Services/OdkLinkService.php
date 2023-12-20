@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Client\RequestException;
 use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
+use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\AppUser;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
@@ -175,14 +176,7 @@ class OdkLinkService
         if (isset($response['xmlFormId'])) {
             $xlsform->update(['odk_id' => $response['xmlFormId']]);
         }
-
-        // upddate the stored schema with the new draft;
-        $schema = Http::withToken($token)
-            ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/fields?odata=true")
-            ->throw()
-            ->json();
-
-        $xlsform->updateQuietly(['schema' => $schema]);
+        $this->updateSchema($xlsform);
 
         // deploy media files
         $this->uploadMediaFileAttachments($xlsform);
@@ -305,14 +299,6 @@ class OdkLinkService
 
         $token = $this->authenticate();
 
-        //        // create a new version locally
-        //        $version = 1;
-        //
-        //        // if there is an existing version; increment the version number;
-        //        if ($xlsform->xlsformVersions()->count() > 0) {
-        //            $version = $xlsform->xlsformVersions()->orderBy('version', 'desc')->first()->version + 1;
-        //        }
-
         Http::withToken($token)
             ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=" . Carbon::now()->toDateTimeString())
             ->throw()
@@ -400,6 +386,34 @@ class OdkLinkService
         }
     }
 
+    // update the schema of a template for xlsform from the latest draft version on ODK Central
+    public function updateSchema(WithXlsFormDrafts $xlsform): void
+    {
+        $token = $this->authenticate();
+
+        // upddate the stored schema with the new draft;
+        $schema = Http::withToken($token)
+            ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/fields?odata=true")
+            ->throw()
+            ->json();
+
+        // get the xlsform and merge in specific details to the schema returned from ODK Central
+        $surveyExcel = (new XlsImport)->toCollection($xlsform->getMedia('xlsform_file')->first()->getPathRelativeToRoot(), config('filament-odk-link.storage.xlsforms'), \Maatwebsite\Excel\Excel::XLSX)[0];
+
+        // TODO: update this to work with any default language
+        $schema = collect($schema)->map(function (array $item) use ($surveyExcel): array {
+            if($row = $surveyExcel->where('name', $item['name'])->first()) {
+                $item['value_type'] = $row['type'];
+                $item['label_english'] = $row['labelenglish'];
+                $item['hint_english'] = $row['hintenglish'];
+            }
+
+            return $item;
+        })->toArray();
+
+        $xlsform->updateQuietly(['schema' => $schema]);
+    }
+
     /**
      * Creates a new csv lookup file from the database;
      */
@@ -464,10 +478,8 @@ class OdkLinkService
             ->json();
     }
 
-    /**
-     * @param mixed $version
-     * @return Model
-     */
+
+    // create a new xlsformVersion from an existing xlsform.
     public function createNewVersion(Xlsform $xlsform, array $versionDetails): XlsformVersion
     {
         $token = $this->authenticate();
@@ -476,27 +488,21 @@ class OdkLinkService
         $fileName = collect(explode('/', $xlsform->xlsfile))->last();
         $versionSlug = Str::slug($versionDetails['version']);
 
-        // copy xlsform file to store linked to this version forever
-        Storage::disk(config('filament-odk-link.storage.xlsforms'))
-            ->copy(
-                $xlsform->xlsfile,
-                "xlsforms/{$xlsform->id}/versions/{$versionSlug}/{$fileName}"
-            );
-
-        // get schema from ODK Central;
-        $schema = Http::withToken($token)
-            ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/versions/{$versionDetails['version']}/fields?odata=true")
-            ->throw()
-            ->json();
-
         // create new active version with latest version number;
-        return $xlsform->xlsformVersions()->create([
+        $xlsformVersion = $xlsform->xlsformVersions()->create([
             'version' => $versionDetails['version'],
-            'xlsfile' => "xlsforms/{$xlsform->id}/versions/{$versionSlug}/{$fileName}",
             'odk_version' => $versionDetails['version'],
             'active' => true,
-            'schema' => $schema,
+            'schema' => $xlsform->schema,
         ]);
+
+        // copy xlsform file to store linked to this version forever
+        $xlsform->getMedia('xlsform_file')->first()->copy($xlsformVersion, 'xlsform_file');
+
+        // copy any attached media
+        $xlsform->getMedia('attached_media')->each(fn($media) => $media->copy($xlsformVersion, 'attached_media'));
+
+        return $xlsformVersion;
     }
 
     public function getSubmissions(Xlsform $xlsform): void
@@ -546,10 +552,9 @@ class OdkLinkService
             // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
             $rootEntry = ['root' => $entry];
 
-            foreach($sections as $section) {
+            foreach ($sections as $section) {
                 $this->processEntryFromSection($xlsform, $rootEntry, $section, $submission->id);
             }
-
 
 
             // ******** CALL APP-SPECIFIC PROCESSING ******** //

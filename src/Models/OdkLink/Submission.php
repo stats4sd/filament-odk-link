@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
@@ -82,6 +83,11 @@ class Submission extends Model implements HasMedia
     public function entities(): HasMany
     {
         return $this->hasMany(Entity::class);
+    }
+
+    public function entityValues(): HasManyThrough
+    {
+        return $this->hasManyThrough(EntityValue::class, Entity::class);
     }
 
 }

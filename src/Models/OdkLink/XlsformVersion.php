@@ -18,8 +18,18 @@ class XlsformVersion extends Model implements HasMedia
     protected $guarded = [];
 
     protected $casts = [
-        'schema' => 'array',
+        'schema' => 'collection',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('xlsform_file')
+            ->singleFile()
+            ->useDisk(config('filament-odk-link.storage.xlsforms'));
+
+        $this->addMediaCollection('attached_media')
+            ->useDisk(config('filament-odk-link.storage.xlsforms'));
+    }
 
     // **************** COMPUTED ATTRIBUTES ***********************
 
@@ -27,21 +37,21 @@ class XlsformVersion extends Model implements HasMedia
     public function title(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->team ? $this->team->name . ' - ' . $this->xlsform->title : '',
+            get: fn(): string => $this->team ? $this->team->name . ' - ' . $this->xlsform->title : '',
         );
     }
 
     public function xlsfile(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->getFirstMediaPath('xlsform_file'),
+            get: fn(): string => $this->getFirstMediaPath('xlsform_file'),
         );
     }
 
     public function xlsfile_name(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->getFirstMedia('xlsform_file')->file_name,
+            get: fn(): string => $this->getFirstMedia('xlsform_file')->file_name,
         );
     }
 

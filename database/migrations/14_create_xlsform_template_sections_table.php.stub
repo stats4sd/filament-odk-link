@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->string('structure_item')->comment('which schema structure item (group or repeat / root) is this dataset linked to in the form?');
             $table->boolean('is_repeat')->default(false)->comment('Is this dataset linked to a repeat_group structure item?');
             $table->json('schema')->nullable();
+            $table->boolean('is_current')->default(true)->comment('Is this section in the current version of the template? If False, the section used to exist in a previous version, and should remain in the database for historical purposes');
             $table->timestamps();
         });
     }

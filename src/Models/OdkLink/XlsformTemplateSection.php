@@ -15,6 +15,14 @@ class XlsformTemplateSection extends Pivot
         'schema' => 'collection',
     ];
 
+    protected static function booted()
+    {
+        // always sort by is_repeat, then by id
+        static::addGlobalScope('sort', function ($query) {
+            $query->orderBy('is_repeat', 'asc')->orderBy('id', 'asc');
+        });
+    }
+
     public function xlsformTemplate(): BelongsTo
     {
         return $this->belongsTo(XlsformTemplate::class);
