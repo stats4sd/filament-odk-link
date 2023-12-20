@@ -43,11 +43,7 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
 
                 // find value for each ODK variable
                 foreach ($this->getHeadings() as $heading) {
-
-                    // assume there is only one value for one ODK variable
-                    $entityValue = $entity->values->where('entity_id', $entity->id)->where('dataset_variable_id', $heading)->first();
-
-                    $record[] = $entityValue?->value;
+                    $record[] = $this->getEntityValue($entity, $heading);
                 }
                 $records[] = $record;
             }
@@ -83,6 +79,21 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
         // get all column names from schema, exclude structure item as they do not have entity_value record
         $schema = $this->xlsformTemplateSection->schema->where('type', '!=', 'structure');
         return $schema->pluck('name')->toArray();
+    }
+
+    /**
+     * @param mixed $entity
+     * @param mixed $heading
+     * @return mixed
+     */
+    public function getEntityValue(mixed $entity, mixed $heading): mixed
+    {
+        // assume there is only one value for one ODK variable
+        return $entity->values
+            ->where('entity_id', $entity->id)
+            ->where('dataset_variable_id', $heading)
+            ->first()
+            ?->value;
     }
 
 }

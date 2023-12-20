@@ -706,7 +706,6 @@ class OdkLinkService
 
     public function exportAsExcelFile(Xlsform $xlsform)
     {
-        ray()->showQueries();
         return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
 
     }
