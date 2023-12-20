@@ -5,6 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Exports;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
@@ -41,6 +42,12 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
                     $record[] = $entity->parent->values->where('dataset_variable_id', $dataset->parent->primary_key)->first()->value;
                 }
 
+                if ($extras = $this->getExtraVariables($entity)) {
+                    foreach ($extras as $extra) {
+                        $record[] = $extra;
+                    }
+                }
+
                 // find value for each ODK variable
                 foreach ($this->getHeadings() as $heading) {
                     $record[] = $this->getEntityValue($entity, $heading);
@@ -64,10 +71,15 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
     {
         $headings = $this->getHeadings();
 
-        // add the parent-id heading to the entity-level headings.
-        if($this->xlsformTemplateSection->dataset->parent) {
+        if($extras = $this->getExtraVariableHeadings()) {
+            $headings = array_merge($extras, $headings);
+        }
+
+        // add the parent-id heading to the entity-level headings as the first heading
+        if ($this->xlsformTemplateSection->dataset->parent) {
             array_unshift($headings, $this->xlsformTemplateSection->dataset->parent->primary_key);
         }
+
 
         return $headings;
     }
@@ -94,6 +106,17 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
             ->where('dataset_variable_id', $heading)
             ->first()
             ?->value;
+    }
+
+    // overwrite this function to add extra variables to the export
+    public function getExtraVariables(Entity $entity): ?array
+    {
+        return null;
+    }
+
+    public function getExtraVariableHeadings(): ?array
+    {
+        return null;
     }
 
 }
