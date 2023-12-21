@@ -5,6 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Exports;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
@@ -22,14 +23,19 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
         $records = [];
         $dataset = $this->xlsformTemplateSection->dataset;
 
+        $this->xlsform->submissions->load([
+            'entities' => function ($query) {
+                $query->where('dataset_id', $this->xlsformTemplateSection->dataset_id)
+                    ->with(['values.translation', 'parent']);
+            },
+        ]);
+
         // for each submission
         foreach ($this->xlsform->submissions as $submission) {
 
             // for entities for a particular dataset
-            $entities = $submission->entities()
-                ->where('dataset_id', $this->xlsformTemplateSection->dataset_id)
-                ->with(['values', 'parent'])
-                ->get();
+            $entities = $submission->entities
+                ->filter(fn($entity) => $entity->dataset_id === $this->xlsformTemplateSection->dataset_id);
 
             foreach ($entities as $entity) {
 
@@ -71,7 +77,7 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
     {
         $headings = $this->getHeadings();
 
-        if($extras = $this->getExtraVariableHeadings()) {
+        if ($extras = $this->getExtraVariableHeadings($this->xlsformTemplateSection->dataset)) {
             $headings = array_merge($extras, $headings);
         }
 
@@ -114,7 +120,7 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
         return null;
     }
 
-    public function getExtraVariableHeadings(): ?array
+    public function getExtraVariableHeadings(?Dataset $dataset): ?array
     {
         return null;
     }
