@@ -9,7 +9,7 @@ class DatasetVariable extends Model
 {
     protected $table = 'dataset_variables';
 
-    protected $guarded = [];
+
 
     public function dataset(): BelongsTo
     {

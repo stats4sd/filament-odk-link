@@ -12,7 +12,7 @@ class Entity extends Model
 {
     protected $table = 'entities';
 
-    protected $guarded = [];
+
 
     // e.g. for an entity created from a repeat group item, the parent entity will be the entity created from the repeat group's parent (the main form or, if it's a nested repeat group, the parent group).
     public function parent(): BelongsTo

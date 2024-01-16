@@ -17,7 +17,7 @@ class Team extends Model
 
     protected $table = 'teams';
 
-    protected $guarded = [];
+
 
     /**
      * Generate an invitation to join this team for each of the provided email addresses

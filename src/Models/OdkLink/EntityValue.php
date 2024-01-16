@@ -12,7 +12,7 @@ class EntityValue extends Model
 {
     protected $table = 'entity_values';
 
-    protected $guarded = [];
+
 
     public function entity(): BelongsTo
     {

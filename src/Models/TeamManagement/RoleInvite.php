@@ -11,7 +11,7 @@ class RoleInvite extends Model
 {
     protected $table = 'role_invites';
 
-    protected $guarded = [];
+
 
     protected $casts = [
         'is_confirmed' => 'boolean',

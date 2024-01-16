@@ -11,7 +11,7 @@ class TeamInvite extends Model
 {
     protected $table = 'team_invites';
 
-    protected $guarded = [];
+
 
     protected $casts = [
         'is_confirmed' => 'boolean',

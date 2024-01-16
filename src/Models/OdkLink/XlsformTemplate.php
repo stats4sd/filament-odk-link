@@ -25,7 +25,7 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
 
     protected $table = 'xlsform_templates';
 
-    protected $guarded = [];
+
 
     protected $casts = [
         'schema' => 'collection',
