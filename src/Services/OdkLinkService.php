@@ -169,8 +169,12 @@ class OdkLinkService
             ])
             ->withBody($file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
             ->post($url)
-            ->throw()
             ->json();
+
+        // if the xlsform file is not valid, throw an error
+        if(Str::startsWith($response['message'], "The given XLSForm file was not valid")){
+            abort(500, $response['details']['error']);
+        }
 
         // when creating a new draft for an existing form, the full form details are not returned. In this case, the $xlsform record can remain unchanged
         if (isset($response['xmlFormId'])) {
