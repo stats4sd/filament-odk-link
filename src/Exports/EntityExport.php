@@ -28,12 +28,17 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
 
         return $this->entities
             ->map(function (Entity $entity) use ($headings, $dataset) {
+
+
+                // find value for each ODK variable
                 $record = $this->getEntityValues($entity, $headings);
 
                 // adding extra variables and parent_id in reverse order (unshifting, so last thing added is the first thing in the array);
-
-
                 if ($extras = $this->getExtraVariables($entity, $dataset)) {
+
+                    // reverse order for unshifting
+                    $extras = array_reverse($extras);
+
                     foreach ($extras as $extra) {
                         array_unshift($record, $extra);
                     }

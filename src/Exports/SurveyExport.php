@@ -19,8 +19,8 @@ class SurveyExport implements WithMultipleSheets
         ray()->stopShowingQueries();
         $this->xlsform = $xlsform;
 
-        $this->entities = $xlsform->submissions->map(function(Submission $submission) {
-            return $submission->entities->load('values.translation');
+        $this->entities = $xlsform->submissions->map(function (Submission $submission) {
+            return $submission->entities->load(['values.translation', 'submission']);
         })->flatten();
 
         $this->mainSurveySection = $this->xlsform->xlsformTemplate->xlsformTemplateSections->firstWhere('is_repeat', 0);
@@ -28,8 +28,8 @@ class SurveyExport implements WithMultipleSheets
     }
 
     /**
-    * @return array
-    */
+     * @return array
+     */
     public function sheets(): array
     {
         // Assumption: for a flatten approach, there is one main survey and multiple repeat groups
