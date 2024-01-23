@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Exports;
 
+use Illuminate\Database\Eloquent\Collection;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
@@ -9,12 +10,21 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 class SurveyExport implements WithMultipleSheets
 {
     protected $xlsform;
+    protected $entities;
     protected $mainSurveySection;
 
     public function __construct(Xlsform $xlsform = null)
     {
+
+        ray()->stopShowingQueries();
         $this->xlsform = $xlsform;
+
+        $this->entities = $xlsform->submissions->map(function(Submission $submission) {
+            return $submission->entities->load('values.translation');
+        })->flatten();
+
         $this->mainSurveySection = $this->xlsform->xlsformTemplate->xlsformTemplateSections->firstWhere('is_repeat', 0);
+
     }
 
     /**
@@ -29,16 +39,16 @@ class SurveyExport implements WithMultipleSheets
         $sheets = [];
 
         // handle main survey
-        $sheets[] = new EntityExport($this->xlsform, 'Main Survey', $this->mainSurveySection);
+        $sheets[] = new EntityExport($this->entities, 'Main Survey', $this->mainSurveySection);
 
         // handle repeat groups
         foreach ($this->xlsform->xlsformTemplate->xlsformTemplateSections as $section) {
             if ($section->id != $this->mainSurveySection->id) {
-                $sheets[] = new EntityExport($this->xlsform, $section->structure_item, $section);
+                $sheets[] = new EntityExport($this->entities, $section->structure_item, $section);
             }
         }
 
         return $sheets;
     }
-    
+
 }
