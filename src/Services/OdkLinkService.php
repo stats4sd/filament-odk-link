@@ -172,7 +172,10 @@ class OdkLinkService
             ->json();
 
         // if the xlsform file is not valid, throw an error
-        if(Str::startsWith($response['message'], "The given XLSForm file was not valid")){
+        if(!isset($response['message'])) {
+            dd($response);
+        }
+        if (Str::startsWith($response['message'], "The given XLSForm file was not valid")) {
             abort(500, $response['details']['error']);
         }
 
@@ -359,6 +362,38 @@ class OdkLinkService
 
         return $result;
 
+    }
+
+    /**
+     * @throws RequestException
+     */
+    public function deleteForm(WithXlsFormDrafts $xlsform): bool
+    {
+        $token = $this->authenticate();
+
+        // if for some reason the odk form doesn't even have an owner, just skip the deletion
+        if (!$xlsform->owner) {
+            return true;
+        }
+
+        try {
+
+            $result = Http::withToken($token)
+                ->delete("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}")
+                ->throw()
+                ->json();
+        } catch (RequestException $exception) {
+            if ($exception->getCode() === 404) {
+                // this is fine; the form does not exist and so has already been deleted.
+
+                return true;
+            }
+
+            throw($exception);
+
+        }
+
+        return true;
     }
 
     public function getAttachedMedia($entry, string $token, Xlsform $xlsform, Model|Submission|null $submission): void

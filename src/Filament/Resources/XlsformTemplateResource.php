@@ -189,7 +189,7 @@ class XlsformTemplateResource extends Resource
                                 ->modalSubmitAction(false)
                                 ->modalCancelActionLabel('Close'),
                         ])
-                        ->visible(fn(?XlsformTemplateSection $record): bool => $record->schema->count() >= 5),
+                        ->visible(fn(?XlsformTemplateSection $record): bool => $record?->schema->count() >= 5),
 
                     Forms\Components\Select::make('dataset_id')
                         ->relationship('dataset', 'name')
@@ -251,7 +251,10 @@ class XlsformTemplateResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title'),
+                Tables\Columns\TextColumn::make('title')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('dataset.name'),
                 Tables\Columns\ViewColumn::make('required_fixed_media_count')
                     ->label('Fixed Media')
                     ->view('filament-odk-link::filament.tables.columns.required-fixed-media-count'),
@@ -259,7 +262,9 @@ class XlsformTemplateResource extends Resource
                     ->label('Datasets')
                     ->view('filament-odk-link::filament.tables.columns.required-data-media-count'),
                 Tables\Columns\CheckboxColumn::make('available')
-                    ->label('Available for use?'),
+                    ->label('Available for use?')
+                    ->sortable(),
+
             ])
             ->filters([
                 //
