@@ -27,7 +27,7 @@ class TeamInvite extends Model
     // *********** RELATIONSHIPS ************ //
     public function inviter(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'inviter_id');
+        return $this->belongsTo(config('filament-odk-link.models.user_model'), 'inviter_id');
     }
 
     public function team(): BelongsTo
