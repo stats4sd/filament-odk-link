@@ -53,7 +53,7 @@ class XlsformTemplateResource extends Resource
             Forms\Components\TextInput::make('title')
                 ->autofocus()
                 ->required()
-                ->maxLength(255)
+                ->maxLength(64)
                 ->placeholder(__('Title'))
                 ->default(function () {
                     // get the title from url if it exists in the query string
@@ -111,7 +111,7 @@ class XlsformTemplateResource extends Resource
                 ->label(function (?XlsformTemplate $record) {
                     $label = "<h4 class='font-bold text-xl'>Link Required Datasets</h4>";
 
-                    if ($record?->requiredFixedMedia()->count() > 0) {
+                    if ($record?->requiredDataMedia()->count() > 0) {
                         $label .= '<p>The Form requires the following media items. Please upload each one here.</p>';
                     } else {
                         $label .= '<p>This form does not require any media files. You may skip this step</p>';

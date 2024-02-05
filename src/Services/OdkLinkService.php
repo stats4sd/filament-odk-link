@@ -4,6 +4,7 @@ namespace Stats4sd\FilamentOdkLink\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
@@ -168,20 +169,22 @@ class OdkLinkService
                 'X-XlsForm-FormId-Fallback' => Str::slug($xlsform->title),
             ])
             ->withBody($file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            ->post($url)
-            ->json();
+            ->post($url);
 
+
+        $responseBody = $response->json();
         // if the xlsform file is not valid, throw an error
-        if(!isset($response['message'])) {
+        if (isset($responseBody['message']) && Str::startsWith($responseBody['message'], "The given XLSForm file was not valid")) {
+            ray($response, $response->json());
+            abort(500, $response->json()['details']['error']);
+        } else if($response->status() !== 200) {
             dd($response);
-        }
-        if (Str::startsWith($response['message'], "The given XLSForm file was not valid")) {
-            abort(500, $response['details']['error']);
+            abort(500, 'An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
         }
 
         // when creating a new draft for an existing form, the full form details are not returned. In this case, the $xlsform record can remain unchanged
-        if (isset($response['xmlFormId'])) {
-            $xlsform->update(['odk_id' => $response['xmlFormId']]);
+        if (isset($responseBody['xmlFormId'])) {
+            $xlsform->update(['odk_id' => $responseBody['xmlFormId']]);
         }
         $this->updateSchema($xlsform);
 
@@ -439,12 +442,25 @@ class OdkLinkService
         // get the xlsform and merge in specific details to the schema returned from ODK Central
         $surveyExcel = (new XlsImport)->toCollection($xlsform->getMedia('xlsform_file')->first()->getPathRelativeToRoot(), config('filament-odk-link.storage.xlsforms'), \Maatwebsite\Excel\Excel::XLSX)[0];
 
-        // TODO: update this to work with any default language
+        ray($surveyExcel);
+
         $schema = collect($schema)->map(function (array $item) use ($surveyExcel): array {
+
+
+
             if ($row = $surveyExcel->where('name', $item['name'])->first()) {
                 $item['value_type'] = $row['type'];
-                $item['label_english'] = $row['labelenglish'];
-                $item['hint_english'] = $row['hintenglish'];
+
+                // find the label and hint for all languages
+                $row->each(function ($value, $key) {
+                    if (Str::startsWith($key, 'label')) {
+                        $item[$key] = $value;
+                    }
+                    if (Str::startsWith($key, 'hint')) {
+                        $item[$key] = $value;
+                    }
+                });
+
             }
 
             return $item;
