@@ -137,18 +137,6 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
 
     // *********************** FUNCTIONS ****************************
 
-    /**
-     * @throws FileDoesNotExist
-     * @throws FileIsTooBig
-     */
-    public function updateXlsfileFromTemplate(): void
-    {
-        // copy media item from template:
-        $this->xlsformTemplate->getFirstMedia('xlsform_file')?->copy($this, 'xlsform_file');
-
-        $this->saveQuietly();
-    }
-
     public function getOdkLinkAttribute(): ?string
     {
         $appends = !$this->is_active ? '/draft' : '';
@@ -159,13 +147,12 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
 
     public function syncWithTemplate(Xlsform $xlsform): void
     {
-        // copy the xlsfile from the template and update the title and id:
-        if (!$xlsform->xlsfile) {
-            $xlsform->updateXlsfileFromTemplate();
-        }
+        // copy the xlsfile from the template;
+        $this->xlsformTemplate->getFirstMedia('xlsform_file')?->copy($this, 'xlsform_file');
+        $this->saveQuietly();
 
-        // update form title
-        UpdateXlsformTitleInFile::dispatchSync($this);
+        // update form title and ID in the file itself (ODK Central looks for these values in the XLS file)
+        UpdateXlsformTitleInFile::dispatchSync($xlsform);
 
         // if the odk_project is not set, set it based on the given owner:
         $xlsform->odk_project_id = $xlsform->owner->odkProject->id;
