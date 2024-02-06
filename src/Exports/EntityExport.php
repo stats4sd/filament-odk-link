@@ -2,11 +2,13 @@
 
 namespace Stats4sd\FilamentOdkLink\Exports;
 
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
@@ -14,66 +16,56 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 class EntityExport implements FromArray, WithTitle, WithHeadings
 {
 
-    public function __construct(protected Xlsform $xlsform, protected string $title, protected XlsformTemplateSection $xlsformTemplateSection)
+    public function __construct(protected Collection $entities, protected string $title, protected XlsformTemplateSection $xlsformTemplateSection)
     {
     }
 
     public function array(): array
     {
-        $records = [];
+
+        $headings = $this->getHeadings();
         $dataset = $this->xlsformTemplateSection->dataset;
 
-        $this->xlsform->submissions->load([
-            'entities' => function ($query) {
-                $query->where('dataset_id', $this->xlsformTemplateSection->dataset_id)
-                    ->with(['values.translation', 'parent']);
-            },
-        ]);
-
-        // for each submission
-        foreach ($this->xlsform->submissions as $submission) {
-
-            // for entities for a particular dataset
-            $entities = $submission->entities
-                ->filter(fn($entity) => $entity->dataset_id === $this->xlsformTemplateSection->dataset_id);
-
-            foreach ($entities as $entity) {
-
-                // initialisation
-                $record = [];
+        return $this->entities
+            ->map(function (Entity $entity) use ($headings, $dataset) {
 
 
-                // add parent primary key if there is a parent dataset
-                if ($dataset->parent) {
-                    $record[] = $entity->parent->values->where('dataset_variable_id', $dataset->parent->primary_key)->first()->value;
-                }
+                // find value for each ODK variable
+                $record = $this->getEntityValues($entity, $headings);
 
-                if ($extras = $this->getExtraVariables($entity)) {
+                // adding extra variables and parent_id in reverse order (unshifting, so last thing added is the first thing in the array);
+                if ($extras = $this->getExtraVariables($entity, $dataset)) {
+
+                    // reverse order for unshifting
+                    $extras = array_reverse($extras);
+
                     foreach ($extras as $extra) {
-                        $record[] = $extra;
+                        array_unshift($record, $extra);
                     }
                 }
 
                 // find value for each ODK variable
-                foreach ($this->getHeadings() as $heading) {
-                    $record[] = $this->getEntityValue($entity, $heading);
+                // add parent primary key if there is a parent dataset
+                if ($dataset->parent) {
+                    array_unshift($record, $entity->parent->values->where('dataset_variable_id', $dataset->parent->primary_key)->first()->value);
                 }
-                $records[] = $record;
-            }
-        }
 
-        return $records;
+                return $record;
+            })
+            ->toArray();
     }
 
     /**
      * @return string
      */
-    public function title(): string
+    public
+    function title(): string
     {
         return $this->title;
     }
 
-    public function headings(): array
+    public
+    function headings(): array
     {
         $headings = $this->getHeadings();
 
@@ -91,8 +83,9 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
     }
 
 
-    // get the entity-level headings.
-    public function getHeadings(): array
+// get the entity-level headings.
+    public
+    function getHeadings(): array
     {
         // get all column names from schema, exclude structure item as they do not have entity_value record
         $schema = $this->xlsformTemplateSection->schema->where('type', '!=', 'structure');
@@ -104,23 +97,26 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
      * @param mixed $heading
      * @return mixed
      */
-    public function getEntityValue(mixed $entity, mixed $heading): mixed
+    public
+    function getEntityValues(mixed $entity, array $headings): array
     {
         // assume there is only one value for one ODK variable
         return $entity->values
-            ->where('entity_id', $entity->id)
-            ->where('dataset_variable_id', $heading)
-            ->first()
-            ?->value;
+            ->whereIn('dataset_variable_id', $headings)
+            ->map(function ($value) {
+                return $value->value;
+            })->toArray();
     }
 
-    // overwrite this function to add extra variables to the export
-    public function getExtraVariables(Entity $entity): ?array
+// overwrite this function to add extra variables to the export
+    public
+    function getExtraVariables(Entity $entity, Dataset $dataset): ?array
     {
         return null;
     }
 
-    public function getExtraVariableHeadings(?Dataset $dataset): ?array
+    public
+    function getExtraVariableHeadings(?Dataset $dataset): ?array
     {
         return null;
     }
