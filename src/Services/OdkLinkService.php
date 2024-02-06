@@ -500,27 +500,6 @@ class OdkLinkService
         return $filePath;
     }
 
-    public function test(): string
-    {
-
-        $data = Http::withToken($this->authenticate())
-            ->get("{$this->endpoint}/projects/24/app-users")
-            ->throw()
-            ->json();
-
-        AppUser::create(
-            [
-                'id' => $data[0]['id'],
-                'odk_project_id' => $data[0]['projectId'],
-                'type' => $data[0]['type'],
-                'display_name' => $data[0]['displayName'],
-                'token' => $data[0]['token'],
-            ]
-        );
-
-        return 'hi';
-    }
-
     public function unArchiveForm(Xlsform $xlsform)
     {
         $token = $this->authenticate();
@@ -579,7 +558,17 @@ class OdkLinkService
             // ******* CREATE SUBMISSION RECORD ******* //
             $xlsformVersion = $xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
 
-            // TODO: handle case where xlsformversion is not found
+            if(!$xlsformVersion) {
+
+                $messageContent = collect([
+                    'formVersion' => $entry['__system']['formVersion'],
+                    'xlsformId' => $xlsform->id,
+                    'xlsformTitle' => $xlsform->title,
+                    'ownerName' => $xlsform->owner->name,
+                    ]);
+
+                abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '));
+            }
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
             $submission = $xlsformVersion?->submissions()->create([
@@ -591,25 +580,6 @@ class OdkLinkService
 
             $this->processEntry($submission, $entry, $xlsformVersion);
             $this->getAttachedMedia($entry, $token, $xlsform, $submission);
-
-
-            // GET schema information for the specific version
-            // TODO: hook this into the select variables work from the other branch...
-
-            $schema = collect($xlsformVersion->schema);
-
-
-            // pass 0 as mainSurveyEntityId at the very beginning
-            // $entryToStore = $this->processEntry($xlsform, $entry, $schema, $submission->id, 'root', null);
-
-            $sections = $xlsform->xlsformTemplate->xlsformTemplateSections;
-
-            // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
-            $rootEntry = ['root' => $entry];
-
-            foreach ($sections as $section) {
-                $this->processEntryFromSection($xlsform, $rootEntry, $section, $submission->id);
-            }
 
 
             // ******** CALL APP-SPECIFIC PROCESSING ******** //
