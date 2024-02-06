@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources;
 
+use App\Filament\Admin\Resources\XlsformTemplateResource\RelationManagers\XlsformsRelationManager;
 use Awcodes\FilamentTableRepeater\Components\TableRepeater;
 use Filament\Forms;
 use Filament\Forms\Components\Actions\Action;
@@ -254,7 +255,6 @@ class XlsformTemplateResource extends Resource
                 Tables\Columns\TextColumn::make('title')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('dataset.name'),
                 Tables\Columns\ViewColumn::make('required_fixed_media_count')
                     ->label('Fixed Media')
                     ->view('filament-odk-link::filament.tables.columns.required-fixed-media-count'),
@@ -264,6 +264,9 @@ class XlsformTemplateResource extends Resource
                 Tables\Columns\CheckboxColumn::make('available')
                     ->label('Available for use?')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('xlsforms_count')
+                    ->label('# Deployments')
+                    ->counts('xlsforms')
 
             ])
             ->filters([
@@ -437,7 +440,7 @@ class XlsformTemplateResource extends Resource
 
                         // show reminder text
                         TextEntry::make('reminder')
-                            ->label('Please be remindeed that the form is only a draft. The ODK submissions sent to it will not be kept. It may not work well until you have added example csv files to any required datasets.'),
+                            ->label('You may use the QR code and link below to test this form template before making it available to teams. Any submissions sent to this draft version will not be saved. If you want to do a more comprehensive test and review the data in the platform, we recommend using a "test" team and deploying a live version of the form to that team.'),
 
                         // show QR code of ODK form draft version
                         ViewEntry::make('qr_code')

@@ -27,7 +27,6 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
     protected $table = 'xlsforms';
 
 
-
     protected $casts = [
         'schema' => 'collection',
     ];
@@ -37,15 +36,7 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
 
         // when the model is created;
         static::saved(static function (Xlsform $xlsform) {
-
-            // copy the xlsfile from the template and update the title and id:
-            if (!$xlsform->xlsfile) {
-                $xlsform->updateXlsfileFromTemplate();
-            }
-
-            // if the odk_project is not set, set it based on the given owner:
-            $xlsform->odk_project_id = $xlsform->owner->odkProject->id;
-            $xlsform->saveQuietly();
+            $xlsform->syncWithTemplate($xlsform);
         });
 
         static::deleting(static function (Xlsform $xlsform) {
@@ -156,7 +147,6 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
         $this->xlsformTemplate->getFirstMedia('xlsform_file')?->copy($this, 'xlsform_file');
 
         $this->saveQuietly();
-        UpdateXlsformTitleInFile::dispatchSync($this);
     }
 
     public function getOdkLinkAttribute(): ?string
@@ -164,5 +154,21 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
         $appends = !$this->is_active ? '/draft' : '';
 
         return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
+    }
+
+
+    public function syncWithTemplate(Xlsform $xlsform): void
+    {
+        // copy the xlsfile from the template and update the title and id:
+        if (!$xlsform->xlsfile) {
+            $xlsform->updateXlsfileFromTemplate();
+        }
+
+        // update form title
+        UpdateXlsformTitleInFile::dispatchSync($this);
+
+        // if the odk_project is not set, set it based on the given owner:
+        $xlsform->odk_project_id = $xlsform->owner->odkProject->id;
+        $xlsform->saveQuietly();
     }
 }

@@ -16,7 +16,6 @@ class SurveyExport implements WithMultipleSheets
     public function __construct(Xlsform $xlsform = null)
     {
 
-        ray()->stopShowingQueries();
         $this->xlsform = $xlsform;
 
         $this->entities = $xlsform->submissions->map(function (Submission $submission) {

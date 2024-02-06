@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Client\RequestException;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
@@ -154,7 +155,13 @@ class OdkLinkService
     {
         $token = $this->authenticate();
 
-        $file = file_get_contents($xlsform->xlsfile);
+        $filePath = $xlsform->getFirstMedia('xlsform_file')?->getPath();
+
+        if(!$filePath) {
+            abort(500, 'The XLSForm file is missing. Please upload the file again and try to deploy the form again.');
+        }
+
+        $file = file_get_contents($filePath);
 
         $url = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms?ignoreWarnings=true&publish=false";
 
@@ -175,10 +182,10 @@ class OdkLinkService
         $responseBody = $response->json();
         // if the xlsform file is not valid, throw an error
         if (isset($responseBody['message']) && Str::startsWith($responseBody['message'], "The given XLSForm file was not valid")) {
-            ray($response, $response->json());
+
             abort(500, $response->json()['details']['error']);
         } else if($response->status() !== 200) {
-            dd($response);
+
             abort(500, 'An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
         }
 
@@ -235,13 +242,14 @@ class OdkLinkService
      */
     public function uploadMediaFileAttachments(WithXlsFormDrafts $xlsform): bool
     {
+
         // static files
         $requiredFixedMedia = $xlsform->attachedFixedMedia()->get();
 
         if ($requiredFixedMedia && count($requiredFixedMedia) > 0) {
 
             foreach ($requiredFixedMedia as $requiredMediaItem) {
-                $this->uploadSingleMediaFile($xlsform, $requiredMediaItem);
+                $this->uploadSingleMediaFile($xlsform, $requiredMediaItem->getFirstMedia()->getPath());
             }
 
         }
@@ -254,9 +262,10 @@ class OdkLinkService
             foreach ($requiredDataMedia as $requiredMediaItem) {
 
                 // if there is a static upload, use it;
+                // TODO: work out how to handle xlsforms where we might have a static media file for TESTING the template...
                 $media = $requiredDataMedia->getFirstMedia();
                 if ($media) {
-                    $this->uploadSingleMediaFile($xlsform, $requiredMediaItem);
+                    $this->uploadSingleMediaFile($xlsform, $media->getPath());
                 } else {
                     // handle csv file generation...
 
@@ -274,12 +283,12 @@ class OdkLinkService
      *
      * @throws RequestException
      */
-    public function uploadSingleMediaFile(Xlsform $xlsform, string $filePath): array
+    public function uploadSingleMediaFile(WithXlsFormDrafts $xlsform, string $filePath): array
     {
         $token = $this->authenticate();
-        $file = file_get_contents(Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($filePath));
+        $file = file_get_contents($filePath);
 
-        $mimeType = mime_content_type(Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($filePath));
+        $mimeType = mime_content_type($filePath);
         $fileName = collect(explode('/', $filePath))->last();
 
         try {
@@ -441,8 +450,6 @@ class OdkLinkService
 
         // get the xlsform and merge in specific details to the schema returned from ODK Central
         $surveyExcel = (new XlsImport)->toCollection($xlsform->getMedia('xlsform_file')->first()->getPathRelativeToRoot(), config('filament-odk-link.storage.xlsforms'), \Maatwebsite\Excel\Excel::XLSX)[0];
-
-        ray($surveyExcel);
 
         $schema = collect($schema)->map(function (array $item) use ($surveyExcel): array {
 
