@@ -287,7 +287,8 @@ class XlsformTemplateResource extends Resource
     {
         return $infolist
             ->schema([
-                Section::make('Xls File')
+                Section::make('Xlsform Details')
+                    ->collapsed()
                     ->schema([
                         TextEntry::make('title'),
                         TextEntry::make('xlsfile_name')
@@ -300,52 +301,56 @@ class XlsformTemplateResource extends Resource
                             }),
                     ])
                     ->columns([
-                        'lg' => 3,
-                        'md' => 2,
-                        'sm' => 1,
+                        'xl' => 3,
+                        'lg' => 2,
+                        'md' => 1,
                     ]),
-                RepeatableEntry::make('requiredFixedMedia')
+                Section::make('Attached media files')
+                    ->collapsed()
                     ->schema([
-                        TextEntry::make('name')
-                            ->url(fn(?RequiredMedia $record): string => $record->getFirstMediaUrl()),
-                        TextEntry::make('type'),
-                        IconEntry::make('status')
-                            ->icon(fn(int $state): string => match ($state) {
-                                1 => 'heroicon-o-check-circle',
-                                0 => 'heroicon-o-x-circle',
-                            })
-                            ->color(fn(int $state): string => match ($state) {
-                                1 => 'success',
-                                0 => 'gray',
-                            }),
-                    ])
-                    ->columns([
-                        'lg' => 3,
-                        'md' => 2,
-                        'sm' => 1,
-                    ]),
+                        RepeatableEntry::make('requiredFixedMedia')
+                            ->schema([
+                                TextEntry::make('name')
+                                    ->url(fn(?RequiredMedia $record): string => $record->getFirstMediaUrl()),
+                                TextEntry::make('type'),
+                                IconEntry::make('status')
+                                    ->icon(fn(int $state): string => match ($state) {
+                                        1 => 'heroicon-o-check-circle',
+                                        0 => 'heroicon-o-x-circle',
+                                    })
+                                    ->color(fn(int $state): string => match ($state) {
+                                        1 => 'success',
+                                        0 => 'gray',
+                                    }),
+                            ])
+                            ->columns([
+                                '2xl' => 3,
+                                'xl' => 2,
+                                'lg' => 1,
+                            ]),
 
-                RepeatableEntry::make('requiredDataMedia')
-                    ->schema([
-                        TextEntry::make('name')
-                            ->url(fn(?RequiredMedia $record): string => $record->getFirstMediaUrl()),
-                        TextEntry::make('full_type'),
-                        IconEntry::make('status')
-                            ->icon(fn(int $state): string => match ($state) {
-                                1 => 'heroicon-o-check-circle',
-                                0 => 'heroicon-o-x-circle',
-                            })
-                            ->color(fn(int $state): string => match ($state) {
-                                1 => 'success',
-                                0 => 'gray',
-                            }),
-                    ])->columns([
-                        'lg' => 3,
-                        'md' => 2,
-                        'sm' => 1,
+                        RepeatableEntry::make('requiredDataMedia')
+                            ->schema([
+                                TextEntry::make('name')
+                                    ->url(fn(?RequiredMedia $record): string => $record->getFirstMediaUrl()),
+                                TextEntry::make('full_type'),
+                                IconEntry::make('status')
+                                    ->icon(fn(int $state): string => match ($state) {
+                                        1 => 'heroicon-o-check-circle',
+                                        0 => 'heroicon-o-x-circle',
+                                    })
+                                    ->color(fn(int $state): string => match ($state) {
+                                        1 => 'success',
+                                        0 => 'gray',
+                                    }),
+                            ])->columns([
+                                'lg' => 3,
+                                'md' => 2,
+                                'sm' => 1,
+                            ]),
                     ]),
-
                 Section::make('Main Survey')
+                    ->collapsed()
                     ->schema([
                         RepeatableEntry::make('schema')
                             ->label('List of variables in the main survey')
@@ -390,6 +395,7 @@ class XlsformTemplateResource extends Resource
                     ]),
 
                 Section::make('Repeat Groups')
+                    ->collapsed()
                     ->schema([
                         RepeatableEntry::make('repeatingSections')
                             ->columns([
@@ -436,6 +442,7 @@ class XlsformTemplateResource extends Resource
                     ->visible(fn(?XlsformTemplate $record): bool => $record->repeatingSections->count() > 0),
 
                 Section::make('Draft Testing')
+                    ->collapsed()
                     ->schema([
 
                         // show reminder text
