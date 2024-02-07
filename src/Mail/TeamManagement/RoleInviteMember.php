@@ -33,6 +33,6 @@ class RoleInviteMember extends Mailable
     {
         return $this->from(config('mail.from.address'))
             ->subject(config('app.name') . ': Invitation To Join with the  ' . $this->invite->role->name . ' User Role')
-            ->markdown('team-management::emails.role_invite');
+            ->markdown('filament-odk-link::emails.role_invite');
     }
 }
