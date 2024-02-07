@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
 
+use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -19,6 +20,22 @@ class CreateXlsformTemplate extends CreateRecord
     use CreateRecord\Concerns\HasWizard;
 
     protected static string $resource = XlsformTemplateResource::class;
+
+
+    // override form from HasWizard trait to add step to url
+    public function form(Form $form): Form
+    {
+        return parent::form($form)
+            ->schema([
+                Wizard::make($this->getSteps())
+                    ->startOnStep($this->getStartStep())
+                    ->cancelAction($this->getCancelFormAction())
+                    ->submitAction($this->getSubmitFormAction())
+                    ->skippable($this->hasSkippableSteps())
+                    ->persistStepInQueryString(),
+            ])
+            ->columns(null);
+    }
 
     public function getSteps(): array
     {
@@ -39,7 +56,11 @@ class CreateXlsformTemplate extends CreateRecord
                     $xlsformTemplate->addMedia(collect($files)->first())->toMediaCollection('xlsform_file');
 
                     // this was being triggered on afterCreate. Call it here instead/as well.
-                    $this->processRecord($xlsformTemplate);
+                    $xlsformTemplate = $this->processRecord($xlsformTemplate);
+
+                    if (!$xlsformTemplate) {
+                        return redirect($this->getResource()::getUrl('create') . '?step=1-xlsform&title=' . urlencode($get('title')));
+                    }
 
                     return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
 
@@ -61,19 +82,7 @@ class CreateXlsformTemplate extends CreateRecord
      * @throws RequestException
      * @throws BindingResolutionException
      */
-    protected function afterCreate(): void
-    {
-        $test = $this->getRecord();
-
-        assert($test instanceof XlsformTemplate);
-        $this->processRecord($test);
-    }
-
-    /**
-     * @throws RequestException
-     * @throws BindingResolutionException
-     */
-    protected function processRecord(XlsformTemplate $record): XlsformTemplate
+    protected function processRecord(XlsformTemplate $record): XlsformTemplate|bool
     {
         $odkLinkService = app()->make(OdkLinkService::class);
 
@@ -84,7 +93,13 @@ class CreateXlsformTemplate extends CreateRecord
         UpdateXlsformTitleInFile::dispatchSync($record);
 
         $record->refresh();
-        $record->deployDraft($odkLinkService);
+        $uploadResult = $record->deployDraft($odkLinkService);
+
+        if (!$uploadResult) {
+            return false;
+        }
+
+        // at this point, the draft form has been created in ODK Central
         $record->getRequiredMedia($odkLinkService);
 
         // TODO: We need to do the extract section when create and edit

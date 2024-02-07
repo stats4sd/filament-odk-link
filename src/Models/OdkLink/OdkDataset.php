@@ -9,7 +9,7 @@ class OdkDataset extends Model
 {
     protected $table = 'datasets';
 
-    protected $guarded = [];
+
 
     public function dataset(): BelongsTo
     {

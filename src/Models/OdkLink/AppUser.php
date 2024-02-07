@@ -11,7 +11,7 @@ class AppUser extends Model
 {
     protected $table = 'app_users';
 
-    protected $guarded = [];
+
 
     public function odkProject(): BelongsTo
     {

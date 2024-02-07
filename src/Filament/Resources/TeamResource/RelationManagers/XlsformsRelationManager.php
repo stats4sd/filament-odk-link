@@ -83,7 +83,7 @@ class XlsformsRelationManager extends RelationManager
                         $odkLinkService = app()->make(OdkLinkService::class);
 
                         if (!$record->xlsfile) {
-                            $record->updateXlsfileFromTemplate();
+                            $record->syncWithTemplate();
                         }
 
                         UpdateXlsformTitleInFile::dispatchSync($record);
@@ -126,7 +126,7 @@ class XlsformsRelationManager extends RelationManager
                 Tables\Actions\Action::make('update_to_latest_template_version')
                     ->label('Update The form definition')
                     ->action(function (Xlsform $record) {
-                        $record->updateXlsfileFromTemplate();
+                        $record->syncWithTemplate();
                         $record->refresh();
 
                         Notification::make('update_success')

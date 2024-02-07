@@ -4,6 +4,7 @@ namespace Stats4sd\FilamentOdkLink\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Client\RequestException;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
@@ -153,7 +155,13 @@ class OdkLinkService
     {
         $token = $this->authenticate();
 
-        $file = file_get_contents($xlsform->xlsfile);
+        $filePath = $xlsform->getFirstMedia('xlsform_file')?->getPath();
+
+        if(!$filePath) {
+            abort(500, 'The XLSForm file is missing. Please upload the file again and try to deploy the form again.');
+        }
+
+        $file = file_get_contents($filePath);
 
         $url = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms?ignoreWarnings=true&publish=false";
 
@@ -168,13 +176,22 @@ class OdkLinkService
                 'X-XlsForm-FormId-Fallback' => Str::slug($xlsform->title),
             ])
             ->withBody($file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            ->post($url)
-            ->throw()
-            ->json();
+            ->post($url);
+
+
+        $responseBody = $response->json();
+        // if the xlsform file is not valid, throw an error
+        if (isset($responseBody['message']) && Str::startsWith($responseBody['message'], "The given XLSForm file was not valid")) {
+
+            abort(500, $response->json()['details']['error']);
+        } else if($response->status() !== 200) {
+
+            abort(500, 'An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
+        }
 
         // when creating a new draft for an existing form, the full form details are not returned. In this case, the $xlsform record can remain unchanged
-        if (isset($response['xmlFormId'])) {
-            $xlsform->update(['odk_id' => $response['xmlFormId']]);
+        if (isset($responseBody['xmlFormId'])) {
+            $xlsform->update(['odk_id' => $responseBody['xmlFormId']]);
         }
         $this->updateSchema($xlsform);
 
@@ -225,13 +242,14 @@ class OdkLinkService
      */
     public function uploadMediaFileAttachments(WithXlsFormDrafts $xlsform): bool
     {
+
         // static files
         $requiredFixedMedia = $xlsform->attachedFixedMedia()->get();
 
         if ($requiredFixedMedia && count($requiredFixedMedia) > 0) {
 
             foreach ($requiredFixedMedia as $requiredMediaItem) {
-                $this->uploadSingleMediaFile($xlsform, $requiredMediaItem);
+                $this->uploadSingleMediaFile($xlsform, $requiredMediaItem->getFirstMedia()->getPath());
             }
 
         }
@@ -244,9 +262,10 @@ class OdkLinkService
             foreach ($requiredDataMedia as $requiredMediaItem) {
 
                 // if there is a static upload, use it;
+                // TODO: work out how to handle xlsforms where we might have a static media file for TESTING the template...
                 $media = $requiredDataMedia->getFirstMedia();
                 if ($media) {
-                    $this->uploadSingleMediaFile($xlsform, $requiredMediaItem);
+                    $this->uploadSingleMediaFile($xlsform, $media->getPath());
                 } else {
                     // handle csv file generation...
 
@@ -264,12 +283,12 @@ class OdkLinkService
      *
      * @throws RequestException
      */
-    public function uploadSingleMediaFile(Xlsform $xlsform, string $filePath): array
+    public function uploadSingleMediaFile(WithXlsFormDrafts $xlsform, string $filePath): array
     {
         $token = $this->authenticate();
-        $file = file_get_contents(Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($filePath));
+        $file = file_get_contents($filePath);
 
-        $mimeType = mime_content_type(Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($filePath));
+        $mimeType = mime_content_type($filePath);
         $fileName = collect(explode('/', $filePath))->last();
 
         try {
@@ -357,6 +376,38 @@ class OdkLinkService
 
     }
 
+    /**
+     * @throws RequestException
+     */
+    public function deleteForm(WithXlsFormDrafts $xlsform): bool
+    {
+        $token = $this->authenticate();
+
+        // if for some reason the odk form doesn't even have an owner, just skip the deletion
+        if (!$xlsform->owner) {
+            return true;
+        }
+
+        try {
+
+            $result = Http::withToken($token)
+                ->delete("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}")
+                ->throw()
+                ->json();
+        } catch (RequestException $exception) {
+            if ($exception->getCode() === 404) {
+                // this is fine; the form does not exist and so has already been deleted.
+
+                return true;
+            }
+
+            throw($exception);
+
+        }
+
+        return true;
+    }
+
     public function getAttachedMedia($entry, string $token, Xlsform $xlsform, Model|Submission|null $submission): void
     {
         // ******** PROCESS MEDIA ******** //
@@ -400,12 +451,23 @@ class OdkLinkService
         // get the xlsform and merge in specific details to the schema returned from ODK Central
         $surveyExcel = (new XlsImport)->toCollection($xlsform->getMedia('xlsform_file')->first()->getPathRelativeToRoot(), config('filament-odk-link.storage.xlsforms'), \Maatwebsite\Excel\Excel::XLSX)[0];
 
-        // TODO: update this to work with any default language
         $schema = collect($schema)->map(function (array $item) use ($surveyExcel): array {
+
+
+
             if ($row = $surveyExcel->where('name', $item['name'])->first()) {
                 $item['value_type'] = $row['type'];
-                $item['label_english'] = $row['labelenglish'];
-                $item['hint_english'] = $row['hintenglish'];
+
+                // find the label and hint for all languages
+                $row->each(function ($value, $key) {
+                    if (Str::startsWith($key, 'label')) {
+                        $item[$key] = $value;
+                    }
+                    if (Str::startsWith($key, 'hint')) {
+                        $item[$key] = $value;
+                    }
+                });
+
             }
 
             return $item;
@@ -443,27 +505,6 @@ class OdkLinkService
         }
 
         return $filePath;
-    }
-
-    public function test(): string
-    {
-
-        $data = Http::withToken($this->authenticate())
-            ->get("{$this->endpoint}/projects/24/app-users")
-            ->throw()
-            ->json();
-
-        AppUser::create(
-            [
-                'id' => $data[0]['id'],
-                'odk_project_id' => $data[0]['projectId'],
-                'type' => $data[0]['type'],
-                'display_name' => $data[0]['displayName'],
-                'token' => $data[0]['token'],
-            ]
-        );
-
-        return 'hi';
     }
 
     public function unArchiveForm(Xlsform $xlsform)
@@ -524,7 +565,17 @@ class OdkLinkService
             // ******* CREATE SUBMISSION RECORD ******* //
             $xlsformVersion = $xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
 
-            // TODO: handle case where xlsformversion is not found
+            if(!$xlsformVersion) {
+
+                $messageContent = collect([
+                    'formVersion' => $entry['__system']['formVersion'],
+                    'xlsformId' => $xlsform->id,
+                    'xlsformTitle' => $xlsform->title,
+                    'ownerName' => $xlsform->owner->name,
+                    ]);
+
+                abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '));
+            }
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
             $submission = $xlsformVersion?->submissions()->create([
@@ -536,25 +587,6 @@ class OdkLinkService
 
             $this->processEntry($submission, $entry, $xlsformVersion);
             $this->getAttachedMedia($entry, $token, $xlsform, $submission);
-
-
-            // GET schema information for the specific version
-            // TODO: hook this into the select variables work from the other branch...
-
-            $schema = collect($xlsformVersion->schema);
-
-
-            // pass 0 as mainSurveyEntityId at the very beginning
-            // $entryToStore = $this->processEntry($xlsform, $entry, $schema, $submission->id, 'root', null);
-
-            $sections = $xlsform->xlsformTemplate->xlsformTemplateSections;
-
-            // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
-            $rootEntry = ['root' => $entry];
-
-            foreach ($sections as $section) {
-                $this->processEntryFromSection($xlsform, $rootEntry, $section, $submission->id);
-            }
 
 
             // ******** CALL APP-SPECIFIC PROCESSING ******** //

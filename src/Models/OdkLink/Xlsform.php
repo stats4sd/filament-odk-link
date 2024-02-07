@@ -26,7 +26,6 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
 
     protected $table = 'xlsforms';
 
-    protected $guarded = [];
 
     protected $casts = [
         'schema' => 'collection',
@@ -37,15 +36,7 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
 
         // when the model is created;
         static::saved(static function (Xlsform $xlsform) {
-
-            // copy the xlsfile from the template and update the title and id:
-            if (!$xlsform->xlsfile) {
-                $xlsform->updateXlsfileFromTemplate();
-            }
-
-            // if the odk_project is not set, set it based on the given owner:
-            $xlsform->odk_project_id = $xlsform->owner->odkProject->id;
-            $xlsform->saveQuietly();
+            $xlsform->syncWithTemplate($xlsform);
         });
 
         static::deleting(static function (Xlsform $xlsform) {
@@ -146,23 +137,25 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
 
     // *********************** FUNCTIONS ****************************
 
-    /**
-     * @throws FileDoesNotExist
-     * @throws FileIsTooBig
-     */
-    public function updateXlsfileFromTemplate(): void
-    {
-        // copy media item from template:
-        $this->xlsformTemplate->getFirstMedia('xlsform_file')?->copy($this, 'xlsform_file');
-
-        $this->saveQuietly();
-        UpdateXlsformTitleInFile::dispatchSync($this);
-    }
-
     public function getOdkLinkAttribute(): ?string
     {
         $appends = !$this->is_active ? '/draft' : '';
 
         return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
+    }
+
+
+    public function syncWithTemplate(Xlsform $xlsform): void
+    {
+        // copy the xlsfile from the template;
+        $this->xlsformTemplate->getFirstMedia('xlsform_file')?->copy($this, 'xlsform_file');
+        $this->saveQuietly();
+
+        // update form title and ID in the file itself (ODK Central looks for these values in the XLS file)
+        UpdateXlsformTitleInFile::dispatchSync($xlsform);
+
+        // if the odk_project is not set, set it based on the given owner:
+        $xlsform->odk_project_id = $xlsform->owner->odkProject->id;
+        $xlsform->saveQuietly();
     }
 }

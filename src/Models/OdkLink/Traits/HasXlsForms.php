@@ -2,6 +2,8 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
 
+use Filament\Tables\Actions\AttachAction;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
@@ -63,5 +65,19 @@ trait HasXlsForms
             'token' => $odkAppUserInfo['token'], // the token required to generate the ODK QR Code;
             'can_access_all_forms' => true,
         ]);
+    }
+
+    public function odkQrCode(): Attribute
+    {
+        return new Attribute(
+            get: function (): ?string {
+
+                if (!$this->odkProject->appUsers->first()) {
+                    return null;
+                }
+
+                return $this->odkProject->appUsers->first()->qr_code_string;
+            }
+        );
     }
 }

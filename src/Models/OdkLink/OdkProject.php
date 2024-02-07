@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class OdkProject extends Model
 {
-    protected $guarded = [];
+
 
     public $incrementing = false;
 

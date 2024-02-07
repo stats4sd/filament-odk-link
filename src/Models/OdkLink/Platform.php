@@ -12,7 +12,7 @@ class Platform extends Model
 
     protected $table = 'platforms';
 
-    protected $guarded = [];
+
 
     protected $casts = [
         'name',

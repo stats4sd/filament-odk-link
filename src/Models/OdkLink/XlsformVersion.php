@@ -15,7 +15,7 @@ class XlsformVersion extends Model implements HasMedia
 
     protected $table = 'xlsform_versions';
 
-    protected $guarded = [];
+
 
     protected $casts = [
         'schema' => 'collection',

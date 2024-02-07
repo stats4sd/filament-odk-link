@@ -27,7 +27,7 @@ class DatasetResource extends Resource
             ->schema(fn(Dataset $record) => self::getCreateFormFields($record));
     }
 
-    public static function getCreateFormFields($record): array
+    public static function getCreateFormFields(?Dataset $record = null): array
     {
         return [
             Forms\Components\TextInput::make('name')

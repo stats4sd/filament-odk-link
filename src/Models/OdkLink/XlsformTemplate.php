@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Dflydev\DotAccessData\Data;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -25,7 +26,7 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
 
     protected $table = 'xlsform_templates';
 
-    protected $guarded = [];
+
 
     protected $casts = [
         'schema' => 'collection',
@@ -117,12 +118,14 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
 
     public function datasets(): BelongsToMany
     {
-        return $this->belongsToMany(Dataset::class)
+        return $this->belongsToMany(Dataset::class, 'required_media')
             ->withPivot([
-                'is_root',
-                'is_repeat',
-                'structure_item',
-            ]);
+                'name',
+                'type',
+                'is_static',
+                'exists_on_odk',
+            ])
+            ->using(RequiredMedia::class);
     }
 
     public function xlsformTemplateSections(): HasMany

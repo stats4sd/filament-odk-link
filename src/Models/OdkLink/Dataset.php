@@ -6,13 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Symfony\Contracts\Service\Attribute\Required;
 
 class Dataset extends Model
 {
     protected $table = 'datasets';
 
-    protected $guarded = [];
 
     // a dataset might be a subset of another dataset (e.g. data from a repeat group in a form; household members in a household, etc);
     public function parent(): BelongsTo
@@ -34,6 +34,12 @@ class Dataset extends Model
     public function variables(): HasMany
     {
         return $this->hasMany(DatasetVariable::class);
+    }
+
+    // A dataset may be linked to a specific model in the main application
+    public function model(): MorphTo
+    {
+        return $this->morphTo();
     }
 
     // A dataset may hold data collected from multiple xlsforms. Xlsform sections table acts as the "pivot" table.

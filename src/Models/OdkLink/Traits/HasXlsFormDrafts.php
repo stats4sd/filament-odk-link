@@ -2,19 +2,38 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
 
+use Filament\Notifications\Notification;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Auth;
 use JsonException;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Throwable;
 
 trait HasXlsFormDrafts
 {
     /**
      * @throws RequestException
      */
-    public function deployDraft(OdkLinkService $service): void
+    public function deployDraft(OdkLinkService $service): bool
     {
+        try {
+            $odkXlsFormDetails = $service->createDraftForm($this);
 
-        $odkXlsFormDetails = $service->createDraftForm($this);
+
+        } catch (Throwable $e) {
+
+            Notification::make('draft-form-failed')
+                ->title('There is an error in the XLS Form')
+                ->body($e->getMessage())
+                ->danger()
+                ->persistent()
+                ->send();
+
+            // delete the xlsform from the database;
+            $this->deleteQuietly();
+
+            return false;
+        }
 
         $this->updateQuietly([
             'odk_id' => $odkXlsFormDetails['xmlFormId'],
@@ -23,6 +42,8 @@ trait HasXlsFormDrafts
             'has_draft' => true,
             'enketo_draft_id' => $odkXlsFormDetails['enketoId'],
         ]);
+
+        return true;
     }
 
     /**
@@ -32,7 +53,7 @@ trait HasXlsFormDrafts
      */
     public function getDraftQrCodeStringAttribute(): ?string
     {
-        if (! $this->has_draft) {
+        if (!$this->has_draft) {
             return null;
         }
 

@@ -9,6 +9,8 @@ return new class extends Migration {
     {
         Schema::create('datasets', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('model_id')->nullable();
+            $table->string('model_type')->nullable();
             $table->string('name')->unique();
             $table->foreignId('parent_id')->nullable()->constrained('datasets')->cascadeOnDelete()->cascadeOnUpdate();
             $table->string('primary_key');

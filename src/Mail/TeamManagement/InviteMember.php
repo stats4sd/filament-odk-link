@@ -33,6 +33,6 @@ class InviteMember extends Mailable
     {
         return $this->from(config('mail.from.address'))
             ->subject(config('app.name') . ': Invitation To Join Team ' . $this->invite->team->name)
-            ->markdown('team-management::emails.invite');
+            ->markdown('filament-odk-link::emails.team_invite');
     }
 }

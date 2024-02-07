@@ -15,7 +15,7 @@ interface WithXlsFormDrafts
 
     public function getDraftQrCodeStringAttribute(): ?string;
 
-    public function deployDraft(OdkLinkService $service): void;
+    public function deployDraft(OdkLinkService $service): bool;
 
     public function getOdkLinkAttribute(): ?string;
 
