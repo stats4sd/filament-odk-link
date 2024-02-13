@@ -34,4 +34,12 @@ class RoleInvite extends Model
     {
         return $this->belongsTo(Role::class);
     }
+
+    public function confirm(): bool
+    {
+        $this->is_confirmed = 1;
+        $this->save();
+
+        return $this->is_confirmed;
+    }
 }
