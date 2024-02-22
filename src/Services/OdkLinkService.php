@@ -85,10 +85,14 @@ class OdkLinkService
     {
         $token = $this->authenticate();
 
+        ray($odkProject);
+        ray($odkProject->owner);
+        ray($odkProject->load('owner')->owner);
+
         // create new app-user
         $userResponse = Http::withToken($token)
             ->post("{$this->endpoint}/projects/{$odkProject->id}/app-users", [
-                'displayName' => 'All Forms - ' . $odkProject->owner->name . ' - ' . $odkProject->appUsers()->count() + 1,
+                'displayName' => 'All Forms - ' . $odkProject->name . ' - ' . $odkProject->appUsers()->count() + 1,
             ])
             ->throw()
             ->json();
