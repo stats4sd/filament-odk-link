@@ -36,6 +36,11 @@ class Dataset extends Model
         return $this->hasMany(DatasetVariable::class);
     }
 
+    public function entities(): HasMany
+    {
+        return $this->hasMany(Entity::class);
+    }
+
     // A dataset may be linked to a specific model in the main application
     public function model(): MorphTo
     {

@@ -70,7 +70,16 @@ class OdkLinkService
         $token = $this->authenticate();
 
         // prepend platform identifier to project name;
-        $name = config('app.name') . ' -- ' . $name;
+        $name = (config('app.short_name') ?? config('app.name')) . '- ' . $name;
+
+        // leave 7 characters for the "all " prefix and number suffix for the app user;
+        if(Str::length($name) > 57) {
+            $name = Str::squish($name);
+        }
+
+        if(Str::length($name) > 57) {
+            $name = Str::limit($name, limit: 57, end: '');
+        }
 
         return Http::withToken($token)
             ->post("{$this->endpoint}/projects", [
@@ -85,14 +94,15 @@ class OdkLinkService
     {
         $token = $this->authenticate();
 
-        ray($odkProject);
-        ray($odkProject->owner);
-        ray($odkProject->load('owner')->owner);
+        // truncate name to 64 characters
+        $displayName = Str::limit('All ' . $odkProject->name . ' ' . $odkProject->appUsers()->count() + 1, limit: 64, end: '');
+
+        ray($displayName, Str::length($displayName));
 
         // create new app-user
         $userResponse = Http::withToken($token)
             ->post("{$this->endpoint}/projects/{$odkProject->id}/app-users", [
-                'displayName' => 'All Forms - ' . $odkProject->name . ' - ' . $odkProject->appUsers()->count() + 1,
+                'displayName' => $displayName,
             ])
             ->throw()
             ->json();
