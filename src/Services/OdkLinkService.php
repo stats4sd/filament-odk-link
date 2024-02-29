@@ -97,8 +97,6 @@ class OdkLinkService
         // truncate name to 64 characters
         $displayName = Str::limit('All ' . $odkProject->name . ' ' . $odkProject->appUsers()->count() + 1, limit: 64, end: '');
 
-        ray($displayName, Str::length($displayName));
-
         // create new app-user
         $userResponse = Http::withToken($token)
             ->post("{$this->endpoint}/projects/{$odkProject->id}/app-users", [
