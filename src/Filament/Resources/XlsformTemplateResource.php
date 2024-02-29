@@ -450,7 +450,7 @@ class XlsformTemplateResource extends Resource
                                         ->url(function (XlsformTemplateSection $record): ?string {
 
                                             if ($record->dataset_id) {
-                                                return DatasetResource::getUrl('view', ['record' => $record->rootSection->dataset_id]);
+                                                return DatasetResource::getUrl('view', ['record' => $record->dataset_id]);
                                             }
 
                                             // if no dataset is linked, return null

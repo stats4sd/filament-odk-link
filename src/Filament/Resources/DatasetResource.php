@@ -34,12 +34,14 @@ class DatasetResource extends Resource
                 ->required()
                 ->unique(ignoreRecord: true),
             Forms\Components\TextInput::make('primary_key')
-                ->hint('If this dataset is being populated by and ODK form, this field should be present in the form.')
-                ->helperText('ignored for now...')
+                ->hint('')
+                ->helperText('NOTE: This key currently is not used for anything, but is intended to be used to link to other datasets in the future.')
                 ->default('id'),
             Forms\Components\Select::make('parent_id')
                 ->relationship('parent', 'name', function (Builder $query) use ($record) {
-                    $query->where('id', '!=', $record->id);
+                    if($record) {
+                        $query->where('id', '!=', $record->id);
+                    }
                 }),
         ];
     }
