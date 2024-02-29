@@ -390,7 +390,17 @@ class XlsformTemplateResource extends Resource
                             ->visible(fn(?XlsformTemplate $record): bool => $record->rootSection->schema->count() >= 5),
 
                         TextEntry::make('rootSection.dataset.name')->label('Submission data is added to:')
-                            ->url(fn(?XlsformTemplate $record): string => DatasetResource::getUrl('view', ['record' => $record->rootSection->dataset_id])),
+                            ->placeholder('No dataset linked')
+                            ->inlineLabel()
+                            ->url(function (?XlsformTemplate $record): ?string {
+
+                                if ($record->rootSection->dataset_id) {
+                                    return DatasetResource::getUrl('view', ['record' => $record->rootSection->dataset_id]);
+                                }
+
+                                // if no dataset is linked, return null
+                                return null;
+                            })
 
                     ]),
 
@@ -434,7 +444,18 @@ class XlsformTemplateResource extends Resource
                                                 ->modalCancelActionLabel('Close'),
                                         ]),
 
-                                    TextEntry::make('dataset.name')->label('Target Dataset'),
+                                    TextEntry::make('dataset.name')->label('Data from this repeat group is added to:')
+                                        ->placeholder('No dataset linked')
+                                        ->inlineLabel()
+                                        ->url(function (XlsformTemplateSection $record): ?string {
+
+                                            if ($record->dataset_id) {
+                                                return DatasetResource::getUrl('view', ['record' => $record->rootSection->dataset_id]);
+                                            }
+
+                                            // if no dataset is linked, return null
+                                            return null;
+                                        }),
                                 ];
                             }),
 
