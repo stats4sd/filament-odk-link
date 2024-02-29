@@ -275,7 +275,7 @@ class OdkLinkService
 
                 // if there is a static upload, use it;
                 // TODO: work out how to handle xlsforms where we might have a static media file for TESTING the template...
-                $media = $requiredDataMedia->getFirstMedia();
+                $media = $requiredMediaItem->getFirstMedia();
                 if ($media) {
                     $this->uploadSingleMediaFile($xlsform, $media->getPath());
                 } else {
