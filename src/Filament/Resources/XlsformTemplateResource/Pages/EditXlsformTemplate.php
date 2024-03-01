@@ -5,6 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pa
 use Filament\Actions;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Database\Eloquent\Model;
 use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
 
 class EditXlsformTemplate extends EditRecord
@@ -64,5 +65,20 @@ class EditXlsformTemplate extends EditRecord
     protected function getRedirectUrl(): ?string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        dd($data);
+    }
+
+    protected function handleRecordUpdate(Model $record, array $data): Model
+    {
+
+        dd($data);
+
+         $record->update($data);
+
+        return $record;
     }
 }

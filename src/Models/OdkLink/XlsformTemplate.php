@@ -33,12 +33,21 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
 
     protected static function booted(): void
     {
-        static::deleting(static function (XlsformTemplate $xlsform) {
+        static::deleting(static function (XlsformTemplate $xlsformTemplate) {
             $odkLinkService = app()->make(OdkLinkService::class);
-            $xlsform->deleteFromOdkCentral($odkLinkService);
+            $xlsformTemplate->deleteFromOdkCentral($odkLinkService);
         });
 
-        // whenever the
+        // if the media files are updated, we need to update the test form in ODK Central
+        static::updated(static function (XlsformTemplate $xlsformTemplate) {
+            $odkLinkService = app()->make(OdkLinkService::class);
+
+            $xlsformTemplate->deployDraft($odkLinkService);
+
+            // mark all other xlsforms using this template as not current
+            $xlsformTemplate->markAllAsNotCurrent();
+
+        });
 
     }
 
