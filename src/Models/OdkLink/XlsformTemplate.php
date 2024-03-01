@@ -27,7 +27,6 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
     protected $table = 'xlsform_templates';
 
 
-
     protected $casts = [
         'schema' => 'collection',
     ];
@@ -38,6 +37,9 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
             $odkLinkService = app()->make(OdkLinkService::class);
             $xlsform->deleteFromOdkCentral($odkLinkService);
         });
+
+        // whenever the
+
     }
 
     // setup media library collections:
@@ -174,11 +176,11 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
     {
 
         // set all existing sections to not current.
-        $this->repeatingSections()->each(fn ($section) => $section->is_current = false);
+        $this->repeatingSections()->each(fn($section) => $section->is_current = false);
 
 
         // create or find the repeat sections
-        $this->schema->filter(fn ($item) => $item['type'] === 'repeat')
+        $this->schema->filter(fn($item) => $item['type'] === 'repeat')
             ->each(function ($item) {
                 $this->repeatingSections()->updateOrCreate([
                     'structure_item' => $item['name'],
@@ -186,9 +188,9 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
                     'is_repeat' => true,
                     'is_current' => true,
                     'schema' => $this->schema->filter(
-                        fn ($subItem) => Str::contains($subItem['path'], $item['path'] . '/')
-                        && $subItem['path'] !== $item['path']
-                        && $subItem['type'] !== 'repeat'
+                        fn($subItem) => Str::contains($subItem['path'], $item['path'] . '/')
+                            && $subItem['path'] !== $item['path']
+                            && $subItem['type'] !== 'repeat'
                     ),
                 ]);
             });
@@ -213,7 +215,7 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
                 //
                 //                dump($reviewSection->schema);
                 $reviewSection->schema = $reviewSection->schema->filter(
-                    fn ($item) => ! Str::startsWith($item['path'], '/' . $reviewSection->structure_item . '/' . $section->structure_item . '/')
+                    fn($item) => !Str::startsWith($item['path'], '/' . $reviewSection->structure_item . '/' . $section->structure_item . '/')
                 );
 
                 $reviewSection->save();
@@ -244,7 +246,7 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
             // 1. structure type item
             // 2. repeat type item
             // 3. item names belong to ODK variable names of all repeating sections
-            'schema' => $this->schema->filter(fn ($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && !in_array($item['name'], $repeatingSectionItemNames)),
+            'schema' => $this->schema->filter(fn($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && !in_array($item['name'], $repeatingSectionItemNames)),
         ]);
 
 
@@ -255,5 +257,11 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
         ]);
 
         return $this->xlsformTemplateSections;
+    }
+
+    // mark all xlsforms using this template as not current (i.e. not using the latest template)
+    public function markAllAsNotCurrent(): void
+    {
+        $this->xlsforms()->update(['has_latest_template' => false]);
     }
 }

@@ -54,7 +54,12 @@ class ViewXlsformTemplate extends ViewRecord
 
         // TODO: We need to do the extract section when create and edit
         $record->extractSections();
+-
+        // mark all xlsforms using this template as not current
+        $record->markAllAsNotCurrent();
 
         return $record;
     }
+
+
 }

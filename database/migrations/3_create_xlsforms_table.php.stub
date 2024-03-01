@@ -31,10 +31,15 @@ return new class extends Migration {
             $table->string('enketo_id')->nullable()->comment('unique id for the enketo version - pulled from the ODK service if supported/enabled');
             $table->boolean('processing')->default(0)->comment('Is the form currently being processed? (helps to avoid duplicate deployments)');
             $table->text('odk_error')->nullable()->comment('If an xlsfile upload returns an error from the ODK Aggregate service, it will be stored here');
-            $table->timestamps();
 
             // The full schema of the form, as a json object
             $table->json('schema')->nullable();
+
+            // Does this form use the latest available template?
+            $table->boolean('has_latest_template')->default(1);
+
+            $table->timestamps();
+
         });
     }
 

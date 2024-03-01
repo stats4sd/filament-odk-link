@@ -45,9 +45,8 @@ trait PublishesToOdkCentral
     {
 
 
-        // check if there is a draft, if not, create one
-        if (!$this->has_draft) {
-
+        // check if there is a draft. If not, create one.
+        if (!$this->has_draft || !$this->has_latest_template) {
             $hasDraft = $this->deployDraft($odkLinkService);
         }
 
@@ -56,6 +55,7 @@ trait PublishesToOdkCentral
             $odkLinkService->publishForm($this);
         }
     }
+
 
     public function deleteFromOdkCentral(OdkLinkService $odkLinkService): void
     {

@@ -36,7 +36,7 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
 
         // when the model is created;
         static::saved(static function (Xlsform $xlsform) {
-            $xlsform->syncWithTemplate($xlsform);
+            $xlsform->syncWithTemplate();
         });
 
         static::deleting(static function (Xlsform $xlsform) {
@@ -145,17 +145,19 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
     }
 
 
-    public function syncWithTemplate(Xlsform $xlsform): void
+    // make sure the xlsform is using the latest template
+    public function syncWithTemplate(): void
     {
         // copy the xlsfile from the template;
         $this->xlsformTemplate->getFirstMedia('xlsform_file')?->copy($this, 'xlsform_file');
         $this->saveQuietly();
 
         // update form title and ID in the file itself (ODK Central looks for these values in the XLS file)
-        UpdateXlsformTitleInFile::dispatchSync($xlsform);
+        UpdateXlsformTitleInFile::dispatchSync($this);
 
         // if the odk_project is not set, set it based on the given owner:
-        $xlsform->odk_project_id = $xlsform->owner->odkProject->id;
-        $xlsform->saveQuietly();
+        $this->odk_project_id = $this->owner->odkProject->id;
+        $this->has_latest_template = true;
+        $this->saveQuietly();
     }
 }
