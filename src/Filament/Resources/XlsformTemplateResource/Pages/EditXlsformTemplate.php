@@ -67,18 +67,4 @@ class EditXlsformTemplate extends EditRecord
         return $this->getResource()::getUrl('index');
     }
 
-    protected function mutateFormDataBeforeSave(array $data): array
-    {
-        dd($data);
-    }
-
-    protected function handleRecordUpdate(Model $record, array $data): Model
-    {
-
-        dd($data);
-
-         $record->update($data);
-
-        return $record;
-    }
 }
