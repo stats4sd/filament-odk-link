@@ -24,7 +24,7 @@ class DatasetResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->schema(fn(Dataset $record) => static::getCreateFormFields($record));
+            ->schema(fn(?Dataset $record) => static::getCreateFormFields($record));
     }
 
     public static function getCreateFormFields(?Dataset $record = null): array
