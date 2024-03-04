@@ -160,4 +160,9 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
         $this->has_latest_template = true;
         $this->saveQuietly();
     }
+
+    public function getSubmissions(): int
+    {
+        return app()->make(OdkLinkService::class)->getSubmissions($this);
+    }
 }

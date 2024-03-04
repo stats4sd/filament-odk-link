@@ -73,11 +73,11 @@ class OdkLinkService
         $name = (config('app.short_name') ?? config('app.name')) . '- ' . $name;
 
         // leave 7 characters for the "all " prefix and number suffix for the app user;
-        if(Str::length($name) > 57) {
+        if (Str::length($name) > 57) {
             $name = Str::squish($name);
         }
 
-        if(Str::length($name) > 57) {
+        if (Str::length($name) > 57) {
             $name = Str::limit($name, limit: 57, end: '');
         }
 
@@ -169,7 +169,7 @@ class OdkLinkService
 
         $filePath = $xlsform->getFirstMedia('xlsform_file')?->getPath();
 
-        if(!$filePath) {
+        if (!$filePath) {
             abort(500, 'The XLSForm file is missing. Please upload the file again and try to deploy the form again.');
         }
 
@@ -196,7 +196,7 @@ class OdkLinkService
         if (isset($responseBody['message']) && Str::startsWith($responseBody['message'], "The given XLSForm file was not valid")) {
 
             abort(500, $response->json()['details']['error']);
-        } else if($response->status() !== 200) {
+        } else if ($response->status() !== 200) {
 
             abort(500, 'An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
         }
@@ -466,7 +466,6 @@ class OdkLinkService
         $schema = collect($schema)->map(function (array $item) use ($surveyExcel): array {
 
 
-
             if ($row = $surveyExcel->where('name', $item['name'])->first()) {
                 $item['value_type'] = $row['type'];
 
@@ -558,7 +557,8 @@ class OdkLinkService
         return $xlsformVersion;
     }
 
-    public function getSubmissions(Xlsform $xlsform): void
+    // checks for new submissions for a given form and returns the count of new submissions found.
+    public function getSubmissions(Xlsform $xlsform): int
     {
         $token = $this->authenticate();
         $oDataServiceUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}.svc";
@@ -577,14 +577,14 @@ class OdkLinkService
             // ******* CREATE SUBMISSION RECORD ******* //
             $xlsformVersion = $xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
 
-            if(!$xlsformVersion) {
+            if (!$xlsformVersion) {
 
                 $messageContent = collect([
                     'formVersion' => $entry['__system']['formVersion'],
                     'xlsformId' => $xlsform->id,
                     'xlsformTitle' => $xlsform->title,
                     'ownerName' => $xlsform->owner->name,
-                    ]);
+                ]);
 
                 abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '));
             }
@@ -611,7 +611,10 @@ class OdkLinkService
                 $class::$method($submission);
             }
 
+
         }
+
+        return $resultsToAdd->count();
 
     }
 
