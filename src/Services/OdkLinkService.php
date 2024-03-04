@@ -707,7 +707,7 @@ class OdkLinkService
                     $entity = Entity::create([
                         'dataset_id' => $section->dataset->id,
                         'submission_id' => $submissionId,
-                        'parent_id' => Entity::where('submission_id', $submissionId)->where('dataset_id', $section->parent->dataset->id)->first()->id,
+                        'parent_id' => Entity::where('submission_id', $submissionId)->where('dataset_id', $section->parent?->dataset->id)->first()?->id ?? null,
                     ]);
 
                     // add polymorphic relationship
