@@ -261,6 +261,7 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
 
         // add the root as the parent of the repeating sections
         // TODO: update to handle nested repeats
+
         $this->repeatingSections()->update([
             'parent_id' => $rootSection->id,
         ]);

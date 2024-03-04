@@ -67,4 +67,11 @@ class EditXlsformTemplate extends EditRecord
         return $this->getResource()::getUrl('index');
     }
 
+    protected function afterSave(): void
+    {
+        // re-extract ODK template sections
+        $this->record->extractSections();
+
+    }
+
 }
