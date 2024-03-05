@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('dataset_variables', function (Blueprint $table) {
-            $table->id();
+            $table->string('id')->primary();
             $table->foreignId('dataset_id')->constrained('datasets');
             $table->string('name');
             $table->timestamps();
