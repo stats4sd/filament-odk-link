@@ -33,7 +33,7 @@ return [
          *
          * If you use a custom installation of ODK Central or Kobotoolbox, it will be the base url to your service.
          */
-        'url' => env('ODK_URL', ''),
+        'url' => env('ODK_URL', null),
         'base_endpoint' => env('ODK_ENDPOINT', env('ODK_URL') . '/v1'),
 
         /**
