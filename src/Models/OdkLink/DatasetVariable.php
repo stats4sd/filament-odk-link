@@ -12,9 +12,6 @@ class DatasetVariable extends Model
     protected $table = 'dataset_variables';
 
     protected $primaryKey = 'id';
-    protected $keyType = 'string';
-    public $incrementing = false;
-
 
     public function dataset(): BelongsTo
     {
