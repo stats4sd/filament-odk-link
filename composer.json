@@ -45,7 +45,8 @@
     "autoload": {
         "psr-4": {
             "Stats4sd\\FilamentOdkLink\\": "src/",
-            "Stats4sd\\FilamentOdkLink\\Database\\Factories\\": "database/factories/"
+            "Stats4sd\\FilamentOdkLink\\Database\\Factories\\": "database/factories/",
+            "Stats4sd\\FilamentOdkLink\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "autoload-dev": {

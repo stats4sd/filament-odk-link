@@ -36,6 +36,8 @@ return [
         'url' => env('ODK_URL', null),
         'base_endpoint' => env('ODK_ENDPOINT', env('ODK_URL') . '/v1'),
 
+        'platform_project_id' => env('ODK_PLATFORM_PROJECT_ID', null),
+
         /**
          * Username and password for the main platform account
          * The platform requires a 'primary' user account on the ODK Central / KoboToolbox server to manage deployments of ODK forms.

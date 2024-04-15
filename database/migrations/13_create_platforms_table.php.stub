@@ -13,9 +13,6 @@ return new class extends Migration {
             $table->id();
             $table->timestamps();
         });
-
-        // create single entry to represent the current platform for xlsform_template drafts.
-        Platform::create();
     }
 
 
