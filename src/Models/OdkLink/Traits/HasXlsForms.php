@@ -17,10 +17,21 @@ trait HasXlsForms
     {
         parent::booted();
 
+        // check if we are in local-only (no-ODK link) mode
+        if (config('filament-odk-link.odk.url') === null || config('filament-odk-link.odk.url') == '') {
+            return;
+        }
+
         $odkLinkService = app()->make(OdkLinkService::class);
 
         // when the model is created; automatically create an associated project on ODK Central;
         static::created(static function ($owner) use ($odkLinkService) {
+
+            // check if we are in local-only (no-ODK link) mode
+            if (config('filament-odk-link.odk.url') === null || config('filament-odk-link.odk.url') == '') {
+                return;
+            }
+
             $owner->createLinkedOdkProject($odkLinkService, $owner);
         });
     }

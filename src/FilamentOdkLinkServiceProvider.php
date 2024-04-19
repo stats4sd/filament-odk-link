@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink;
 
+use Filament\Facades\Filament;
 use Filament\Support\Assets\AlpineComponent;
 use Filament\Support\Assets\Asset;
 use Filament\Support\Assets\Css;
@@ -36,8 +37,7 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
                 $command
                     ->publishConfigFile()
                     ->publishMigrations()
-                    ->askToRunMigrations()
-                    ->askToStarRepoOnGitHub('stats4sd/filament-odk-link');
+                    ->askToRunMigrations();
             });
 
         $configFileName = $package->shortName();
@@ -82,6 +82,11 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
             $this->getScriptData(),
             $this->getAssetPackageName()
         );
+
+        // Widget Registration
+        Filament::registerWidgets([
+
+        ]);
 
         // Icon Registration
         FilamentIcon::register($this->getIcons());

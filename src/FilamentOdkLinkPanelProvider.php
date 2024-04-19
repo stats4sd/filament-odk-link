@@ -27,7 +27,8 @@ class FilamentOdkLinkPanelProvider extends PanelProvider
             ->login()
             ->default()
             ->discoverResources(in: __DIR__ . '/Filament/Resources', for: 'Stats4sd\\FilamentOdkLink\\Filament\\Resources')
-            ->discoverPages(in: __DIR__ . './Filament/Pages', for: 'Stats4sd\\FilamentOdkLink\\Filament\\Pages')
+            ->discoverPages(in: __DIR__ . '/Filament/Pages', for: 'Stats4sd\\FilamentOdkLink\\Filament\\Pages')
+            ->discoverWidgets(in: __DIR__ . '/Filament/Widgets', for: 'Stats4sd\\FilamentOdkLink\\Filament\\Widgets')
             ->pages([
                 Dashboard::class,
             ])

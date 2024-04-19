@@ -33,8 +33,10 @@ return [
          *
          * If you use a custom installation of ODK Central or Kobotoolbox, it will be the base url to your service.
          */
-        'url' => env('ODK_URL', ''),
+        'url' => env('ODK_URL', null),
         'base_endpoint' => env('ODK_ENDPOINT', env('ODK_URL') . '/v1'),
+
+        'platform_project_id' => env('ODK_PLATFORM_PROJECT_ID', null),
 
         /**
          * Username and password for the main platform account

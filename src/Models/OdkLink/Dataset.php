@@ -11,8 +11,6 @@ use Symfony\Contracts\Service\Attribute\Required;
 
 class Dataset extends Model
 {
-    protected $table = 'datasets';
-
 
     // a dataset might be a subset of another dataset (e.g. data from a repeat group in a form; household members in a household, etc);
     public function parent(): BelongsTo
