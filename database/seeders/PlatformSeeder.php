@@ -15,17 +15,12 @@ class PlatformSeeder extends Seeder
     public function run()
     {
         // check config item existence, and check empty config item
-        if (config('filament-odk-link.odk.url') === null || config('filament-odk-link.odk.url') == '') {
+        if (config('filament-odk-link.odk.url') === null || config('filament-odk-link.odk.url') === '') {
             return;
         }
 
-        // check config item existence
-        if (config('filament-odk-link.odk.platform_project_id') === null) {
-            return;
-        }
-
-        // and check empty config item
-        if (config('filament-odk-link.odk.platform_project_id') == '') {
+        // check config item existence - if there is no platform project ID, create a new platform and odk project in the 'usual' way.
+        if (config('filament-odk-link.odk.platform_project_id') === null || config('filament-odk-link.odk.platform_project_id') === '') {
             $platform = Platform::create();
 
             //add the platform's odk-project ID to the env file
@@ -35,8 +30,7 @@ class PlatformSeeder extends Seeder
         }
 
         // create the platform quietly, then quietly create the odk project entry;
-
-        // Question: If we call forceCreateQuitely(), there is no app_users record for platform model
+        // no app users are needed, because the 'platform' is not a user-facing entity. No xlsforms will be published to the platform project - it is only for testing drafts of xlsform templates.
 
         $platform = Platform::forceCreateQuietly();
         $odkProject = $platform->odkProject()->forceCreateQuietly([
@@ -45,16 +39,25 @@ class PlatformSeeder extends Seeder
         ]);
     }
 
-    private function setEnvironmentValue($key, $value): void
+    private function setEnvironmentValue(string $key, string $value): void
     {
         $path = base_path('.env');
 
         if (file_exists($path)) {
-            file_put_contents($path, str_replace(
-                $key . '=' . env($key),
-                $key . '=' . $value,
-                file_get_contents($path)
-            ));
+
+            // if the .env file is set but empty, update it.
+            if(str_contains(file_get_contents($path), $key. '=')) {
+                file_put_contents($path, str_replace(
+                    $key . '=' . env($key),
+                    $key . '=' . $value,
+                    file_get_contents($path)
+                ));
+                return;
+            }
+
+            // if the .env file is set but the key is not present, add it.
+            file_put_contents($path, PHP_EOL . $key . '=' . $value, FILE_APPEND);
+
         }
     }
 }
