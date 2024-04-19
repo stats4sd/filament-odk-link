@@ -13,10 +13,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Client\RequestException;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Stats4sd\FilamentOdkLink\Exports\DatasetModelsExport;
 use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\AppUser;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
@@ -273,13 +275,22 @@ class OdkLinkService
         if ($requiredDataMedia && count($requiredDataMedia) > 0) {
             foreach ($requiredDataMedia as $requiredMediaItem) {
 
+                ray($requiredMediaItem->name);
+                ray($requiredMediaItem->toArray());
+
                 // if there is a static upload, use it;
                 // TODO: work out how to handle xlsforms where we might have a static media file for TESTING the template...
                 $media = $requiredMediaItem->getFirstMedia();
                 if ($media) {
                     $this->uploadSingleMediaFile($xlsform, $media->getPath());
                 } else {
-                    // handle csv file generation...
+
+                    if (!$requiredMediaItem->is_static) {
+                        $csvPath = $this->createCsvLookupFile($xlsform, $requiredMediaItem);
+
+                        $this->uploadSingleMediaFile($xlsform, $csvPath);
+                    }
+
 
                 }
 
@@ -490,32 +501,32 @@ class OdkLinkService
     /**
      * Creates a new csv lookup file from the database;
      */
-    private function createCsvLookupFile(Xlsform $xlsform, mixed $lookup): string
+    private function createCsvLookupFile(WithXlsFormDrafts $xlsform, RequiredMedia $requiredMedia): string
     {
+        $dataset = $requiredMedia->dataset;
 
-        $filePath = 'xlsforms' . $xlsform->id . '/' . $lookup['csv_name'] . '.csv';
+        $filePath = 'xlsforms/' . $xlsform->id . '/' . Str::slug($dataset->name) . '.csv';
 
-        if ($lookup['per_owner'] === '1') {
-            $owner = $xlsform->owner;
-        } else {
-            $owner = null;
+        // check if the folder exists; if not, create it
+        if (!Storage::disk(config('filament-odk-link.storage.xlsforms'))->exists('xlsforms')) {
+            Storage::disk(config('filament-odk-link.storage.xlsforms'))->makeDirectory('xlsforms');
         }
 
+        if (!Storage::disk(config('filament-odk-link.storage.xlsforms'))->exists('xlsforms/' . $xlsform->id)) {
+            Storage::disk(config('filament-odk-link.storage.xlsforms'))->makeDirectory('xlsforms/' . $xlsform->id);
+        }
+
+        $owner = $xlsform->owner;
+
         Excel::store(
-            new SqlViewExport($lookup['mysql_name'], $owner, $lookup['owner_foreign_key']),
+            new DatasetModelsExport($dataset, $owner),
             $filePath,
             config('filament-odk-link.storage.xlsforms')
         );
 
-        // If the csv file is used with "select_one_from_external_file" (or multiple) it must not have any enclosure characters:
-        if (isset($lookup['external_file']) && $lookup['external_file'] === '1') {
-            $contents = Storage::disk(config('filament-odk-link.storage.xlsforms'))->get($filePath);
-            $contents = Str::of($contents)->replace('"', '');
+        // TODO: Explore if we need select_one_from_external_file support.
 
-            Storage::disk(config('filament-odk-link.storage.xlsforms'))->put($filePath, $contents);
-        }
-
-        return $filePath;
+        return Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($filePath);
     }
 
     public function unArchiveForm(Xlsform $xlsform)
