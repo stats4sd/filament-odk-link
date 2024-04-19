@@ -14,25 +14,35 @@ class PlatformSeeder extends Seeder
 
     public function run()
     {
+        // check config item existence, and check empty config item
+        if (config('filament-odk-link.odk.url') === null || config('filament-odk-link.odk.url') == '') {
+            return;
+        }
 
-        // if there is no pre-set platform project ID, create the platform entry with the usual ODK Central project creation.
-        if(config('filament-odk-link.odk.url') === null || config('filament-odk-link.odk.platform_project_id') === '') {
+        // check config item existence
+        if (config('filament-odk-link.odk.platform_project_id') === null) {
+            return;
+        }
+
+        // and check empty config item
+        if (config('filament-odk-link.odk.platform_project_id') == '') {
             $platform = Platform::create();
 
             //add the platform's odk-project ID to the env file
             $this->setEnvironmentValue('ODK_PLATFORM_PROJECT_ID', $platform->odkProject->id);
 
-
             return;
         }
 
         // create the platform quietly, then quietly create the odk project entry;
+
+        // Question: If we call forceCreateQuitely(), there is no app_users record for platform model
+
         $platform = Platform::forceCreateQuietly();
         $odkProject = $platform->odkProject()->forceCreateQuietly([
             'id' => config('filament-odk-link.odk.platform_project_id'),
             'name' => config('app.name', 'Laravel Platform') . ' Platform',
         ]);
-
     }
 
     private function setEnvironmentValue($key, $value): void
@@ -47,5 +57,4 @@ class PlatformSeeder extends Seeder
             ));
         }
     }
-
 }

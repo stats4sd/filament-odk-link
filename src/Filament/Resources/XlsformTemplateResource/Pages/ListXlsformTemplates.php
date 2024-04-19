@@ -16,9 +16,10 @@ class ListXlsformTemplates extends ListRecords
     {
         $widgets = [];
 
-        if(config('filament-odk-link.odk.url') === null) {
+        // check config item existence, and check empty config item
+        if (config('filament-odk-link.odk.url') === null || config('filament-odk-link.odk.url') == '') {
 
-                $widgets[] = OdkUrlAlertWidget::class;
+            $widgets[] = OdkUrlAlertWidget::class;
         }
 
         return $widgets;
