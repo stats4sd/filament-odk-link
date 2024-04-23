@@ -17,17 +17,14 @@ class DatasetModelsExport implements FromCollection, WithHeadings, WithStrictNul
     // by default, we use the dataset variables as the columns. If you want to specify columns, you can pass them in as an array.
     public function __construct(
         public Dataset      $dataset,
-        public WithXlsforms $owner,
-        public ?array       $columns = null)
+        public WithXlsforms $owner)
     {
-        $this->columns = $this->columns ?? $this->dataset->variables->pluck('name')->toArray();
     }
 
     public function collection(): Collection
     {
 
         // get all entries from the dataset's entity_model that belong to the given owner or that do not belong to anybody (owner_id === null means the entry is universal).
-        ray($this->columns);
 
         return $this->dataset->entity_model::select($this->columns)
             ->where(function(Builder $query) {
@@ -35,11 +32,14 @@ class DatasetModelsExport implements FromCollection, WithHeadings, WithStrictNul
                     ->where('owner_type', get_class($this->owner));
             })
             ->orWhere('owner_id', null)
-            ->get();
+            ->get()
+            ->map(function ($entry) {
+                return $entry->getCsvContentsForOdk();
+            });
     }
 
     public function headings(): array
     {
-        return $this->columns;
+        return $this->dataset->entity_model::getColumnsForOdk();
     }
 }

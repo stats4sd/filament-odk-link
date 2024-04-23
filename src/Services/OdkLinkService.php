@@ -275,9 +275,6 @@ class OdkLinkService
         if ($requiredDataMedia && count($requiredDataMedia) > 0) {
             foreach ($requiredDataMedia as $requiredMediaItem) {
 
-                ray($requiredMediaItem->name);
-                ray($requiredMediaItem->toArray());
-
                 // if there is a static upload, use it;
                 // TODO: work out how to handle xlsforms where we might have a static media file for TESTING the template...
                 $media = $requiredMediaItem->getFirstMedia();
