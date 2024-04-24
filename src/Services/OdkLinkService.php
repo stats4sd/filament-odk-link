@@ -502,7 +502,7 @@ class OdkLinkService
     {
         $dataset = $requiredMedia->dataset;
 
-        $filePath = 'xlsforms/' . $xlsform->id . '/' . Str::slug($dataset->name) . '.csv';
+        $filePath = 'xlsforms/' . $xlsform->id . '/' . $requiredMedia->name;
 
         // check if the folder exists; if not, create it
         if (!Storage::disk(config('filament-odk-link.storage.xlsforms'))->exists('xlsforms')) {
