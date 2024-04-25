@@ -23,6 +23,7 @@ return new class extends Migration {
             // what data model entries were created when processing this submission? (e.g., if the application has custom data maps that populate tables from processed submissions.
             $table->json('entries')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

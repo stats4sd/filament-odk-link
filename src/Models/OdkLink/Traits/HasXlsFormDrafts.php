@@ -20,9 +20,7 @@ trait HasXlsFormDrafts
             $odkXlsFormDetails = $service->createDraftForm($this);
 
         } catch (Throwable $e) {
-
-            dd($e);
-
+            
             Notification::make('draft-form-failed')
                 ->title('There is an error in the XLS Form')
                 ->body($e->getMessage())
