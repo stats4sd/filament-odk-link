@@ -83,7 +83,7 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
     {
         return new Attribute(
             get: function () {
-                if(!$this->has_latest_template) {
+                if(!$this->has_latest_template || !$this->has_latest_media) {
                     return 'UPDATES AVAILABLE';
                 }
                 if ($this->is_active) {
