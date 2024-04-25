@@ -70,15 +70,10 @@ class TeamResource extends Resource
             ->schema([
                 Section::make('Team Details')
                     ->columns(6)
-                    ->schema([
-                        ImageEntry::make('avatar')
-                            ->label('')
-                            ->columnSpan(2),
-                        TextEntry::make('description')
-                            ->getStateUsing(fn ($record) => new HtmlString(preg_replace('/\n/', '<br/>', $record->description)))
-                            ->columnSpan(4),
-                        ViewEntry::make('qr_code')
-                            ->view('filament-odk-link::filament.infolists.components.team-qr-code'),
+                ->schema([
+                        ViewEntry::make('odk_qr_code')
+                            ->view('filament-odk-link::filament.infolists.components.team-qr-code')
+                            ->columnSpanFull(),
 
                     ]),
             ]);

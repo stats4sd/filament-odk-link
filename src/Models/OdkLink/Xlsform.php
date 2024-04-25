@@ -83,6 +83,9 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
     {
         return new Attribute(
             get: function () {
+                if(!$this->has_latest_template) {
+                    return 'UPDATES AVAILABLE';
+                }
                 if ($this->is_active) {
                     return 'LIVE';
                 }
@@ -164,5 +167,20 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
     public function getSubmissions(): int
     {
         return app()->make(OdkLinkService::class)->getSubmissions($this);
+    }
+
+    public function getLiveSubmissionCount(): int
+    {
+        return app()->make(OdkLinkService::class)->getSubmissionCount($this);
+    }
+
+    // Get the live submissions count from ODK Central
+    public function liveSubmissionsCount(): Attribute
+    {
+        return new Attribute(
+            get: function () {
+                return $this->getLiveSubmissionCount();
+            },
+        );
     }
 }

@@ -53,6 +53,12 @@ trait PublishesToOdkCentral
         // if the draft was successfully created; publish it.
         if ($hasDraft) {
             $odkLinkService->publishForm($this);
+
+            // update the xlsform to show that it's using the latest template and latest media
+            $this->updateQuietly([
+                'has_latest_template' => true,
+                'has_latest_media' => true,
+            ]);
         }
     }
 

@@ -565,6 +565,17 @@ class OdkLinkService
         return $xlsformVersion;
     }
 
+    public function getSubmissionCount(Xlsform $xlsform): int
+    {
+        $token = $this->authenticate();
+        $results = Http::withToken($token)
+            ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions")
+            ->throw()
+            ->json();
+
+        return count($results);
+    }
+
     // checks for new submissions for a given form and returns the count of new submissions found.
     public function getSubmissions(Xlsform $xlsform): int
     {

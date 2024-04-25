@@ -18,7 +18,7 @@ class Team extends Model implements WithXlsforms
 
     protected $table = 'teams';
 
-
+    protected $appends = ['odk_qr_code'];
 
     /**
      * Generate an invitation to join this team for each of the provided email addresses
