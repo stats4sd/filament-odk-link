@@ -6,7 +6,7 @@
 
 Click the link below to register on the platform. If you use the same email address, you will be automatically added to the team after registration.
 
-@component('mail::button', ['url' => route('register').'?token='.$invite->token])
+@component('mail::button', ['url' => \Filament\Facades\Filament::getRegistrationUrl() .'?token='.$invite->token])
     Register to join {{ $invite->team->name }}
 @endcomponent
 
