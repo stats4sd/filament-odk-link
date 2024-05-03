@@ -20,31 +20,6 @@ class PlatformSeeder extends Seeder
             $platform = Platform::create();
 
             //add the platform's odk-project ID to the env file
-            $this->setEnvironmentValue('ODK_PLATFORM_PROJECT_ID', $platform->odkProject->id);
-
-            return;
-        }
-
-        // create the platform quietly, then quietly create the odk project entry;
-        $platform = Platform::forceCreateQuietly();
-        $odkProject = $platform->odkProject()->forceCreateQuietly([
-            'id' => config('filament-odk-link.odk.platform_project_id'),
-            'name' => config('app.name', 'Laravel Platform') . ' Platform',
-        ]);
-
-    }
-
-    private function setEnvironmentValue($key, $value): void
-    {
-        $path = base_path('.env');
-
-        if (file_exists($path)) {
-            file_put_contents($path, str_replace(
-                $key . '=' . env($key),
-                $key . '=' . $value,
-                file_get_contents($path)
-            ));
-        }
-    }
-
-}
+            if ($platform->odkProject) {
+                $this->setEnvironmentValue('ODK_PLATFORM_PROJECT_ID', $platform->odkProject->id);
+            }gs
