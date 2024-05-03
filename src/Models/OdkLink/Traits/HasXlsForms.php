@@ -23,7 +23,7 @@ trait HasXlsForms
         static::created(static function ($owner) use ($odkLinkService) {
 
             // check if we are in local-only (no-ODK link) mode
-            if(config('filament-odk-link.odk.url') === null) {
+            if(!config('filament-odk-link.odk.url')) {
                 return;
             }
 

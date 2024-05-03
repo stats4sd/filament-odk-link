@@ -16,12 +16,11 @@ class PlatformSeeder extends Seeder
     {
 
         // if there is no pre-set platform project ID, create the platform entry with the usual ODK Central project creation.
-        if(config('filament-odk-link.odk.url') === null || config('filament-odk-link.odk.platform_project_id') === '') {
+        if(!config('filament-odk-link.odk.platform_project_id')) {
             $platform = Platform::create();
 
             //add the platform's odk-project ID to the env file
             $this->setEnvironmentValue('ODK_PLATFORM_PROJECT_ID', $platform->odkProject->id);
-
 
             return;
         }
