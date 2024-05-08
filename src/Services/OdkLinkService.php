@@ -4,29 +4,31 @@ namespace Stats4sd\FilamentOdkLink\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use App\Models\SurveyData\SimpleFormMain;
 use Illuminate\Http\Client\RequestException;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Stats4sd\FilamentOdkLink\Exports\DatasetModelsExport;
-use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
+use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
+use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\AppUser;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\FilamentOdkLink\Exports\DatasetModelsExport;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
-use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
 
 /**
  * All ODK Aggregation services should be able to handle ODK forms, so this interface should always be used.
@@ -55,9 +57,7 @@ class OdkLinkService
                 ->json();
 
             return $response['token'];
-
         });
-
     }
 
     /**
@@ -89,7 +89,6 @@ class OdkLinkService
             ])
             ->throw()
             ->json();
-
     }
 
     public function createProjectAppUser(OdkProject $odkProject): array
@@ -114,7 +113,6 @@ class OdkLinkService
             ->json();
 
         return $userResponse;
-
     }
 
     /**
@@ -242,7 +240,6 @@ class OdkLinkService
             ->get("{$this->endpoint}/projects/{$xlsformTemplate->owner->odkProject->id}/forms/{$xlsformTemplate->odk_id}/attachments")
             ->throw()
             ->json();
-
     }
 
 
@@ -265,7 +262,6 @@ class OdkLinkService
             foreach ($requiredFixedMedia as $requiredMediaItem) {
                 $this->uploadSingleMediaFile($xlsform, $requiredMediaItem->getFirstMedia()->getPath());
             }
-
         }
 
 
@@ -287,15 +283,11 @@ class OdkLinkService
 
                         $this->uploadSingleMediaFile($xlsform, $csvPath);
                     }
-
-
                 }
-
             }
         }
 
         return true;
-
     }
 
     /**
@@ -369,7 +361,6 @@ class OdkLinkService
         $xlsform->save();
 
         return $xlsformVersion;
-
     }
 
     /**
@@ -393,7 +384,6 @@ class OdkLinkService
         ]);
 
         return $result;
-
     }
 
     /**
@@ -421,8 +411,7 @@ class OdkLinkService
                 return true;
             }
 
-            throw($exception);
-
+            throw ($exception);
         }
 
         return true;
@@ -452,7 +441,6 @@ class OdkLinkService
                 // link it to the submission via Media Library
                 $submission->addMediaFromDisk($mediaItem['name'], config('filament-odk-link.storage.media'))
                     ->toMediaLibrary();
-
             }
         }
     }
@@ -486,7 +474,6 @@ class OdkLinkService
                         $item[$key] = $value;
                     }
                 });
-
             }
 
             return $item;
@@ -560,7 +547,7 @@ class OdkLinkService
         $xlsform->getMedia('xlsform_file')->first()->copy($xlsformVersion, 'xlsform_file');
 
         // copy any attached media
-        $xlsform->getMedia('attached_media')->each(fn($media) => $media->copy($xlsformVersion, 'attached_media'));
+        $xlsform->getMedia('attached_media')->each(fn ($media) => $media->copy($xlsformVersion, 'attached_media'));
 
         return $xlsformVersion;
     }
@@ -605,7 +592,7 @@ class OdkLinkService
                     'ownerName' => $xlsform->owner->name,
                 ]);
 
-                abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '));
+                abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '));
             }
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
@@ -629,12 +616,9 @@ class OdkLinkService
             if ($class && $method) {
                 $class::$method($submission);
             }
-
-
         }
 
         return $resultsToAdd->count();
-
     }
 
     public function processEntry(Submission $submission, array $entry, XlsformVersion $xlsformVersion): void
@@ -678,12 +662,35 @@ class OdkLinkService
             // add polymorphic relationship
             $entity->owner()->associate($xlsform->owner)->save();
 
+
+            // P.S. When deleting submission in application, we must delete related records for both generic approach and custom table approach
+
+            // check whether this xlsform template section has a related database table
+            $class = $section->dataset?->entity_model;
+
+            if ($class) {
+                $model = new $class;
+
+                // check database table existence
+                if (Schema::hasTable($model->getTable())) {
+                    // get all column names of a table
+                    $columnNames = Schema::getColumnListing($model->getTable());
+                }
+            }
+
+            // initialise data array
+            $dataArray = [];
+
             // access the value of each ODK variable from a deeply nested array using "dot" notation
             foreach ($schema as $schemaItem) {
                 $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
                 $value = Arr::get($entry, $itemPath);
 
                 // dump($schemaItem['name'] . ' : ' . $value);
+
+                if ($class && in_array($schemaItem['name'], $columnNames)) {
+                    $dataArray[$schemaItem['name']] = $value;
+                }
 
                 if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
                     // store ODK variable value as entity value record
@@ -694,6 +701,12 @@ class OdkLinkService
                     ]);
                 }
             }
+
+            if ($class) {
+                // create a new database record
+                $class::create($dataArray);
+            }
+
 
             // handle repeat group
         } else {
@@ -760,23 +773,16 @@ class OdkLinkService
                             ]);
                         }
                     }
-
                 }
-
             } else {
                 // dump("This is NOT an array");
             }
-
         }
-
     }
 
 
     public function exportAsExcelFile(Xlsform $xlsform)
     {
         return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
-
     }
-
-
 }
