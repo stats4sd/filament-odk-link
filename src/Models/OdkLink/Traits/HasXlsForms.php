@@ -78,7 +78,7 @@ trait HasXlsForms
         return new Attribute(
             get: function (): ?string {
 
-                if (!$this->odkProject->appUsers->first()) {
+                if (!$this->odkProject?->appUsers->first()) {
                     return null;
                 }
 
