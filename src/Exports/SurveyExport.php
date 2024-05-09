@@ -19,11 +19,10 @@ class SurveyExport implements WithMultipleSheets
         $this->xlsform = $xlsform;
 
         $this->entities = $xlsform->submissions->map(function (Submission $submission) {
-            return $submission->entities->load(['values.translation', 'submission']);
+            return $submission->entities;
         })->flatten();
 
         $this->mainSurveySection = $this->xlsform->xlsformTemplate->xlsformTemplateSections->firstWhere('is_repeat', 0);
-
     }
 
     /**
@@ -34,7 +33,7 @@ class SurveyExport implements WithMultipleSheets
         $sheets = [];
 
         // handle main survey
-        $entities = $this->entities->filter(fn($entity) => $entity->dataset_id === $this->mainSurveySection->dataset_id);
+        $entities = $this->entities->filter(fn ($entity) => $entity->dataset_id === $this->mainSurveySection->dataset_id);
 
 
         $sheets[] = new EntityExport($entities, 'Main Survey', $this->mainSurveySection);
@@ -43,7 +42,7 @@ class SurveyExport implements WithMultipleSheets
         foreach ($this->xlsform->xlsformTemplate->xlsformTemplateSections as $section) {
             if ($section->id !== $this->mainSurveySection->id) {
 
-                $entities = $this->entities->filter(fn($entity) => $entity->dataset_id === $section->dataset_id);
+                $entities = $this->entities->filter(fn ($entity) => $entity->dataset_id === $section->dataset_id);
 
                 $sheets[] = new EntityExport($entities, $section->structure_item, $section);
             }
@@ -51,5 +50,4 @@ class SurveyExport implements WithMultipleSheets
 
         return $sheets;
     }
-
 }

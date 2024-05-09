@@ -36,10 +36,10 @@ class XlsformsRelationManager extends RelationManager
                     ->relationship(
                         name: 'xlsformTemplate',
                         titleAttribute: 'title',
-                        modifyQueryUsing: fn(Builder $query) => $query->where('available', true)
+                        modifyQueryUsing: fn (Builder $query) => $query->where('available', true)
                     )
                     ->live()
-                    ->afterStateUpdated(fn(Forms\Set $set, $state) => $set('title', $state ? XlsformTemplate::find($state)->title : '')),
+                    ->afterStateUpdated(fn (Forms\Set $set, $state) => $set('title', $state ? XlsformTemplate::find($state)->title : '')),
 
                 Forms\Components\TextInput::make('title')
                     ->helperText('By default, this is the title of the Template you select. If you want multiple instances of the same form template, you should give each a unique title.')
@@ -90,7 +90,6 @@ class XlsformsRelationManager extends RelationManager
 
                         $record->refresh();
                         $record->deployDraft($odkLinkService);
-
                     }),
             ])
             ->actions([
