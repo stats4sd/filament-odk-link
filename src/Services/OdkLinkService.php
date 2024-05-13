@@ -485,7 +485,7 @@ class OdkLinkService
     /**
      * Creates a new csv lookup file from the database;
      */
-    private function createCsvLookupFile(WithXlsFormDrafts $xlsform, RequiredMedia $requiredMedia): string
+    public function createCsvLookupFile(WithXlsFormDrafts $xlsform, RequiredMedia $requiredMedia): string
     {
         $dataset = $requiredMedia->dataset;
 
