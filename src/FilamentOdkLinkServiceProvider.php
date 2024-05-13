@@ -15,6 +15,7 @@ use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Stats4sd\FilamentOdkLink\Commands\FilamentOdkLinkCommand;
+use Stats4sd\FilamentOdkLink\Commands\PollForOdkData;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Stats4sd\FilamentOdkLink\Testing\TestsFilamentOdkLink;
 
@@ -128,6 +129,7 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
     {
         return [
             FilamentOdkLinkCommand::class,
+            PollForOdkData::class,
         ];
     }
 
