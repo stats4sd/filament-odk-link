@@ -42,7 +42,7 @@ class DatasetModelsExport implements FromCollection, WithHeadings, WithStrictNul
         return $query
             ->get()
             ->map(function ($entry) {
-                return $entry->getCsvContentsForOdk();
+                return $entry->getCsvContentsForOdk($this->owner);
             });
     }
 
