@@ -680,6 +680,7 @@ class OdkLinkService
 
             // initialise data array
             $dataArray = [];
+            $dataArray['odk_id'] = $entity->submission->odk_id;
 
             // access the value of each ODK variable from a deeply nested array using "dot" notation
             foreach ($schema as $schemaItem) {
@@ -732,6 +733,24 @@ class OdkLinkService
             if (is_array($repeatGroupArray)) {
                 // dump("This is an array");
 
+                // P.S. When deleting submission in application, we must delete related records for both generic approach and custom table approach
+
+                // check whether this xlsform template section has a related database table
+                $class = $section->dataset?->entity_model;
+
+                if ($class) {
+                    $model = new $class;
+
+                    // check database table existence
+                    if (Schema::hasTable($model->getTable())) {
+                        // get all column names of a table
+                        $columnNames = Schema::getColumnListing($model->getTable());
+                    }
+                }
+
+                // initialise data array
+                $dataArray = [];
+
                 // handle each record in repeat group
                 foreach ($repeatGroupArray as $repeatGroupRecord) {
                     // dump($repeatGroupRecord);
@@ -743,6 +762,9 @@ class OdkLinkService
                         'parent_id' => Entity::where('submission_id', $submissionId)->where('dataset_id', $section->parent?->dataset->id)->first()?->id ?? null,
                         'model_type' => $section->dataset->entity_model,
                     ]);
+
+                    // P.S. it can support repeat group in level 1, but it will not be able to support nested repeat group
+                    $dataArray['odk_id'] = $entity->parent->submission->odk_id;
 
                     // add polymorphic relationship
                     $entity->owner()->associate($xlsform->owner)->save();
@@ -764,6 +786,10 @@ class OdkLinkService
                         $value = Arr::get($repeatGroupEntry, $fullItemPath);
                         // dump($schemaItem['name'] . ' : ' . $value);
 
+                        if ($class && in_array($schemaItem['name'], $columnNames)) {
+                            $dataArray[$schemaItem['name']] = $value;
+                        }
+
                         if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
                             // store ODK variable value as entity value record
                             EntityValue::create([
@@ -772,6 +798,11 @@ class OdkLinkService
                                 'value' => $value,
                             ]);
                         }
+                    }
+
+                    if ($class) {
+                        // create a new database record
+                        $class::create($dataArray);
                     }
                 }
             } else {
