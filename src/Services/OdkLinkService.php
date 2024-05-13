@@ -645,23 +645,194 @@ class OdkLinkService
 
         // use the schema to populate the entity with variables from the $entry (flattened entry);
 
-
-        // handle main survey (root)
         if ($section->is_repeat == 0) {
+            // handle main survey (root)
+            $this->storeMainSurveyToEntity($xlsform, $entry, $section, $submissionId);
 
-            // exclude structure items from section schema, as there is no value to be stored for a structure item
-            $schema = $section->schema->where('type', '!=', 'structure');
+            $this->storeMainSurveyToCustomTable($xlsform, $entry, $section, $submissionId);
+        } else {
+            // handle repeat group
+            $this->storeRepeatGroupToEntity($xlsform, $entry, $section, $submissionId);
 
-            // create entity record for main survey (root)
-            $entity = Entity::create([
-                'dataset_id' => $section->dataset->id,
-                'submission_id' => $submissionId,
-                'model_type' => $section->dataset->entity_model,
-            ]);
+            $this->storeRepeatGroupToCustomTable($xlsform, $entry, $section, $submissionId);
+        }
+    }
 
-            // add polymorphic relationship
-            $entity->owner()->associate($xlsform->owner)->save();
 
+    // store main survey to entities and entity_value tables
+    private function storeMainSurveyToEntity(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    {
+        // exclude structure items from section schema, as there is no value to be stored for a structure item
+        $schema = $section->schema->where('type', '!=', 'structure');
+
+        // create entity record for main survey (root)
+        $entity = Entity::create([
+            'dataset_id' => $section->dataset->id,
+            'submission_id' => $submissionId,
+            'model_type' => $section->dataset->entity_model,
+        ]);
+
+        // add polymorphic relationship
+        $entity->owner()->associate($xlsform->owner)->save();
+
+        // access the value of each ODK variable from a deeply nested array using "dot" notation
+        foreach ($schema as $schemaItem) {
+            $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+            $value = Arr::get($entry, $itemPath);
+
+            // dump($schemaItem['name'] . ' : ' . $value);
+
+            if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
+                // store ODK variable value as entity value record
+                EntityValue::create([
+                    'entity_id' => $entity->id,
+                    'dataset_variable_id' => $schemaItem['name'],
+                    'value' => $value,
+                ]);
+            }
+        }
+    }
+
+
+    // store main survey to custom table (if any)
+    private function storeMainSurveyToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    {
+        // exclude structure items from section schema, as there is no value to be stored for a structure item
+        $schema = $section->schema->where('type', '!=', 'structure');
+
+        // P.S. When deleting submission in application, we must delete related records for both generic approach and custom table approach
+
+        // check whether this xlsform template section has a related database table
+        $class = $section->dataset?->entity_model;
+
+        if ($class) {
+            $model = new $class;
+
+            // check database table existence
+            if (Schema::hasTable($model->getTable())) {
+                // get all column names of a table
+                $columnNames = Schema::getColumnListing($model->getTable());
+            }
+
+            // initialise data array
+            $dataArray = [];
+
+            // find odk_id from submission record directly
+            $dataArray['odk_id'] = Submission::find($submissionId)->odk_id;
+
+            // access the value of each ODK variable from a deeply nested array using "dot" notation
+            foreach ($schema as $schemaItem) {
+                $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+                $value = Arr::get($entry, $itemPath);
+
+                // dump($schemaItem['name'] . ' : ' . $value);
+
+                if ($class && in_array($schemaItem['name'], $columnNames)) {
+                    $dataArray[$schemaItem['name']] = $value;
+                }
+            }
+
+            // create a new database record
+            $class::create($dataArray);
+        }
+    }
+
+
+    // store repeat group to entities and entity_value tables
+    private function storeRepeatGroupToEntity(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    {
+        // exclude structure items from section schema, as there is no value to be stored for a structure item
+        $schema = $section->schema->where('type', '!=', 'structure');
+
+        // find the path of repeat group first item
+        $schemaPaths = $schema->pluck('path')->toArray();
+        // dump($schemaPaths[0]);
+
+        $position = Str::position($schemaPaths[0], $section->structure_item);
+
+        // construct the path for getting an array of repeat group
+        $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . $section->structure_item;
+        // dump($repeatGroupArrayPath);
+
+        // get the array for repeat group
+        $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
+        // dump($repeatGroupArray);
+
+        // it should be an array containing records for a repeat group
+        if (is_array($repeatGroupArray)) {
+            // dump("This is an array");
+
+            // handle each record in repeat group
+            foreach ($repeatGroupArray as $repeatGroupRecord) {
+                // dump($repeatGroupRecord);
+
+                // create entity record for each repeat group record
+                $entity = Entity::create([
+                    'dataset_id' => $section->dataset->id,
+                    'submission_id' => $submissionId,
+                    'parent_id' => Entity::where('submission_id', $submissionId)->where('dataset_id', $section->parent?->dataset->id)->first()?->id ?? null,
+                    'model_type' => $section->dataset->entity_model,
+                ]);
+
+                // add polymorphic relationship
+                $entity->owner()->associate($xlsform->owner)->save();
+
+                // get array element as record
+                $repeatGroupEntry = ['rg' => $repeatGroupRecord];
+
+                foreach ($schema as $schemaItem) {
+                    $pathLength = Str::length($schemaItem['path']);
+                    $position = Str::position($schemaItem['path'], $section->structure_item);
+                    $lengthToCut = $pathLength - $position;
+
+                    $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
+                    // dump('$itemPath : ' . $itemPath);
+
+                    $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+                    // dump('$fullItemPath : ' . $fullItemPath);
+
+                    $value = Arr::get($repeatGroupEntry, $fullItemPath);
+                    // dump($schemaItem['name'] . ' : ' . $value);
+
+                    if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
+                        // store ODK variable value as entity value record
+                        EntityValue::create([
+                            'entity_id' => $entity->id,
+                            'dataset_variable_id' => $schemaItem['name'],
+                            'value' => $value,
+                        ]);
+                    }
+                }
+            }
+        } else {
+            // dump("This is NOT an array");
+        }
+    }
+
+
+    // store repeat group to custom table (if any)
+    private function storeRepeatGroupToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    {
+        // exclude structure items from section schema, as there is no value to be stored for a structure item
+        $schema = $section->schema->where('type', '!=', 'structure');
+
+        // find the path of repeat group first item
+        $schemaPaths = $schema->pluck('path')->toArray();
+        // dump($schemaPaths[0]);
+
+        $position = Str::position($schemaPaths[0], $section->structure_item);
+
+        // construct the path for getting an array of repeat group
+        $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . $section->structure_item;
+        // dump($repeatGroupArrayPath);
+
+        // get the array for repeat group
+        $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
+        // dump($repeatGroupArray);
+
+        // it should be an array containing records for a repeat group
+        if (is_array($repeatGroupArray)) {
+            // dump("This is an array");
 
             // P.S. When deleting submission in application, we must delete related records for both generic approach and custom table approach
 
@@ -675,139 +846,47 @@ class OdkLinkService
                 if (Schema::hasTable($model->getTable())) {
                     // get all column names of a table
                     $columnNames = Schema::getColumnListing($model->getTable());
-                }
-            }
 
-            // initialise data array
-            $dataArray = [];
-            $dataArray['odk_id'] = $entity->submission->odk_id;
+                    // initialise data array
+                    $dataArray = [];
 
-            // access the value of each ODK variable from a deeply nested array using "dot" notation
-            foreach ($schema as $schemaItem) {
-                $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
-                $value = Arr::get($entry, $itemPath);
+                    // handle each record in repeat group
+                    foreach ($repeatGroupArray as $repeatGroupRecord) {
+                        // dump($repeatGroupRecord);
 
-                // dump($schemaItem['name'] . ' : ' . $value);
+                        // P.S. it can support repeat group in level 1, but it will not be able to support nested repeat group
+                        // find odk_id from submission record directly
+                        $dataArray['odk_id'] = Submission::find($submissionId)->odk_id;
 
-                if ($class && in_array($schemaItem['name'], $columnNames)) {
-                    $dataArray[$schemaItem['name']] = $value;
-                }
+                        // get array element as record
+                        $repeatGroupEntry = ['rg' => $repeatGroupRecord];
 
-                if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
-                    // store ODK variable value as entity value record
-                    EntityValue::create([
-                        'entity_id' => $entity->id,
-                        'dataset_variable_id' => $schemaItem['name'],
-                        'value' => $value,
-                    ]);
-                }
-            }
+                        foreach ($schema as $schemaItem) {
+                            $pathLength = Str::length($schemaItem['path']);
+                            $position = Str::position($schemaItem['path'], $section->structure_item);
+                            $lengthToCut = $pathLength - $position;
 
-            if ($class) {
-                // create a new database record
-                $class::create($dataArray);
-            }
+                            $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
+                            // dump('$itemPath : ' . $itemPath);
 
+                            $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+                            // dump('$fullItemPath : ' . $fullItemPath);
 
-            // handle repeat group
-        } else {
+                            $value = Arr::get($repeatGroupEntry, $fullItemPath);
+                            // dump($schemaItem['name'] . ' : ' . $value);
 
-            // exclude structure items from section schema, as there is no value to be stored for a structure item
-            $schema = $section->schema->where('type', '!=', 'structure');
-
-            // find the path of repeat group first item
-            $schemaPaths = $schema->pluck('path')->toArray();
-            // dump($schemaPaths[0]);
-
-            $position = Str::position($schemaPaths[0], $section->structure_item);
-
-            // construct the path for getting an array of repeat group
-            $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . $section->structure_item;
-            // dump($repeatGroupArrayPath);
-
-            // get the array for repeat group
-            $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
-            // dump($repeatGroupArray);
-
-            // it should be an array containing records for a repeat group
-            if (is_array($repeatGroupArray)) {
-                // dump("This is an array");
-
-                // P.S. When deleting submission in application, we must delete related records for both generic approach and custom table approach
-
-                // check whether this xlsform template section has a related database table
-                $class = $section->dataset?->entity_model;
-
-                if ($class) {
-                    $model = new $class;
-
-                    // check database table existence
-                    if (Schema::hasTable($model->getTable())) {
-                        // get all column names of a table
-                        $columnNames = Schema::getColumnListing($model->getTable());
-                    }
-                }
-
-                // initialise data array
-                $dataArray = [];
-
-                // handle each record in repeat group
-                foreach ($repeatGroupArray as $repeatGroupRecord) {
-                    // dump($repeatGroupRecord);
-
-                    // create entity record for each repeat group record
-                    $entity = Entity::create([
-                        'dataset_id' => $section->dataset->id,
-                        'submission_id' => $submissionId,
-                        'parent_id' => Entity::where('submission_id', $submissionId)->where('dataset_id', $section->parent?->dataset->id)->first()?->id ?? null,
-                        'model_type' => $section->dataset->entity_model,
-                    ]);
-
-                    // P.S. it can support repeat group in level 1, but it will not be able to support nested repeat group
-                    $dataArray['odk_id'] = $entity->parent->submission->odk_id;
-
-                    // add polymorphic relationship
-                    $entity->owner()->associate($xlsform->owner)->save();
-
-                    // get array element as record
-                    $repeatGroupEntry = ['rg' => $repeatGroupRecord];
-
-                    foreach ($schema as $schemaItem) {
-                        $pathLength = Str::length($schemaItem['path']);
-                        $position = Str::position($schemaItem['path'], $section->structure_item);
-                        $lengthToCut = $pathLength - $position;
-
-                        $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
-                        // dump('$itemPath : ' . $itemPath);
-
-                        $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
-                        // dump('$fullItemPath : ' . $fullItemPath);
-
-                        $value = Arr::get($repeatGroupEntry, $fullItemPath);
-                        // dump($schemaItem['name'] . ' : ' . $value);
-
-                        if ($class && in_array($schemaItem['name'], $columnNames)) {
-                            $dataArray[$schemaItem['name']] = $value;
+                            if (in_array($schemaItem['name'], $columnNames)) {
+                                $dataArray[$schemaItem['name']] = $value;
+                            }
                         }
 
-                        if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
-                            // store ODK variable value as entity value record
-                            EntityValue::create([
-                                'entity_id' => $entity->id,
-                                'dataset_variable_id' => $schemaItem['name'],
-                                'value' => $value,
-                            ]);
-                        }
-                    }
-
-                    if ($class) {
                         // create a new database record
                         $class::create($dataArray);
                     }
                 }
-            } else {
-                // dump("This is NOT an array");
             }
+        } else {
+            // dump("This is NOT an array");
         }
     }
 
