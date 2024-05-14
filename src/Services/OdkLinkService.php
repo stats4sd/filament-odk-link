@@ -621,6 +621,37 @@ class OdkLinkService
         return $resultsToAdd->count();
     }
 
+
+    // re-handle the updated submission content (submission content updated by user in front end)
+    public function handleUpdatedSubmissionContent(Submission $submission)
+    {
+        $entry = $submission->content;
+
+        $xlsformVersion = $submission->xlsformVersion;
+
+        $this->processEntry($submission, $entry, $xlsformVersion);
+
+        // TODO: as entities records are deleted, it looks like we need to handle media files again here
+        // $this->getAttachedMedia($entry, $token, $xlsform, $submission);
+
+
+        // ******** CALL APP-SPECIFIC PROCESSING ******** //
+
+        // if app developer has defined a method of processing submission content, call that method:
+
+        // Question: suppose application specific feature has been triggered when retrieve submission at first time,
+        // it should not be necessary to trigger it again after user editing submission content in front end
+
+        // $class = config('filament-odk-link.submission.process_method.class');
+        // $method = config('filament-odk-link.submission.process_method.method');
+
+        // if ($class && $method) {
+        //     $class::$method($submission);
+        // }
+        // }
+    }
+
+
     public function processEntry(Submission $submission, array $entry, XlsformVersion $xlsformVersion): void
     {
         // ******** PROCESS DATA INTO DATASETS ******** //
@@ -731,6 +762,9 @@ class OdkLinkService
                     $dataArray[$schemaItem['name']] = $value;
                 }
             }
+
+            // delete previously stored records in this table (if any)
+            $class::where('odk_id', $dataArray['odk_id'])->delete();
 
             // create a new database record
             $class::create($dataArray);
@@ -879,6 +913,9 @@ class OdkLinkService
                                 $dataArray[$schemaItem['name']] = $value;
                             }
                         }
+
+                        // delete previously stored records in this table (if any)
+                        $class::where('odk_id', $dataArray['odk_id'])->delete();
 
                         // create a new database record
                         $class::create($dataArray);
