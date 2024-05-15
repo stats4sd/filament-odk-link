@@ -734,8 +734,8 @@ class OdkLinkService
             // initialise data array
             $dataArray = [];
 
-            // find odk_id from submission record directly
-            $dataArray['odk_id'] = Submission::find($submissionId)->odk_id;
+            // Link the new data model to the current submission
+            $dataArray['submission_id'] = $submissionId;
 
             // access the value of each ODK variable from a deeply nested array using "dot" notation
             foreach ($schema as $schemaItem) {
@@ -750,7 +750,7 @@ class OdkLinkService
             }
 
             // delete previously stored records in this table (if any)
-            $class::where('odk_id', $dataArray['odk_id'])->delete();
+            $class::where('submission_id', $dataArray['submission_id'])->delete();
 
             // create a new database record
             $class::create($dataArray);
@@ -874,9 +874,13 @@ class OdkLinkService
                     foreach ($repeatGroupArray as $repeatGroupRecord) {
                         // dump($repeatGroupRecord);
 
-                        // P.S. it can support repeat group in level 1, but it will not be able to support nested repeat group
-                        // find odk_id from submission record directly
-                        $dataArray['odk_id'] = Submission::find($submissionId)->odk_id;
+                        // link new data model to the current submission
+                        $dataArray['submission_id'] = $submissionId;
+
+                        // find the parent (if exists)
+                        if($parentDataset = $section->dataset?->parent) {
+                            $parentClass = $section->dataset?->entity_model;
+                        }
 
                         // get array element as record
                         $repeatGroupEntry = ['rg' => $repeatGroupRecord];
@@ -901,7 +905,7 @@ class OdkLinkService
                         }
 
                         // delete previously stored records in this table (if any)
-                        $class::where('odk_id', $dataArray['odk_id'])->delete();
+                        $class::where('submission_id', $dataArray['submission_id'])->delete();
 
                         // create a new database record
                         $class::create($dataArray);
