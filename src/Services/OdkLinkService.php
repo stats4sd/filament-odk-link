@@ -625,30 +625,16 @@ class OdkLinkService
     // re-handle the updated submission content (submission content updated by user in front end)
     public function handleUpdatedSubmissionContent(Submission $submission)
     {
+        // Note:
+        // 1. It is necessary to call processEntry() to store submission data as entities, entity_values and custom table records
+        // 1. It is not necessary to call getAttachedMedia() function again, as media files of a submission were associated with submission.
+        // 2. It is not necessary to call app-specific processing again, as it should be triggered when submission is retrieved at first time
+
         $entry = $submission->content;
 
         $xlsformVersion = $submission->xlsformVersion;
 
         $this->processEntry($submission, $entry, $xlsformVersion);
-
-        // TODO: as entities records are deleted, it looks like we need to handle media files again here
-        // $this->getAttachedMedia($entry, $token, $xlsform, $submission);
-
-
-        // ******** CALL APP-SPECIFIC PROCESSING ******** //
-
-        // if app developer has defined a method of processing submission content, call that method:
-
-        // Question: suppose application specific feature has been triggered when retrieve submission at first time,
-        // it should not be necessary to trigger it again after user editing submission content in front end
-
-        // $class = config('filament-odk-link.submission.process_method.class');
-        // $method = config('filament-odk-link.submission.process_method.method');
-
-        // if ($class && $method) {
-        //     $class::$method($submission);
-        // }
-        // }
     }
 
 

@@ -54,6 +54,8 @@ class Submission extends Model implements HasMedia
             }
 
             // before updating submission record
+            // P.S. model event can be triggered after saving the updated submission content in modal popup,
+            // but it cannot be triggered if the editing is saved in a separated Edit page
             static::updating(function ($record) {
                 // submission content has been updated by user, need to delete all related entities and entity_values records,
                 // because they contain values before editing
