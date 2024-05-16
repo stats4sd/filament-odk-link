@@ -612,6 +612,11 @@ class OdkLinkService
             if ($class && $method) {
                 $class::$method($submission);
             }
+
+            //££
+            // Add temporary code to retrieve one submission only
+            break;
+            //££
         }
 
         return $resultsToAdd->count();
@@ -732,36 +737,30 @@ class OdkLinkService
             // initialise data array
             $dataArray = [];
 
-            // Link the new data model to the current submission
-            $dataArray['submission_id'] = $submissionId;
+            // // Link the new data model to the current submission
+            // $dataArray['submission_id'] = $submissionId;
 
             // access the value of each ODK variable from a deeply nested array using "dot" notation
             foreach ($schema as $schemaItem) {
                 $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
                 $value = Arr::get($entry, $itemPath);
 
-                // handle GPS data
-                // We expect the data model to have columns for latitude, longitude, altitude and accuracy in the format of $varName + '_' + 'latitude', etc.
-                if ($schemaItem['type'] === 'geopoint') {
-                    if (in_array($schemaItem['name'] . '_' . 'latitude', $columnNames, true)) {
-                        $dataArray[$schemaItem['name'] . '_' . 'latitude'] = $value['coordinates'][0];
-                    }
-
-                    if (in_array($schemaItem['name'] . '_' . 'longitude', $columnNames, true)) {
-                        $dataArray[$schemaItem['name'] . '_' . 'longitude'] = $value['coordinates'][1];
-                    }
-
-                    if (in_array($schemaItem['name'] . '_' . 'altitude', $columnNames, true)) {
-                        $dataArray[$schemaItem['name'] . '_' . 'altitude'] = $value['coordinates'][2];
-                    }
-
-                    if (in_array($schemaItem['name'] . '_' . 'accuracy', $columnNames, true)) {
-                        $dataArray[$schemaItem['name'] . '_' . 'accuracy'] = $value['properties']['accuracy'];
-                    }
-                } elseif ($class && in_array($schemaItem['name'], $columnNames)) {
+                if ($class && in_array($schemaItem['name'], $columnNames)) {
                     $dataArray[$schemaItem['name']] = $value;
                 }
             }
+
+            // Link the new data model to the current submission
+            $dataArray['submission_id'] = $submissionId;
+
+            $newDataArray = $this->prepareDataArray($section->is_repeat, $entry, $schema, $class, $columnNames, $submissionId);
+            $newDataArray['submission_id'] = $submissionId;
+
+            logger('$dataArray');
+            logger($dataArray);
+
+            logger('$newDataArray');
+            logger($newDataArray);
 
             // delete previously stored records in this table (if any)
             $class::where('submission_id', $dataArray['submission_id'])->delete();
@@ -769,6 +768,34 @@ class OdkLinkService
             // create a new database record
             $class::create($dataArray);
         }
+    }
+
+
+    private function prepareDataArray($isRepeat, $entry, $schema, $class, $columnNames, $submissionId)
+    {
+        // initialise array
+        $result = [];
+
+        // add submission Id to array
+        $result['submission_id'] = $submissionId;
+
+        // extract values from main survey to array
+        if ($isRepeat === 0) {
+            // access the value of each ODK variable from a deeply nested array using "dot" notation
+            foreach ($schema as $schemaItem) {
+                $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+                $value = Arr::get($entry, $itemPath);
+
+                if ($class && in_array($schemaItem['name'], $columnNames)) {
+                    $result[$schemaItem['name']] = $value;
+                }
+            }
+
+            // extract values from repeat group to array
+        } else {
+        }
+
+        return $result;
     }
 
 
@@ -895,7 +922,7 @@ class OdkLinkService
                         $dataArray['submission_id'] = $submissionId;
 
                         // find the parent (if exists)
-                        if($parentDataset = $section->dataset?->parent) {
+                        if ($parentDataset = $section->dataset?->parent) {
                             $parentClass = $section->dataset?->entity_model;
                         }
 
@@ -916,27 +943,7 @@ class OdkLinkService
                             $value = Arr::get($repeatGroupEntry, $fullItemPath);
                             // dump($schemaItem['name'] . ' : ' . $value);
 
-                            // handle GPS data
-                            // We expect the data model to have columns for latitude, longitude, altitude and accuracy in the format of $varName + '_' + 'latitude', etc.
-
-                            if ($schemaItem['type'] === 'geopoint') {
-                                if (in_array($schemaItem['name'] . '_' . 'latitude', $columnNames, true)) {
-                                    $dataArray[$schemaItem['name'] . '_' . 'latitude'] = $value['coordinates'][0];
-                                }
-
-                                if (in_array($schemaItem['name'] . '_' . 'longitude', $columnNames, true)) {
-                                    $dataArray[$schemaItem['name'] . '_' . 'longitude'] = $value['coordinates'][1];
-                                }
-
-                                if (in_array($schemaItem['name'] . '_' . 'altitude', $columnNames, true)) {
-                                    $dataArray[$schemaItem['name'] . '_' . 'altitude'] = $value['coordinates'][2];
-                                }
-
-                                if (in_array($schemaItem['name'] . '_' . 'accuracy', $columnNames, true)) {
-                                    $dataArray[$schemaItem['name'] . '_' . 'accuracy'] = $value['properties']['accuracy'];
-                                }
-                            }
-                            elseif (in_array($schemaItem['name'], $columnNames)) {
+                            if (in_array($schemaItem['name'], $columnNames)) {
                                 $dataArray[$schemaItem['name']] = $value;
                             }
                         }
