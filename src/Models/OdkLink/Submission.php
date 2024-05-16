@@ -2,16 +2,17 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
-use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Submission extends Model implements HasMedia
 {
@@ -31,7 +32,7 @@ class Submission extends Model implements HasMedia
     protected static function booted(): void
     {
         static::addGlobalScope('owned', static function (Builder $query) {
-            if (Auth::check() && ! Auth::user()?->hasRole(config('filament-odk-link.roles.xlsform-admin'))) {
+            if (Auth::check() && !Auth::user()?->hasRole(config('filament-odk-link.roles.xlsform-admin'))) {
                 $query->where(function (Builder $query) {
                     $query->whereHas('xlsformVersion', function (Builder $query) {
                         $query->whereHas('xlsform', function (Builder $query) {
@@ -51,6 +52,30 @@ class Submission extends Model implements HasMedia
                     });
                 });
             }
+
+            // before updating submission record
+            // P.S. model event can be triggered after saving the updated submission content in modal popup,
+            // but it cannot be triggered if the editing is saved in a separated Edit page
+            static::updating(function ($record) {
+                // submission content has been updated by user, need to delete all related entities and entity_values records,
+                // because they contain values before editing
+                $entities = Entity::where('submission_id', $record->id)->orderByDesc('id')->get();
+
+                foreach ($entities as $entity) {
+                    EntityValue::where('entity_id', $entity->id)->delete();
+                }
+
+                foreach ($entities as $entity) {
+                    $entity->delete();
+                }
+
+                // Note: This is hard to find all related models inside a submission here,
+                // it would be much easier to delete custom table records in OdkLinkService.processEntryFromSection()
+
+                // handle the updated submission content again, this will create entities, entity_values and custom table records
+                $odkLinkService = app()->make(OdkLinkService::class);
+                $odkLinkService->handleUpdatedSubmissionContent($record);
+            });
         });
     }
 
@@ -91,5 +116,4 @@ class Submission extends Model implements HasMedia
     {
         return $this->hasManyThrough(EntityValue::class, Entity::class);
     }
-
 }
