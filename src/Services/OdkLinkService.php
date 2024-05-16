@@ -919,9 +919,6 @@ class OdkLinkService
                             // handle GPS data
                             // We expect the data model to have columns for latitude, longitude, altitude and accuracy in the format of $varName + '_' + 'latitude', etc.
 
-                            $valueType = $this->getValueType($schemaItem, )
-
-
                             if ($schemaItem['type'] === 'geopoint') {
                                 if (in_array($schemaItem['name'] . '_' . 'latitude', $columnNames, true)) {
                                     $dataArray[$schemaItem['name'] . '_' . 'latitude'] = $value['coordinates'][0];
