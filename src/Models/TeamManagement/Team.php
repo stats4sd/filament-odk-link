@@ -8,16 +8,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Mail\TeamManagement\InviteMember;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsForms;
 use App\Models\User;
 
-class Team extends Model
+class Team extends Model implements WithXlsforms
 {
     use HasXlsForms;
 
     protected $table = 'teams';
 
-
+    protected $appends = ['odk_qr_code'];
 
     /**
      * Generate an invitation to join this team for each of the provided email addresses

@@ -38,6 +38,12 @@ return new class extends Migration {
             // Does this form use the latest available template?
             $table->boolean('has_latest_template')->default(1);
 
+            // Does the published form have the latest media files?
+            // Should be updated in the case where:
+            // - a new media file is added to the form_template
+            // - the owner updates entries in their lookup dataset entries that are linked to this form.
+            $table->boolean('has_latest_media')->default(1);
+
             $table->timestamps();
 
         });

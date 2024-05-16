@@ -28,7 +28,7 @@ trait HasXlsForms
         static::created(static function ($owner) use ($odkLinkService) {
 
             // check if we are in local-only (no-ODK link) mode
-            if (config('filament-odk-link.odk.url') === null || config('filament-odk-link.odk.url') == '') {
+            if (!config('filament-odk-link.odk.url')) {
                 return;
             }
 
@@ -83,7 +83,7 @@ trait HasXlsForms
         return new Attribute(
             get: function (): ?string {
 
-                if (!$this->odkProject->appUsers->first()) {
+                if (!$this->odkProject?->appUsers->first()) {
                     return null;
                 }
 

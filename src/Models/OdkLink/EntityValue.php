@@ -2,7 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use App\Models\Translation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,8 +10,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class EntityValue extends Model
 {
     protected $table = 'entity_values';
-
-
 
     public function entity(): BelongsTo
     {
@@ -23,11 +20,4 @@ class EntityValue extends Model
     {
         return $this->belongsTo(OdkProject::class);
     }
-
-    public function translation(): HasOne
-    {
-        return $this->hasOne(Translation::class);
-    }
-
-
 }

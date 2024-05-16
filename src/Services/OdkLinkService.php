@@ -4,27 +4,31 @@ namespace Stats4sd\FilamentOdkLink\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use App\Models\SurveyData\SimpleFormMain;
 use Illuminate\Http\Client\RequestException;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
+use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
+use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\AppUser;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\FilamentOdkLink\Exports\DatasetModelsExport;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
-use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
 
 /**
  * All ODK Aggregation services should be able to handle ODK forms, so this interface should always be used.
@@ -53,9 +57,7 @@ class OdkLinkService
                 ->json();
 
             return $response['token'];
-
         });
-
     }
 
     /**
@@ -87,7 +89,6 @@ class OdkLinkService
             ])
             ->throw()
             ->json();
-
     }
 
     public function createProjectAppUser(OdkProject $odkProject): array
@@ -112,7 +113,6 @@ class OdkLinkService
             ->json();
 
         return $userResponse;
-
     }
 
     /**
@@ -240,7 +240,6 @@ class OdkLinkService
             ->get("{$this->endpoint}/projects/{$xlsformTemplate->owner->odkProject->id}/forms/{$xlsformTemplate->odk_id}/attachments")
             ->throw()
             ->json();
-
     }
 
 
@@ -263,7 +262,6 @@ class OdkLinkService
             foreach ($requiredFixedMedia as $requiredMediaItem) {
                 $this->uploadSingleMediaFile($xlsform, $requiredMediaItem->getFirstMedia()->getPath());
             }
-
         }
 
 
@@ -279,15 +277,17 @@ class OdkLinkService
                 if ($media) {
                     $this->uploadSingleMediaFile($xlsform, $media->getPath());
                 } else {
-                    // handle csv file generation...
 
+                    if (!$requiredMediaItem->is_static) {
+                        $csvPath = $this->createCsvLookupFile($xlsform, $requiredMediaItem);
+
+                        $this->uploadSingleMediaFile($xlsform, $csvPath);
+                    }
                 }
-
             }
         }
 
         return true;
-
     }
 
     /**
@@ -361,7 +361,6 @@ class OdkLinkService
         $xlsform->save();
 
         return $xlsformVersion;
-
     }
 
     /**
@@ -385,7 +384,6 @@ class OdkLinkService
         ]);
 
         return $result;
-
     }
 
     /**
@@ -413,8 +411,7 @@ class OdkLinkService
                 return true;
             }
 
-            throw($exception);
-
+            throw ($exception);
         }
 
         return true;
@@ -444,7 +441,6 @@ class OdkLinkService
                 // link it to the submission via Media Library
                 $submission->addMediaFromDisk($mediaItem['name'], config('filament-odk-link.storage.media'))
                     ->toMediaLibrary();
-
             }
         }
     }
@@ -478,7 +474,6 @@ class OdkLinkService
                         $item[$key] = $value;
                     }
                 });
-
             }
 
             return $item;
@@ -490,32 +485,32 @@ class OdkLinkService
     /**
      * Creates a new csv lookup file from the database;
      */
-    private function createCsvLookupFile(Xlsform $xlsform, mixed $lookup): string
+    public function createCsvLookupFile(WithXlsFormDrafts $xlsform, RequiredMedia $requiredMedia): string
     {
+        $dataset = $requiredMedia->dataset;
 
-        $filePath = 'xlsforms' . $xlsform->id . '/' . $lookup['csv_name'] . '.csv';
+        $filePath = 'xlsforms/' . $xlsform->id . '/' . $requiredMedia->name;
 
-        if ($lookup['per_owner'] === '1') {
-            $owner = $xlsform->owner;
-        } else {
-            $owner = null;
+        // check if the folder exists; if not, create it
+        if (!Storage::disk(config('filament-odk-link.storage.xlsforms'))->exists('xlsforms')) {
+            Storage::disk(config('filament-odk-link.storage.xlsforms'))->makeDirectory('xlsforms');
         }
 
+        if (!Storage::disk(config('filament-odk-link.storage.xlsforms'))->exists('xlsforms/' . $xlsform->id)) {
+            Storage::disk(config('filament-odk-link.storage.xlsforms'))->makeDirectory('xlsforms/' . $xlsform->id);
+        }
+
+        $owner = $xlsform->owner;
+
         Excel::store(
-            new SqlViewExport($lookup['mysql_name'], $owner, $lookup['owner_foreign_key']),
+            new DatasetModelsExport($dataset, $owner),
             $filePath,
             config('filament-odk-link.storage.xlsforms')
         );
 
-        // If the csv file is used with "select_one_from_external_file" (or multiple) it must not have any enclosure characters:
-        if (isset($lookup['external_file']) && $lookup['external_file'] === '1') {
-            $contents = Storage::disk(config('filament-odk-link.storage.xlsforms'))->get($filePath);
-            $contents = Str::of($contents)->replace('"', '');
+        // TODO: Explore if we need select_one_from_external_file support.
 
-            Storage::disk(config('filament-odk-link.storage.xlsforms'))->put($filePath, $contents);
-        }
-
-        return $filePath;
+        return Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($filePath);
     }
 
     public function unArchiveForm(Xlsform $xlsform)
@@ -552,9 +547,20 @@ class OdkLinkService
         $xlsform->getMedia('xlsform_file')->first()->copy($xlsformVersion, 'xlsform_file');
 
         // copy any attached media
-        $xlsform->getMedia('attached_media')->each(fn($media) => $media->copy($xlsformVersion, 'attached_media'));
+        $xlsform->getMedia('attached_media')->each(fn ($media) => $media->copy($xlsformVersion, 'attached_media'));
 
         return $xlsformVersion;
+    }
+
+    public function getSubmissionCount(Xlsform $xlsform): int
+    {
+        $token = $this->authenticate();
+        $results = Http::withToken($token)
+            ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions")
+            ->throw()
+            ->json();
+
+        return count($results);
     }
 
     // checks for new submissions for a given form and returns the count of new submissions found.
@@ -586,7 +592,7 @@ class OdkLinkService
                     'ownerName' => $xlsform->owner->name,
                 ]);
 
-                abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '));
+                abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '));
             }
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
@@ -610,13 +616,27 @@ class OdkLinkService
             if ($class && $method) {
                 $class::$method($submission);
             }
-
-
         }
 
         return $resultsToAdd->count();
-
     }
+
+
+    // re-handle the updated submission content (submission content updated by user in front end)
+    public function handleUpdatedSubmissionContent(Submission $submission)
+    {
+        // Note:
+        // 1. It is necessary to call processEntry() to store submission data as entities, entity_values and custom table records
+        // 1. It is not necessary to call getAttachedMedia() function again, as media files of a submission were associated with submission.
+        // 2. It is not necessary to call app-specific processing again, as it should be triggered when submission is retrieved at first time
+
+        $entry = $submission->content;
+
+        $xlsformVersion = $submission->xlsformVersion;
+
+        $this->processEntry($submission, $entry, $xlsformVersion);
+    }
+
 
     public function processEntry(Submission $submission, array $entry, XlsformVersion $xlsformVersion): void
     {
@@ -642,22 +662,80 @@ class OdkLinkService
 
         // use the schema to populate the entity with variables from the $entry (flattened entry);
 
-
-        // handle main survey (root)
         if ($section->is_repeat == 0) {
+            // handle main survey (root)
+            $this->storeMainSurveyToEntity($xlsform, $entry, $section, $submissionId);
 
-            // exclude structure items from section schema, as there is no value to be stored for a structure item
-            $schema = $section->schema->where('type', '!=', 'structure');
+            $this->storeMainSurveyToCustomTable($xlsform, $entry, $section, $submissionId);
+        } else {
+            // handle repeat group
+            $this->storeRepeatGroupToEntity($xlsform, $entry, $section, $submissionId);
 
-            // create entity record for main survey (root)
-            $entity = Entity::create([
-                'dataset_id' => $section->dataset->id,
-                'submission_id' => $submissionId,
-                'model_type' => $section->dataset->entity_model,
-            ]);
+            $this->storeRepeatGroupToCustomTable($xlsform, $entry, $section, $submissionId);
+        }
+    }
 
-            // add polymorphic relationship
-            $entity->owner()->associate($xlsform->owner)->save();
+
+    // store main survey to entities and entity_value tables
+    private function storeMainSurveyToEntity(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    {
+        // exclude structure items from section schema, as there is no value to be stored for a structure item
+        $schema = $section->schema->where('type', '!=', 'structure');
+
+        // create entity record for main survey (root)
+        $entity = Entity::create([
+            'dataset_id' => $section->dataset->id,
+            'submission_id' => $submissionId,
+            'model_type' => $section->dataset->entity_model,
+        ]);
+
+        // add polymorphic relationship
+        $entity->owner()->associate($xlsform->owner)->save();
+
+        // access the value of each ODK variable from a deeply nested array using "dot" notation
+        foreach ($schema as $schemaItem) {
+            $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+            $value = Arr::get($entry, $itemPath);
+
+            // dump($schemaItem['name'] . ' : ' . $value);
+
+            if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
+                // store ODK variable value as entity value record
+                EntityValue::create([
+                    'entity_id' => $entity->id,
+                    'dataset_variable_id' => $schemaItem['name'],
+                    'value' => $value,
+                ]);
+            }
+        }
+    }
+
+
+    // store main survey to custom table (if any)
+    private function storeMainSurveyToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    {
+        // exclude structure items from section schema, as there is no value to be stored for a structure item
+        $schema = $section->schema->where('type', '!=', 'structure');
+
+        // P.S. When deleting submission in application, we must delete related records for both generic approach and custom table approach
+
+        // check whether this xlsform template section has a related database table
+        $class = $section->dataset?->entity_model;
+
+        if ($class) {
+            $model = new $class;
+
+            // check database table existence
+            if (Schema::hasTable($model->getTable())) {
+                // get all column names of a table
+                $columnNames = Schema::getColumnListing($model->getTable());
+            }
+
+            // initialise data array
+            $dataArray = [];
+
+            // Link the new data model to the current submission
+            $dataArray['submission_id'] = $submissionId;
 
             // access the value of each ODK variable from a deeply nested array using "dot" notation
             foreach ($schema as $schemaItem) {
@@ -666,98 +744,182 @@ class OdkLinkService
 
                 // dump($schemaItem['name'] . ' : ' . $value);
 
-                if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
-                    // store ODK variable value as entity value record
-                    EntityValue::create([
-                        'entity_id' => $entity->id,
-                        'dataset_variable_id' => $schemaItem['name'],
-                        'value' => $value,
-                    ]);
+                if ($class && in_array($schemaItem['name'], $columnNames)) {
+                    $dataArray[$schemaItem['name']] = $value;
                 }
             }
 
-            // handle repeat group
-        } else {
+            // delete previously stored records in this table (if any)
+            $class::where('submission_id', $dataArray['submission_id'])->delete();
 
-            // exclude structure items from section schema, as there is no value to be stored for a structure item
-            $schema = $section->schema->where('type', '!=', 'structure');
-
-            // find the path of repeat group first item
-            $schemaPaths = $schema->pluck('path')->toArray();
-            // dump($schemaPaths[0]);
-
-            $position = Str::position($schemaPaths[0], $section->structure_item);
-
-            // construct the path for getting an array of repeat group
-            $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . $section->structure_item;
-            // dump($repeatGroupArrayPath);
-
-            // get the array for repeat group
-            $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
-            // dump($repeatGroupArray);
-
-            // it should be an array containing records for a repeat group
-            if (is_array($repeatGroupArray)) {
-                // dump("This is an array");
-
-                // handle each record in repeat group
-                foreach ($repeatGroupArray as $repeatGroupRecord) {
-                    // dump($repeatGroupRecord);
-
-                    // create entity record for each repeat group record
-                    $entity = Entity::create([
-                        'dataset_id' => $section->dataset->id,
-                        'submission_id' => $submissionId,
-                        'parent_id' => Entity::where('submission_id', $submissionId)->where('dataset_id', $section->parent?->dataset->id)->first()?->id ?? null,
-                        'model_type' => $section->dataset->entity_model,
-                    ]);
-
-                    // add polymorphic relationship
-                    $entity->owner()->associate($xlsform->owner)->save();
-
-                    // get array element as record
-                    $repeatGroupEntry = ['rg' => $repeatGroupRecord];
-
-                    foreach ($schema as $schemaItem) {
-                        $pathLength = Str::length($schemaItem['path']);
-                        $position = Str::position($schemaItem['path'], $section->structure_item);
-                        $lengthToCut = $pathLength - $position;
-
-                        $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
-                        // dump('$itemPath : ' . $itemPath);
-
-                        $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
-                        // dump('$fullItemPath : ' . $fullItemPath);
-
-                        $value = Arr::get($repeatGroupEntry, $fullItemPath);
-                        // dump($schemaItem['name'] . ' : ' . $value);
-
-                        if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
-                            // store ODK variable value as entity value record
-                            EntityValue::create([
-                                'entity_id' => $entity->id,
-                                'dataset_variable_id' => $schemaItem['name'],
-                                'value' => $value,
-                            ]);
-                        }
-                    }
-
-                }
-
-            } else {
-                // dump("This is NOT an array");
-            }
-
+            // create a new database record
+            $class::create($dataArray);
         }
+    }
 
+
+    // store repeat group to entities and entity_value tables
+    private function storeRepeatGroupToEntity(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    {
+        // exclude structure items from section schema, as there is no value to be stored for a structure item
+        $schema = $section->schema->where('type', '!=', 'structure');
+
+        // find the path of repeat group first item
+        $schemaPaths = $schema->pluck('path')->toArray();
+        // dump($schemaPaths[0]);
+
+        $position = Str::position($schemaPaths[0], $section->structure_item);
+
+        // construct the path for getting an array of repeat group
+        $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . $section->structure_item;
+        // dump($repeatGroupArrayPath);
+
+        // get the array for repeat group
+        $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
+        // dump($repeatGroupArray);
+
+        // it should be an array containing records for a repeat group
+        if (is_array($repeatGroupArray)) {
+            // dump("This is an array");
+
+            // handle each record in repeat group
+            foreach ($repeatGroupArray as $repeatGroupRecord) {
+                // dump($repeatGroupRecord);
+
+                // create entity record for each repeat group record
+                $entity = Entity::create([
+                    'dataset_id' => $section->dataset->id,
+                    'submission_id' => $submissionId,
+                    'parent_id' => Entity::where('submission_id', $submissionId)->where('dataset_id', $section->parent?->dataset->id)->first()?->id ?? null,
+                    'model_type' => $section->dataset->entity_model,
+                ]);
+
+                // add polymorphic relationship
+                $entity->owner()->associate($xlsform->owner)->save();
+
+                // get array element as record
+                $repeatGroupEntry = ['rg' => $repeatGroupRecord];
+
+                foreach ($schema as $schemaItem) {
+                    $pathLength = Str::length($schemaItem['path']);
+                    $position = Str::position($schemaItem['path'], $section->structure_item);
+                    $lengthToCut = $pathLength - $position;
+
+                    $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
+                    // dump('$itemPath : ' . $itemPath);
+
+                    $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+                    // dump('$fullItemPath : ' . $fullItemPath);
+
+                    $value = Arr::get($repeatGroupEntry, $fullItemPath);
+                    // dump($schemaItem['name'] . ' : ' . $value);
+
+                    if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
+                        // store ODK variable value as entity value record
+                        EntityValue::create([
+                            'entity_id' => $entity->id,
+                            'dataset_variable_id' => $schemaItem['name'],
+                            'value' => $value,
+                        ]);
+                    }
+                }
+            }
+        } else {
+            // dump("This is NOT an array");
+        }
+    }
+
+
+    // store repeat group to custom table (if any)
+    private function storeRepeatGroupToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    {
+        // exclude structure items from section schema, as there is no value to be stored for a structure item
+        $schema = $section->schema->where('type', '!=', 'structure');
+
+        // find the path of repeat group first item
+        $schemaPaths = $schema->pluck('path')->toArray();
+        // dump($schemaPaths[0]);
+
+        $position = Str::position($schemaPaths[0], $section->structure_item);
+
+        // construct the path for getting an array of repeat group
+        $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . $section->structure_item;
+        // dump($repeatGroupArrayPath);
+
+        // get the array for repeat group
+        $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
+        // dump($repeatGroupArray);
+
+        // it should be an array containing records for a repeat group
+        if (is_array($repeatGroupArray)) {
+            // dump("This is an array");
+
+            // P.S. When deleting submission in application, we must delete related records for both generic approach and custom table approach
+
+            // check whether this xlsform template section has a related database table
+            $class = $section->dataset?->entity_model;
+
+            if ($class) {
+                $model = new $class;
+
+                // check database table existence
+                if (Schema::hasTable($model->getTable())) {
+                    // get all column names of a table
+                    $columnNames = Schema::getColumnListing($model->getTable());
+
+                    // initialise data array
+                    $dataArray = [];
+
+                    // handle each record in repeat group
+                    foreach ($repeatGroupArray as $repeatGroupRecord) {
+                        // dump($repeatGroupRecord);
+
+                        // link new data model to the current submission
+                        $dataArray['submission_id'] = $submissionId;
+
+                        // find the parent (if exists)
+                        if($parentDataset = $section->dataset?->parent) {
+                            $parentClass = $section->dataset?->entity_model;
+                        }
+
+                        // get array element as record
+                        $repeatGroupEntry = ['rg' => $repeatGroupRecord];
+
+                        foreach ($schema as $schemaItem) {
+                            $pathLength = Str::length($schemaItem['path']);
+                            $position = Str::position($schemaItem['path'], $section->structure_item);
+                            $lengthToCut = $pathLength - $position;
+
+                            $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
+                            // dump('$itemPath : ' . $itemPath);
+
+                            $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+                            // dump('$fullItemPath : ' . $fullItemPath);
+
+                            $value = Arr::get($repeatGroupEntry, $fullItemPath);
+                            // dump($schemaItem['name'] . ' : ' . $value);
+
+                            if (in_array($schemaItem['name'], $columnNames)) {
+                                $dataArray[$schemaItem['name']] = $value;
+                            }
+                        }
+
+                        // delete previously stored records in this table (if any)
+                        $class::where('submission_id', $dataArray['submission_id'])->delete();
+
+                        // create a new database record
+                        $class::create($dataArray);
+                    }
+                }
+            }
+        } else {
+            // dump("This is NOT an array");
+        }
     }
 
 
     public function exportAsExcelFile(Xlsform $xlsform)
     {
         return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
-
     }
-
-
 }

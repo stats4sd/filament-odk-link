@@ -11,7 +11,7 @@ class AppUser extends Model
 {
     protected $table = 'app_users';
 
-
+    protected $appends = ['qr_code_string'];
 
     public function odkProject(): BelongsTo
     {

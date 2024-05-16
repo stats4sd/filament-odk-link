@@ -19,12 +19,15 @@ class PlatformSeeder extends Seeder
             return;
         }
 
-        // check config item existence - if there is no platform project ID, create a new platform and odk project in the 'usual' way.
-        if (config('filament-odk-link.odk.platform_project_id') === null || config('filament-odk-link.odk.platform_project_id') === '') {
+
+        // if there is no pre-set platform project ID, create the platform entry with the usual ODK Central project creation.
+        if (!config('filament-odk-link.odk.platform_project_id')) {
             $platform = Platform::create();
 
             //add the platform's odk-project ID to the env file
-            $this->setEnvironmentValue('ODK_PLATFORM_PROJECT_ID', $platform->odkProject->id);
+            if ($platform->odkProject) {
+                $this->setEnvironmentValue('ODK_PLATFORM_PROJECT_ID', $platform->odkProject->id);
+            }
 
             return;
         }
@@ -46,7 +49,7 @@ class PlatformSeeder extends Seeder
         if (file_exists($path)) {
 
             // if the .env file is set but empty, update it.
-            if(str_contains(file_get_contents($path), $key. '=')) {
+            if (str_contains(file_get_contents($path), $key . '=')) {
                 file_put_contents($path, str_replace(
                     $key . '=' . env($key),
                     $key . '=' . $value,
@@ -57,7 +60,6 @@ class PlatformSeeder extends Seeder
 
             // if the .env file is set but the key is not present, add it.
             file_put_contents($path, PHP_EOL . $key . '=' . $value, FILE_APPEND);
-
         }
     }
 }

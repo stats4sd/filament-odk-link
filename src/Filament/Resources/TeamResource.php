@@ -3,16 +3,13 @@
 namespace Stats4sd\FilamentOdkLink\Filament\Resources;
 
 use Filament\Forms;
-use Filament\Tables;
 use Filament\Forms\Form;
-use Filament\Tables\Table;
+use Filament\Infolists\Components\Section;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
-use Illuminate\Support\HtmlString;
-use Filament\Infolists\Components\Section;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\ViewEntry;
-use Filament\Infolists\Components\ImageEntry;
+use Filament\Tables;
+use Filament\Tables\Table;
 use Stats4sd\FilamentOdkLink\Filament\Resources\TeamResource\Pages;
 
 class TeamResource extends Resource
@@ -70,15 +67,10 @@ class TeamResource extends Resource
             ->schema([
                 Section::make('Team Details')
                     ->columns(6)
-                    ->schema([
-                        ImageEntry::make('avatar')
-                            ->label('')
-                            ->columnSpan(2),
-                        TextEntry::make('description')
-                            ->getStateUsing(fn ($record) => new HtmlString(preg_replace('/\n/', '<br/>', $record->description)))
-                            ->columnSpan(4),
-                        ViewEntry::make('qr_code')
-                            ->view('filament-odk-link::filament.infolists.components.team-qr-code'),
+                ->schema([
+                        ViewEntry::make('odk_qr_code')
+                            ->view('filament-odk-link::filament.infolists.components.team-qr-code')
+                            ->columnSpanFull(),
 
                     ]),
             ]);

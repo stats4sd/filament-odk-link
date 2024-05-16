@@ -81,4 +81,18 @@ class Dataset extends Model
             ])
             ->using(RequiredMedia::class);
     }
+
+
+    // Some datasets are customisable by owners (e.g. "Farms" for a survey; or lookup lists that are contextualisable. Some datasets are universal, and the same set of entities should be available to all teams.
+    public function isOwnerSpecific(): bool
+    {
+        return !$this->is_universal;
+    }
+
+    public function isUniversal(): bool
+    {
+        return $this->is_universal;
+    }
+
+
 }
