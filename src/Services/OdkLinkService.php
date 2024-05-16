@@ -2,33 +2,29 @@
 
 namespace Stats4sd\FilamentOdkLink\Services;
 
-use Carbon\Carbon;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Http;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 use App\Models\SurveyData\SimpleFormMain;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\RequestException;
-use Stats4sd\FilamentOdkLink\Imports\XlsImport;
-use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
-use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\AppUser;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 use Stats4sd\FilamentOdkLink\Exports\DatasetModelsExport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
+use Stats4sd\FilamentOdkLink\Imports\XlsImport;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 
 /**
  * All ODK Aggregation services should be able to handle ODK forms, so this interface should always be used.
@@ -726,10 +722,12 @@ class OdkLinkService
             $model = new $class;
 
             // check database table existence
-            if (Schema::hasTable($model->getTable())) {
-                // get all column names of a table
-                $columnNames = Schema::getColumnListing($model->getTable());
+            if (!Schema::hasTable($model->getTable())) {
+                return;
             }
+
+            // get all column names of a table
+            $columnNames = Schema::getColumnListing($model->getTable());
 
             // initialise data array
             $dataArray = [];
@@ -742,7 +740,26 @@ class OdkLinkService
                 $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
                 $value = Arr::get($entry, $itemPath);
 
-                // dump($schemaItem['name'] . ' : ' . $value);
+                // handle GPS data
+                // We expect the data model to have columns for latitude, longitude, altitude and accuracy in the format of $varName + '_' + 'latitude', etc.
+                if ($schemaItem['type'] === 'geopoint') {
+                    if (in_array($schemaItem['name'] . '_' . 'latitude', $columnNames, true)) {
+                        $dataArray[$schemaItem['name'] . '_' . 'latitude'] = $value['coordinates'][0];
+                    }
+
+                    if (in_array($schemaItem['name'] . '_' . 'longitude', $columnNames, true)) {
+                        $dataArray[$schemaItem['name'] . '_' . 'longitude'] = $value['coordinates'][1];
+                    }
+
+                    if (in_array($schemaItem['name'] . '_' . 'altitude', $columnNames, true)) {
+                        $dataArray[$schemaItem['name'] . '_' . 'altitude'] = $value['coordinates'][2];
+                    }
+
+                    if (in_array($schemaItem['name'] . '_' . 'accuracy', $columnNames, true)) {
+                        $dataArray[$schemaItem['name'] . '_' . 'accuracy'] = $value['properties']['accuracy'];
+                    }
+                }
+
 
                 if ($class && in_array($schemaItem['name'], $columnNames)) {
                     $dataArray[$schemaItem['name']] = $value;
@@ -870,6 +887,9 @@ class OdkLinkService
                     // initialise data array
                     $dataArray = [];
 
+                    // delete previously stored records in this table (if any)
+                    $class::where('submission_id', $submissionId)->delete();
+
                     // handle each record in repeat group
                     foreach ($repeatGroupArray as $repeatGroupRecord) {
                         // dump($repeatGroupRecord);
@@ -899,13 +919,30 @@ class OdkLinkService
                             $value = Arr::get($repeatGroupEntry, $fullItemPath);
                             // dump($schemaItem['name'] . ' : ' . $value);
 
+                            // handle GPS data
+                            // We expect the data model to have columns for latitude, longitude, altitude and accuracy in the format of $varName + '_' + 'latitude', etc.
+                            if ($schemaItem['type'] === 'geopoint') {
+                                if (in_array($schemaItem['name'] . '_' . 'latitude', $columnNames, true)) {
+                                    $dataArray[$schemaItem['name'] . '_' . 'latitude'] = $value['coordinates'][0];
+                                }
+
+                                if (in_array($schemaItem['name'] . '_' . 'longitude', $columnNames, true)) {
+                                    $dataArray[$schemaItem['name'] . '_' . 'longitude'] = $value['coordinates'][1];
+                                }
+
+                                if (in_array($schemaItem['name'] . '_' . 'altitude', $columnNames, true)) {
+                                    $dataArray[$schemaItem['name'] . '_' . 'altitude'] = $value['coordinates'][2];
+                                }
+
+                                if (in_array($schemaItem['name'] . '_' . 'accuracy', $columnNames, true)) {
+                                    $dataArray[$schemaItem['name'] . '_' . 'accuracy'] = $value['properties']['accuracy'];
+                                }
+                            }
+
                             if (in_array($schemaItem['name'], $columnNames)) {
                                 $dataArray[$schemaItem['name']] = $value;
                             }
                         }
-
-                        // delete previously stored records in this table (if any)
-                        $class::where('submission_id', $dataArray['submission_id'])->delete();
 
                         // create a new database record
                         $class::create($dataArray);
