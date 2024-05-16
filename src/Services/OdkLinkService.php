@@ -758,10 +758,7 @@ class OdkLinkService
                     if (in_array($schemaItem['name'] . '_' . 'accuracy', $columnNames, true)) {
                         $dataArray[$schemaItem['name'] . '_' . 'accuracy'] = $value['properties']['accuracy'];
                     }
-                }
-
-
-                if ($class && in_array($schemaItem['name'], $columnNames)) {
+                } elseif ($class && in_array($schemaItem['name'], $columnNames)) {
                     $dataArray[$schemaItem['name']] = $value;
                 }
             }
@@ -921,6 +918,10 @@ class OdkLinkService
 
                             // handle GPS data
                             // We expect the data model to have columns for latitude, longitude, altitude and accuracy in the format of $varName + '_' + 'latitude', etc.
+
+                            $valueType = $this->getValueType($schemaItem, )
+
+
                             if ($schemaItem['type'] === 'geopoint') {
                                 if (in_array($schemaItem['name'] . '_' . 'latitude', $columnNames, true)) {
                                     $dataArray[$schemaItem['name'] . '_' . 'latitude'] = $value['coordinates'][0];
@@ -938,8 +939,7 @@ class OdkLinkService
                                     $dataArray[$schemaItem['name'] . '_' . 'accuracy'] = $value['properties']['accuracy'];
                                 }
                             }
-
-                            if (in_array($schemaItem['name'], $columnNames)) {
+                            elseif (in_array($schemaItem['name'], $columnNames)) {
                                 $dataArray[$schemaItem['name']] = $value;
                             }
                         }
