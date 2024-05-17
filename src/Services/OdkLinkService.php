@@ -617,7 +617,7 @@ class OdkLinkService
 
             //££
             // Add temporary code to retrieve one submission only
-            break;
+            // break;
             //££
         }
 
@@ -738,6 +738,8 @@ class OdkLinkService
 
             // get data array from main survey
             $dataArray = $this->prepareDataArray($entry, $section, $schema, $model, $submissionId);
+            logger($dataArray);
+            logger('***** ' . $dataArray['farm_id']);
 
             // create a new database record
             $class::create($dataArray);
@@ -757,24 +759,19 @@ class OdkLinkService
         // get all column names of a table
         $columnNames = Schema::getColumnListing($model->getTable());
 
-        // $foreignKeyDetails = Schema::getForeignKeys($model->getTable());
-        // logger('table: ' . $model->getTable());
-
-        // hardcode temporary for testing
-        $foreignKeyDetails = Schema::getForeignKeys('xlsform_template_sections');
-        logger('table: ' . 'xlsform_template_sections');
+        // get all foreign key details of a table
+        $foreignKeyDetails = Schema::getForeignKeys($model->getTable());
+        logger('table: ' . $model->getTable());
 
         logger('$foreignKeyDetails: ');
         logger($foreignKeyDetails);
 
+        // store foreign key column name and foreign key table name in associative array
         // TODO: find Laravel array helper function to do the same in a simpler way
-        // use associative array, column name => foreign key table name
         $foreignKeyColumnNames = [];
         foreach ($foreignKeyDetails as $foreignKey) {
             foreach ($foreignKey['columns'] as $foreignKeyColumn) {
                 logger('foreign_key_column_name: ' . $foreignKeyColumn);
-                // array_push($foreignKeyColumnNames, $foreignKeyColumn);
-
                 $foreignKeyColumnNames[$foreignKeyColumn] = $foreignKey['foreign_table'];
             }
             logger('foreign_table: ' . $foreignKey['foreign_table']);
@@ -783,37 +780,6 @@ class OdkLinkService
         logger('$foreignKeyColumnNames: ');
         logger($foreignKeyColumnNames);
 
-        $attributeName = 'parent_id';
-
-        if (array_key_exists($attributeName, $foreignKeyColumnNames)) {
-            // find foreign key's table name
-            // $foreignKeyTableName = $foreignKeyColumnNames[$attributeName];
-
-            // hardcode temporary for testing
-            $foreignKeyTableName = 'users';
-
-
-            $model = HelperService::getModelByTablename($foreignKeyTableName);
-
-            if ($model == null) {
-                logger('Cannot find related model for this database table');
-            } else {
-                logger('Found related model for this database table');
-
-                logger('$attributeName: ' . $attributeName);
-                logger('$foreignKeyTableName: ' . $foreignKeyTableName);
-
-                // get foreign key table columns
-                $foreignKeyTableColumnNames = Schema::getColumnListing($foreignKeyTableName);
-
-                // get values to create a new record in foreign key table
-                $foreignKeyTableDataArray = ['name' => 'Testing', 'email' => 'testing@example.com', 'password' => '12345678'];
-
-                $record = $model::create($foreignKeyTableDataArray);
-            }
-
-            // set foreign key table new record id to foreign key column in this table
-        }
 
 
         // access the value of each ODK variable from a deeply nested array using "dot" notation
@@ -840,6 +806,39 @@ class OdkLinkService
                 // dump($schemaItem['name'] . ' : ' . $value);
             }
 
+
+            // special handling for ODK attribute serves as foreign key, and new record need to be created in foreign key table
+            if ($value == -99 && array_key_exists($schemaItem['name'], $foreignKeyColumnNames)) {
+
+                // find foreign key's table name
+                $foreignKeyTableName = $foreignKeyColumnNames[$schemaItem['name']];
+
+                // try to find the corresponding model by table name
+                $model = HelperService::getModelByTablename($foreignKeyTableName);
+
+                if ($model == null) {
+                    logger('Cannot find related model for this database table');
+                } else {
+                    logger('Found related model for this database table');
+
+                    logger('foreign key column name: ' . $schemaItem['name']);
+                    logger('$foreignKeyTableName: ' . $foreignKeyTableName);
+
+                    $foreignKeyTableDataArray = $this->prepareForeignKeyTableDataArray($schemaItem['name']);
+                    logger($foreignKeyTableDataArray);
+
+                    $newRecord = $model::create($foreignKeyTableDataArray);
+                    logger($newRecord);
+
+                    // set foreign key table new record id to foreign key column in this table
+                    $result[$schemaItem['name']] = $newRecord->id;
+                }
+
+                // foreign key ODK attribute handling is completed, contine to handle next ODK variable
+                continue;
+            }
+
+
             // handle different kind of data value
             if ($schemaItem['type'] === 'geopoint') {
                 $gpsData = $this->extractGpsData($schemaItem, $columnNames, $value);
@@ -847,6 +846,27 @@ class OdkLinkService
             } elseif (in_array($schemaItem['name'], $columnNames)) {
                 $result[$schemaItem['name']] = $value;
             }
+        }
+
+        return $result;
+    }
+
+
+    // a function to prepare data array for creating a new record in foreign key table
+    // P.S. It is not appropriate to have application specific code in this package, need to find
+    // a way to move this to main application in later time
+    private function prepareForeignKeyTableDataArray($foreignKeyName): array
+    {
+        logger('OdkLinkService.prepareForeignKeyTableDataArray()');
+
+        $result = [];
+
+        switch ($foreignKeyName) {
+            case 'farm_id':
+                $result = ['location_id' => 1, 'team_code' => 'C10001'];
+                break;
+
+            default:
         }
 
         return $result;
