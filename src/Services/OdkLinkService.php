@@ -2,29 +2,31 @@
 
 namespace Stats4sd\FilamentOdkLink\Services;
 
-use App\Models\SurveyData\SimpleFormMain;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
-use Stats4sd\FilamentOdkLink\Exports\DatasetModelsExport;
-use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use App\Models\SurveyData\SimpleFormMain;
+use App\Services\HelperService;
+use Illuminate\Http\Client\RequestException;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
+use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
+use Stats4sd\FilamentOdkLink\Exports\DatasetModelsExport;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
 
 /**
  * All ODK Aggregation services should be able to handle ODK forms, so this interface should always be used.
@@ -615,7 +617,7 @@ class OdkLinkService
 
             //££
             // Add temporary code to retrieve one submission only
-            // break;
+            break;
             //££
         }
 
@@ -754,6 +756,65 @@ class OdkLinkService
 
         // get all column names of a table
         $columnNames = Schema::getColumnListing($model->getTable());
+
+        // $foreignKeyDetails = Schema::getForeignKeys($model->getTable());
+        // logger('table: ' . $model->getTable());
+
+        // hardcode temporary for testing
+        $foreignKeyDetails = Schema::getForeignKeys('xlsform_template_sections');
+        logger('table: ' . 'xlsform_template_sections');
+
+        logger('$foreignKeyDetails: ');
+        logger($foreignKeyDetails);
+
+        // TODO: find Laravel array helper function to do the same in a simpler way
+        // use associative array, column name => foreign key table name
+        $foreignKeyColumnNames = [];
+        foreach ($foreignKeyDetails as $foreignKey) {
+            foreach ($foreignKey['columns'] as $foreignKeyColumn) {
+                logger('foreign_key_column_name: ' . $foreignKeyColumn);
+                // array_push($foreignKeyColumnNames, $foreignKeyColumn);
+
+                $foreignKeyColumnNames[$foreignKeyColumn] = $foreignKey['foreign_table'];
+            }
+            logger('foreign_table: ' . $foreignKey['foreign_table']);
+        }
+
+        logger('$foreignKeyColumnNames: ');
+        logger($foreignKeyColumnNames);
+
+        $attributeName = 'parent_id';
+
+        if (array_key_exists($attributeName, $foreignKeyColumnNames)) {
+            // find foreign key's table name
+            // $foreignKeyTableName = $foreignKeyColumnNames[$attributeName];
+
+            // hardcode temporary for testing
+            $foreignKeyTableName = 'users';
+
+
+            $model = HelperService::getModelByTablename($foreignKeyTableName);
+
+            if ($model == null) {
+                logger('Cannot find related model for this database table');
+            } else {
+                logger('Found related model for this database table');
+
+                logger('$attributeName: ' . $attributeName);
+                logger('$foreignKeyTableName: ' . $foreignKeyTableName);
+
+                // get foreign key table columns
+                $foreignKeyTableColumnNames = Schema::getColumnListing($foreignKeyTableName);
+
+                // get values to create a new record in foreign key table
+                $foreignKeyTableDataArray = ['name' => 'Testing', 'email' => 'testing@example.com', 'password' => '12345678'];
+
+                $record = $model::create($foreignKeyTableDataArray);
+            }
+
+            // set foreign key table new record id to foreign key column in this table
+        }
+
 
         // access the value of each ODK variable from a deeply nested array using "dot" notation
         foreach ($schema as $schemaItem) {
