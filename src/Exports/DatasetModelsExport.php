@@ -43,7 +43,8 @@ class DatasetModelsExport implements FromCollection, WithHeadings, WithStrictNul
             ->get()
             ->map(function ($entry) {
                 return $entry->getCsvContentsForOdk($this->owner);
-            });
+            })
+            ->concat(collect($this->dataset->entity_model::getExtraCsvRows()));
     }
 
     public function headings(): array
