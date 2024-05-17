@@ -731,35 +731,11 @@ class OdkLinkService
                 return;
             }
 
-            // get all column names of a table
-            $columnNames = Schema::getColumnListing($model->getTable());
-
-            // initialise data array
-            $dataArray = [];
-
-            // Link the new data model to the current submission
-            $dataArray['submission_id'] = $submissionId;
-
-            // access the value of each ODK variable from a deeply nested array using "dot" notation
-            foreach ($schema as $schemaItem) {
-                $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
-                $value = Arr::get($entry, $itemPath);
-
-                if ($class && in_array($schemaItem['name'], $columnNames)) {
-                    $dataArray[$schemaItem['name']] = $value;
-                }
-            }
-
-            $newDataArray = $this->prepareDataArray($section->is_repeat, $entry, $section, $schema, $class, $columnNames, $submissionId);
-
-            logger('main survey $dataArray');
-            logger($dataArray);
-
-            logger('main survey $newDataArray');
-            logger($newDataArray);
-
             // delete previously stored records in this table (if any)
-            $class::where('submission_id', $dataArray['submission_id'])->delete();
+            $class::where('submission_id', $submissionId)->delete();
+
+            // get data array from main survey
+            $dataArray = $this->prepareDataArray($entry, $section, $schema, $class, $model, $submissionId);
 
             // create a new database record
             $class::create($dataArray);
@@ -767,7 +743,8 @@ class OdkLinkService
     }
 
 
-    private function prepareDataArray($isRepeat, $entry, $section, $schema, $class, $columnNames, $submissionId)
+    // a generalised function to extract values from main survey and repeat group entry, returns an array for further processing
+    private function prepareDataArray($entry, $section, $schema, $class, $model, $submissionId): array
     {
         // initialise array
         $result = [];
@@ -775,8 +752,11 @@ class OdkLinkService
         // add submission Id to array
         $result['submission_id'] = $submissionId;
 
+        // get all column names of a table
+        $columnNames = Schema::getColumnListing($model->getTable());
+
         // extract values from main survey to array
-        if ($isRepeat === 0) {
+        if ($section->is_repeat == 0) {
 
             // access the value of each ODK variable from a deeply nested array using "dot" notation
             foreach ($schema as $schemaItem) {
@@ -790,9 +770,6 @@ class OdkLinkService
 
             // extract values from repeat group to array
         } else {
-
-            logger('$entry');
-            logger($entry);
 
             foreach ($schema as $schemaItem) {
                 $pathLength = Str::length($schemaItem['path']);
@@ -809,7 +786,7 @@ class OdkLinkService
                 // dump($schemaItem['name'] . ' : ' . $value);
 
                 if (in_array($schemaItem['name'], $columnNames)) {
-                    $dataArray[$schemaItem['name']] = $value;
+                    $result[$schemaItem['name']] = $value;
                 }
             }
         }
@@ -923,65 +900,30 @@ class OdkLinkService
                 $model = new $class;
 
                 // check database table existence
-                if (Schema::hasTable($model->getTable())) {
-                    // get all column names of a table
-                    $columnNames = Schema::getColumnListing($model->getTable());
+                if (!Schema::hasTable($model->getTable())) {
+                    return;
+                }
 
-                    // initialise data array
-                    $dataArray = [];
+                // delete previously stored records in this table (if any)
+                $class::where('submission_id', $submissionId)->delete();
 
-                    // delete previously stored records in this table (if any)
-                    $class::where('submission_id', $submissionId)->delete();
+                // handle each record in repeat group
+                foreach ($repeatGroupArray as $repeatGroupRecord) {
+                    // dump($repeatGroupRecord);
 
-                    // handle each record in repeat group
-                    foreach ($repeatGroupArray as $repeatGroupRecord) {
-                        // dump($repeatGroupRecord);
-
-                        // link new data model to the current submission
-                        $dataArray['submission_id'] = $submissionId;
-
-                        // find the parent (if exists)
-                        if ($parentDataset = $section->dataset?->parent) {
-                            $parentClass = $section->dataset?->entity_model;
-                        }
-
-                        // get array element as record
-                        $repeatGroupEntry = ['rg' => $repeatGroupRecord];
-
-                        logger('$repeatGroupEntry');
-                        logger($repeatGroupEntry);
-
-                        foreach ($schema as $schemaItem) {
-                            $pathLength = Str::length($schemaItem['path']);
-                            $position = Str::position($schemaItem['path'], $section->structure_item);
-                            $lengthToCut = $pathLength - $position;
-
-                            $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
-                            // dump('$itemPath : ' . $itemPath);
-
-                            $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
-                            // dump('$fullItemPath : ' . $fullItemPath);
-
-                            $value = Arr::get($repeatGroupEntry, $fullItemPath);
-                            // dump($schemaItem['name'] . ' : ' . $value);
-
-                            if (in_array($schemaItem['name'], $columnNames)) {
-                                $dataArray[$schemaItem['name']] = $value;
-                            }
-                        }
-
-                        $newDataArray = $this->prepareDataArray($section->is_repeat, $repeatGroupEntry, $section, $schema, $class, $columnNames, $submissionId);
-
-                        logger('repeat group $dataArray');
-                        logger($dataArray);
-
-                        logger('repeat group $newDataArray');
-                        logger($newDataArray);
-
-
-                        // create a new database record
-                        $class::create($dataArray);
+                    // find the parent (if exists)
+                    if ($parentDataset = $section->dataset?->parent) {
+                        $parentClass = $section->dataset?->entity_model;
                     }
+
+                    // get array element as record
+                    $repeatGroupEntry = ['rg' => $repeatGroupRecord];
+
+                    // get data array from repeat group entry
+                    $dataArray = $this->prepareDataArray($repeatGroupEntry, $section, $schema, $class, $model, $submissionId);
+
+                    // create a new database record
+                    $class::create($dataArray);
                 }
             }
         } else {
