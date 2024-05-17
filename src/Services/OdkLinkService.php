@@ -615,7 +615,7 @@ class OdkLinkService
 
             //££
             // Add temporary code to retrieve one submission only
-            break;
+            // break;
             //££
         }
 
@@ -735,7 +735,7 @@ class OdkLinkService
             $class::where('submission_id', $submissionId)->delete();
 
             // get data array from main survey
-            $dataArray = $this->prepareDataArray($entry, $section, $schema, $class, $model, $submissionId);
+            $dataArray = $this->prepareDataArray($entry, $section, $schema, $model, $submissionId);
 
             // create a new database record
             $class::create($dataArray);
@@ -743,8 +743,8 @@ class OdkLinkService
     }
 
 
-    // a generalised function to extract values from main survey and repeat group entry, returns an array for further processing
-    private function prepareDataArray($entry, $section, $schema, $class, $model, $submissionId): array
+    // a generic function to extract values from main survey and repeat group entry, returns an array for further processing
+    private function prepareDataArray($entry, $section, $schema, $model, $submissionId): array
     {
         // initialise array
         $result = [];
@@ -755,23 +755,16 @@ class OdkLinkService
         // get all column names of a table
         $columnNames = Schema::getColumnListing($model->getTable());
 
-        // extract values from main survey to array
-        if ($section->is_repeat == 0) {
+        // access the value of each ODK variable from a deeply nested array using "dot" notation
+        foreach ($schema as $schemaItem) {
 
-            // access the value of each ODK variable from a deeply nested array using "dot" notation
-            foreach ($schema as $schemaItem) {
+            // extract value from main survey
+            if ($section->is_repeat == 0) {
                 $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
                 $value = Arr::get($entry, $itemPath);
 
-                if ($class && in_array($schemaItem['name'], $columnNames)) {
-                    $result[$schemaItem['name']] = $value;
-                }
-            }
-
-            // extract values from repeat group to array
-        } else {
-
-            foreach ($schema as $schemaItem) {
+                // extract value from repeat group
+            } else {
                 $pathLength = Str::length($schemaItem['path']);
                 $position = Str::position($schemaItem['path'], $section->structure_item);
                 $lengthToCut = $pathLength - $position;
@@ -784,10 +777,43 @@ class OdkLinkService
 
                 $value = Arr::get($entry, $fullItemPath);
                 // dump($schemaItem['name'] . ' : ' . $value);
+            }
 
-                if (in_array($schemaItem['name'], $columnNames)) {
-                    $result[$schemaItem['name']] = $value;
-                }
+            // handle different kind of data value
+            if ($schemaItem['type'] === 'geopoint') {
+                $gpsData = $this->extractGpsData($schemaItem, $columnNames, $value);
+                $result = array_merge($result, $gpsData);
+            } elseif (in_array($schemaItem['name'], $columnNames)) {
+                $result[$schemaItem['name']] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+
+    // a generic function to extract GPS data, returns an array
+    private function extractGpsData($schemaItem, $columnNames, $value): array
+    {
+        $result = [];
+
+        // handle GPS data
+        // We expect the data model to have columns for latitude, longitude, altitude and accuracy in the format of $varName + '_' + 'latitude', etc.
+        if ($value != null) {
+            if (in_array($schemaItem['name'] . '_' . 'latitude', $columnNames, true)) {
+                $result[$schemaItem['name'] . '_' . 'latitude'] = $value['coordinates'][0];
+            }
+
+            if (in_array($schemaItem['name'] . '_' . 'longitude', $columnNames, true)) {
+                $result[$schemaItem['name'] . '_' . 'longitude'] = $value['coordinates'][1];
+            }
+
+            if (in_array($schemaItem['name'] . '_' . 'altitude', $columnNames, true)) {
+                $result[$schemaItem['name'] . '_' . 'altitude'] = $value['coordinates'][2];
+            }
+
+            if (in_array($schemaItem['name'] . '_' . 'accuracy', $columnNames, true)) {
+                $result[$schemaItem['name'] . '_' . 'accuracy'] = $value['properties']['accuracy'];
             }
         }
 
@@ -920,7 +946,7 @@ class OdkLinkService
                     $repeatGroupEntry = ['rg' => $repeatGroupRecord];
 
                     // get data array from repeat group entry
-                    $dataArray = $this->prepareDataArray($repeatGroupEntry, $section, $schema, $class, $model, $submissionId);
+                    $dataArray = $this->prepareDataArray($repeatGroupEntry, $section, $schema, $model, $submissionId);
 
                     // create a new database record
                     $class::create($dataArray);
