@@ -737,9 +737,9 @@ class OdkLinkService
             $class::where('submission_id', $submissionId)->delete();
 
             // get data array from main survey
-            $dataArray = $this->prepareDataArray($entry, $section, $schema, $model, $submissionId);
-            logger($dataArray);
-            logger('***** ' . $dataArray['farm_id']);
+            $dataArray = $this->prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId);
+            // logger($dataArray);
+            // logger('***** ' . $dataArray['farm_id']);
 
             // create a new database record
             $class::create($dataArray);
@@ -748,7 +748,7 @@ class OdkLinkService
 
 
     // a generic function to extract values from main survey and repeat group entry, returns an array for further processing
-    private function prepareDataArray($entry, $section, $schema, $model, $submissionId): array
+    private function prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId): array
     {
         // initialise array
         $result = [];
@@ -761,24 +761,24 @@ class OdkLinkService
 
         // get all foreign key details of a table
         $foreignKeyDetails = Schema::getForeignKeys($model->getTable());
-        logger('table: ' . $model->getTable());
+        // logger('table: ' . $model->getTable());
 
-        logger('$foreignKeyDetails: ');
-        logger($foreignKeyDetails);
+        // logger('$foreignKeyDetails: ');
+        // logger($foreignKeyDetails);
 
         // store foreign key column name and foreign key table name in associative array
         // TODO: find Laravel array helper function to do the same in a simpler way
         $foreignKeyColumnNames = [];
         foreach ($foreignKeyDetails as $foreignKey) {
             foreach ($foreignKey['columns'] as $foreignKeyColumn) {
-                logger('foreign_key_column_name: ' . $foreignKeyColumn);
+                // logger('foreign_key_column_name: ' . $foreignKeyColumn);
                 $foreignKeyColumnNames[$foreignKeyColumn] = $foreignKey['foreign_table'];
             }
-            logger('foreign_table: ' . $foreignKey['foreign_table']);
+            // logger('foreign_table: ' . $foreignKey['foreign_table']);
         }
 
-        logger('$foreignKeyColumnNames: ');
-        logger($foreignKeyColumnNames);
+        // logger('$foreignKeyColumnNames: ');
+        // logger($foreignKeyColumnNames);
 
 
 
@@ -807,7 +807,7 @@ class OdkLinkService
             }
 
 
-            // special handling for ODK attribute serves as foreign key, and new record need to be created in foreign key table
+            // special handling for ODK attribute that serves as foreign key, and create new record in foreign key table
             if ($value == -99 && array_key_exists($schemaItem['name'], $foreignKeyColumnNames)) {
 
                 // find foreign key's table name
@@ -816,19 +816,19 @@ class OdkLinkService
                 // try to find the corresponding model by table name
                 $model = HelperService::getModelByTablename($foreignKeyTableName);
 
-                if ($model == null) {
-                    logger('Cannot find related model for this database table');
-                } else {
-                    logger('Found related model for this database table');
+                if ($model != null) {
+                    // logger('Found related model for this database table');
+                    // logger('foreign key column name: ' . $schemaItem['name']);
+                    // logger('$foreignKeyTableName: ' . $foreignKeyTableName);
 
-                    logger('foreign key column name: ' . $schemaItem['name']);
-                    logger('$foreignKeyTableName: ' . $foreignKeyTableName);
-
-                    $foreignKeyTableDataArray = $this->prepareForeignKeyTableDataArray($schemaItem['name']);
-                    logger($foreignKeyTableDataArray);
+                    $foreignKeyTableDataArray = $this->prepareForeignKeyTableDataArray($entry, $schemaItem['name']);
+                    // logger($foreignKeyTableDataArray);
 
                     $newRecord = $model::create($foreignKeyTableDataArray);
-                    logger($newRecord);
+                    // logger($newRecord);
+
+                    // add xlsform's owner as farm's owner
+                    $newRecord->owner()->associate($xlsform->owner)->save();
 
                     // set foreign key table new record id to foreign key column in this table
                     $result[$schemaItem['name']] = $newRecord->id;
@@ -854,16 +854,40 @@ class OdkLinkService
 
     // a function to prepare data array for creating a new record in foreign key table
     // P.S. It is not appropriate to have application specific code in this package, need to find
-    // a way to move this to main application in later time
-    private function prepareForeignKeyTableDataArray($foreignKeyName): array
+    // a way to move this to main application in later time.
+    // E.g. subclass to overload superclass's function, or use interface
+    private function prepareForeignKeyTableDataArray($entry, $foreignKeyName): array
     {
-        logger('OdkLinkService.prepareForeignKeyTableDataArray()');
+        // logger('OdkLinkService.prepareForeignKeyTableDataArray()');
 
         $result = [];
 
         switch ($foreignKeyName) {
             case 'farm_id':
-                $result = ['location_id' => 1, 'team_code' => 'C10001'];
+                // get required information from submission entry directly
+
+                // Question: any idea to avoid adding extra double quote character in JSON content...?
+                $respondentName = Arr::get($entry, 'root.farm_info.respondent_name');
+                $identifiers = ['name' => $respondentName];
+                $result['identifiers'] = json_encode($identifiers);
+                // logger($result['identifiers']);
+
+                $result['location_id'] = Arr::get($entry, 'root.reg.final_location_id');
+                // logger($result['location_id']);
+
+                $result['latitude'] = Arr::get($entry, 'root.farm_info.gps_loc.coordinates')[0];
+                // logger($result['latitude']);
+
+                $result['longitude'] = Arr::get($entry, 'root.farm_info.gps_loc.coordinates')[1];
+                // logger($result['longitude']);
+
+                $result['altitude'] = Arr::get($entry, 'root.farm_info.gps_loc.coordinates')[2];
+                // logger($result['altitude']);
+
+                // prefix C for comparison farm, append timestamp in millsecond, hopefully it would be good enough to avoid duplication
+                $result['team_code'] = 'C' . Carbon::now()->getTimestampMs();
+                // logger($result['team_code']);
+
                 break;
 
             default:
@@ -879,22 +903,23 @@ class OdkLinkService
         $result = [];
 
         // handle GPS data
-        // We expect the data model to have columns for latitude, longitude, altitude and accuracy in the format of $varName + '_' + 'latitude', etc.
+        // We expect the data model to have columns for latitude, longitude, altitude and accuracy
+        // P.S. It would be more intuitive and generic to directly use column names latitude, longitude, altitude and accuracy
         if ($value != null) {
-            if (in_array($schemaItem['name'] . '_' . 'latitude', $columnNames, true)) {
-                $result[$schemaItem['name'] . '_' . 'latitude'] = $value['coordinates'][0];
+            if (in_array('latitude', $columnNames, true)) {
+                $result['latitude'] = $value['coordinates'][0];
             }
 
-            if (in_array($schemaItem['name'] . '_' . 'longitude', $columnNames, true)) {
-                $result[$schemaItem['name'] . '_' . 'longitude'] = $value['coordinates'][1];
+            if (in_array('longitude', $columnNames, true)) {
+                $result['longitude'] = $value['coordinates'][1];
             }
 
-            if (in_array($schemaItem['name'] . '_' . 'altitude', $columnNames, true)) {
-                $result[$schemaItem['name'] . '_' . 'altitude'] = $value['coordinates'][2];
+            if (in_array('altitude', $columnNames, true)) {
+                $result['altitude'] = $value['coordinates'][2];
             }
 
-            if (in_array($schemaItem['name'] . '_' . 'accuracy', $columnNames, true)) {
-                $result[$schemaItem['name'] . '_' . 'accuracy'] = $value['properties']['accuracy'];
+            if (in_array('accuracy', $columnNames, true)) {
+                $result['accuracy'] = $value['properties']['accuracy'];
             }
         }
 
@@ -1027,7 +1052,7 @@ class OdkLinkService
                     $repeatGroupEntry = ['rg' => $repeatGroupRecord];
 
                     // get data array from repeat group entry
-                    $dataArray = $this->prepareDataArray($repeatGroupEntry, $section, $schema, $model, $submissionId);
+                    $dataArray = $this->prepareDataArray($xlsform, $repeatGroupEntry, $section, $schema, $model, $submissionId);
 
                     // create a new database record
                     $class::create($dataArray);
