@@ -13,7 +13,7 @@ class TestCsvMediaGeneration extends Command
      *
      * @var string
      */
-    protected $signature = 'app:test-csv-media-generation';
+    protected $signature = 'odk:test-csv-media-generation';
 
     /**
      * The console command description.

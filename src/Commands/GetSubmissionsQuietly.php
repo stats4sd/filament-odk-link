@@ -13,7 +13,7 @@ class GetSubmissionsQuietly extends Command
      *
      * @var string
      */
-    protected $signature = 'app:get-submissions-quietly';
+    protected $signature = 'odk:get-submissions-quietly';
 
     /**
      * The console command description.

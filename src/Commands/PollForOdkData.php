@@ -13,7 +13,7 @@ class PollForOdkData extends Command
      *
      * @var string
      */
-    protected $signature = 'app:poll-for-odk-data';
+    protected $signature = 'odk:poll-for-odk-data';
 
     /**
      * The console command description.
