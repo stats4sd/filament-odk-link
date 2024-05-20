@@ -869,7 +869,7 @@ class OdkLinkService
                 // Question: any idea to avoid adding extra double quote character in JSON content...?
                 $respondentName = Arr::get($entry, 'root.farm_info.respondent_name');
                 $identifiers = ['name' => $respondentName];
-                $result['identifiers'] = json_encode($identifiers);
+                $result['identifiers'] = $identifiers;
                 // logger($result['identifiers']);
 
                 $result['location_id'] = Arr::get($entry, 'root.reg.final_location_id');
