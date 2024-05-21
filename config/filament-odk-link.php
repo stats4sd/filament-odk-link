@@ -78,5 +78,12 @@ return [
             'class' => env('SUBMISSION_PROCESS_CLASS', null),
             'method' => env('SUBMISSION_PROCESS_METHOD', null),
         ],
+
+        // The class and method used to process foreign key records in the submissions.
+        'foreign_key_process_method' => [
+            'class' => env('SUBMISSION_FOREIGN_KEY_PROCESS_CLASS', null),
+            'method' => env('SUBMISSION_FOREIGN_KEY_PROCESS_METHOD', null),
+        ],
+
     ],
 ];

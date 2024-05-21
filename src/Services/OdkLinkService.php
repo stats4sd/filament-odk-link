@@ -614,11 +614,6 @@ class OdkLinkService
             if ($class && $method) {
                 $class::$method($submission);
             }
-
-            //££
-            // Add temporary code to retrieve one submission only
-            // break;
-            //££
         }
 
         return $resultsToAdd->count();
@@ -738,8 +733,6 @@ class OdkLinkService
 
             // get data array from main survey
             $dataArray = $this->prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId);
-            // logger($dataArray);
-            // logger('***** ' . $dataArray['farm_id']);
 
             // create a new database record
             $class::create($dataArray);
@@ -761,25 +754,15 @@ class OdkLinkService
 
         // get all foreign key details of a table
         $foreignKeyDetails = Schema::getForeignKeys($model->getTable());
-        // logger('table: ' . $model->getTable());
-
-        // logger('$foreignKeyDetails: ');
-        // logger($foreignKeyDetails);
 
         // store foreign key column name and foreign key table name in associative array
         // TODO: find Laravel array helper function to do the same in a simpler way
         $foreignKeyColumnNames = [];
         foreach ($foreignKeyDetails as $foreignKey) {
             foreach ($foreignKey['columns'] as $foreignKeyColumn) {
-                // logger('foreign_key_column_name: ' . $foreignKeyColumn);
                 $foreignKeyColumnNames[$foreignKeyColumn] = $foreignKey['foreign_table'];
             }
-            // logger('foreign_table: ' . $foreignKey['foreign_table']);
         }
-
-        // logger('$foreignKeyColumnNames: ');
-        // logger($foreignKeyColumnNames);
-
 
 
         // access the value of each ODK variable from a deeply nested array using "dot" notation
@@ -807,31 +790,19 @@ class OdkLinkService
             }
 
 
-            // special handling for ODK attribute that serves as foreign key, and create new record in foreign key table
-            if ($value == -99 && array_key_exists($schemaItem['name'], $foreignKeyColumnNames)) {
+            // if app developer has defined a method of creating foreign key record in submission content, call that method:
+            $class = config('filament-odk-link.submission.foreign_key_process_method.class');
+            $method = config('filament-odk-link.submission.foreign_key_process_method.method');
 
-                // find foreign key's table name
-                $foreignKeyTableName = $foreignKeyColumnNames[$schemaItem['name']];
+            if (array_key_exists($schemaItem['name'], $foreignKeyColumnNames) && $class && $method) {
+                $newRecordId = $class::$method($entry, $xlsform->owner, $schemaItem['name'], $value, $foreignKeyColumnNames[$schemaItem['name']]);
 
-                // try to find the corresponding model by table name
-                $model = HelperService::getModelByTablename($foreignKeyTableName);
-
-                if ($model != null) {
-                    // logger('Found related model for this database table');
-                    // logger('foreign key column name: ' . $schemaItem['name']);
-                    // logger('$foreignKeyTableName: ' . $foreignKeyTableName);
-
-                    $foreignKeyTableDataArray = $this->prepareForeignKeyTableDataArray($entry, $schemaItem['name']);
-                    // logger($foreignKeyTableDataArray);
-
-                    $newRecord = $model::create($foreignKeyTableDataArray);
-                    // logger($newRecord);
-
-                    // add xlsform's owner as farm's owner
-                    $newRecord->owner()->associate($xlsform->owner)->save();
-
-                    // set foreign key table new record id to foreign key column in this table
-                    $result[$schemaItem['name']] = $newRecord->id;
+                if ($newRecordId != -1) {
+                    // created new record in foreign key table, use newly created record ID
+                    $result[$schemaItem['name']] = $newRecordId;
+                } else {
+                    // it is not necessary to create new record in foreign key table, use ID defined in submission
+                    $result[$schemaItem['name']] = $value;
                 }
 
                 // foreign key ODK attribute handling is completed, contine to handle next ODK variable
@@ -846,51 +817,6 @@ class OdkLinkService
             } elseif (in_array($schemaItem['name'], $columnNames)) {
                 $result[$schemaItem['name']] = $value;
             }
-        }
-
-        return $result;
-    }
-
-
-    // a function to prepare data array for creating a new record in foreign key table
-    // P.S. It is not appropriate to have application specific code in this package, need to find
-    // a way to move this to main application in later time.
-    // E.g. subclass to overload superclass's function, or use interface
-    private function prepareForeignKeyTableDataArray($entry, $foreignKeyName): array
-    {
-        // logger('OdkLinkService.prepareForeignKeyTableDataArray()');
-
-        $result = [];
-
-        switch ($foreignKeyName) {
-            case 'farm_id':
-                // get required information from submission entry directly
-
-                // Question: any idea to avoid adding extra double quote character in JSON content...?
-                $respondentName = Arr::get($entry, 'root.farm_info.respondent_name');
-                $identifiers = ['name' => $respondentName];
-                $result['identifiers'] = $identifiers;
-                // logger($result['identifiers']);
-
-                $result['location_id'] = Arr::get($entry, 'root.reg.final_location_id');
-                // logger($result['location_id']);
-
-                $result['latitude'] = Arr::get($entry, 'root.farm_info.gps_loc.coordinates')[0];
-                // logger($result['latitude']);
-
-                $result['longitude'] = Arr::get($entry, 'root.farm_info.gps_loc.coordinates')[1];
-                // logger($result['longitude']);
-
-                $result['altitude'] = Arr::get($entry, 'root.farm_info.gps_loc.coordinates')[2];
-                // logger($result['altitude']);
-
-                // prefix C for comparison farm, append timestamp in millsecond, hopefully it would be good enough to avoid duplication
-                $result['team_code'] = 'C' . Carbon::now()->getTimestampMs();
-                // logger($result['team_code']);
-
-                break;
-
-            default:
         }
 
         return $result;
