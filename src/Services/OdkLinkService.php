@@ -5,22 +5,17 @@ namespace Stats4sd\FilamentOdkLink\Services;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
-use App\Models\SurveyData\SimpleFormMain;
 use Illuminate\Http\Client\RequestException;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
-use Stats4sd\FilamentOdkLink\Exports\SqlViewExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\AppUser;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
@@ -575,7 +570,7 @@ class OdkLinkService
             ->json();
 
         // only process new submissions
-        $resultsToAdd = Collect($results['value'])->whereNotIn('__id', $xlsform->submissions->pluck('odk_id')->toArray());
+        $resultsToAdd = Collect($results['value'])->whereNotIn('__id', $xlsform->submissions()->withTrashed('soft_deletes')->pluck('odk_id')->toArray());
 
         foreach ($resultsToAdd as $entry) {
 
@@ -726,35 +721,132 @@ class OdkLinkService
             $model = new $class;
 
             // check database table existence
-            if (Schema::hasTable($model->getTable())) {
-                // get all column names of a table
-                $columnNames = Schema::getColumnListing($model->getTable());
-            }
-
-            // initialise data array
-            $dataArray = [];
-
-            // Link the new data model to the current submission
-            $dataArray['submission_id'] = $submissionId;
-
-            // access the value of each ODK variable from a deeply nested array using "dot" notation
-            foreach ($schema as $schemaItem) {
-                $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
-                $value = Arr::get($entry, $itemPath);
-
-                // dump($schemaItem['name'] . ' : ' . $value);
-
-                if ($class && in_array($schemaItem['name'], $columnNames)) {
-                    $dataArray[$schemaItem['name']] = $value;
-                }
+            if (!Schema::hasTable($model->getTable())) {
+                return;
             }
 
             // delete previously stored records in this table (if any)
-            $class::where('submission_id', $dataArray['submission_id'])->delete();
+            $class::where('submission_id', $submissionId)->delete();
+
+            // get data array from main survey
+            $dataArray = $this->prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId);
 
             // create a new database record
             $class::create($dataArray);
         }
+    }
+
+
+    // a generic function to extract values from main survey and repeat group entry, returns an array for further processing
+    private function prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId): array
+    {
+        // initialise array
+        $result = [];
+
+        // add submission Id to array
+        $result['submission_id'] = $submissionId;
+
+        // get all column names of a table
+        $columnNames = Schema::getColumnListing($model->getTable());
+
+        // get all foreign key details of a table
+        $foreignKeyDetails = Schema::getForeignKeys($model->getTable());
+
+        // store foreign key column name and foreign key table name in associative array
+        // TODO: find Laravel array helper function to do the same in a simpler way
+        $foreignKeyColumnNames = [];
+        foreach ($foreignKeyDetails as $foreignKey) {
+            foreach ($foreignKey['columns'] as $foreignKeyColumn) {
+                $foreignKeyColumnNames[$foreignKeyColumn] = $foreignKey['foreign_table'];
+            }
+        }
+
+
+        // access the value of each ODK variable from a deeply nested array using "dot" notation
+        foreach ($schema as $schemaItem) {
+
+            // extract value from main survey
+            if ($section->is_repeat == 0) {
+                $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+                $value = Arr::get($entry, $itemPath);
+
+                // extract value from repeat group
+            } else {
+                $pathLength = Str::length($schemaItem['path']);
+                $position = Str::position($schemaItem['path'], $section->structure_item);
+                $lengthToCut = $pathLength - $position;
+
+                $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
+                // dump('$itemPath : ' . $itemPath);
+
+                $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+                // dump('$fullItemPath : ' . $fullItemPath);
+
+                $value = Arr::get($entry, $fullItemPath);
+                // dump($schemaItem['name'] . ' : ' . $value);
+            }
+
+
+            // if app developer has defined a method of creating foreign key record in submission content, call that method:
+            $class = config('filament-odk-link.submission.foreign_key_process_method.class');
+            $method = config('filament-odk-link.submission.foreign_key_process_method.method');
+
+            if (array_key_exists($schemaItem['name'], $foreignKeyColumnNames) && $class && $method) {
+                $newRecordId = $class::$method($entry, $xlsform->owner, $schemaItem['name'], $value, $foreignKeyColumnNames[$schemaItem['name']]);
+
+                if ($newRecordId != -1) {
+                    // created new record in foreign key table, use newly created record ID
+                    $result[$schemaItem['name']] = $newRecordId;
+                } else {
+                    // it is not necessary to create new record in foreign key table, use ID defined in submission
+                    $result[$schemaItem['name']] = $value;
+                }
+
+                // foreign key ODK attribute handling is completed, contine to handle next ODK variable
+                continue;
+            }
+
+
+            // handle different kind of data value
+            if ($schemaItem['type'] === 'geopoint') {
+                $gpsData = $this->extractGpsData($schemaItem, $columnNames, $value);
+                $result = array_merge($result, $gpsData);
+            } elseif (in_array($schemaItem['name'], $columnNames)) {
+                $result[$schemaItem['name']] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+
+    // a generic function to extract GPS data, returns an array
+    private function extractGpsData($schemaItem, $columnNames, $value): array
+    {
+        $result = [];
+
+        // handle GPS data
+        // We expect the data model to have columns for latitude, longitude, altitude and accuracy
+        // P.S. It would be more intuitive and generic to directly use column names latitude, longitude, altitude and accuracy
+        if ($value != null) {
+            if (in_array('latitude', $columnNames, true)) {
+                $result['latitude'] = $value['coordinates'][0];
+            }
+
+            if (in_array('longitude', $columnNames, true)) {
+                $result['longitude'] = $value['coordinates'][1];
+            }
+
+            if (in_array('altitude', $columnNames, true)) {
+                $result['altitude'] = $value['coordinates'][2];
+            }
+
+            if (in_array('accuracy', $columnNames, true)) {
+                $result['accuracy'] = $value['properties']['accuracy'];
+            }
+        }
+
+        return $result;
     }
 
 
@@ -863,53 +955,30 @@ class OdkLinkService
                 $model = new $class;
 
                 // check database table existence
-                if (Schema::hasTable($model->getTable())) {
-                    // get all column names of a table
-                    $columnNames = Schema::getColumnListing($model->getTable());
+                if (!Schema::hasTable($model->getTable())) {
+                    return;
+                }
 
-                    // initialise data array
-                    $dataArray = [];
+                // delete previously stored records in this table (if any)
+                $class::where('submission_id', $submissionId)->delete();
 
-                    // handle each record in repeat group
-                    foreach ($repeatGroupArray as $repeatGroupRecord) {
-                        // dump($repeatGroupRecord);
+                // handle each record in repeat group
+                foreach ($repeatGroupArray as $repeatGroupRecord) {
+                    // dump($repeatGroupRecord);
 
-                        // link new data model to the current submission
-                        $dataArray['submission_id'] = $submissionId;
-
-                        // find the parent (if exists)
-                        if($parentDataset = $section->dataset?->parent) {
-                            $parentClass = $section->dataset?->entity_model;
-                        }
-
-                        // get array element as record
-                        $repeatGroupEntry = ['rg' => $repeatGroupRecord];
-
-                        foreach ($schema as $schemaItem) {
-                            $pathLength = Str::length($schemaItem['path']);
-                            $position = Str::position($schemaItem['path'], $section->structure_item);
-                            $lengthToCut = $pathLength - $position;
-
-                            $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
-                            // dump('$itemPath : ' . $itemPath);
-
-                            $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
-                            // dump('$fullItemPath : ' . $fullItemPath);
-
-                            $value = Arr::get($repeatGroupEntry, $fullItemPath);
-                            // dump($schemaItem['name'] . ' : ' . $value);
-
-                            if (in_array($schemaItem['name'], $columnNames)) {
-                                $dataArray[$schemaItem['name']] = $value;
-                            }
-                        }
-
-                        // delete previously stored records in this table (if any)
-                        $class::where('submission_id', $dataArray['submission_id'])->delete();
-
-                        // create a new database record
-                        $class::create($dataArray);
+                    // find the parent (if exists)
+                    if ($parentDataset = $section->dataset?->parent) {
+                        $parentClass = $section->dataset?->entity_model;
                     }
+
+                    // get array element as record
+                    $repeatGroupEntry = ['rg' => $repeatGroupRecord];
+
+                    // get data array from repeat group entry
+                    $dataArray = $this->prepareDataArray($xlsform, $repeatGroupEntry, $section, $schema, $model, $submissionId);
+
+                    // create a new database record
+                    $class::create($dataArray);
                 }
             }
         } else {
