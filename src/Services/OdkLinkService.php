@@ -830,11 +830,11 @@ class OdkLinkService
         // P.S. It would be more intuitive and generic to directly use column names latitude, longitude, altitude and accuracy
         if ($value != null) {
             if (in_array('latitude', $columnNames, true)) {
-                $result['latitude'] = $value['coordinates'][0];
+                $result['latitude'] = $value['coordinates'][1];
             }
 
             if (in_array('longitude', $columnNames, true)) {
-                $result['longitude'] = $value['coordinates'][1];
+                $result['longitude'] = $value['coordinates'][0];
             }
 
             if (in_array('altitude', $columnNames, true)) {
