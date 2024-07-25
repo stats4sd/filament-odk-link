@@ -24,8 +24,8 @@ class ViewXlsformTemplate extends ViewRecord
     {
         return [
             Actions\Action::make('update_xlsform_template')
-                ->label('Update XLSForm Template')
-                ->icon('heroicon-o-pencil')
+                ->label('Replace XLSForm')
+                ->icon('heroicon-o-document-arrow-up')
                 ->form(XlsformTemplateResource::getCreateFields())
                 ->fillForm(fn() => [
                     'title' => self::getRecord()->title,
@@ -33,7 +33,9 @@ class ViewXlsformTemplate extends ViewRecord
                 ->action(function (array $data, XlsformTemplate $record, Get $get) {
                     $this->processRecord($record);
                 }),
-            Actions\EditAction::make(),
+            Actions\EditAction::make()
+                ->icon('heroicon-o-pencil-square')
+                ->label('Edit Media & Data'),
             Actions\DeleteAction::make(),
         ];
     }

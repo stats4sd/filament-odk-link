@@ -48,6 +48,29 @@ class XlsformTemplateResource extends Resource
             ]);
     }
 
+    protected function processRecord(XlsformTemplate $record): XlsformTemplate
+    {
+        $odkLinkService = app()->make(OdkLinkService::class);
+
+        $record->owner()->associate(Platform::first());
+        $record->saveQuietly();
+
+        // update form title in xlsfile to match user-given title
+        UpdateXlsformTitleInFile::dispatchSync($record);
+
+        $record->refresh();
+        $record->deployDraft($odkLinkService);
+        $record->getRequiredMedia($odkLinkService);
+
+        // TODO: We need to do the extract section when create and edit
+        $record->extractSections();
+-
+        // mark all xlsforms using this template as not current
+        $record->markAllAsNotCurrent();
+
+        return $record;
+    }
+
     public static function getCreateFields(): array
     {
         return [
@@ -66,6 +89,7 @@ class XlsformTemplateResource extends Resource
                 ->downloadable()
                 ->autofocus()
                 ->required()
+                ->disabledOn(['edit'])
                 ->placeholder(__('File')),
         ];
     }
@@ -254,6 +278,7 @@ class XlsformTemplateResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('title')
                     ->searchable()
+                    ->wrap()
                     ->sortable(),
                 Tables\Columns\ViewColumn::make('required_fixed_media_count')
                     ->label('Fixed Media')
@@ -274,7 +299,19 @@ class XlsformTemplateResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('update_xlsform_template')
+                    ->label('Replace XLSForm')
+                    ->icon('heroicon-o-document-arrow-up')
+                    ->form(XlsformTemplateResource::getCreateFields())
+                    ->fillForm(function (XlsformTemplate $record) {
+                        return [
+                            'title' => $record->title,
+                        ];
+                    })
+                ->action(function (array $data, XlsformTemplate $record, Get $get) {
+                    $this->processRecord($record);
+                }),
+                Tables\Actions\EditAction::make()->label('Edit Media & Data'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
