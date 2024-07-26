@@ -793,10 +793,10 @@ class OdkLinkService
                 // extract value from repeat group
             } else {
                 $pathLength = Str::length($schemaItem['path']);
-                $position = Str::position($schemaItem['path'], $section->structure_item);
+                $position = Str::position($schemaItem['path'], '/' . $section->structure_item . '/');
                 $lengthToCut = $pathLength - $position;
 
-                $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
+                $itemPath = Str::substr($schemaItem['path'], ($position + 1) + Str::length($section->structure_item), $lengthToCut);
                 // dump('$itemPath : ' . $itemPath);
 
                 $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
@@ -937,10 +937,10 @@ class OdkLinkService
         $schemaPaths = $schema->pluck('path')->toArray();
         // dump($schemaPaths[0]);
 
-        $position = Str::position($schemaPaths[0], $section->structure_item);
+        $position = Str::position($schemaPaths[0], '/' . $section->structure_item . '/');
 
         // construct the path for getting an array of repeat group
-        $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . $section->structure_item;
+        $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . '.' . $section->structure_item;
         // dump($repeatGroupArrayPath);
 
         // get the array for repeat group
@@ -970,11 +970,13 @@ class OdkLinkService
                 $repeatGroupEntry = ['rg' => $repeatGroupRecord];
 
                 foreach ($schema as $schemaItem) {
+                    // dump('$schemaItem[path] : ' . $schemaItem['path']);
+
                     $pathLength = Str::length($schemaItem['path']);
-                    $position = Str::position($schemaItem['path'], $section->structure_item);
+                    $position = Str::position($schemaItem['path'], '/' . $section->structure_item . '/');
                     $lengthToCut = $pathLength - $position;
 
-                    $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
+                    $itemPath = Str::substr($schemaItem['path'], ($position + 1) + Str::length($section->structure_item), $lengthToCut);
                     // dump('$itemPath : ' . $itemPath);
 
                     $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
@@ -1009,10 +1011,10 @@ class OdkLinkService
         $schemaPaths = $schema->pluck('path')->toArray();
         // dump($schemaPaths[0]);
 
-        $position = Str::position($schemaPaths[0], $section->structure_item);
+        $position = Str::position($schemaPaths[0], '/' . $section->structure_item . '/');
 
         // construct the path for getting an array of repeat group
-        $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . $section->structure_item;
+        $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . '.' . $section->structure_item;
         // dump($repeatGroupArrayPath);
 
         // get the array for repeat group
