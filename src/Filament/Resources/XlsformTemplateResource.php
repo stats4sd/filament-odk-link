@@ -21,9 +21,12 @@ use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
 use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
+use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class XlsformTemplateResource extends Resource
 {
@@ -48,7 +51,7 @@ class XlsformTemplateResource extends Resource
             ]);
     }
 
-    protected function processRecord(XlsformTemplate $record): XlsformTemplate
+    public static function processRecord(XlsformTemplate $record): XlsformTemplate
     {
         $odkLinkService = app()->make(OdkLinkService::class);
 
@@ -79,6 +82,7 @@ class XlsformTemplateResource extends Resource
                 ->required()
                 ->maxLength(64)
                 ->placeholder(__('Title'))
+                ->disabledOn(['edit'])
                 ->default(function () {
                     // get the title from url if it exists in the query string
                     return request()?->query('title');
@@ -302,14 +306,14 @@ class XlsformTemplateResource extends Resource
                 Tables\Actions\Action::make('update_xlsform_template')
                     ->label('Replace XLSForm')
                     ->icon('heroicon-o-document-arrow-up')
-                    ->form(XlsformTemplateResource::getCreateFields())
+                    ->form(self::getCreateFields())
                     ->fillForm(function (XlsformTemplate $record) {
                         return [
                             'title' => $record->title,
                         ];
                     })
-                ->action(function (array $data, XlsformTemplate $record, Get $get) {
-                    $this->processRecord($record);
+                ->action(function (array $data, XlsformTemplate $record) {
+                    XlsformTemplateResource::processRecord($record);
                 }),
                 Tables\Actions\EditAction::make()->label('Edit Media & Data'),
             ])
