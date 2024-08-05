@@ -2,31 +2,32 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources;
 
-use App\Filament\Admin\Resources\XlsformTemplateResource\RelationManagers\XlsformsRelationManager;
-use Awcodes\FilamentTableRepeater\Components\TableRepeater;
 use Filament\Forms;
-use Filament\Forms\Components\Actions\Action;
-use Filament\Forms\Components\Tabs;
-use Filament\Forms\Form;
+use Filament\Tables;
 use Filament\Forms\Get;
-use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\Section;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\ViewEntry;
+use Filament\Forms\Form;
+use Filament\Tables\Table;
+use Filament\Facades\Filament;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
-use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
-use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
+use Filament\Forms\Components\Tabs;
+use Filament\Infolists\Components\Section;
+use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
+use Filament\Forms\Components\Actions\Action;
+use Filament\Infolists\Components\RepeatableEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
+use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
+use Awcodes\FilamentTableRepeater\Components\TableRepeater;
+use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
+use App\Filament\Admin\Resources\XlsformTemplateResource\RelationManagers\XlsformsRelationManager;
 
 class XlsformTemplateResource extends Resource
 {
@@ -54,9 +55,6 @@ class XlsformTemplateResource extends Resource
     public static function processRecord(XlsformTemplate $record): XlsformTemplate
     {
         $odkLinkService = app()->make(OdkLinkService::class);
-
-        $record->owner()->associate(Platform::first());
-        $record->saveQuietly();
 
         // update form title in xlsfile to match user-given title
         UpdateXlsformTitleInFile::dispatchSync($record);

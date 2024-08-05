@@ -31,7 +31,7 @@ class ViewXlsformTemplate extends ViewRecord
                     'title' => self::getRecord()->title,
                 ])
                 ->action(function (array $data, XlsformTemplate $record, Get $get) {
-                    $this->processRecord($record);
+                    XlsformTemplateResource::processRecord($record);
                 }),
             Actions\EditAction::make()
                 ->icon('heroicon-o-pencil-square')
@@ -39,29 +39,5 @@ class ViewXlsformTemplate extends ViewRecord
             Actions\DeleteAction::make(),
         ];
     }
-
-    protected function processRecord(XlsformTemplate $record): XlsformTemplate
-    {
-        $odkLinkService = app()->make(OdkLinkService::class);
-
-        $record->owner()->associate(Platform::first());
-        $record->saveQuietly();
-
-        // update form title in xlsfile to match user-given title
-        UpdateXlsformTitleInFile::dispatchSync($record);
-
-        $record->refresh();
-        $record->deployDraft($odkLinkService);
-        $record->getRequiredMedia($odkLinkService);
-
-        // TODO: We need to do the extract section when create and edit
-        $record->extractSections();
--
-        // mark all xlsforms using this template as not current
-        $record->markAllAsNotCurrent();
-
-        return $record;
-    }
-
 
 }
