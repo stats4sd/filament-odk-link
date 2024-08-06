@@ -7,7 +7,6 @@ use Filament\Tables;
 use Filament\Forms\Get;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Filament\Facades\Filament;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Illuminate\Support\HtmlString;
@@ -27,7 +26,6 @@ use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
-use App\Filament\Admin\Resources\XlsformTemplateResource\RelationManagers\XlsformsRelationManager;
 
 class XlsformTemplateResource extends Resource
 {
