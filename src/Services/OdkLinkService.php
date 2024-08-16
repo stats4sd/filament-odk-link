@@ -30,9 +30,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
  */
 class OdkLinkService
 {
-    public function __construct(protected string $endpoint)
-    {
-    }
+    public function __construct(protected string $endpoint) {}
 
     /**
      * Creates a new session + auth token for communication with the ODK Central server
@@ -542,7 +540,7 @@ class OdkLinkService
         $xlsform->getMedia('xlsform_file')->first()->copy($xlsformVersion, 'xlsform_file');
 
         // copy any attached media
-        $xlsform->getMedia('attached_media')->each(fn ($media) => $media->copy($xlsformVersion, 'attached_media'));
+        $xlsform->getMedia('attached_media')->each(fn($media) => $media->copy($xlsformVersion, 'attached_media'));
 
         return $xlsformVersion;
     }
@@ -587,7 +585,7 @@ class OdkLinkService
                     'ownerName' => $xlsform->owner->name,
                 ]);
 
-                abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '));
+                abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '));
             }
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
@@ -730,6 +728,20 @@ class OdkLinkService
 
             // get data array from main survey
             $dataArray = $this->prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId);
+
+            // if database table has column "team_id", get owner id of xlsform, set it as team_id
+            if (Schema::hasColumn($model->getTable(), 'team_id')) {
+                logger($model->getTable() . ' has column team_id');
+
+                $teamId = $xlsform->owner->id;
+                logger('***** $xlsform->id: ' . $xlsform->id);
+                logger('***** $xlsform->owner->id: ' . $teamId);
+
+                $dataArray['team_id'] = $teamId;
+                logger('***** ' . $dataArray['team_id']);
+            } else {
+                logger($model->getTable() . ' DOES NOT HAVE column team_id');
+            }
 
             // create a new database record
             $class::create($dataArray);
@@ -976,6 +988,20 @@ class OdkLinkService
 
                     // get data array from repeat group entry
                     $dataArray = $this->prepareDataArray($xlsform, $repeatGroupEntry, $section, $schema, $model, $submissionId);
+
+                    // if database table has column "team_id", get owner id of xlsform, set it as team_id
+                    if (Schema::hasColumn($model->getTable(), 'team_id')) {
+                        logger($model->getTable() . ' has column team_id');
+
+                        $teamId = $xlsform->owner->id;
+                        logger('***** $xlsform->id: ' . $xlsform->id);
+                        logger('***** $xlsform->owner->id: ' . $teamId);
+
+                        $dataArray['team_id'] = $teamId;
+                        logger('***** ' . $dataArray['team_id']);
+                    } else {
+                        logger($model->getTable() . ' DOES NOT HAVE column team_id');
+                    }
 
                     // create a new database record
                     $class::create($dataArray);
