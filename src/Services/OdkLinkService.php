@@ -731,16 +731,16 @@ class OdkLinkService
 
             // if database table has column "team_id", get owner id of xlsform, set it as team_id
             if (Schema::hasColumn($model->getTable(), 'team_id')) {
-                logger($model->getTable() . ' has column team_id');
+                // logger($model->getTable() . ' has column team_id');
 
                 $teamId = $xlsform->owner->id;
-                logger('***** $xlsform->id: ' . $xlsform->id);
-                logger('***** $xlsform->owner->id: ' . $teamId);
+                // logger('***** $xlsform->id: ' . $xlsform->id);
+                // logger('***** $xlsform->owner->id: ' . $teamId);
 
                 $dataArray['team_id'] = $teamId;
-                logger('***** ' . $dataArray['team_id']);
+                // logger('***** ' . $dataArray['team_id']);
             } else {
-                logger($model->getTable() . ' DOES NOT HAVE column team_id');
+                // logger($model->getTable() . ' DOES NOT HAVE column team_id');
             }
 
             // create a new database record
@@ -989,22 +989,47 @@ class OdkLinkService
                     // get data array from repeat group entry
                     $dataArray = $this->prepareDataArray($xlsform, $repeatGroupEntry, $section, $schema, $model, $submissionId);
 
+                    // to prevent saving empty record for repeat group to database table
+                    // P.S. I assume it is not necessary to do the same for main survey, as it is really rare not to have any value in main survey
+                    $isEmptyRecord = true;
+
+                    foreach ($dataArray as $key => $value) {
+                        // logger($key . '=' . $value);
+
+                        // skip item "submission_id" as it must contain a value
+                        if ($key == 'submission_id') {
+                            continue;
+                        }
+
+                        // indicate this is not an empty record if any item contains value
+                        if ($value != null) {
+                            $isEmptyRecord = false;
+                            break;
+                        }
+                    }
+
+                    if ($isEmptyRecord) {
+                        logger('All items in this repeat group contain NULL value. This is an empty record, no need to create ' . $model->getTable() . ' record.');
+                    }
+
                     // if database table has column "team_id", get owner id of xlsform, set it as team_id
                     if (Schema::hasColumn($model->getTable(), 'team_id')) {
-                        logger($model->getTable() . ' has column team_id');
+                        // logger($model->getTable() . ' has column team_id');
 
                         $teamId = $xlsform->owner->id;
-                        logger('***** $xlsform->id: ' . $xlsform->id);
-                        logger('***** $xlsform->owner->id: ' . $teamId);
+                        // logger('***** $xlsform->id: ' . $xlsform->id);
+                        // logger('***** $xlsform->owner->id: ' . $teamId);
 
                         $dataArray['team_id'] = $teamId;
-                        logger('***** ' . $dataArray['team_id']);
+                        // logger('***** ' . $dataArray['team_id']);
                     } else {
-                        logger($model->getTable() . ' DOES NOT HAVE column team_id');
+                        // logger($model->getTable() . ' DOES NOT HAVE column team_id');
                     }
 
                     // create a new database record
-                    $class::create($dataArray);
+                    if (!$isEmptyRecord) {
+                        $class::create($dataArray);
+                    }
                 }
             }
         } else {
