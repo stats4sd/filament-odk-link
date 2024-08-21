@@ -672,6 +672,8 @@ class OdkLinkService
     // store main survey to entities and entity_value tables
     private function storeMainSurveyToEntity(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
     {
+        // dump('OdkLinkService.storeMainSurveyToEntity() starts...');
+
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
@@ -707,6 +709,8 @@ class OdkLinkService
     // store main survey to custom table (if any)
     private function storeMainSurveyToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
     {
+        // dump('OdkLinkService.storeMainSurveyToCustomTable() starts...');
+
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
@@ -733,7 +737,7 @@ class OdkLinkService
             $isEmptyRecord = true;
 
             foreach ($dataArray as $key => $value) {
-                // logger($key . '=' . $value);
+                // dump($key . '=' . $value);
 
                 // skip item "submission_id" as it must contain a value
                 if ($key == 'submission_id') {
@@ -749,23 +753,26 @@ class OdkLinkService
 
             // if database table has column "team_id", get owner id of xlsform, set it as team_id
             if (Schema::hasColumn($model->getTable(), 'team_id')) {
-                // logger($model->getTable() . ' has column team_id');
+                // dump($model->getTable() . ' has column team_id');
 
                 $teamId = $xlsform->owner->id;
-                // logger('***** $xlsform->id: ' . $xlsform->id);
-                // logger('***** $xlsform->owner->id: ' . $teamId);
+                // dump('***** $xlsform->id: ' . $xlsform->id);
+                // dump('***** $xlsform->owner->id: ' . $teamId);
 
                 $dataArray['team_id'] = $teamId;
-                // logger('***** ' . $dataArray['team_id']);
+                // dump('***** ' . $dataArray['team_id']);
             } else {
-                // logger($model->getTable() . ' DOES NOT HAVE column team_id');
+                // dump($model->getTable() . ' DOES NOT HAVE column team_id');
             }
+
+            // dump($dataArray);
 
             // create a new database record
             if (!$isEmptyRecord) {
                 $class::create($dataArray);
+                // dump('Created ' . $model->getTable() . ' record.');
             } else {
-                logger('All items contain NULL value. No need to create ' . $model->getTable() . ' record.');
+                // dump('All items contain NULL value. No need to create ' . $model->getTable() . ' record.');
             }
         }
     }
@@ -887,6 +894,8 @@ class OdkLinkService
     // store repeat group to entities and entity_value tables
     private function storeRepeatGroupToEntity(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
     {
+        // dump('OdkLinkService.storeRepeatGroupToEntity() starts...');
+
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
@@ -959,6 +968,8 @@ class OdkLinkService
     // store repeat group to custom table (if any)
     private function storeRepeatGroupToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
     {
+        // dump('OdkLinkService.storeRepeatGroupToCustomTable() starts...');
+
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
@@ -984,12 +995,14 @@ class OdkLinkService
 
             // check whether this xlsform template section has a related database table
             $class = $section->dataset?->entity_model;
+            // dump($class);
 
             if ($class) {
                 $model = new $class;
 
                 // check database table existence
                 if (!Schema::hasTable($model->getTable())) {
+                    // dump('Database table ' . $model->getTable() . ' does not exist');
                     return;
                 }
 
@@ -998,8 +1011,6 @@ class OdkLinkService
 
                 // handle each record in repeat group
                 foreach ($repeatGroupArray as $repeatGroupRecord) {
-                    // dump($repeatGroupRecord);
-
                     // find the parent (if exists)
                     if ($parentDataset = $section->dataset?->parent) {
                         $parentClass = $section->dataset?->entity_model;
@@ -1015,12 +1026,17 @@ class OdkLinkService
                     $isEmptyRecord = true;
 
                     foreach ($dataArray as $key => $value) {
-                        // logger($key . '=' . $value);
+                        // dump($key . '=' . $value);
+
+                        // for soils database table nutrient_balances, it does not have columns for individual attribute.
+                        // the return value from function prepareDataArray() will contain submission_id only.
+                        // let it create nutrient_balances, all attribute values will be fill in to JSON column nutrient_balances.properties afterwards
 
                         // skip item "submission_id" as it must contain a value
-                        if ($key == 'submission_id') {
-                            continue;
-                        }
+                        // if ($key == 'submission_id') {
+                        //     dump('skip item submission_id as it must contain a value');
+                        //     continue;
+                        // }
 
                         // indicate this is not an empty record if any item contains value
                         if ($value != null) {
@@ -1031,23 +1047,26 @@ class OdkLinkService
 
                     // if database table has column "team_id", get owner id of xlsform, set it as team_id
                     if (Schema::hasColumn($model->getTable(), 'team_id')) {
-                        // logger($model->getTable() . ' has column team_id');
+                        // dump($model->getTable() . ' has column team_id');
 
                         $teamId = $xlsform->owner->id;
-                        // logger('***** $xlsform->id: ' . $xlsform->id);
-                        // logger('***** $xlsform->owner->id: ' . $teamId);
+                        // dump('***** $xlsform->id: ' . $xlsform->id);
+                        // dump('***** $xlsform->owner->id: ' . $teamId);
 
                         $dataArray['team_id'] = $teamId;
-                        // logger('***** ' . $dataArray['team_id']);
+                        // dump('***** ' . $dataArray['team_id']);
                     } else {
-                        // logger($model->getTable() . ' DOES NOT HAVE column team_id');
+                        // dump($model->getTable() . ' DOES NOT HAVE column team_id');
                     }
+
+                    // dump($dataArray);
 
                     // create a new database record
                     if (!$isEmptyRecord) {
                         $class::create($dataArray);
+                        // dump('Created ' . $model->getTable() . ' record.');
                     } else {
-                        logger('All items contain NULL value. No need to create ' . $model->getTable() . ' record.');
+                        // dump('All items contain NULL value. No need to create ' . $model->getTable() . ' record.');
                     }
                 }
             }
