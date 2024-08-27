@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\App\Clusters\XlsformsCluster\Resources;
+namespace Stats4sd\FilamentOdkLink\Filament\Resources;
 
 use Filament\Forms;
 use App\Models\Team;

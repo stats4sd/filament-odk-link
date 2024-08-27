@@ -14,9 +14,12 @@ use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\RepeatableEntry;
+use Stats4sd\FilamentOdkLink\Filament\Resources\TeamCustomXlsformTemplateResource\Pages\CreateTeamCustomXlsformTemplate;
+use Stats4sd\FilamentOdkLink\Filament\Resources\TeamCustomXlsformTemplateResource\Pages\EditTeamCustomXlsformTemplate;
+use Stats4sd\FilamentOdkLink\Filament\Resources\TeamCustomXlsformTemplateResource\Pages\ListTeamCustomXlsformTemplates;
+use Stats4sd\FilamentOdkLink\Filament\Resources\TeamCustomXlsformTemplateResource\Pages\ViewTeamCustomXlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Filament\Resources\TeamCustomXlsformTemplateResource\Pages;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 
 class TeamCustomXlsformTemplateResource extends Resource
@@ -261,10 +264,10 @@ class TeamCustomXlsformTemplateResource extends Resource
     public static function getPages(): array
     {
         return [
-            // 'index' => Pages\ListTeamCustomXlsformTemplates::route('/'),
-            // 'create' => Pages\CreateTeamCustomXlsformTemplate::route('/create'),
-            // 'edit' => Pages\EditTeamCustomXlsformTemplate::route('/{record}/edit'),
-            // 'view' => Pages\ViewTeamCustomXlsformTemplate::route('/{record}'),
+             'index' => ListTeamCustomXlsformTemplates::route('/'),
+             'create' => CreateTeamCustomXlsformTemplate::route('/create'),
+             'edit' => EditTeamCustomXlsformTemplate::route('/{record}/edit'),
+             'view' => ViewTeamCustomXlsformTemplate::route('/{record}'),
         ];
     }
 }
