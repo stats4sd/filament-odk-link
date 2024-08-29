@@ -751,6 +751,12 @@ class OdkLinkService
                 }
             }
 
+            // if database table has column "properties", prepare it as JSON content with all attribute values
+            if (Schema::hasColumn($model->getTable(), 'properties')) {
+                $properties = $this->preparePropertiesArray($xlsform, $entry, $section, $schema, $model, $submissionId);
+                $dataArray['properties'] = $properties;
+            }
+
             // if database table has column "team_id", get owner id of xlsform, set it as team_id
             if (Schema::hasColumn($model->getTable(), 'team_id')) {
                 // dump($model->getTable() . ' has column team_id');
@@ -853,6 +859,80 @@ class OdkLinkService
                 $gpsData = $this->extractGpsData($schemaItem, $columnNames, $value);
                 $result = array_merge($result, $gpsData);
             } elseif (in_array($schemaItem['name'], $columnNames)) {
+                $result[$schemaItem['name']] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+
+    // a generic function to extract values from main survey and repeat group entry, returns an array for properties column
+    private function preparePropertiesArray($xlsform, $entry, $section, $schema, $model, $submissionId): array
+    {
+        // initialise array
+        $result = [];
+
+        // get all column names of a table
+        $columnNames = Schema::getColumnListing($model->getTable());
+
+        // these variables are ODK form specific, which are not necessary to store in properties column
+        $odkVariablesToIgnore =
+            [
+                '__id',
+                'instanceID',
+                'meta',
+                'deviceid',
+                'start_time',
+                'end_time',
+                '_id',
+                'uuid',
+                '__version__',
+                '_xform_id_string',
+                '_uuid',
+                '_attachments',
+                '_status',
+                '_geolocation',
+                '_submission_time',
+                '_tags',
+                '_notes',
+                '_validation_status',
+                '_submitted_by',
+            ];
+
+        // access the value of each ODK variable from a deeply nested array using "dot" notation
+        foreach ($schema as $schemaItem) {
+
+            // extract value from main survey
+            if ($section->is_repeat == 0) {
+                $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+                $value = Arr::get($entry, $itemPath);
+
+                // extract value from repeat group
+            } else {
+                $pathLength = Str::length($schemaItem['path']);
+                $position = Str::position($schemaItem['path'], $section->structure_item);
+                $lengthToCut = $pathLength - $position;
+
+                $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
+                // dump('$itemPath : ' . $itemPath);
+
+                $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+                // dump('$fullItemPath : ' . $fullItemPath);
+
+                $value = Arr::get($entry, $fullItemPath);
+                // dump($schemaItem['name'] . ' : ' . $value);
+            }
+
+            // put this item into $result if
+            // 1. it is not a geopoint
+            // 2. it is not a ODK variable to ignore
+            // 3. it's value is not null
+            if (
+                $schemaItem['type'] != 'geopoint' &&
+                !in_array($schemaItem['name'], $odkVariablesToIgnore) &&
+                $value != null
+            ) {
                 $result[$schemaItem['name']] = $value;
             }
         }
@@ -1043,6 +1123,12 @@ class OdkLinkService
                             $isEmptyRecord = false;
                             break;
                         }
+                    }
+
+                    // if database table has column "properties", prepare it as JSON content with all attribute values
+                    if (Schema::hasColumn($model->getTable(), 'properties')) {
+                        $properties = $this->preparePropertiesArray($xlsform, $repeatGroupEntry, $section, $schema, $model, $submissionId);
+                        $dataArray['properties'] = $properties;
                     }
 
                     // if database table has column "team_id", get owner id of xlsform, set it as team_id
