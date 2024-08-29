@@ -14,6 +14,9 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use App\Filament\App\Clusters\XlsformsCluster\Resources\XlsformTemplateResource\Pages;
 
+// Use this resource for a panel scoped to a team
+// This resource is for templates available to all platform users
+
 class TeamXlsformTemplateResource extends Resource
 {
     protected static ?string $model = XlsformTemplate::class;

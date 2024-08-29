@@ -10,6 +10,8 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Filament\Resources\CustomXlsformTemplateResource\Pages;
 
+// Use this resource for an admin panel
+// This resource shows all custom templates which are owned by specific teams
 
 class CustomXlsformTemplateResource extends Resource
 {

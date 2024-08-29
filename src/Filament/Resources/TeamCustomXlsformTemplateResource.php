@@ -22,6 +22,9 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 
+// Use this resource for a panel scoped to a team
+// This resource is for a team to add their own custom templates
+
 class TeamCustomXlsformTemplateResource extends Resource
 {
     protected static ?string $model = XlsformTemplate::class;

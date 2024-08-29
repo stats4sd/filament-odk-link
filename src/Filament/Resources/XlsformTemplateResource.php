@@ -28,6 +28,9 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
 
+// Use this resource for an admin panel
+// This resource is for templates that can be made available to all platform users
+
 class XlsformTemplateResource extends Resource
 {
     protected static ?string $model = XlsformTemplate::class;
