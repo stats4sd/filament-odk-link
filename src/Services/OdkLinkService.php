@@ -641,13 +641,18 @@ class OdkLinkService
 
         $xlsform = $xlsformVersion->xlsform;
 
+        // one submissions should contain one main survey only.
+        // this associative array stores the user-specified foreign key column name and created record id.
+        // it will be populated when storing repeat groups data in custom tables.
+        $mainSurveyId = [];
+
         foreach ($sections as $section) {
-            $this->processEntryFromSection($xlsform, $rootEntry, $section, $submission->id);
+            $mainSurveyId = $this->processEntryFromSection($xlsform, $rootEntry, $section, $submission->id, $mainSurveyId);
         }
     }
 
 
-    private function processEntryFromSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    private function processEntryFromSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId, $mainSurveyId)
     {
         // get the section schema and the dataset it is linked to;
 
@@ -659,13 +664,16 @@ class OdkLinkService
             // handle main survey (root)
             $this->storeMainSurveyToEntity($xlsform, $entry, $section, $submissionId);
 
-            $this->storeMainSurveyToCustomTable($xlsform, $entry, $section, $submissionId);
+            $mainSurveyId = $this->storeMainSurveyToCustomTable($xlsform, $entry, $section, $submissionId);
         } else {
             // handle repeat group
             $this->storeRepeatGroupToEntity($xlsform, $entry, $section, $submissionId);
 
-            $this->storeRepeatGroupToCustomTable($xlsform, $entry, $section, $submissionId);
+            $this->storeRepeatGroupToCustomTable($xlsform, $entry, $section, $submissionId, $mainSurveyId);
         }
+
+        // assumption: main survey section should be processed first, therefore main survey Id will be available when processing repeat groups
+        return $mainSurveyId;
     }
 
 
@@ -714,6 +722,8 @@ class OdkLinkService
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
+        $mainSurveyId = [];
+
         // P.S. When deleting submission in application, we must delete related records for both generic approach and custom table approach
 
         // check whether this xlsform template section has a related database table
@@ -731,7 +741,7 @@ class OdkLinkService
             $class::where('submission_id', $submissionId)->delete();
 
             // get data array from main survey
-            $dataArray = $this->prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId);
+            $dataArray = $this->prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId, $mainSurveyId);
 
             // to prevent saving empty record to database table
             $isEmptyRecord = true;
@@ -775,18 +785,28 @@ class OdkLinkService
 
             // create a new database record
             if (!$isEmptyRecord) {
-                $class::create($dataArray);
+                $record = $class::create($dataArray);
+
+                // if there is a user-specified foreign key column name in model class, store the main survey id into array
+                if ($model->foreignKeyIdColumnName != '') {
+                    $mainSurveyId[$model->foreignKeyIdColumnName] = $record->id;
+                }
+
                 // dump('Created ' . $model->getTable() . ' record.');
             } else {
                 // dump('All items contain NULL value. No need to create ' . $model->getTable() . ' record.');
             }
         }
+
+        return $mainSurveyId;
     }
 
 
     // a generic function to extract values from main survey and repeat group entry, returns an array for further processing
-    private function prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId): array
+    private function prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId, $mainSurveyId): array
     {
+        // dump('OdkLinkService.prepareDataArray()...');
+
         // initialise array
         $result = [];
 
@@ -860,6 +880,13 @@ class OdkLinkService
                 $result = array_merge($result, $gpsData);
             } elseif (in_array($schemaItem['name'], $columnNames)) {
                 $result[$schemaItem['name']] = $value;
+            }
+        }
+
+        // if main survey Id exists in table's foreign key list, populate it to $result array
+        foreach ($mainSurveyId as $key => $value) {
+            if (array_key_exists($key, $foreignKeyColumnNames)) {
+                $result[$key] = $value;
             }
         }
 
@@ -1046,7 +1073,7 @@ class OdkLinkService
 
 
     // store repeat group to custom table (if any)
-    private function storeRepeatGroupToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    private function storeRepeatGroupToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId, $mainSurveyId)
     {
         // dump('OdkLinkService.storeRepeatGroupToCustomTable() starts...');
 
@@ -1100,7 +1127,7 @@ class OdkLinkService
                     $repeatGroupEntry = ['rg' => $repeatGroupRecord];
 
                     // get data array from repeat group entry
-                    $dataArray = $this->prepareDataArray($xlsform, $repeatGroupEntry, $section, $schema, $model, $submissionId);
+                    $dataArray = $this->prepareDataArray($xlsform, $repeatGroupEntry, $section, $schema, $model, $submissionId, $mainSurveyId);
 
                     // to prevent saving empty record to database table
                     $isEmptyRecord = true;
