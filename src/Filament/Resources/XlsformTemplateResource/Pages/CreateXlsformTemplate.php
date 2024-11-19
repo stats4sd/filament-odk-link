@@ -2,18 +2,19 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
 
+use Filament\Forms\Get;
+use Filament\Forms\Form;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Client\RequestException;
-use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
 
 class CreateXlsformTemplate extends CreateRecord
 {
@@ -86,8 +87,14 @@ class CreateXlsformTemplate extends CreateRecord
     {
         $odkLinkService = app()->make(OdkLinkService::class);
 
-        $record->owner()->associate(Platform::first());
-        $record->saveQuietly();
+        if (is_null(Filament::getTenant())) {
+            $record->owner()->associate(Platform::first());
+            $record->saveQuietly();
+        }
+        else {
+            $record->owner()->associate(Filament::getTenant());
+            $record->saveQuietly();
+        }
 
         // update form title in xlsfile to match user-given title
         UpdateXlsformTitleInFile::dispatchSync($record);
