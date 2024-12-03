@@ -2,34 +2,46 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources;
 
-use App\Filament\Admin\Resources\XlsformTemplateResource\RelationManagers\XlsformsRelationManager;
-use Awcodes\FilamentTableRepeater\Components\TableRepeater;
 use Filament\Forms;
-use Filament\Forms\Components\Actions\Action;
-use Filament\Forms\Components\Tabs;
-use Filament\Forms\Form;
+use Filament\Tables;
 use Filament\Forms\Get;
-use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\Section;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\ViewEntry;
+use Filament\Forms\Form;
+use Filament\Tables\Table;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
-use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
+use Filament\Forms\Components\Tabs;
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Infolists\Components\Section;
+use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
+use Filament\Forms\Components\Actions\Action;
+use Filament\Infolists\Components\RepeatableEntry;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
+use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
+use Awcodes\FilamentTableRepeater\Components\TableRepeater;
+use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
+
+// Use this resource for an admin panel
+// This resource is for templates that can be made available to all platform users
 
 class XlsformTemplateResource extends Resource
 {
     protected static ?string $model = XlsformTemplate::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('owner_type', '=', Platform::class);
+    }
 
     public static function form(Form $form): Form
     {
@@ -48,6 +60,26 @@ class XlsformTemplateResource extends Resource
             ]);
     }
 
+    public static function processRecord(XlsformTemplate $record): XlsformTemplate
+    {
+        $odkLinkService = app()->make(OdkLinkService::class);
+
+        // update form title in xlsfile to match user-given title
+        UpdateXlsformTitleInFile::dispatchSync($record);
+
+        $record->refresh();
+        $record->deployDraft($odkLinkService);
+        $record->getRequiredMedia($odkLinkService);
+
+        // TODO: We need to do the extract section when create and edit
+        $record->extractSections();
+-
+        // mark all xlsforms using this template as not current
+        $record->markAllAsNotCurrent();
+
+        return $record;
+    }
+
     public static function getCreateFields(): array
     {
         return [
@@ -56,6 +88,7 @@ class XlsformTemplateResource extends Resource
                 ->required()
                 ->maxLength(64)
                 ->placeholder(__('Title'))
+                ->disabledOn(['edit'])
                 ->default(function () {
                     // get the title from url if it exists in the query string
                     return request()?->query('title');
@@ -66,6 +99,7 @@ class XlsformTemplateResource extends Resource
                 ->downloadable()
                 ->autofocus()
                 ->required()
+                ->disabledOn(['edit'])
                 ->placeholder(__('File')),
         ];
     }
@@ -255,6 +289,7 @@ class XlsformTemplateResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('title')
                     ->searchable()
+                    ->wrap()
                     ->sortable(),
                 Tables\Columns\ViewColumn::make('required_fixed_media_count')
                     ->label('Fixed Media')
@@ -275,7 +310,19 @@ class XlsformTemplateResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('update_xlsform_template')
+                    ->label('Replace XLSForm')
+                    ->icon('heroicon-o-document-arrow-up')
+                    ->form(self::getCreateFields())
+                    ->fillForm(function (XlsformTemplate $record) {
+                        return [
+                            'title' => $record->title,
+                        ];
+                    })
+                ->action(function (array $data, XlsformTemplate $record) {
+                    XlsformTemplateResource::processRecord($record);
+                }),
+                Tables\Actions\EditAction::make()->label('Edit Media & Data'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
