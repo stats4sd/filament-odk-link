@@ -3,16 +3,17 @@
 namespace Stats4sd\FilamentOdkLink\Filament\Resources;
 
 use Filament\Forms;
-use App\Models\Team;
+
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Builder;
+use Stats4sd\FilamentOdkLink\Filament\Resources\TeamXlsformTemplateResource\Pages\ListTeamXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use App\Filament\App\Clusters\XlsformsCluster\Resources\XlsformTemplateResource\Pages;
+
 
 // Use this resource for a panel scoped to a team
 // This resource is for templates available to all platform users
@@ -76,7 +77,7 @@ class TeamXlsformTemplateResource extends Resource
 
                         $xlsform = $record->xlsforms()->create([
                             'owner_id' => Filament::getTenant()->id,
-                            'owner_type' => Team::class,
+                            'owner_type' => config('filament-odk-link.models.team_model'),
                             'title' => $data['title'],
                         ]);
 
@@ -100,7 +101,7 @@ class TeamXlsformTemplateResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListXlsformTemplates::route('/'),
+            'index' => ListTeamXlsformTemplates::route('/'),
         ];
     }
 }
