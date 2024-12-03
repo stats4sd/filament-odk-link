@@ -279,7 +279,8 @@ class XlsformTemplateResource extends Resource
                         ->label('Select which dataset the submissions should be linked to')
                         ->createOptionForm(DatasetResource::getCreateFormFields())
                         ->createOptionModalHeading('Create New Dataset'),
-                ])];
+                ])
+        ];
     }
 
     public static function table(Table $table): Table
@@ -335,7 +336,6 @@ class XlsformTemplateResource extends Resource
         return $infolist
             ->schema([
                 Section::make('Xlsform Details')
-                    ->collapsed()
                     ->schema([
                         TextEntry::make('title'),
                         TextEntry::make('xlsfile_name')
@@ -345,6 +345,10 @@ class XlsformTemplateResource extends Resource
                             ->icon(fn(bool $state): string => match ($state) {
                                 false => 'heroicon-o-no-symbol',
                                 true => 'heroicon-o-check-circle',
+                            })
+                            ->color(fn(bool $state): string => match ($state) {
+                                false => 'gray',
+                                true => 'success',
                             }),
                     ])
                     ->columns([

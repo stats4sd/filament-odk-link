@@ -23,6 +23,13 @@ class ViewXlsformTemplate extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('make_template_available')
+                ->label('Make Template Available')
+                ->icon('heroicon-o-pencil')
+                ->disabled(fn($record) => $record->available == true)
+                ->action(function (array $data, XlsformTemplate $record, Get $get) {
+                    $this->makeTemplateAvailable($record);
+                }),
             Actions\Action::make('update_xlsform_template')
                 ->label('Replace XLSForm')
                 ->icon('heroicon-o-document-arrow-up')
@@ -40,4 +47,13 @@ class ViewXlsformTemplate extends ViewRecord
         ];
     }
 
+
+
+    protected function makeTemplateAvailable(XlsformTemplate $record): XlsformTemplate
+    {
+        $record->available = true;
+        $record->save();
+
+        return $record;
+    }
 }
