@@ -23,6 +23,13 @@ class ViewXlsformTemplate extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('make_template_available')
+                ->label('Make Template Available')
+                ->icon('heroicon-o-pencil')
+                ->disabled(fn($record) => $record->available == true)
+                ->action(function (array $data, XlsformTemplate $record, Get $get) {
+                    $this->makeTemplateAvailable($record);
+                }),
             Actions\Action::make('update_xlsform_template')
                 ->label('Update XLSForm Template')
                 ->icon('heroicon-o-pencil')
@@ -54,12 +61,18 @@ class ViewXlsformTemplate extends ViewRecord
 
         // TODO: We need to do the extract section when create and edit
         $record->extractSections();
--
+        -
         // mark all xlsforms using this template as not current
         $record->markAllAsNotCurrent();
 
         return $record;
     }
 
+    protected function makeTemplateAvailable(XlsformTemplate $record): XlsformTemplate
+    {
+        $record->available = true;
+        $record->save();
 
+        return $record;
+    }
 }
