@@ -879,6 +879,13 @@ class OdkLinkService
                 // dump($repeatGroupRecord);
 
                 // create entity record for each repeat group record
+
+                // if the section is not linked to a dataset, move on;
+                if(!$section->dataset) {
+                    continue;
+                }
+
+
                 $entity = Entity::create([
                     'dataset_id' => $section->dataset->id,
                     'submission_id' => $submissionId,
