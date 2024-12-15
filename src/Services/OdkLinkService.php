@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Client\RequestException;
+use Stats4sd\FilamentOdkLink\Exports\ChoiceListModelsExport;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
@@ -158,7 +159,7 @@ class OdkLinkService
      *
      * @throws RequestException
      */
-    public function createDraftForm(WithXlsFormDrafts $xlsform): array
+    public function createDraftForm(WithXlsFormDrafts $xlsform, bool $withMedia): array
     {
         $token = $this->authenticate();
 
@@ -202,8 +203,10 @@ class OdkLinkService
         }
         $this->updateSchema($xlsform);
 
-        // deploy media files
-        $this->uploadMediaFileAttachments($xlsform);
+        // deploy media files - only if with media is true.
+        if ($withMedia) {
+            $this->uploadMediaFileAttachments($xlsform);
+        }
 
         return $this->getDraftFormDetails($xlsform);
     }
@@ -482,7 +485,9 @@ class OdkLinkService
      */
     public function createCsvLookupFile(WithXlsFormDrafts $xlsform, RequiredMedia $requiredMedia): string
     {
-        $dataset = $requiredMedia->dataset;
+        ray('trying to create csv lookup file for ' . $requiredMedia->name . ' for ' . $xlsform->title . ' (' . $xlsform->id . ')');
+
+        $choiceList = $requiredMedia->choiceList;
 
         $filePath = 'xlsforms/' . $xlsform->id . '/' . $requiredMedia->name;
 
@@ -495,10 +500,8 @@ class OdkLinkService
             Storage::disk(config('filament-odk-link.storage.xlsforms'))->makeDirectory('xlsforms/' . $xlsform->id);
         }
 
-        $owner = $xlsform->owner;
-
         Excel::store(
-            new DatasetModelsExport($dataset, $owner),
+            new ChoiceListModelsExport($choiceList, $xlsform),
             $filePath,
             config('filament-odk-link.storage.xlsforms')
         );
@@ -542,7 +545,7 @@ class OdkLinkService
         $xlsform->getMedia('xlsform_file')->first()->copy($xlsformVersion, 'xlsform_file');
 
         // copy any attached media
-        $xlsform->getMedia('attached_media')->each(fn ($media) => $media->copy($xlsformVersion, 'attached_media'));
+        $xlsform->getMedia('attached_media')->each(fn($media) => $media->copy($xlsformVersion, 'attached_media'));
 
         return $xlsformVersion;
     }
@@ -587,7 +590,7 @@ class OdkLinkService
                     'ownerName' => $xlsform->owner->name,
                 ]);
 
-                abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '));
+                abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '));
             }
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
@@ -881,7 +884,7 @@ class OdkLinkService
                 // create entity record for each repeat group record
 
                 // if the section is not linked to a dataset, move on;
-                if(!$section->dataset) {
+                if (!$section->dataset) {
                     continue;
                 }
 

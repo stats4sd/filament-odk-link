@@ -14,13 +14,13 @@ trait HasXlsFormDrafts
     /**
      * @throws RequestException
      */
-    public function deployDraft(OdkLinkService $service): bool
+    public function deployDraft(OdkLinkService $service, bool $withMedia = true): bool
     {
         try {
-            $odkXlsFormDetails = $service->createDraftForm($this);
+            $odkXlsFormDetails = $service->createDraftForm($this, $withMedia);
 
         } catch (Throwable $e) {
-            
+
             Notification::make('draft-form-failed')
                 ->title('There is an error in the XLS Form')
                 ->body($e->getMessage())

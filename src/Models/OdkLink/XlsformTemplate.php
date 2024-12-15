@@ -122,7 +122,8 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
             ->where('required_media.type', '=', 'file')
             ->where(function (Builder $query) {
                 $query->whereHas('media')
-                    ->orWhere('required_media.dataset_id', '!=', null);
+                    // HOLPA CHANGE! In Holpa we have moved to using ChoiceList and ChoiceListEntry to manage custom lookup tables, instead of datasets. We need to decide if this is a good change that should be brought into the main package or if we should merge ChoiceList and Dataset somehow...
+                    ->orWhere('required_media.choice_list_id', '!=', null);
             });
 
     }
@@ -169,9 +170,13 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
             ], [
                 'type' => $mediaItem['type'],
                 'exists_on_odk' => $mediaItem['exists'],
+                'updated_during_import' => true,
             ]);
 
         }
+
+        // remove any media that are no longer needed
+        $this->requiredMedia()->where('updated_during_import', false)->delete();
 
     }
 

@@ -36,7 +36,7 @@ class XlsformTemplateResource extends Resource
     protected static ?string $model = XlsformTemplate::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
@@ -68,7 +68,7 @@ class XlsformTemplateResource extends Resource
         UpdateXlsformTitleInFile::dispatchSync($record);
 
         $record->refresh();
-        $record->deployDraft($odkLinkService);
+        $record->deployDraft($odkLinkService, withMedia: false);
         $record->getRequiredMedia($odkLinkService);
 
         // TODO: We need to do the extract section when create and edit
@@ -176,9 +176,9 @@ class XlsformTemplateResource extends Resource
                         ->visible(fn(Get $get): bool => $get('is_static')),
 
                     // for non-static media (linked to datasets)
-                    Forms\Components\Select::make('dataset_id')
-                        ->label('Select a dataset')
-                        ->relationship('dataset', 'name')
+                    Forms\Components\Select::make('choice_list_id')
+                        ->label('Select a Choice List to link to')
+                        ->relationship('choiceList', 'list_name', fn(Builder $query, ?RequiredMedia $record): Builder => $record ? $query->where('xlsform_template_id', '=', $record?->xlsformTemplate->id) : $query)
                         ->visible(fn(Get $get): bool => !$get('is_static')),
 
                 ]),
@@ -279,7 +279,7 @@ class XlsformTemplateResource extends Resource
                         ->label('Select which dataset the submissions should be linked to')
                         ->createOptionForm(DatasetResource::getCreateFormFields())
                         ->createOptionModalHeading('Create New Dataset'),
-                ])
+                ]),
         ];
     }
 
@@ -302,7 +302,7 @@ class XlsformTemplateResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('xlsforms_count')
                     ->label('# Deployments')
-                    ->counts('xlsforms')
+                    ->counts('xlsforms'),
 
             ])
             ->filters([
@@ -451,7 +451,7 @@ class XlsformTemplateResource extends Resource
 
                                 // if no dataset is linked, return null
                                 return null;
-                            })
+                            }),
 
                     ]),
 

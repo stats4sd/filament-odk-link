@@ -46,9 +46,9 @@ trait PublishesToOdkCentral
 
 
         // check if there is a draft. If not, create one.
-        if (!$this->has_draft || !$this->has_latest_template) {
+        //if (!$this->has_draft || !$this->has_latest_template) {
             $hasDraft = $this->deployDraft($odkLinkService);
-        }
+        //}
 
         // if the draft was successfully created; publish it.
         if ($hasDraft) {
