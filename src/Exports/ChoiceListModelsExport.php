@@ -19,6 +19,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\TeamManagement\Team;
 
+//** This export ONLY works for HOLPA right now, as it uses a bunch of App\Models references etc. This will be reconciled later... */
 class ChoiceListModelsExport implements FromCollection, WithHeadings, WithStrictNullComparison
 {
 
