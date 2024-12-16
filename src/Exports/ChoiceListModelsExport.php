@@ -63,8 +63,7 @@ class ChoiceListModelsExport implements FromCollection, WithHeadings, WithStrict
                     ]),
                 ];
 
-            })
-            ->values();
+            });
     }
 
     public function collection(): Collection
