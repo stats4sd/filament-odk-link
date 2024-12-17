@@ -30,9 +30,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
  */
 class OdkLinkService
 {
-    public function __construct(protected string $endpoint)
-    {
-    }
+    public function __construct(protected string $endpoint) {}
 
     /**
      * Creates a new session + auth token for communication with the ODK Central server
@@ -542,7 +540,7 @@ class OdkLinkService
         $xlsform->getMedia('xlsform_file')->first()->copy($xlsformVersion, 'xlsform_file');
 
         // copy any attached media
-        $xlsform->getMedia('attached_media')->each(fn ($media) => $media->copy($xlsformVersion, 'attached_media'));
+        $xlsform->getMedia('attached_media')->each(fn($media) => $media->copy($xlsformVersion, 'attached_media'));
 
         return $xlsformVersion;
     }
@@ -587,7 +585,7 @@ class OdkLinkService
                     'ownerName' => $xlsform->owner->name,
                 ]);
 
-                abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '));
+                abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '));
             }
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
@@ -709,6 +707,8 @@ class OdkLinkService
     // store main survey to custom table (if any)
     private function storeMainSurveyToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
     {
+        // dump('OdkLinkService.storeMainSurveyToCustomTable() starts...');
+
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
@@ -770,6 +770,14 @@ class OdkLinkService
                 $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
                 $value = Arr::get($entry, $itemPath);
 
+                // hardcode temporary as a quick workaround for area_xxx_ha ODK variables
+                if (!is_array($value)) {
+                    if ($value == 'NaN') {
+                        $value = null;
+                    }
+                }
+
+
                 // extract value from repeat group
             } else {
                 $pathLength = Str::length($schemaItem['path']);
@@ -783,7 +791,13 @@ class OdkLinkService
                 // dump('$fullItemPath : ' . $fullItemPath);
 
                 $value = Arr::get($entry, $fullItemPath);
-                // dump($schemaItem['name'] . ' : ' . $value);
+
+                // hardcode temporary as a quick workaround for area_xxx_ha ODK variables
+                if (!is_array($value)) {
+                    if ($value == 'NaN') {
+                        $value = null;
+                    }
+                }
             }
 
 
@@ -881,7 +895,7 @@ class OdkLinkService
                 // create entity record for each repeat group record
 
                 // if the section is not linked to a dataset, move on;
-                if(!$section->dataset) {
+                if (!$section->dataset) {
                     continue;
                 }
 
@@ -934,6 +948,8 @@ class OdkLinkService
     // store repeat group to custom table (if any)
     private function storeRepeatGroupToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
     {
+        dump('OdkLinkService.storeRepeatGroupToCustomTable() starts...');
+
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
