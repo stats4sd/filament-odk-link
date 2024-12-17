@@ -39,6 +39,7 @@ class XlsformsRelationManager extends RelationManager
                         titleAttribute: 'title',
                         modifyQueryUsing: fn (Builder $query) => $query->where('available', true)
                     )
+                    ->required()
                     ->live()
                     ->afterStateUpdated(fn (Forms\Set $set, $state) => $set('title', $state ? XlsformTemplate::find($state)->title : '')),
 
