@@ -205,7 +205,6 @@ class OdkLinkService
 
         // deploy media files - only if with media is true.
         if ($withMedia) {
-            ray('with media');
             $this->uploadMediaFileAttachments($xlsform);
         }
 
@@ -591,6 +590,8 @@ class OdkLinkService
                     'ownerName' => $xlsform->owner->name,
                 ]);
 
+                ray($messageContent);
+
                 abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '));
             }
 
@@ -790,6 +791,12 @@ class OdkLinkService
                 // dump($schemaItem['name'] . ' : ' . $value);
             }
 
+            // hardcode temporary as a quick workaround for area_xxx_ha ODK variables
+            if (!is_array($value)) {
+                if ($value == 'NaN') {
+                    $value = null;
+                }
+            }
 
             // if app developer has defined a method of creating foreign key record in submission content, call that method:
             $class = config('filament-odk-link.submission.foreign_key_process_method.class');
