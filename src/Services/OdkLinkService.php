@@ -948,7 +948,7 @@ class OdkLinkService
     // store repeat group to custom table (if any)
     private function storeRepeatGroupToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
     {
-        dump('OdkLinkService.storeRepeatGroupToCustomTable() starts...');
+        // dump('OdkLinkService.storeRepeatGroupToCustomTable() starts...');
 
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
