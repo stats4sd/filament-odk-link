@@ -40,7 +40,6 @@ class ChoiceListModelsExport implements FromCollection, WithHeadings, WithStrict
             ->filter(fn(ChoiceListEntry $choiceListEntry) => $choiceListEntry->owner_id === $xlsform->owner->id || $choiceListEntry->owner_id === null)
             ->mapWithKeys(function (ChoiceListEntry $choiceListEntry) use ($xlsformTemplateLanguages) {
 
-                ray('processing ' . $choiceListEntry->name);
 
                 $labelColumns = $xlsformTemplateLanguages->mapWithKeys(function (XlsformTemplateLanguage $xlsformTemplateLanguage) use ($choiceListEntry) {
                     return $choiceListEntry
@@ -51,9 +50,12 @@ class ChoiceListModelsExport implements FromCollection, WithHeadings, WithStrict
                         ]);
                 });
 
-                $propertyColumns = collect($choiceListEntry->choiceList->properties['extra_properties'])->mapWithKeys(fn($property) => [
-                    $property['name'] => $choiceListEntry->properties[$property['name']] ?? null]);
-
+                if (isset($choiceListEntry->choiceList->properties['extra_properties'])) {
+                    $propertyColumns = collect($choiceListEntry->choiceList->properties['extra_properties'])->mapWithKeys(fn($property) => [
+                        $property['name'] => $choiceListEntry->properties[$property['name']] ?? null]);
+                } else {
+                    $propertyColumns = collect();
+                }
 
                 return [
                     $choiceListEntry->id => collect([

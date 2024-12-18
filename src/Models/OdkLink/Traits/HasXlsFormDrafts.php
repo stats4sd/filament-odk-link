@@ -21,6 +21,8 @@ trait HasXlsFormDrafts
 
         } catch (Throwable $e) {
 
+            ray($e);
+
             Notification::make('draft-form-failed')
                 ->title('There is an error in the XLS Form')
                 ->body($e->getMessage())

@@ -205,6 +205,7 @@ class OdkLinkService
 
         // deploy media files - only if with media is true.
         if ($withMedia) {
+            ray('with media');
             $this->uploadMediaFileAttachments($xlsform);
         }
 
