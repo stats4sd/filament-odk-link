@@ -191,9 +191,13 @@ class OdkLinkService
         // if the xlsform file is not valid, throw an error
         if (isset($responseBody['message']) && Str::startsWith($responseBody['message'], "The given XLSForm file was not valid")) {
 
+            ray('The XLSForm file is not valid. Please review the file and try to deploy the form again.');
+            ray($response->json());
             abort(500, $response->json()['details']['error']);
         } else if ($response->status() !== 200) {
 
+            ray('An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
+            ray($response->json());
             abort(500, 'An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
         }
 
