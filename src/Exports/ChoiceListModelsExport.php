@@ -32,7 +32,15 @@ class ChoiceListModelsExport implements FromCollection, WithHeadings, WithStrict
     {
 
         // get the template languages for the form chosen by the team
-        $xlsformTemplateLanguages = $xlsform->xlsformTemplate->xlsformTemplateLanguages
+        if($xlsform->xlsformTemplate) {
+            $xlsformTemplateLanguages = $xlsform->xlsformTemplate->xlsformTemplateLanguages;
+        } else {
+            $xlsformTemplateLanguages = $xlsform->xlsformTemplateLanguages;
+        }
+
+        ray($xlsformTemplateLanguages);
+
+        $xlsformTemplateLanguages = $xlsformTemplateLanguages
             ->filter(fn(XlsformTemplateLanguage $xlsformTemplateLanguage) => $xlsform->owner->locales->contains('id', $xlsformTemplateLanguage->locale->id));
 
         $this->entries = $choiceList->choiceListEntries
