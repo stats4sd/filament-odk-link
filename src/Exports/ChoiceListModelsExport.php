@@ -2,7 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Exports;
 
-use App\Models\XlsformLanguages\XlsformTemplateLanguage;
+use App\Models\XlsformLanguages\XlsformModuleVersionLocale;
 use App\Models\Xlsforms\ChoiceList;
 use App\Models\Xlsforms\ChoiceListEntry;
 use App\Models\Xlsforms\LanguageString;
@@ -35,7 +35,7 @@ class ChoiceListModelsExport implements FromCollection, WithHeadings, WithStrict
         ray($xlsformTemplateLanguages);
 
         $xlsformTemplateLanguages = $xlsformTemplateLanguages
-            ->filter(fn(XlsformTemplateLanguage $xlsformTemplateLanguage) => $xlsform->owner->locales->contains('id', $xlsformTemplateLanguage->locale->id));
+            ->filter(fn(XlsformModuleVersionLocale $xlsformTemplateLanguage) => $xlsform->owner->locales->contains('id', $xlsformTemplateLanguage->locale->id));
 
         $this->entries = $choiceList->choiceListEntries
             // may not need explicit filter when running on front-end with Filament Tenancy, but won't hurt
@@ -43,7 +43,7 @@ class ChoiceListModelsExport implements FromCollection, WithHeadings, WithStrict
             ->mapWithKeys(function (ChoiceListEntry $choiceListEntry) use ($xlsformTemplateLanguages) {
 
 
-                $labelColumns = $xlsformTemplateLanguages->mapWithKeys(function (XlsformTemplateLanguage $xlsformTemplateLanguage) use ($choiceListEntry) {
+                $labelColumns = $xlsformTemplateLanguages->mapWithKeys(function (XlsformModuleVersionLocale $xlsformTemplateLanguage) use ($choiceListEntry) {
                     return $choiceListEntry
                         ->languageStrings
                         ->filter(fn(LanguageString $languageString) => $languageString->xlsformTemplateLanguage->id === $xlsformTemplateLanguage->id)
