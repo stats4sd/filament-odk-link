@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Client\RequestException;
+use Stats4sd\FilamentOdkLink\Exports\ChoiceListModelsExport;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
@@ -30,7 +31,9 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
  */
 class OdkLinkService
 {
-    public function __construct(protected string $endpoint) {}
+    public function __construct(protected string $endpoint)
+    {
+    }
 
     /**
      * Creates a new session + auth token for communication with the ODK Central server
@@ -156,7 +159,7 @@ class OdkLinkService
      *
      * @throws RequestException
      */
-    public function createDraftForm(WithXlsFormDrafts $xlsform): array
+    public function createDraftForm(WithXlsFormDrafts $xlsform, bool $withMedia): array
     {
         $token = $this->authenticate();
 
@@ -188,9 +191,13 @@ class OdkLinkService
         // if the xlsform file is not valid, throw an error
         if (isset($responseBody['message']) && Str::startsWith($responseBody['message'], "The given XLSForm file was not valid")) {
 
+            ray('The XLSForm file is not valid. Please review the file and try to deploy the form again.');
+            ray($response->json());
             abort(500, $response->json()['details']['error']);
         } else if ($response->status() !== 200) {
 
+            ray('An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
+            ray($response->json());
             abort(500, 'An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
         }
 
@@ -200,8 +207,10 @@ class OdkLinkService
         }
         $this->updateSchema($xlsform);
 
-        // deploy media files
-        $this->uploadMediaFileAttachments($xlsform);
+        // deploy media files - only if with media is true.
+        if ($withMedia) {
+            $this->uploadMediaFileAttachments($xlsform);
+        }
 
         return $this->getDraftFormDetails($xlsform);
     }
@@ -480,7 +489,9 @@ class OdkLinkService
      */
     public function createCsvLookupFile(WithXlsFormDrafts $xlsform, RequiredMedia $requiredMedia): string
     {
-        $dataset = $requiredMedia->dataset;
+        ray('trying to create csv lookup file for ' . $requiredMedia->name . ' for ' . $xlsform->title . ' (' . $xlsform->id . ')');
+
+        $choiceList = $requiredMedia->choiceList;
 
         $filePath = 'xlsforms/' . $xlsform->id . '/' . $requiredMedia->name;
 
@@ -493,10 +504,8 @@ class OdkLinkService
             Storage::disk(config('filament-odk-link.storage.xlsforms'))->makeDirectory('xlsforms/' . $xlsform->id);
         }
 
-        $owner = $xlsform->owner;
-
         Excel::store(
-            new DatasetModelsExport($dataset, $owner),
+            new ChoiceListModelsExport($choiceList, $xlsform),
             $filePath,
             config('filament-odk-link.storage.xlsforms')
         );
@@ -680,8 +689,6 @@ class OdkLinkService
     // store main survey to entities and entity_value tables
     private function storeMainSurveyToEntity(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
     {
-        // dump('OdkLinkService.storeMainSurveyToEntity() starts...');
-
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
@@ -717,8 +724,6 @@ class OdkLinkService
     // store main survey to custom table (if any)
     private function storeMainSurveyToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
     {
-        // dump('OdkLinkService.storeMainSurveyToCustomTable() starts...');
-
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
@@ -805,8 +810,6 @@ class OdkLinkService
     // a generic function to extract values from main survey and repeat group entry, returns an array for further processing
     private function prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId, $mainSurveyId): array
     {
-        // dump('OdkLinkService.prepareDataArray()...');
-
         // initialise array
         $result = [];
 
@@ -853,6 +856,12 @@ class OdkLinkService
                 // dump($schemaItem['name'] . ' : ' . $value);
             }
 
+            // hardcode temporary as a quick workaround for area_xxx_ha ODK variables
+            if (!is_array($value)) {
+                if ($value == 'NaN') {
+                    $value = null;
+                }
+            }
 
             // if app developer has defined a method of creating foreign key record in submission content, call that method:
             $class = config('filament-odk-link.submission.foreign_key_process_method.class');
@@ -1001,8 +1010,6 @@ class OdkLinkService
     // store repeat group to entities and entity_value tables
     private function storeRepeatGroupToEntity(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
     {
-        // dump('OdkLinkService.storeRepeatGroupToEntity() starts...');
-
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
@@ -1029,6 +1036,13 @@ class OdkLinkService
                 // dump($repeatGroupRecord);
 
                 // create entity record for each repeat group record
+
+                // if the section is not linked to a dataset, move on;
+                if (!$section->dataset) {
+                    continue;
+                }
+
+
                 $entity = Entity::create([
                     'dataset_id' => $section->dataset->id,
                     'submission_id' => $submissionId,
@@ -1077,8 +1091,6 @@ class OdkLinkService
     // store repeat group to custom table (if any)
     private function storeRepeatGroupToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId, $mainSurveyId)
     {
-        // dump('OdkLinkService.storeRepeatGroupToCustomTable() starts...');
-
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
@@ -1104,14 +1116,12 @@ class OdkLinkService
 
             // check whether this xlsform template section has a related database table
             $class = $section->dataset?->entity_model;
-            // dump($class);
 
             if ($class) {
                 $model = new $class;
 
                 // check database table existence
                 if (!Schema::hasTable($model->getTable())) {
-                    // dump('Database table ' . $model->getTable() . ' does not exist');
                     return;
                 }
 

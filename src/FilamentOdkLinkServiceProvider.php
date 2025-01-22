@@ -15,6 +15,7 @@ use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Stats4sd\FilamentOdkLink\Commands\FilamentOdkLinkCommand;
+use Stats4sd\FilamentOdkLink\Commands\GetSubmissionsQuietly;
 use Stats4sd\FilamentOdkLink\Commands\PollForOdkData;
 use Stats4sd\FilamentOdkLink\Commands\TestCsvMediaGeneration;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
@@ -130,6 +131,7 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
     {
         return [
             FilamentOdkLinkCommand::class,
+            GetSubmissionsQuietly::class,
             PollForOdkData::class,
             TestCsvMediaGeneration::class,
         ];

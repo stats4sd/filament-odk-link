@@ -83,7 +83,7 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
     {
         return new Attribute(
             get: function () {
-                if(!$this->has_latest_template || !$this->has_latest_media) {
+                if (!$this->has_latest_template || !$this->has_latest_media) {
                     return 'UPDATES AVAILABLE';
                 }
                 if ($this->is_active) {
@@ -128,6 +128,7 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
         return $this->xlsformTemplate->requiredMedia();
     }
 
+
     public function attachedFixedMedia(): HasMany
     {
         return $this->xlsformTemplate->attachedFixedMedia();
@@ -152,7 +153,21 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
     public function syncWithTemplate(): void
     {
         // copy the xlsfile from the template;
-        $this->xlsformTemplate->getFirstMedia('xlsform_file')?->copy($this, 'xlsform_file');
+
+        // TEMP fix for namespace clashes
+        // TODO - find a permanent fix for this
+        if (!$xlsfile = $this->xlsformTemplate->getFirstMedia('xlsform_file')) {
+
+            // check if \App\Models\XlsformTemplate exists
+            if (class_exists('\App\Models\XlsformTemplate')) {
+
+                $xlsfile = \App\Models\XlsformTemplate::find($this->xlsformTemplate->id)
+                    ->getFirstMedia('xlsform_file');
+
+            }
+        }
+
+        $xlsfile->copy($this, 'xlsform_file');
         $this->saveQuietly();
 
         // update form title and ID in the file itself (ODK Central looks for these values in the XLS file)

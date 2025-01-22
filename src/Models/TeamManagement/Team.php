@@ -10,7 +10,6 @@ use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Mail\TeamManagement\InviteMember;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsForms;
-use App\Models\User;
 
 class Team extends Model implements WithXlsforms
 {
@@ -39,20 +38,20 @@ class Team extends Model implements WithXlsforms
     // **************** RELATIONSHIPS ***************** //
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'team_members')
+        return $this->belongsToMany(config('filament-odk-link.models.user_model'), 'team_members')
             ->withPivot('is_admin');
     }
 
     public function admins(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'team_members')
+        return $this->belongsToMany(config('filament-odk-link.models.user_model'), 'team_members')
             ->withPivot('is_admin')
             ->wherePivot('is_admin', 1);
     }
 
     public function members(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'team_members')
+        return $this->belongsToMany(config('filament-odk-link.models.user_model'), 'team_members')
             ->withPivot('is_admin')
             ->wherePivot('is_admin', 0);
     }

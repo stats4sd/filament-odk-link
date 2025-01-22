@@ -2,7 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\Resources;
 
-use App\Filament\Admin\Resources\XlsformTemplateResource\RelationManagers\XlsformsRelationManager;
 use Awcodes\FilamentTableRepeater\Components\TableRepeater;
 use Filament\Forms;
 use Filament\Forms\Components\Actions\Action;
@@ -18,6 +17,7 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
 use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
@@ -28,11 +28,20 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
+// Use this resource for an admin panel
+// This resource is for templates that can be made available to all platform users
+
 class XlsformTemplateResource extends Resource
 {
     protected static ?string $model = XlsformTemplate::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('owner_type', '=', Platform::class);
+    }
 
     public static function form(Form $form): Form
     {
@@ -55,14 +64,11 @@ class XlsformTemplateResource extends Resource
     {
         $odkLinkService = app()->make(OdkLinkService::class);
 
-        $record->owner()->associate(Platform::first());
-        $record->saveQuietly();
-
         // update form title in xlsfile to match user-given title
         UpdateXlsformTitleInFile::dispatchSync($record);
 
         $record->refresh();
-        $record->deployDraft($odkLinkService);
+        $record->deployDraft($odkLinkService, withMedia: false);
         $record->getRequiredMedia($odkLinkService);
 
         // TODO: We need to do the extract section when create and edit
@@ -170,9 +176,9 @@ class XlsformTemplateResource extends Resource
                         ->visible(fn(Get $get): bool => $get('is_static')),
 
                     // for non-static media (linked to datasets)
-                    Forms\Components\Select::make('dataset_id')
-                        ->label('Select a dataset')
-                        ->relationship('dataset', 'name')
+                    Forms\Components\Select::make('choice_list_id')
+                        ->label('Select a Choice List to link to')
+                        ->relationship('choiceList', 'list_name', fn(Builder $query, ?RequiredMedia $record): Builder => $record ? $query->whereHasMorph('template', [\App\Models\Xlsforms\XlsformTemplate::class, XlsformTemplate::class], fn($query) => $query->whereHas('requiredMedia', fn($query) => $query->where('id', $record->id))) : $query)
                         ->visible(fn(Get $get): bool => !$get('is_static')),
 
                 ]),
@@ -273,7 +279,8 @@ class XlsformTemplateResource extends Resource
                         ->label('Select which dataset the submissions should be linked to')
                         ->createOptionForm(DatasetResource::getCreateFormFields())
                         ->createOptionModalHeading('Create New Dataset'),
-                ])];
+                ]),
+        ];
     }
 
     public static function table(Table $table): Table
@@ -295,7 +302,7 @@ class XlsformTemplateResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('xlsforms_count')
                     ->label('# Deployments')
-                    ->counts('xlsforms')
+                    ->counts('xlsforms'),
 
             ])
             ->filters([
@@ -329,7 +336,6 @@ class XlsformTemplateResource extends Resource
         return $infolist
             ->schema([
                 Section::make('Xlsform Details')
-                    ->collapsed()
                     ->schema([
                         TextEntry::make('title'),
                         TextEntry::make('xlsfile_name')
@@ -339,6 +345,10 @@ class XlsformTemplateResource extends Resource
                             ->icon(fn(bool $state): string => match ($state) {
                                 false => 'heroicon-o-no-symbol',
                                 true => 'heroicon-o-check-circle',
+                            })
+                            ->color(fn(bool $state): string => match ($state) {
+                                false => 'gray',
+                                true => 'success',
                             }),
                     ])
                     ->columns([
@@ -441,7 +451,7 @@ class XlsformTemplateResource extends Resource
 
                                 // if no dataset is linked, return null
                                 return null;
-                            })
+                            }),
 
                     ]),
 

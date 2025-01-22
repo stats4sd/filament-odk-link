@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use App\Models\Xlsforms\ChoiceList;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
@@ -58,6 +59,11 @@ class RequiredMedia extends Pivot implements HasMedia
     public function dataset(): BelongsTo
     {
         return $this->belongsTo(Dataset::class);
+    }
+
+    public function choiceList(): BelongsTo
+    {
+        return $this->belongsTo(ChoiceList::class);
     }
 
     // maybe need to get imageUrl (for media attachments) and/or dataset attachment...

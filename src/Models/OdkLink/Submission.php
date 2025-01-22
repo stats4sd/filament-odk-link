@@ -2,17 +2,18 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use Spatie\MediaLibrary\HasMedia;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
-use Spatie\MediaLibrary\InteractsWithMedia;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class Submission extends Model implements HasMedia
 {
@@ -76,6 +77,10 @@ class Submission extends Model implements HasMedia
                 $odkLinkService = app()->make(OdkLinkService::class);
                 $odkLinkService->handleUpdatedSubmissionContent($record);
             });
+        });
+
+        static::addGlobalScope('ignore_drafts', static function (Builder $query) {
+            $query->where('from_draft', false);
         });
     }
 

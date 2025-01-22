@@ -3,24 +3,24 @@
 namespace Stats4sd\FilamentOdkLink\Commands;
 
 use Illuminate\Console\Command;
-use Stats4sd\FilamentOdkLink\Jobs\PullSubmissionsFromXlsform;
+use Stats4sd\FilamentOdkLink\Jobs\PullSubmissionsFromXlsformQuietly;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 
-class PollForOdkData extends Command
+class GetSubmissionsQuietly extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'odk:poll-for-odk-data';
+    protected $signature = 'odk:get-submissions-quietly';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Checks all active xlsforms for new submissions and downloads them to the database.';
+    protected $description = 'Pulls submissions from ODK Central without running any additional processing. No Entities are created; no custom models are created. Mostly used for testing';
 
     /**
      * Execute the console command.
@@ -30,8 +30,10 @@ class PollForOdkData extends Command
         $xlsforms = Xlsform::where('is_active', true)->get()
             ->each(function (Xlsform $xlsform) {
                 $this->info("Processing {$xlsform->title}...");
-                PullSubmissionsFromXlsform::dispatch($xlsform);
+                PullSubmissionsFromXlsformQuietly::dispatch($xlsform);
             });
     }
+}
+{
 
 }

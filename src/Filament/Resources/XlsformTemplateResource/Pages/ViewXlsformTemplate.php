@@ -23,6 +23,13 @@ class ViewXlsformTemplate extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('make_template_available')
+                ->label('Make Template Available')
+                ->icon('heroicon-o-pencil')
+                ->disabled(fn($record) => $record->available == true)
+                ->action(function (array $data, XlsformTemplate $record, Get $get) {
+                    $this->makeTemplateAvailable($record);
+                }),
             Actions\Action::make('update_xlsform_template')
                 ->label('Replace XLSForm')
                 ->icon('heroicon-o-document-arrow-up')
@@ -31,7 +38,7 @@ class ViewXlsformTemplate extends ViewRecord
                     'title' => self::getRecord()->title,
                 ])
                 ->action(function (array $data, XlsformTemplate $record, Get $get) {
-                    $this->processRecord($record);
+                    XlsformTemplateResource::processRecord($record);
                 }),
             Actions\EditAction::make()
                 ->icon('heroicon-o-pencil-square')
@@ -40,28 +47,13 @@ class ViewXlsformTemplate extends ViewRecord
         ];
     }
 
-    protected function processRecord(XlsformTemplate $record): XlsformTemplate
+
+
+    protected function makeTemplateAvailable(XlsformTemplate $record): XlsformTemplate
     {
-        $odkLinkService = app()->make(OdkLinkService::class);
-
-        $record->owner()->associate(Platform::first());
-        $record->saveQuietly();
-
-        // update form title in xlsfile to match user-given title
-        UpdateXlsformTitleInFile::dispatchSync($record);
-
-        $record->refresh();
-        $record->deployDraft($odkLinkService);
-        $record->getRequiredMedia($odkLinkService);
-
-        // TODO: We need to do the extract section when create and edit
-        $record->extractSections();
--
-        // mark all xlsforms using this template as not current
-        $record->markAllAsNotCurrent();
+        $record->available = true;
+        $record->save();
 
         return $record;
     }
-
-
 }
