@@ -8,6 +8,7 @@ use Filament\Tables;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Infolists\Infolist;
+use Illuminate\Validation\Rules\Unique;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Forms\Components\ViewField;
 use Illuminate\Database\Eloquent\Builder;
@@ -38,6 +39,7 @@ class XlsformsRelationManager extends RelationManager
                         titleAttribute: 'title',
                         modifyQueryUsing: fn (Builder $query) => $query->where('available', true)
                     )
+                    ->required()
                     ->live()
                     ->afterStateUpdated(fn (Forms\Set $set, $state) => $set('title', $state ? XlsformTemplate::find($state)->title : '')),
 
@@ -45,7 +47,9 @@ class XlsformsRelationManager extends RelationManager
                     ->helperText('By default, this is the title of the Template you select. If you want multiple instances of the same form template, you should give each a unique title.')
                     ->required()
                     ->maxLength(255)
-                    ->unique(ignoreRecord: true),
+                    ->unique(ignoreRecord: true, modifyRuleUsing: function(Unique $rule, self $livewire) {
+                        return  $rule->where('owner_id', $livewire->getOwnerRecord()->id)->where('owner_type', get_class($livewire->getOwnerRecord()));
+                    }),
 
                 // // show QR code
                 // ViewField::make('qr_code')
