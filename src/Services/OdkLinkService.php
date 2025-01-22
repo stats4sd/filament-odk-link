@@ -594,8 +594,6 @@ class OdkLinkService
                     'ownerName' => $xlsform->owner->name,
                 ]);
 
-                ray($messageContent);
-
                 abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '));
             }
 
@@ -652,13 +650,18 @@ class OdkLinkService
 
         $xlsform = $xlsformVersion->xlsform;
 
+        // one submissions should contain one main survey only.
+        // this associative array stores the user-specified foreign key column name and created record id.
+        // it will be populated when storing repeat groups data in custom tables.
+        $mainSurveyId = [];
+
         foreach ($sections as $section) {
-            $this->processEntryFromSection($xlsform, $rootEntry, $section, $submission->id);
+            $mainSurveyId = $this->processEntryFromSection($xlsform, $rootEntry, $section, $submission->id, $mainSurveyId);
         }
     }
 
 
-    private function processEntryFromSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    private function processEntryFromSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId, $mainSurveyId)
     {
         // get the section schema and the dataset it is linked to;
 
@@ -670,13 +673,16 @@ class OdkLinkService
             // handle main survey (root)
             $this->storeMainSurveyToEntity($xlsform, $entry, $section, $submissionId);
 
-            $this->storeMainSurveyToCustomTable($xlsform, $entry, $section, $submissionId);
+            $mainSurveyId = $this->storeMainSurveyToCustomTable($xlsform, $entry, $section, $submissionId);
         } else {
             // handle repeat group
             $this->storeRepeatGroupToEntity($xlsform, $entry, $section, $submissionId);
 
-            $this->storeRepeatGroupToCustomTable($xlsform, $entry, $section, $submissionId);
+            $this->storeRepeatGroupToCustomTable($xlsform, $entry, $section, $submissionId, $mainSurveyId);
         }
+
+        // assumption: main survey section should be processed first, therefore main survey Id will be available when processing repeat groups
+        return $mainSurveyId;
     }
 
 
@@ -721,6 +727,8 @@ class OdkLinkService
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
+        $mainSurveyId = [];
+
         // P.S. When deleting submission in application, we must delete related records for both generic approach and custom table approach
 
         // check whether this xlsform template section has a related database table
@@ -738,16 +746,69 @@ class OdkLinkService
             $class::where('submission_id', $submissionId)->delete();
 
             // get data array from main survey
-            $dataArray = $this->prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId);
+            $dataArray = $this->prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId, $mainSurveyId);
+
+            // to prevent saving empty record to database table
+            $isEmptyRecord = true;
+
+            foreach ($dataArray as $key => $value) {
+                // dump($key . '=' . $value);
+
+                // skip item "submission_id" as it must contain a value
+                if ($key == 'submission_id') {
+                    continue;
+                }
+
+                // indicate this is not an empty record if any item contains value
+                if ($value != null) {
+                    $isEmptyRecord = false;
+                    break;
+                }
+            }
+
+            // if database table has column "properties", prepare it as JSON content with all attribute values
+            if (Schema::hasColumn($model->getTable(), 'properties')) {
+                $properties = $this->preparePropertiesArray($xlsform, $entry, $section, $schema, $model, $submissionId);
+                $dataArray['properties'] = $properties;
+            }
+
+            // if database table has column "team_id", get owner id of xlsform, set it as team_id
+            if (Schema::hasColumn($model->getTable(), 'team_id')) {
+                // dump($model->getTable() . ' has column team_id');
+
+                $teamId = $xlsform->owner->id;
+                // dump('***** $xlsform->id: ' . $xlsform->id);
+                // dump('***** $xlsform->owner->id: ' . $teamId);
+
+                $dataArray['team_id'] = $teamId;
+                // dump('***** ' . $dataArray['team_id']);
+            } else {
+                // dump($model->getTable() . ' DOES NOT HAVE column team_id');
+            }
+
+            // dump($dataArray);
 
             // create a new database record
-            $class::create($dataArray);
+            if (!$isEmptyRecord) {
+                $record = $class::create($dataArray);
+
+                // if there is a user-specified foreign key column name in model class, store the main survey id into array
+                if ($model->foreignKeyIdColumnName != '') {
+                    $mainSurveyId[$model->foreignKeyIdColumnName] = $record->id;
+                }
+
+                // dump('Created ' . $model->getTable() . ' record.');
+            } else {
+                // dump('All items contain NULL value. No need to create ' . $model->getTable() . ' record.');
+            }
         }
+
+        return $mainSurveyId;
     }
 
 
     // a generic function to extract values from main survey and repeat group entry, returns an array for further processing
-    private function prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId): array
+    private function prepareDataArray($xlsform, $entry, $section, $schema, $model, $submissionId, $mainSurveyId): array
     {
         // initialise array
         $result = [];
@@ -827,6 +888,87 @@ class OdkLinkService
                 $gpsData = $this->extractGpsData($schemaItem, $columnNames, $value);
                 $result = array_merge($result, $gpsData);
             } elseif (in_array($schemaItem['name'], $columnNames)) {
+                $result[$schemaItem['name']] = $value;
+            }
+        }
+
+        // if main survey Id exists in table's foreign key list, populate it to $result array
+        foreach ($mainSurveyId as $key => $value) {
+            if (array_key_exists($key, $foreignKeyColumnNames)) {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+
+    // a generic function to extract values from main survey and repeat group entry, returns an array for properties column
+    private function preparePropertiesArray($xlsform, $entry, $section, $schema, $model, $submissionId): array
+    {
+        // initialise array
+        $result = [];
+
+        // get all column names of a table
+        $columnNames = Schema::getColumnListing($model->getTable());
+
+        // these variables are ODK form specific, which are not necessary to store in properties column
+        $odkVariablesToIgnore =
+            [
+                '__id',
+                'instanceID',
+                'meta',
+                'deviceid',
+                'start_time',
+                'end_time',
+                '_id',
+                'uuid',
+                '__version__',
+                '_xform_id_string',
+                '_uuid',
+                '_attachments',
+                '_status',
+                '_geolocation',
+                '_submission_time',
+                '_tags',
+                '_notes',
+                '_validation_status',
+                '_submitted_by',
+            ];
+
+        // access the value of each ODK variable from a deeply nested array using "dot" notation
+        foreach ($schema as $schemaItem) {
+
+            // extract value from main survey
+            if ($section->is_repeat == 0) {
+                $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+                $value = Arr::get($entry, $itemPath);
+
+                // extract value from repeat group
+            } else {
+                $pathLength = Str::length($schemaItem['path']);
+                $position = Str::position($schemaItem['path'], $section->structure_item);
+                $lengthToCut = $pathLength - $position;
+
+                $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
+                // dump('$itemPath : ' . $itemPath);
+
+                $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+                // dump('$fullItemPath : ' . $fullItemPath);
+
+                $value = Arr::get($entry, $fullItemPath);
+                // dump($schemaItem['name'] . ' : ' . $value);
+            }
+
+            // put this item into $result if
+            // 1. it is not a geopoint
+            // 2. it is not a ODK variable to ignore
+            // 3. it's value is not null
+            if (
+                $schemaItem['type'] != 'geopoint' &&
+                !in_array($schemaItem['name'], $odkVariablesToIgnore) &&
+                $value != null
+            ) {
                 $result[$schemaItem['name']] = $value;
             }
         }
@@ -947,7 +1089,7 @@ class OdkLinkService
 
 
     // store repeat group to custom table (if any)
-    private function storeRepeatGroupToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    private function storeRepeatGroupToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId, $mainSurveyId)
     {
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
@@ -988,8 +1130,6 @@ class OdkLinkService
 
                 // handle each record in repeat group
                 foreach ($repeatGroupArray as $repeatGroupRecord) {
-                    // dump($repeatGroupRecord);
-
                     // find the parent (if exists)
                     if ($parentDataset = $section->dataset?->parent) {
                         $parentClass = $section->dataset?->entity_model;
@@ -999,10 +1139,60 @@ class OdkLinkService
                     $repeatGroupEntry = ['rg' => $repeatGroupRecord];
 
                     // get data array from repeat group entry
-                    $dataArray = $this->prepareDataArray($xlsform, $repeatGroupEntry, $section, $schema, $model, $submissionId);
+                    $dataArray = $this->prepareDataArray($xlsform, $repeatGroupEntry, $section, $schema, $model, $submissionId, $mainSurveyId);
+
+                    // to prevent saving empty record to database table
+                    $isEmptyRecord = true;
+
+                    foreach ($dataArray as $key => $value) {
+                        // dump($key . '=' . $value);
+
+                        // for soils database table nutrient_balances, it does not have columns for individual attribute.
+                        // the return value from function prepareDataArray() will contain submission_id only.
+                        // let it create nutrient_balances, all attribute values will be fill in to JSON column nutrient_balances.properties afterwards
+
+                        // skip item "submission_id" as it must contain a value
+                        // if ($key == 'submission_id') {
+                        //     dump('skip item submission_id as it must contain a value');
+                        //     continue;
+                        // }
+
+                        // indicate this is not an empty record if any item contains value
+                        if ($value != null) {
+                            $isEmptyRecord = false;
+                            break;
+                        }
+                    }
+
+                    // if database table has column "properties", prepare it as JSON content with all attribute values
+                    if (Schema::hasColumn($model->getTable(), 'properties')) {
+                        $properties = $this->preparePropertiesArray($xlsform, $repeatGroupEntry, $section, $schema, $model, $submissionId);
+                        $dataArray['properties'] = $properties;
+                    }
+
+                    // if database table has column "team_id", get owner id of xlsform, set it as team_id
+                    if (Schema::hasColumn($model->getTable(), 'team_id')) {
+                        // dump($model->getTable() . ' has column team_id');
+
+                        $teamId = $xlsform->owner->id;
+                        // dump('***** $xlsform->id: ' . $xlsform->id);
+                        // dump('***** $xlsform->owner->id: ' . $teamId);
+
+                        $dataArray['team_id'] = $teamId;
+                        // dump('***** ' . $dataArray['team_id']);
+                    } else {
+                        // dump($model->getTable() . ' DOES NOT HAVE column team_id');
+                    }
+
+                    // dump($dataArray);
 
                     // create a new database record
-                    $class::create($dataArray);
+                    if (!$isEmptyRecord) {
+                        $class::create($dataArray);
+                        // dump('Created ' . $model->getTable() . ' record.');
+                    } else {
+                        // dump('All items contain NULL value. No need to create ' . $model->getTable() . ' record.');
+                    }
                 }
             }
         } else {
