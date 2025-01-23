@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink;
 
+use Exception;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -19,6 +20,9 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class FilamentOdkLinkPanelProvider extends PanelProvider
 {
+    /**
+     * @throws Exception
+     */
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -33,7 +37,7 @@ class FilamentOdkLinkPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->userMenuItems([
-                MenuItem::make('Home')
+                MenuItem::make()
                     ->label('Back to main site')
                     ->url(url('/'))
                     ->icon('heroicon-o-home'),

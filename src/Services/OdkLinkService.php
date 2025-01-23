@@ -13,18 +13,17 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
-use Stats4sd\FilamentOdkLink\Exports\ChoiceListModelsExport;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * All ODK Aggregation services should be able to handle ODK forms, so this interface should always be used.
@@ -188,13 +187,9 @@ class OdkLinkService
         // if the xlsform file is not valid, throw an error
         if (isset($responseBody['message']) && Str::startsWith($responseBody['message'], 'The given XLSForm file was not valid')) {
 
-            ray('The XLSForm file is not valid. Please review the file and try to deploy the form again.');
-            ray($response->json());
             abort(500, $response->json()['details']['error']);
         } elseif ($response->status() !== 200) {
 
-            ray('An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
-            ray($response->json());
             abort(500, 'An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
         }
 
@@ -215,7 +210,7 @@ class OdkLinkService
     /**
      * Gets the draft form details for a given xlsform
      *
-     * @throws RequestException
+     * @throws RequestException|ConnectionException
      */
     public function getDraftFormDetails(WithXlsFormDrafts $xlsform): array
     {
@@ -230,7 +225,7 @@ class OdkLinkService
     /**
      * Gets the expected media items for a given draft form template
      *
-     * @throws RequestException
+     * @throws RequestException|ConnectionException
      */
     public function getRequiredMedia(WithXlsFormDrafts $xlsformTemplate): array
     {
@@ -249,7 +244,7 @@ class OdkLinkService
     /**
      * Uploads all media files for an XLSform to ODK Central - both static files and dyncsv files
      *
-     * @throws RequestException
+     * @throws RequestException|ConnectionException
      */
     public function uploadMediaFileAttachments(WithXlsFormDrafts $xlsform): bool
     {
@@ -275,14 +270,10 @@ class OdkLinkService
                 $media = $requiredMediaItem->getFirstMedia();
                 if ($media) {
                     $this->uploadSingleMediaFile($xlsform, $media->getPath());
-                } else {
-
-                    if (! $requiredMediaItem->is_static) {
-                        $csvPath = $this->createCsvLookupFile($xlsform, $requiredMediaItem);
-
-                        $this->uploadSingleMediaFile($xlsform, $csvPath);
-                    }
                 }
+
+                // TODO: add csv media file creation;
+                // $this->uploadSingleMediaFile($xlsform, $csvPath);
             }
         }
 
@@ -292,7 +283,7 @@ class OdkLinkService
     /**
      * Uploads a single media file to the given xlsform
      *
-     * @throws RequestException
+     * @throws RequestException|ConnectionException
      */
     public function uploadSingleMediaFile(WithXlsFormDrafts $xlsform, string $filePath): array
     {
@@ -323,6 +314,8 @@ class OdkLinkService
      * Publishes the current draft form so it is available for live data collection
      *
      * @return XlsformVersion $xlsformVersion
+     *
+     * @throws RequestException
      */
     public function publishForm(Xlsform $xlsform): XlsformVersion
     {
@@ -478,37 +471,6 @@ class OdkLinkService
         })->toArray();
 
         $xlsform->updateQuietly(['schema' => $schema]);
-    }
-
-    /**
-     * Creates a new csv lookup file from the database;
-     */
-    public function createCsvLookupFile(WithXlsFormDrafts $xlsform, RequiredMedia $requiredMedia): string
-    {
-        ray('trying to create csv lookup file for ' . $requiredMedia->name . ' for ' . $xlsform->title . ' (' . $xlsform->id . ')');
-
-        $choiceList = $requiredMedia->choiceList;
-
-        $filePath = 'xlsforms/' . $xlsform->id . '/' . $requiredMedia->name;
-
-        // check if the folder exists; if not, create it
-        if (! Storage::disk(config('filament-odk-link.storage.xlsforms'))->exists('xlsforms')) {
-            Storage::disk(config('filament-odk-link.storage.xlsforms'))->makeDirectory('xlsforms');
-        }
-
-        if (! Storage::disk(config('filament-odk-link.storage.xlsforms'))->exists('xlsforms/' . $xlsform->id)) {
-            Storage::disk(config('filament-odk-link.storage.xlsforms'))->makeDirectory('xlsforms/' . $xlsform->id);
-        }
-
-        Excel::store(
-            new ChoiceListModelsExport($choiceList, $xlsform),
-            $filePath,
-            config('filament-odk-link.storage.xlsforms')
-        );
-
-        // TODO: Explore if we need select_one_from_external_file support.
-
-        return Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($filePath);
     }
 
     public function unArchiveForm(Xlsform $xlsform)
@@ -713,7 +675,8 @@ class OdkLinkService
     }
 
     // store main survey to custom table (if any)
-    private function storeMainSurveyToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    // TODO: why does this return an array? Probably needs refactoring.
+    private function storeMainSurveyToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId): ?array
     {
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
@@ -730,7 +693,7 @@ class OdkLinkService
 
             // check database table existence
             if (! Schema::hasTable($model->getTable())) {
-                return;
+                return null;
             }
 
             // delete previously stored records in this table (if any)
@@ -759,24 +722,7 @@ class OdkLinkService
             }
 
             // if database table has column "properties", prepare it as JSON content with all attribute values
-            if (Schema::hasColumn($model->getTable(), 'properties')) {
-                $properties = $this->preparePropertiesArray($xlsform, $entry, $section, $schema, $model, $submissionId);
-                $dataArray['properties'] = $properties;
-            }
-
-            // if database table has column "team_id", get owner id of xlsform, set it as team_id
-            if (Schema::hasColumn($model->getTable(), 'team_id')) {
-                // dump($model->getTable() . ' has column team_id');
-
-                $teamId = $xlsform->owner->id;
-                // dump('***** $xlsform->id: ' . $xlsform->id);
-                // dump('***** $xlsform->owner->id: ' . $teamId);
-
-                $dataArray['team_id'] = $teamId;
-                // dump('***** ' . $dataArray['team_id']);
-            } else {
-                // dump($model->getTable() . ' DOES NOT HAVE column team_id');
-            }
+            $dataArray = $this->getArr($model, $xlsform, $entry, $section, $schema, $submissionId, $dataArray);
 
             // dump($dataArray);
 
@@ -790,8 +736,6 @@ class OdkLinkService
                 }
 
                 // dump('Created ' . $model->getTable() . ' record.');
-            } else {
-                // dump('All items contain NULL value. No need to create ' . $model->getTable() . ' record.');
             }
         }
 
@@ -1031,7 +975,7 @@ class OdkLinkService
                 $entity = Entity::create([
                     'dataset_id' => $section->dataset->id,
                     'submission_id' => $submissionId,
-                    'parent_id' => Entity::where('submission_id', $submissionId)->where('dataset_id', $section->parent?->dataset->id)->first()?->id ?? null,
+                    'parent_id' => Entity::where('submission_id', $submissionId)->where('dataset_id', $section->parent?->dataset->id)->first()->id ?? null,
                     'model_type' => $section->dataset->entity_model,
                 ]);
 
@@ -1067,13 +1011,11 @@ class OdkLinkService
                     }
                 }
             }
-        } else {
-            // dump("This is NOT an array");
         }
     }
 
     // store repeat group to custom table (if any)
-    private function storeRepeatGroupToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId, $mainSurveyId)
+    private function storeRepeatGroupToCustomTable(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId, $mainSurveyId): void
     {
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
@@ -1150,24 +1092,7 @@ class OdkLinkService
                     }
 
                     // if database table has column "properties", prepare it as JSON content with all attribute values
-                    if (Schema::hasColumn($model->getTable(), 'properties')) {
-                        $properties = $this->preparePropertiesArray($xlsform, $repeatGroupEntry, $section, $schema, $model, $submissionId);
-                        $dataArray['properties'] = $properties;
-                    }
-
-                    // if database table has column "team_id", get owner id of xlsform, set it as team_id
-                    if (Schema::hasColumn($model->getTable(), 'team_id')) {
-                        // dump($model->getTable() . ' has column team_id');
-
-                        $teamId = $xlsform->owner->id;
-                        // dump('***** $xlsform->id: ' . $xlsform->id);
-                        // dump('***** $xlsform->owner->id: ' . $teamId);
-
-                        $dataArray['team_id'] = $teamId;
-                        // dump('***** ' . $dataArray['team_id']);
-                    } else {
-                        // dump($model->getTable() . ' DOES NOT HAVE column team_id');
-                    }
+                    $dataArray = $this->getArr($model, $xlsform, $repeatGroupEntry, $section, $schema, $submissionId, $dataArray);
 
                     // dump($dataArray);
 
@@ -1175,18 +1100,36 @@ class OdkLinkService
                     if (! $isEmptyRecord) {
                         $class::create($dataArray);
                         // dump('Created ' . $model->getTable() . ' record.');
-                    } else {
-                        // dump('All items contain NULL value. No need to create ' . $model->getTable() . ' record.');
                     }
                 }
             }
-        } else {
-            // dump("This is NOT an array");
         }
     }
 
-    public function exportAsExcelFile(Xlsform $xlsform)
+    public function exportAsExcelFile(Xlsform $xlsform): BinaryFileResponse
     {
         return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
+    }
+
+    private function getArr(mixed $model, Xlsform $xlsform, $entry, XlsformTemplateSection $section, mixed $schema, $submissionId, array $dataArray): array
+    {
+        if (Schema::hasColumn($model->getTable(), 'properties')) {
+            $properties = $this->preparePropertiesArray($xlsform, $entry, $section, $schema, $model, $submissionId);
+            $dataArray['properties'] = $properties;
+        }
+
+        // if database table has column "team_id", get owner id of xlsform, set it as team_id
+        if (Schema::hasColumn($model->getTable(), 'team_id')) {
+            // dump($model->getTable() . ' has column team_id');
+
+            $teamId = $xlsform->owner->id;
+            // dump('***** $xlsform->id: ' . $xlsform->id);
+            // dump('***** $xlsform->owner->id: ' . $teamId);
+
+            $dataArray['team_id'] = $teamId;
+            // dump('***** ' . $dataArray['team_id']);
+        }
+
+        return $dataArray;
     }
 }

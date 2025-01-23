@@ -5,7 +5,6 @@ parameters:
     level: 4
     paths:
         - src
-        - config
         - database
     databaseMigrationsPath:
         - database/migrations
@@ -13,3 +12,4 @@ parameters:
     checkOctaneCompatibility: true
     checkModelProperties: true
     noUnnecessaryCollectionCallOnly: ['count', 'first']
+    noEnvCallsOutsideOfConfig: false

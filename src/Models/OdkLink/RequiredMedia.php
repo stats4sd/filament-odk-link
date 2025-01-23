@@ -37,11 +37,11 @@ class RequiredMedia extends Pivot implements HasMedia
         });
     }
 
-    /** @return Attribute<string, never> */
+    /** @return Attribute<int, never> */
     public function status(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->dataset_id || $this->hasMedia() ? 1 : 0,
+            get: fn (): int => $this->dataset_id || $this->hasMedia() ? 1 : 0,
         );
     }
 
@@ -59,7 +59,7 @@ class RequiredMedia extends Pivot implements HasMedia
         return $this->belongsTo(XlsformTemplate::class);
     }
 
-    /** @return BelongsTo<Dataset, $this>< */
+    /** @return BelongsTo<Dataset, $this> */
     public function dataset(): BelongsTo
     {
         return $this->belongsTo(Dataset::class);

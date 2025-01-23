@@ -14,7 +14,6 @@ use Livewire\Features\SupportTesting\Testable;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Stats4sd\FilamentOdkLink\Commands\FilamentOdkLinkCommand;
 use Stats4sd\FilamentOdkLink\Commands\GetSubmissionsQuietly;
 use Stats4sd\FilamentOdkLink\Commands\PollForOdkData;
 use Stats4sd\FilamentOdkLink\Commands\TestCsvMediaGeneration;
@@ -69,9 +68,7 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
         });
     }
 
-    public function packageRegistered(): void
-    {
-    }
+    public function packageRegistered(): void {}
 
     public function packageBooted(): void
     {
@@ -104,7 +101,7 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
         }
 
         // Testing
-        Testable::mixin(new TestsFilamentOdkLink());
+        Testable::mixin(new TestsFilamentOdkLink);
     }
 
     protected function getAssetPackageName(): ?string
