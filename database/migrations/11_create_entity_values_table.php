@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('entity_values', function (Blueprint $table) {
             $table->id();
             $table->foreignId('entity_id')->constrained('entities');
-            $table->string('dataset_variable_id')->constrained('dataset_variables');
+            $table->foreignId('dataset_variable_id')->constrained('dataset_variables');
             $table->text('value');
             $table->timestamps();
 

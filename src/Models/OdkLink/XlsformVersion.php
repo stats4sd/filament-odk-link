@@ -33,7 +33,7 @@ class XlsformVersion extends Model implements HasMedia
 
     // If no title is given, add a default title by combining the owner name and template title.
     /** @return Attribute<string, never> */
-    public function title(): Attribute
+    protected function title(): Attribute
     {
         return new Attribute(
             get: fn (): string => $this->team ? $this->team->name . ' - ' . $this->xlsform->title : '',
@@ -41,7 +41,7 @@ class XlsformVersion extends Model implements HasMedia
     }
 
     /** @return Attribute<string, never> */
-    public function xlsfile(): Attribute
+    protected function xlsfile(): Attribute
     {
         return new Attribute(
             get: fn (): string => $this->getFirstMediaPath('xlsform_file'),
@@ -49,7 +49,7 @@ class XlsformVersion extends Model implements HasMedia
     }
 
     /** @return Attribute<string, never> */
-    public function xlsfile_name(): Attribute
+    protected function xlsfile_name(): Attribute
     {
         return new Attribute(
             get: fn (): string => $this->getFirstMedia('xlsform_file')->file_name,

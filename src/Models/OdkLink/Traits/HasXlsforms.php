@@ -11,7 +11,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
-trait HasXlsForms
+trait HasXlsforms
 {
     /** @throws BindingResolutionException */
     protected static function booted(): void
@@ -79,7 +79,7 @@ trait HasXlsForms
         ]);
     }
 
-    public function odkQrCode(): Attribute
+    protected function odkQrCode(): Attribute
     {
         return new Attribute(
             get: function (): ?string {

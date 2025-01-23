@@ -15,7 +15,7 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
  * @property string $odk_id
  * @property string $title
  */
-interface WithXlsFormDrafts
+interface WIthXlsformDrafts
 {
     // If it can have a draft, it must have an owner
     public function owner(): MorphTo;

@@ -29,9 +29,7 @@ class PlatformSeeder extends Seeder
             $platform = Platform::create();
 
             // add the platform's odk-project ID to the env file
-            if ($platform->odkProject) {
-                $this->setEnvironmentValue($platform->odkProject->id);
-            }
+            $this->setEnvironmentValue($platform->odkProject->id);
 
             return;
         }

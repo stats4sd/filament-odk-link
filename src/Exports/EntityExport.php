@@ -78,10 +78,6 @@ class EntityExport implements FromArray, WithHeadings, WithTitle
         return $schema->pluck('name')->toArray();
     }
 
-    /**
-     * @param  mixed  $heading
-     * @return mixed
-     */
     public function getEntityValues(mixed $entity, array $headings): array
     {
         // assume there is only one value for one ODK variable

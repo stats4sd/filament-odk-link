@@ -32,7 +32,7 @@ class OdkProject extends Model
 
     // add this method because it will be called when xlsform->toArray() is called
     /** @return Attribute<string, never> */
-    public function odkUrl(): Attribute
+    protected function odkUrl(): Attribute
     {
         return new Attribute(
             get: fn (): string => config('filament-odk-link.odk.url') . '/#/projects/' . $this->id,

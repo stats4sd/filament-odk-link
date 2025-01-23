@@ -12,7 +12,8 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 /**
  * @phpstan-require-extends Model
  *
- * @property OdkProject $odkProject
+ * @property ?OdkProject $odkProject
+ * @property string $name
  */
 interface WithXlsforms
 {
@@ -22,7 +23,7 @@ interface WithXlsforms
     // All owners have access to all public templates (templates where available = 1)
     public function xlsformTemplates(): MorphMany;
 
-    /** @return MorphOne<OdkProject, $this> */
+    /** @return MorphOne */
     public function odkProject(): MorphOne;
 
     public function createLinkedOdkProject(OdkLinkService $odkLinkService): void;

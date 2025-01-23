@@ -28,7 +28,8 @@
         "maatwebsite/excel": "^3.1",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-medialibrary": "^10.15|^11.4",
-        "spatie/laravel-package-tools": "^1.15.0"
+        "spatie/laravel-package-tools": "^1.15.0",
+        "spatie/laravel-permission": "^6.10"
     },
     "require-dev": {
         "larastan/larastan": "^3.0",

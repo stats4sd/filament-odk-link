@@ -5,25 +5,29 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Str;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 trait PublishesToOdkCentral
 {
-    public function xlsfile(): Attribute
+    /** @return Attribute<Media, never> */
+    protected function xlsfile(): Attribute
     {
         return new Attribute(
             get: fn (): string => $this->getFirstMediaPath('xlsform_file'),
         );
     }
 
-    public function xlsfileName(): Attribute
+    /** @return Attribute<string, never> */
+    protected function xlsfileName(): Attribute
     {
         return new Attribute(
             get: fn (): ?string => $this->getFirstMedia('xlsform_file')?->file_name,
         );
     }
 
-    public function enketoDraftUrl(): Attribute
+    /** @return Attribute<string, never> */
+    protected function enketoDraftUrl(): Attribute
     {
         return new Attribute(
             get: function () {

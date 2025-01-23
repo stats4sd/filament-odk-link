@@ -33,7 +33,7 @@ class TeamXlsformTemplateResource extends Resource
             ->where('available', true)
             ->where(function (Builder $query) {
                 $query->whereHas('owner', function (Builder $subQuery) {
-                    $subQuery->where('id', Filament::getTenant()->id);
+                    $subQuery->where('id', Filament::getTenant()->getKey());
                 })
                     ->orWhere('owner_type', Platform::class);
             })
@@ -47,7 +47,7 @@ class TeamXlsformTemplateResource extends Resource
                 Tables\Columns\TextColumn::make('title'),
                 Tables\Columns\IconColumn::make('has_version')
                     ->label('Deployed?')
-                    ->state(fn(Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->id)->count() > 0)
+                    ->state(fn(Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->getKey())->count() > 0)
                     ->boolean(),
                 Tables\Columns\TextColumn::make('owner_type')
                     ->label('Owner')
@@ -63,9 +63,11 @@ class TeamXlsformTemplateResource extends Resource
                 //
             ])
             ->actions([
+
+                // TODO: setup a helper function that a) returns the current tenant as a "WithXlsforms" class, and b) makes sure that devs realise the Filament tenant must implement this interface.
                 Tables\Actions\Action::make('deploy')
                     ->label('Deploy Form')
-                    ->hidden(fn(Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->id)->count() > 0)
+                    ->hidden(fn(Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->getKey())->count() > 0)
                     ->icon('heroicon-o-cloud-arrow-up')
                     ->form([
                         Forms\Components\TextInput::make('title')
@@ -76,7 +78,7 @@ class TeamXlsformTemplateResource extends Resource
                     ->action(function (XlsformTemplate $record, array $data) {
 
                         $xlsform = $record->xlsforms()->create([
-                            'owner_id' => Filament::getTenant()->id,
+                            'owner_id' => Filament::getTenant()->getKey(),
                             'owner_type' => config('filament-odk-link.models.team_model'),
                             'title' => $data['title'],
                         ]);

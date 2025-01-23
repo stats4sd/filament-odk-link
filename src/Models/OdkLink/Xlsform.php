@@ -11,14 +11,14 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsFormDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WIthXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
-class Xlsform extends Model implements HasMedia, WithXlsformDrafts
+class Xlsform extends Model implements HasMedia, WIthXlsformDrafts
 {
-    use HasXlsFormDrafts;
+    use HasXlsformDrafts;
     use InteractsWithMedia;
     use PublishesToOdkCentral;
 
@@ -56,7 +56,7 @@ class Xlsform extends Model implements HasMedia, WithXlsformDrafts
 
     // Get an xlsformId string that is both human-readable and guaranteed to be unique within the platform
     /** @return Attribute<string, never> */
-    public function xlsformId(): Attribute
+    protected function xlsformId(): Attribute
     {
         return new Attribute(
             get: fn (): string => str($this->title)->slug() . '_' . $this->id,
@@ -64,7 +64,7 @@ class Xlsform extends Model implements HasMedia, WithXlsformDrafts
     }
 
     /** @return Attribute<string, never> */
-    public function ownedByName(): Attribute
+    protected function ownedByName(): Attribute
     {
         return new Attribute(
             get: fn (): string => $this->owner->{$this->getOwnerIdentifierAttributeName()} ?? '',
@@ -72,7 +72,7 @@ class Xlsform extends Model implements HasMedia, WithXlsformDrafts
     }
 
     /** @return Attribute<string, never> */
-    public function currentVersion(): Attribute
+    protected function currentVersion(): Attribute
     {
         return new Attribute(
             get: fn (): string => $this->xlsformVersions()->latest()->first()?->version ?? '',
@@ -80,7 +80,7 @@ class Xlsform extends Model implements HasMedia, WithXlsformDrafts
     }
 
     /** @return Attribute<string, never> */
-    public function status(): Attribute
+    protected function status(): Attribute
     {
         return new Attribute(
             get: function (): string {
@@ -197,7 +197,7 @@ class Xlsform extends Model implements HasMedia, WithXlsformDrafts
     // Get the live submissions count from ODK Central
 
     /** @return Attribute<?int, never> */
-    public function liveSubmissionsCount(): Attribute
+    protected function liveSubmissionsCount(): Attribute
     {
         return new Attribute(
             get: function (): ?int {

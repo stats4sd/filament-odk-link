@@ -9,7 +9,7 @@ use JsonException;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Throwable;
 
-trait HasXlsFormDrafts
+trait HasXlsformDrafts
 {
     /**
      * @throws RequestException
@@ -20,8 +20,6 @@ trait HasXlsFormDrafts
             $odkXlsFormDetails = $service->createDraftForm($this, $withMedia);
 
         } catch (Throwable $e) {
-
-            ray($e);
 
             Notification::make('draft-form-failed')
                 ->title('There is an error in the XLS Form')

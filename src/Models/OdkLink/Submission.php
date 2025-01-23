@@ -40,15 +40,10 @@ class Submission extends Model implements HasMedia
                         $query->whereHas('xlsform', function (Builder $query) {
                             $query->whereHas('owner', function (Builder $query) {
 
-                                // if xlsforms are owned by a user, return the user's forms directly.
-                                if (is_a($query->getModel(), User::class)) {
+                                // is the xlsform owned by a team/group that the logged-in user is linked to?
+                                $query->whereHas('users', function ($query) {
                                     $query->where('users.id', Auth::id());
-                                } else {
-                                    // is the xlsform owned by a team/group that the logged-in user is linked to?
-                                    $query->whereHas('users', function ($query) {
-                                        $query->where('users.id', Auth::id());
-                                    });
-                                }
+                                });
                             });
                         });
                     });
@@ -108,7 +103,7 @@ class Submission extends Model implements HasMedia
     }
 
     /** @return Attribute<string, never> */
-    public function xlsformTitle(): Attribute
+    protected function xlsformTitle(): Attribute
     {
         return new Attribute(
             get: fn (): string => $this->xlsformVersion->xlsform->title,

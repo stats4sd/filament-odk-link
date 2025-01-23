@@ -38,7 +38,7 @@ class RequiredMedia extends Pivot implements HasMedia
     }
 
     /** @return Attribute<int, never> */
-    public function status(): Attribute
+    protected function status(): Attribute
     {
         return new Attribute(
             get: fn (): int => $this->dataset_id || $this->hasMedia() ? 1 : 0,
@@ -46,7 +46,7 @@ class RequiredMedia extends Pivot implements HasMedia
     }
 
     /** @return Attribute<string, never> */
-    public function fullType(): Attribute
+    protected function fullType(): Attribute
     {
         return new Attribute(
             get: fn (): string => $this->is_static ? $this->type : 'dataset',

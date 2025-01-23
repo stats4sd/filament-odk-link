@@ -13,14 +13,14 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsFormDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WIthXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
-class XlsformTemplate extends Model implements WithXlsformDrafts, HasMedia
+class XlsformTemplate extends Model implements WIthXlsformDrafts, HasMedia
 {
-    use HasXlsFormDrafts;
+    use HasXlsformDrafts;
     use InteractsWithMedia;
     use PublishesToOdkCentral;
 

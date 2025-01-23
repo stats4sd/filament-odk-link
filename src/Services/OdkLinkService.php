@@ -17,7 +17,7 @@ use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WIthXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
@@ -156,7 +156,7 @@ class OdkLinkService
      *
      * @throws RequestException|ConnectionException
      */
-    public function createDraftForm(WithXlsFormDrafts $xlsform, bool $withMedia): array
+    public function createDraftForm(WIthXlsformDrafts $xlsform, bool $withMedia): array
     {
         $token = $this->authenticate();
 
@@ -212,7 +212,7 @@ class OdkLinkService
      *
      * @throws RequestException|ConnectionException
      */
-    public function getDraftFormDetails(WithXlsFormDrafts $xlsform): array
+    public function getDraftFormDetails(WIthXlsformDrafts $xlsform): array
     {
         $token = $this->authenticate();
 
@@ -227,7 +227,7 @@ class OdkLinkService
      *
      * @throws RequestException|ConnectionException
      */
-    public function getRequiredMedia(WithXlsFormDrafts $xlsformTemplate): array
+    public function getRequiredMedia(WIthXlsformDrafts $xlsformTemplate): array
     {
         $token = $this->authenticate();
 
@@ -246,7 +246,7 @@ class OdkLinkService
      *
      * @throws RequestException|ConnectionException
      */
-    public function uploadMediaFileAttachments(WithXlsFormDrafts $xlsform): bool
+    public function uploadMediaFileAttachments(WIthXlsformDrafts $xlsform): bool
     {
 
         // static files
@@ -285,7 +285,7 @@ class OdkLinkService
      *
      * @throws RequestException|ConnectionException
      */
-    public function uploadSingleMediaFile(WithXlsFormDrafts $xlsform, string $filePath): array
+    public function uploadSingleMediaFile(WIthXlsformDrafts $xlsform, string $filePath): array
     {
         $token = $this->authenticate();
         $file = file_get_contents($filePath);
@@ -381,14 +381,9 @@ class OdkLinkService
     /**
      * @throws RequestException
      */
-    public function deleteForm(WithXlsFormDrafts $xlsform): bool
+    public function deleteForm(WIthXlsformDrafts $xlsform): bool
     {
         $token = $this->authenticate();
-
-        // if for some reason the odk form doesn't even have an owner, just skip the deletion
-        if (! $xlsform->owner) {
-            return true;
-        }
 
         try {
 
@@ -409,7 +404,7 @@ class OdkLinkService
         return true;
     }
 
-    public function getAttachedMedia($entry, string $token, Xlsform $xlsform, Model | Submission | null $submission): void
+    public function getAttachedMedia($entry, string $token, Xlsform $xlsform, ?Submission $submission): void
     {
         // ******** PROCESS MEDIA ******** //
         // check if media is expected
@@ -438,7 +433,7 @@ class OdkLinkService
     }
 
     // update the schema of a template for xlsform from the latest draft version on ODK Central
-    public function updateSchema(WithXlsFormDrafts $xlsform): void
+    public function updateSchema(WIthXlsformDrafts $xlsform): void
     {
         $token = $this->authenticate();
 
@@ -490,8 +485,6 @@ class OdkLinkService
     {
         $token = $this->authenticate();
 
-        // base xlsfile name
-        $fileName = collect(explode('/', $xlsform->xlsfile))->last();
         $versionSlug = Str::slug($versionDetails['version']);
 
         // create new active version with latest version number;
@@ -557,7 +550,7 @@ class OdkLinkService
             }
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
-            $submission = $xlsformVersion?->submissions()->create([
+            $submission = $xlsformVersion->submissions()->create([
                 'odk_id' => $entry['__id'],
                 'submitted_at' => (new Carbon($entry['__system']['submissionDate']))->toDateTimeString(),
                 'submitted_by' => $entry['__system']['submitterName'],
@@ -1122,7 +1115,7 @@ class OdkLinkService
         if (Schema::hasColumn($model->getTable(), 'team_id')) {
             // dump($model->getTable() . ' has column team_id');
 
-            $teamId = $xlsform->owner->id;
+            $teamId = $xlsform->owner->getKey();
             // dump('***** $xlsform->id: ' . $xlsform->id);
             // dump('***** $xlsform->owner->id: ' . $teamId);
 

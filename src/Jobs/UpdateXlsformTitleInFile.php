@@ -13,7 +13,7 @@ use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 use Stats4sd\FilamentOdkLink\Models\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WIthXlsformDrafts;
 
 /**
  * This job opens up the actual XLS file for a given Xlsform and updates the form_id and form_title fields.

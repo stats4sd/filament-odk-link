@@ -7,6 +7,7 @@ use Filament\Forms\Components\Wizard\Step;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 class EditXlsformTemplate extends EditRecord
 {
@@ -73,5 +74,4 @@ class EditXlsformTemplate extends EditRecord
         $this->record->extractSections();
 
     }
-
 }

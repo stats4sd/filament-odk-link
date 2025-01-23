@@ -83,11 +83,6 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
             $this->getAssetPackageName()
         );
 
-        // Widget Registration
-        Filament::registerWidgets([
-
-        ]);
-
         // Icon Registration
         FilamentIcon::register($this->getIcons());
 
