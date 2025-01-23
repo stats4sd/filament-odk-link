@@ -11,29 +11,34 @@ use Symfony\Contracts\Service\Attribute\Required;
 
 class Dataset extends Model
 {
-
     // a dataset might be a subset of another dataset (e.g. data from a repeat group in a form; household members in a household, etc);
+
+    /** @return BelongsTo<self, $this> */
     public function parent(): BelongsTo
     {
         return $this->belongsTo(self::class, 'parent_id');
     }
 
     // a dataset might have many children (e.g. if a form has 3 repeat group sections, the 'main survey' dataset would have 3 child datasets);
+    /** @return HasMany<self, $this> */
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id');
     }
 
+    /** @return HasMany<OdkDataset, $this> */
     public function odkDatasets(): HasMany
     {
         return $this->hasMany(OdkDataset::class);
     }
 
+    /** @return HasMany<DatasetVariable, $this> */
     public function variables(): HasMany
     {
         return $this->hasMany(DatasetVariable::class);
     }
 
+    /** @return HasMany<Entity, $this> */
     public function entities(): HasMany
     {
         return $this->hasMany(Entity::class);
@@ -46,11 +51,13 @@ class Dataset extends Model
     }
 
     // A dataset may hold data collected from multiple xlsforms. Xlsform sections table acts as the "pivot" table.
+    /** @return HasMany<XlsformTemplateSection, $this> */
     public function xlsformTemplateSections(): HasMany
     {
         return $this->hasMany(XlsformTemplateSection::class);
     }
 
+    /** @return BelongsToMany<XlsformTemplate, $this> */
     public function xlsformTemplateSources(): BelongsToMany
     {
         return $this->belongsToMany(XlsformTemplate::class, 'xlsform_template_sections')
@@ -64,12 +71,14 @@ class Dataset extends Model
 
     // A dataset may be used as a source for xlsformtemplate lookup data
     // Using the required_media as a pivot table
+    /** @return HasMany<RequiredMedia, $this> */
     public function requiredMedia(): HasMany
     {
         return $this->hasMany(RequiredMedia::class);
     }
 
     // xlsform templates that use this dataset as a source
+    /** @return BelongsToMany<XlsformTemplate, $this> */
     public function xlsformTemplates(): BelongsToMany
     {
         return $this->belongsToMany(XlsformTemplate::class, 'required_media')
@@ -82,17 +91,14 @@ class Dataset extends Model
             ->using(RequiredMedia::class);
     }
 
-
     // Some datasets are customisable by owners (e.g. "Farms" for a survey; or lookup lists that are contextualisable. Some datasets are universal, and the same set of entities should be available to all teams.
     public function isOwnerSpecific(): bool
     {
-        return !$this->is_universal;
+        return ! $this->is_universal;
     }
 
     public function isUniversal(): bool
     {
         return $this->is_universal;
     }
-
-
 }

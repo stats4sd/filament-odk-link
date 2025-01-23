@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('xlsform_templates', function (Blueprint $table) {
@@ -26,8 +27,6 @@ return new class extends Migration {
             $table->boolean('draft_needs_updating')->default(0)->comment('Set to true if the form has been updated since the last draft was deployed to ODK Central');
             $table->text('odk_error')->nullable()->comment('If a xlsfile upload results in an ODK syntax error, it will be stored here. For working forms, this will be null');
             $table->string('odk_version_id')->nullable();
-
-
 
             // The full schema of the form, as a json object
             $table->json('schema')->nullable();

@@ -10,22 +10,19 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
-use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsFormDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
-class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
+class Xlsform extends Model implements HasMedia, WithXlsformDrafts
 {
     use HasXlsFormDrafts;
     use InteractsWithMedia;
     use PublishesToOdkCentral;
 
     protected $table = 'xlsforms';
-
 
     protected $casts = [
         'schema' => 'collection',
@@ -58,32 +55,36 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
     // ****************** COMPUTED ATTRIBUTES ************************
 
     // Get an xlsformId string that is both human-readable and guaranteed to be unique within the platform
+    /** @return Attribute<string, never> */
     public function xlsformId(): Attribute
     {
         return new Attribute(
-            get: fn(): string => str($this->title)->slug() . '_' . $this->id,
+            get: fn (): string => str($this->title)->slug() . '_' . $this->id,
         );
     }
 
+    /** @return Attribute<string, never> */
     public function ownedByName(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->owner->{$this->getOwnerIdentifierAttributeName()} ?? '',
+            get: fn (): string => $this->owner->{$this->getOwnerIdentifierAttributeName()} ?? '',
         );
     }
 
+    /** @return Attribute<string, never> */
     public function currentVersion(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->xlsformVersions()->latest()->first()?->version ?? '',
+            get: fn (): string => $this->xlsformVersions()->latest()->first()?->version ?? '',
         );
     }
 
+    /** @return Attribute<string, never> */
     public function status(): Attribute
     {
         return new Attribute(
-            get: function () {
-                if (!$this->has_latest_template || !$this->has_latest_media) {
+            get: function (): string {
+                if (! $this->has_latest_template || ! $this->has_latest_media) {
                     return 'UPDATES AVAILABLE';
                 }
                 if ($this->is_active) {
@@ -106,16 +107,19 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
         return $this->morphTo();
     }
 
+    /** @return BelongsTo<XlsformTemplate, $this> */
     public function xlsformTemplate(): BelongsTo
     {
         return $this->belongsTo(XlsformTemplate::class);
     }
 
+    /** @return HasMany<XlsformVersion, $this> */
     public function xlsformVersions(): HasMany
     {
         return $this->hasMany(XlsformVersion::class);
     }
 
+    /** @return HasManyThrough<Submission, $this> */
     public function submissions(): HasManyThrough
     {
         return $this->hasManyThrough(Submission::class, XlsformVersion::class);
@@ -123,17 +127,19 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
 
     // ***** RELATIONSHIPS VIA XLSFORM TEMPLATE *****
 
+    /** @return HasMany<RequiredMedia, $this> */
     public function requiredMedia(): HasMany
     {
         return $this->xlsformTemplate->requiredMedia();
     }
 
-
+    /** @return HasMany<RequiredMedia, $this> */
     public function attachedFixedMedia(): HasMany
     {
         return $this->xlsformTemplate->attachedFixedMedia();
     }
 
+    /** @return HasMany<RequiredMedia, $this> */
     public function attachedDataMedia(): HasMany
     {
         return $this->xlsformTemplate->attachedDataMedia();
@@ -143,11 +149,10 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
 
     public function getOdkLinkAttribute(): ?string
     {
-        $appends = !$this->is_active ? '/draft' : '';
+        $appends = ! $this->is_active ? '/draft' : '';
 
         return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
     }
-
 
     // make sure the xlsform is using the latest template
     public function syncWithTemplate(): void
@@ -156,7 +161,7 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
 
         // TEMP fix for namespace clashes
         // TODO - find a permanent fix for this
-        if (!$xlsfile = $this->xlsformTemplate->getFirstMedia('xlsform_file')) {
+        if (! $xlsfile = $this->xlsformTemplate->getFirstMedia('xlsform_file')) {
 
             // check if \App\Models\XlsformTemplate exists
             if (class_exists('\App\Models\XlsformTemplate')) {
@@ -184,16 +189,18 @@ class Xlsform extends Model implements HasMedia, WithXlsFormDrafts
         return app()->make(OdkLinkService::class)->getSubmissions($this);
     }
 
-    public function getLiveSubmissionCount(): int
+    public function getLiveSubmissionCount(): ?int
     {
         return app()->make(OdkLinkService::class)->getSubmissionCount($this);
     }
 
     // Get the live submissions count from ODK Central
+
+    /** @return Attribute<?int, never> */
     public function liveSubmissionsCount(): Attribute
     {
         return new Attribute(
-            get: function () {
+            get: function (): ?int {
                 return $this->getLiveSubmissionCount();
             },
         );

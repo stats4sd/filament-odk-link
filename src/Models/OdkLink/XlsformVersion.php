@@ -15,8 +15,6 @@ class XlsformVersion extends Model implements HasMedia
 
     protected $table = 'xlsform_versions';
 
-
-
     protected $casts = [
         'schema' => 'collection',
     ];
@@ -34,34 +32,39 @@ class XlsformVersion extends Model implements HasMedia
     // **************** COMPUTED ATTRIBUTES ***********************
 
     // If no title is given, add a default title by combining the owner name and template title.
+    /** @return Attribute<string, never> */
     public function title(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->team ? $this->team->name . ' - ' . $this->xlsform->title : '',
+            get: fn (): string => $this->team ? $this->team->name . ' - ' . $this->xlsform->title : '',
         );
     }
 
+    /** @return Attribute<string, never> */
     public function xlsfile(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->getFirstMediaPath('xlsform_file'),
+            get: fn (): string => $this->getFirstMediaPath('xlsform_file'),
         );
     }
 
+    /** @return Attribute<string, never> */
     public function xlsfile_name(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->getFirstMedia('xlsform_file')->file_name,
+            get: fn (): string => $this->getFirstMedia('xlsform_file')->file_name,
         );
     }
 
     // ************ RELATIONSHIPS ***************
 
+    /** @return BelongsTo<Xlsform, $this> */
     public function xlsform(): BelongsTo
     {
         return $this->belongsTo(Xlsform::class);
     }
 
+    /** @return HasMany<Submission, $this> */
     public function submissions(): HasMany
     {
         return $this->hasMany(Submission::class);

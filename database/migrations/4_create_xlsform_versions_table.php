@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         /**
@@ -18,7 +19,6 @@ return new class extends Migration {
 
             // yes, we're keeping the schema at the template, xlsform and version level...
             $table->json('schema')->nullable();
-
 
             $table->boolean('active')->default(0);
             $table->timestamps();

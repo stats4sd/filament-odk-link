@@ -19,6 +19,7 @@ class Platform extends Model implements WithXlsforms
         'name',
     ];
 
+    /** @return Attribute<string, never> */
     public function name(): Attribute
     {
         return new Attribute(

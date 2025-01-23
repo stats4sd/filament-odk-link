@@ -25,15 +25,13 @@ class GetSubmissionsQuietly extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): void
     {
-        $xlsforms = Xlsform::where('is_active', true)->get()
+        Xlsform::where('is_active', true)
+            ->get()
             ->each(function (Xlsform $xlsform) {
                 $this->info("Processing {$xlsform->title}...");
                 PullSubmissionsFromXlsformQuietly::dispatch($xlsform);
             });
     }
-}
-{
-
 }

@@ -3,6 +3,7 @@
 namespace Stats4sd\FilamentOdkLink\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
@@ -24,8 +25,10 @@ class TestCsvMediaGeneration extends Command
 
     /**
      * Execute the console command.
+     *
+     * @throws BindingResolutionException
      */
-    public function handle()
+    public function handle(): void
     {
         $xlsforms = Xlsform::all()
             ->pluck('title', 'id')
@@ -43,10 +46,11 @@ class TestCsvMediaGeneration extends Command
             $csv = app()->make(OdkLinkService::class)
                 ->createCsvLookupFile($xlsform, $media);
 
+            $this->info('Csv file created at ' . $csv);
+        } else {
+            $this->error('Media not found');
         }
 
-        $this->info('Csv file created at ' . $csv);
-
-
+        $this->info('Done!');
     }
 }

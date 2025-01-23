@@ -12,14 +12,14 @@ trait PublishesToOdkCentral
     public function xlsfile(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->getFirstMediaPath('xlsform_file'),
+            get: fn (): string => $this->getFirstMediaPath('xlsform_file'),
         );
     }
 
     public function xlsfileName(): Attribute
     {
         return new Attribute(
-            get: fn(): ?string => $this->getFirstMedia('xlsform_file')?->file_name,
+            get: fn (): ?string => $this->getFirstMedia('xlsform_file')?->file_name,
         );
     }
 
@@ -28,7 +28,7 @@ trait PublishesToOdkCentral
         return new Attribute(
             get: function () {
                 // if there is no enketo id in the database, retrieve it from ODK Central
-                if (!$this->enketo_draft_id || Str::endsWith($this->enketo_draft_id, '/-/')) {
+                if (! $this->enketo_draft_id || Str::endsWith($this->enketo_draft_id, '/-/')) {
                     $this->updateDraftFormDetails(app()->make(OdkLinkService::class));
                 }
 
@@ -44,11 +44,10 @@ trait PublishesToOdkCentral
     public function publishForm(OdkLinkService $odkLinkService): void
     {
 
-
         // check if there is a draft. If not, create one.
-        //if (!$this->has_draft || !$this->has_latest_template) {
-            $hasDraft = $this->deployDraft($odkLinkService);
-        //}
+        // if (!$this->has_draft || !$this->has_latest_template) {
+        $hasDraft = $this->deployDraft($odkLinkService);
+        // }
 
         // if the draft was successfully created; publish it.
         if ($hasDraft) {
@@ -62,7 +61,9 @@ trait PublishesToOdkCentral
         }
     }
 
-
+    /**
+     * @throws RequestException
+     */
     public function deleteFromOdkCentral(OdkLinkService $odkLinkService): void
     {
         $odkLinkService->deleteForm($this);

@@ -3,13 +3,13 @@
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 interface WithXlsforms
 {
-
     public function xlsforms(): MorphMany;
 
     // Private templates are owned by a single form owner.
@@ -22,4 +22,6 @@ interface WithXlsforms
 
     public function odkQrCode(): Attribute;
 
+    // Some specific Model functions for PHPStan
+    public function getKey(): int | string;
 }

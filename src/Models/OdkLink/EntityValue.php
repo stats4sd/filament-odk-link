@@ -11,11 +11,13 @@ class EntityValue extends Model
 {
     protected $table = 'entity_values';
 
+    /** @return BelongsTo<Entity, $this> */
     public function entity(): BelongsTo
     {
         return $this->belongsTo(Entity::class);
     }
 
+    /** @return BelongsTo<OdkProject, $this> */
     public function odkProject(): BelongsTo
     {
         return $this->belongsTo(OdkProject::class);

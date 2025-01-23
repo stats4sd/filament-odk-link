@@ -130,7 +130,6 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
     protected function getCommands(): array
     {
         return [
-            FilamentOdkLinkCommand::class,
             GetSubmissionsQuietly::class,
             PollForOdkData::class,
             TestCsvMediaGeneration::class,

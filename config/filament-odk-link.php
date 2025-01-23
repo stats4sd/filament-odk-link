@@ -13,7 +13,7 @@ return [
          * User can define custom Team model in .env file config item "ODK_TEAM_MODEL"
          */
         'team_model' => env('ODK_TEAM_MODEL', \Stats4sd\FilamentOdkLink\Models\TeamManagement\Team::class),
-        'user_model' => env('ODK_USER_MODEL', \App\Models\User::class)
+        'user_model' => env('ODK_USER_MODEL', '\App\Models\User'),
 
     ],
 

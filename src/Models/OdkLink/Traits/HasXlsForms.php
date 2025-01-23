@@ -2,7 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
 
-use Filament\Tables\Actions\AttachAction;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
@@ -13,6 +13,7 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 trait HasXlsForms
 {
+    /** @throws BindingResolutionException */
     protected static function booted(): void
     {
         parent::booted();
@@ -28,7 +29,7 @@ trait HasXlsForms
         static::created(static function ($owner) use ($odkLinkService) {
 
             // check if we are in local-only (no-ODK link) mode
-            if (!config('filament-odk-link.odk.url')) {
+            if (! config('filament-odk-link.odk.url')) {
                 return;
             }
 
@@ -83,7 +84,7 @@ trait HasXlsForms
         return new Attribute(
             get: function (): ?string {
 
-                if (!$this->odkProject?->appUsers->first()) {
+                if (! $this->odkProject?->appUsers->first()) {
                     return null;
                 }
 

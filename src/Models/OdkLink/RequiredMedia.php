@@ -37,6 +37,7 @@ class RequiredMedia extends Pivot implements HasMedia
         });
     }
 
+    /** @return Attribute<string, never> */
     public function status(): Attribute
     {
         return new Attribute(
@@ -44,6 +45,7 @@ class RequiredMedia extends Pivot implements HasMedia
         );
     }
 
+    /** @return Attribute<string, never> */
     public function fullType(): Attribute
     {
         return new Attribute(
@@ -51,16 +53,20 @@ class RequiredMedia extends Pivot implements HasMedia
         );
     }
 
+    /** @return BelongsTo<XlsformTemplate, $this> */
     public function xlsformTemplate(): BelongsTo
     {
         return $this->belongsTo(XlsformTemplate::class);
     }
 
+    /** @return BelongsTo<Dataset, $this>< */
     public function dataset(): BelongsTo
     {
         return $this->belongsTo(Dataset::class);
     }
 
+    // *** ONLY HOLPA FOR NOW ***
+    /** @return BelongsTo<ChoiceList, $this> */
     public function choiceList(): BelongsTo
     {
         return $this->belongsTo(ChoiceList::class);

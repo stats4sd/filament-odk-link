@@ -9,8 +9,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class OdkProject extends Model
 {
-
-
     public $incrementing = false;
 
     public $keyType = 'integer';
@@ -26,20 +24,23 @@ class OdkProject extends Model
         return $this->morphTo(); // can be linked to any Model with the HasXlsforms trait.
     }
 
+    /** @return HasMany<AppUser, $this> */
     public function appUsers(): HasMany
     {
         return $this->hasMany(AppUser::class);
     }
 
     // add this method because it will be called when xlsform->toArray() is called
+    /** @return Attribute<string, never> */
     public function odkUrl(): Attribute
     {
         return new Attribute(
-            get: fn (): ?string => config('filament-odk-link.odk.url') . '/#/projects/' . $this->id,
+            get: fn (): string => config('filament-odk-link.odk.url') . '/#/projects/' . $this->id,
         );
     }
 
     // TODO: is this redundant? It's certainly not normalised SQL, as in theory we can get to Xlsforms via the owner, but we don't know the model type of the owner, so it's easier to add odk_project_id to the xlsforms table and add this relationship.
+    /** @return HasMany<Xlsform, $this> */
     public function xlsforms(): HasMany
     {
         return $this->hasMany(Xlsform::class);

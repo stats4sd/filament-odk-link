@@ -4,21 +4,15 @@ namespace Stats4sd\FilamentOdkLink\Exports;
 
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 
-class EntityExport implements FromArray, WithTitle, WithHeadings
+class EntityExport implements FromArray, WithHeadings, WithTitle
 {
-
-    public function __construct(protected Collection $entities, protected string $title, protected XlsformTemplateSection $xlsformTemplateSection)
-    {
-    }
+    public function __construct(protected Collection $entities, protected string $title, protected XlsformTemplateSection $xlsformTemplateSection) {}
 
     public function array(): array
     {
@@ -28,7 +22,6 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
 
         return $this->entities
             ->map(function (Entity $entity) use ($headings, $dataset) {
-
 
                 // find value for each ODK variable
                 $record = $this->getEntityValues($entity, $headings);
@@ -55,17 +48,12 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
             ->toArray();
     }
 
-    /**
-     * @return string
-     */
-    public
-    function title(): string
+    public function title(): string
     {
         return $this->title;
     }
 
-    public
-    function headings(): array
+    public function headings(): array
     {
         $headings = $this->getHeadings();
 
@@ -78,27 +66,23 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
             array_unshift($headings, $this->xlsformTemplateSection->dataset->parent->primary_key);
         }
 
-
         return $headings;
     }
 
-
-// get the entity-level headings.
-    public
-    function getHeadings(): array
+    // get the entity-level headings.
+    public function getHeadings(): array
     {
         // get all column names from schema, exclude structure item as they do not have entity_value record
         $schema = $this->xlsformTemplateSection->schema->where('type', '!=', 'structure');
+
         return $schema->pluck('name')->toArray();
     }
 
     /**
-     * @param mixed $entity
-     * @param mixed $heading
+     * @param  mixed  $heading
      * @return mixed
      */
-    public
-    function getEntityValues(mixed $entity, array $headings): array
+    public function getEntityValues(mixed $entity, array $headings): array
     {
         // assume there is only one value for one ODK variable
         return $entity->values
@@ -108,17 +92,14 @@ class EntityExport implements FromArray, WithTitle, WithHeadings
             })->toArray();
     }
 
-// overwrite this function to add extra variables to the export
-    public
-    function getExtraVariables(Entity $entity, Dataset $dataset): ?array
+    // overwrite this function to add extra variables to the export
+    public function getExtraVariables(Entity $entity, Dataset $dataset): ?array
     {
         return null;
     }
 
-    public
-    function getExtraVariableHeadings(?Dataset $dataset): ?array
+    public function getExtraVariableHeadings(?Dataset $dataset): ?array
     {
         return null;
     }
-
 }

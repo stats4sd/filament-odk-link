@@ -13,7 +13,7 @@ use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 use Stats4sd\FilamentOdkLink\Models\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 
 /**
  * This job opens up the actual XLS file for a given Xlsform and updates the form_id and form_title fields.
@@ -26,7 +26,7 @@ class UpdateXlsformTitleInFile implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public function __construct(public WithXlsFormDrafts $xlsform)
+    public function __construct(public HasXlsformDrafts $xlsform)
     {
     }
 
