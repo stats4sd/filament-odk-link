@@ -5,12 +5,24 @@ namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateRe
 use Filament\Actions;
 use Filament\Forms\Get;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Database\Eloquent\Model;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 class ViewXlsformTemplate extends ViewRecord
 {
     protected static string $resource = XlsformTemplateResource::class;
+
+    /**
+     * @phpstan-return XlsformTemplate
+     */
+    public function getRecord(): Model | XlsformTemplate
+    {
+        /** @var XlsformTemplate $record */
+        $record = parent::getRecord();
+
+        return $record;
+    }
 
     public function getTitle(): string
     {

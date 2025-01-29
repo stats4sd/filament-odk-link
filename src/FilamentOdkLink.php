@@ -2,6 +2,4 @@
 
 namespace Stats4sd\FilamentOdkLink;
 
-class FilamentOdkLink
-{
-}
+class FilamentOdkLink {}

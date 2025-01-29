@@ -12,7 +12,7 @@ class EditDataset extends EditRecord
 {
     protected static string $resource = DatasetResource::class;
 
-        /**
+    /**
      * @phpstan-return Dataset
      */
     public function getRecord(): Model | Dataset

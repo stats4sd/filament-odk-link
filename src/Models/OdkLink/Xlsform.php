@@ -12,13 +12,10 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class Xlsform extends HasXlsformDrafts implements HasMedia
 {
-    use InteractsWithMedia;
-
     protected $table = 'xlsforms';
 
     protected $casts = [

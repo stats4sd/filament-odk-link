@@ -15,6 +15,17 @@ class EditXlsformTemplate extends EditRecord
 
     protected static string $resource = XlsformTemplateResource::class;
 
+    /**
+     * @phpstan-return XlsformTemplate
+     */
+    public function getRecord(): Model | XlsformTemplate
+    {
+        /** @var XlsformTemplate $record */
+        $record = parent::getRecord();
+
+        return $record;
+    }
+
     public function getTitle(): string
     {
         return 'Edit ' . self::getRecord()->title;
@@ -71,7 +82,7 @@ class EditXlsformTemplate extends EditRecord
     protected function afterSave(): void
     {
         // re-extract ODK template sections
-        $this->record->extractSections();
+        $this->getRecord()->extractSections();
 
     }
 }

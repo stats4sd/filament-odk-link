@@ -71,7 +71,7 @@ class TeamXlsformTemplateResource extends Resource
                     ->form([
                         Forms\Components\TextInput::make('title')
                             ->label('Please give the form a title.')
-                            ->default(fn (XlsformTemplate $record) => Filament::getTenant()->name . ' - ' . $record->title)
+                            ->default(fn (XlsformTemplate $record) => Filament::getTenant()->getFilamentName() . ' - ' . $record->title)
                             ->hint('Note that ODK form titles cannot be longer than 64 characters.'),
                     ])
                     ->action(function (XlsformTemplate $record, array $data) {

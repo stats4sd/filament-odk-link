@@ -1,9 +1,9 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Filament\Resources\CustomXlsformTemplateResource\Pages;
+namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\CustomXlsformTemplateResource\Pages;
 
 use Filament\Resources\Pages\ListRecords;
-use Stats4sd\FilamentOdkLink\Filament\Resources\CustomXlsformTemplateResource;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\CustomXlsformTemplateResource;
 
 class ListCustomXlsformTemplates extends ListRecords
 {

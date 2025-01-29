@@ -72,8 +72,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Stats4sd\\FilamentOdkLink\\FilamentOdkLinkServiceProvider",
-                "Stats4sd\\FilamentOdkLink\\FilamentOdkLinkPanelProvider"
+                "Stats4sd\\FilamentOdkLink\\FilamentOdkLinkServiceProvider"
             ],
             "aliases": {
                 "FilamentOdkLink": "Stats4sd\\FilamentOdkLink\\Facades\\FilamentOdkLink"

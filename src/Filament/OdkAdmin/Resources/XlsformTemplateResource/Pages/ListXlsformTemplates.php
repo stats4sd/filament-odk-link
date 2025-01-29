@@ -12,7 +12,7 @@ class ListXlsformTemplates extends ListRecords
 {
     protected static string $resource = XlsformTemplateResource::class;
 
-    public function getHeaderWidgets(): array
+    protected function getHeaderWidgets(): array
     {
         $widgets = [];
 

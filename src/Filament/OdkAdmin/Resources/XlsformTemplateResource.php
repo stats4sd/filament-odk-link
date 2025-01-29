@@ -19,13 +19,10 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource;
-use Stats4sd\FilamentOdkLink\Filament\Resources\XlsformTemplateResource\Pages;
 use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
 use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
@@ -33,7 +30,7 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 // Use this resource for an admin panel
 // This resource is for templates that can be made available to all platform users
 
-class XlsformTemplateResource extends Resource
+class XlsformTemplateResource extends resource
 {
     protected static ?string $model = XlsformTemplate::class;
 
@@ -75,7 +72,7 @@ class XlsformTemplateResource extends Resource
 
         // TODO: We need to do the extract section when create and edit
         $record->extractSections();
-        -// mark all xlsforms using this template as not current
+        // mark all xlsforms using this template as not current
         $record->markAllAsNotCurrent();
 
         return $record;
@@ -176,11 +173,11 @@ class XlsformTemplateResource extends Resource
                         ->required()
                         ->visible(fn (Get $get): bool => $get('is_static')),
 
-//                    // for non-static media (linked to datasets)
-//                    Forms\Components\Select::make('choice_list_id')
-//                        ->label('Select a Choice List to link to')
-//                        ->relationship('choiceList', 'list_name', fn (Builder $query, ?RequiredMedia $record): Builder => $record ? $query->whereHasMorph('template', [\App\Models\Xlsforms\XlsformTemplate::class, XlsformTemplate::class], fn ($query) => $query->whereHas('requiredMedia', fn ($query) => $query->where('id', $record->id))) : $query)
-//                        ->visible(fn (Get $get): bool => ! $get('is_static')),
+                    //                    // for non-static media (linked to datasets)
+                    //                    Forms\Components\Select::make('choice_list_id')
+                    //                        ->label('Select a Choice List to link to')
+                    //                        ->relationship('choiceList', 'list_name', fn (Builder $query, ?RequiredMedia $record): Builder => $record ? $query->whereHasMorph('template', [\App\Models\Xlsforms\XlsformTemplate::class, XlsformTemplate::class], fn ($query) => $query->whereHas('requiredMedia', fn ($query) => $query->where('id', $record->id))) : $query)
+                    //                        ->visible(fn (Get $get): bool => ! $get('is_static')),
 
                 ]),
         ];

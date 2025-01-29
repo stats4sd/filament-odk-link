@@ -5,7 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamCustomXlsformT
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamCustomXlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Filament\Widgets\CustomOdkTemplatesWidget;
+use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Widgets\CustomOdkTemplatesWidget;
 
 class ListTeamCustomXlsformTemplates extends ListRecords
 {

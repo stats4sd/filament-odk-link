@@ -13,13 +13,10 @@ use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class XlsformTemplate extends HasXlsformDrafts implements HasMedia
 {
-    use InteractsWithMedia;
-
     protected $table = 'xlsform_templates';
 
     protected $casts = [

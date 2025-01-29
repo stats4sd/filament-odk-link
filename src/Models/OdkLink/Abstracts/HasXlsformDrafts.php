@@ -6,11 +6,8 @@ use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use JsonException;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Throwable;
 
@@ -22,6 +19,7 @@ use Throwable;
  */
 abstract class HasXlsformDrafts extends Model
 {
+    use InteractsWithMedia;
     use PublishesToOdkCentral;
 
     public function owner(): MorphTo

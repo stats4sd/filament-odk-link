@@ -531,7 +531,7 @@ class OdkLinkService
             ->json();
 
         // only process new submissions
-        $resultsToAdd = Collect($results['value'])->whereNotIn('__id', $xlsform->submissions()->withTrashed('soft_deletes')->pluck('odk_id')->toArray());
+        $resultsToAdd = Collect($results['value'])->whereNotIn('__id', $xlsform->submissions()->withTrashed()->pluck('odk_id')->toArray());
 
         foreach ($resultsToAdd as $entry) {
 

@@ -60,7 +60,7 @@ class UpdateXlsformTitleInFile implements ShouldQueue
 
                     // assume that the headers are on row < 10 and column < AA
                     $coordinates = str_split($coordinates);
-                    $newCoordinates = $coordinates[0] . (string) ((int) $coordinates[1] + 1);
+                    $newCoordinates = $coordinates[0] . ((int) $coordinates[1] + 1);
                     $worksheet->setCellValue($newCoordinates, $formId);
                     $idUpdated = true;
                     if ($titleUpdated) {
@@ -74,7 +74,7 @@ class UpdateXlsformTitleInFile implements ShouldQueue
 
                     // assume that the headers are on row < 10 and column < AA
                     $coordinates = str_split($coordinates);
-                    $newCoordinates = $coordinates[0] . (string) ((int) $coordinates[1] + 1);
+                    $newCoordinates = $coordinates[0] . ((int) $coordinates[1] + 1);
 
                     $worksheet->setCellValue($newCoordinates, $this->xlsform->title);
 

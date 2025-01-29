@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Filament\Resources;
+namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources;
 
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -55,7 +55,7 @@ class CustomXlsformTemplateResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCustomXlsformTemplates::route('/'),
+            'index' => \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\CustomXlsformTemplateResource\Pages\ListCustomXlsformTemplates::route('/'),
         ];
     }
 }

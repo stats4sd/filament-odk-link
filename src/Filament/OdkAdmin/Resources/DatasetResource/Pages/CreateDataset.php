@@ -11,14 +11,4 @@ class CreateDataset extends CreateRecord
 {
     protected static string $resource = DatasetResource::class;
 
-    /**
-     * @phpstan-return Dataset
-     */
-    public function getRecord(): Model | Dataset
-    {
-        /** @var Dataset $record */
-        $record = parent::getRecord();
-
-        return $record;
-    }
 }
