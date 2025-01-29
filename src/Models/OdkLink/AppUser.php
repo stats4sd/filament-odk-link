@@ -13,11 +13,13 @@ class AppUser extends Model
 
     protected $appends = ['qr_code_string'];
 
+    /** @return BelongsTo<OdkProject, $this> */
     public function odkProject(): BelongsTo
     {
         return $this->belongsTo(OdkProject::class);
     }
 
+    /** @return BelongsToMany<Xlsform, $this> */
     public function xlsforms(): BelongsToMany
     {
         return $this->belongsToMany(Xlsform::class, 'app_user_assignments');
@@ -33,12 +35,12 @@ class AppUser extends Model
         // Question: After scanning QR code, it does not show the published ODK form.
         // It is different from scanning QR code in ODK central...
         $settings = [
-            "general" => [
-                "server_url" => config('filament-odk-link.odk.base_endpoint') . "/key/{$this->token}/projects/{$this->odkProject->id}",
-                "form_update_mode" => "match_exactly",
+            'general' => [
+                'server_url' => config('filament-odk-link.odk.base_endpoint') . "/key/{$this->token}/projects/{$this->odkProject->id}",
+                'form_update_mode' => 'match_exactly',
             ],
-            "project" => ["name" => $this->odkProject->name],
-            "admin" => ["automatic_update" => true],
+            'project' => ['name' => $this->odkProject->name],
+            'admin' => ['automatic_update' => true],
         ];
 
         $json = json_encode($settings, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);

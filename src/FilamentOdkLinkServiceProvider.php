@@ -8,16 +8,12 @@ use Filament\Support\Assets\Asset;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
-use Filament\Support\Facades\FilamentIcon;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\File;
 use Livewire\Features\SupportTesting\Testable;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Stats4sd\FilamentOdkLink\Commands\FilamentOdkLinkCommand;
-use Stats4sd\FilamentOdkLink\Commands\GetSubmissionsQuietly;
-use Stats4sd\FilamentOdkLink\Commands\PollForOdkData;
-use Stats4sd\FilamentOdkLink\Commands\TestCsvMediaGeneration;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Stats4sd\FilamentOdkLink\Testing\TestsFilamentOdkLink;
 
@@ -31,7 +27,6 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
     {
         /*
          * This class is a Package Service Provider
-         *
          * More info: https://github.com/spatie/laravel-package-tools
          */
         $package->name(static::$name)
@@ -43,56 +38,33 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
                     ->askToRunMigrations();
             });
 
-        $configFileName = $package->shortName();
+        $package->hasConfigFile();
+        $package->hasMigrations($this->getMigrations());
 
-        if (file_exists($package->basePath("/../config/{$configFileName}.php"))) {
-            $package->hasConfigFile();
-        }
+        // TODO: add translations
+        // $package->hasTranslations();
 
-        if (file_exists($package->basePath('/../database/migrations'))) {
-            $package->hasMigrations($this->getMigrations());
-        }
-
-        if (file_exists($package->basePath('/../resources/lang'))) {
-            $package->hasTranslations();
-        }
-
-        if (file_exists($package->basePath('/../resources/views'))) {
-            $package->hasViews(static::$viewNamespace);
-        }
+        $package->hasViews(static::$viewNamespace);
     }
 
     public function registeringPackage()
     {
+        // Setup the main service class as a singleton.
         $this->app->singleton(OdkLinkService::class, function ($app) {
             return new OdkLinkService(config('filament-odk-link.odk.base_endpoint'));
         });
-    }
-
-    public function packageRegistered(): void
-    {
     }
 
     public function packageBooted(): void
     {
         // Asset Registration
         FilamentAsset::register(
-            $this->getAssets(),
-            $this->getAssetPackageName()
+            [
+                Css::make('filament-odk-link-styles', __DIR__ . '/../resources/dist/filament-odk-link.css'),
+                Js::make('filament-odk-link-scripts', __DIR__ . '/../resources/dist/filament-odk-link.js'),
+            ],
+            'stats4sd/filament-odk-link'
         );
-
-        FilamentAsset::registerScriptData(
-            $this->getScriptData(),
-            $this->getAssetPackageName()
-        );
-
-        // Widget Registration
-        Filament::registerWidgets([
-
-        ]);
-
-        // Icon Registration
-        FilamentIcon::register($this->getIcons());
 
         // Handle Stubs
         if (app()->runningInConsole()) {
@@ -104,61 +76,21 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
         }
 
         // Testing
-        Testable::mixin(new TestsFilamentOdkLink());
+        Testable::mixin(new TestsFilamentOdkLink);
     }
 
-    protected function getAssetPackageName(): ?string
-    {
-        return 'stats4sd/filament-odk-link';
-    }
-
-    /**
-     * @return array<Asset>
-     */
-    protected function getAssets(): array
-    {
-        return [
-            // AlpineComponent::make('filament-odk-link', __DIR__ . '/../resources/dist/components/filament-odk-link.js'),
-            Css::make('filament-odk-link-styles', __DIR__ . '/../resources/dist/filament-odk-link.css'),
-            Js::make('filament-odk-link-scripts', __DIR__ . '/../resources/dist/filament-odk-link.js'),
-        ];
-    }
 
     /**
      * @return array<class-string>
      */
     protected function getCommands(): array
     {
-        return [
-            FilamentOdkLinkCommand::class,
-            GetSubmissionsQuietly::class,
-            PollForOdkData::class,
-            TestCsvMediaGeneration::class,
-        ];
-    }
+        // get all files in the Commands directory
+        $files = File::files(__DIR__ . '/Commands');
 
-    /**
-     * @return array<string>
-     */
-    protected function getIcons(): array
-    {
-        return [];
-    }
-
-    /**
-     * @return array<string>
-     */
-    protected function getRoutes(): array
-    {
-        return [];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    protected function getScriptData(): array
-    {
-        return [];
+        return collect($files)->map(fn ($file) => $file->getFilenameWithoutExtension())
+            ->map(fn ($filename) => "Stats4sd\\FilamentOdkLink\\Commands\\{$filename}")
+            ->toArray();
     }
 
     /**
@@ -183,6 +115,7 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
             '14_create_xlsform_template_sections_table',
             '15_create_app_user_assignments_table',
             '16_create_media_table',
+            // TODO: remove these? We should not assume the users are using our Teams / Invites stuff.
             '17_create_permission_tables',
             '18_create_teams_table',
             '19_create_role_invites_table',

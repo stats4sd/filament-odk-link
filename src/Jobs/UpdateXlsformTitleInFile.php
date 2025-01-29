@@ -7,13 +7,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
-use Stats4sd\FilamentOdkLink\Models\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 /**
  * This job opens up the actual XLS file for a given Xlsform and updates the form_id and form_title fields.
@@ -26,9 +25,7 @@ class UpdateXlsformTitleInFile implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public function __construct(public WithXlsFormDrafts $xlsform)
-    {
-    }
+    public function __construct(public Xlsform | XlsformTemplate $xlsform) {}
 
     /**
      * @throws Exception
@@ -63,7 +60,7 @@ class UpdateXlsformTitleInFile implements ShouldQueue
 
                     // assume that the headers are on row < 10 and column < AA
                     $coordinates = str_split($coordinates);
-                    $newCoordinates = $coordinates[0] . $coordinates[1] + 1;
+                    $newCoordinates = $coordinates[0] . ((int) $coordinates[1] + 1);
                     $worksheet->setCellValue($newCoordinates, $formId);
                     $idUpdated = true;
                     if ($titleUpdated) {
@@ -77,7 +74,7 @@ class UpdateXlsformTitleInFile implements ShouldQueue
 
                     // assume that the headers are on row < 10 and column < AA
                     $coordinates = str_split($coordinates);
-                    $newCoordinates = $coordinates[0] . $coordinates[1] + 1;
+                    $newCoordinates = $coordinates[0] . ((int) $coordinates[1] + 1);
 
                     $worksheet->setCellValue($newCoordinates, $this->xlsform->title);
 

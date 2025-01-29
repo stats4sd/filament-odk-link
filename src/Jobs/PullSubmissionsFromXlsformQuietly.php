@@ -18,7 +18,10 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
  */
 class PullSubmissionsFromXlsformQuietly implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     /**
      * Create a new job instance.
@@ -36,7 +39,7 @@ class PullSubmissionsFromXlsformQuietly implements ShouldQueue
         $odkLinkService = app()->make(OdkLinkService::class);
 
         $token = $odkLinkService->authenticate();
-        $oDataServiceUrl = config("filament-odk-link.odk.base_endpoint") . "/projects/{$this->xlsform->owner->odkProject->id}/forms/{$this->xlsform->odk_id}.svc";
+        $oDataServiceUrl = config('filament-odk-link.odk.base_endpoint') . "/projects/{$this->xlsform->owner->odkProject->id}/forms/{$this->xlsform->odk_id}.svc";
 
         $results = Http::withToken($token)
             ->get($oDataServiceUrl . '/Submissions?$expand=*')
@@ -48,11 +51,10 @@ class PullSubmissionsFromXlsformQuietly implements ShouldQueue
 
         foreach ($resultsToAdd as $entry) {
 
-
             // ******* CREATE SUBMISSION RECORD ******* //
             $xlsformVersion = $this->xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
 
-            if (!$xlsformVersion) {
+            if (! $xlsformVersion) {
 
                 $messageContent = collect([
                     'formVersion' => $entry['__system']['formVersion'],
@@ -61,11 +63,11 @@ class PullSubmissionsFromXlsformQuietly implements ShouldQueue
                     'ownerName' => $this->xlsform->owner->name,
                 ]);
 
-                abort(500, "The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: " . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '));
+                abort(500, 'The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '));
             }
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
-            $submission = $xlsformVersion?->submissions()->create([
+            $submission = $xlsformVersion->submissions()->create([
                 'odk_id' => $entry['__id'],
                 'submitted_at' => (new Carbon($entry['__system']['submissionDate']))->toDateTimeString(),
                 'submitted_by' => $entry['__system']['submitterName'],

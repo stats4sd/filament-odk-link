@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Testing\Fluent\Concerns\Has;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
@@ -33,21 +34,16 @@ class Submission extends Model implements HasMedia
     protected static function booted(): void
     {
         static::addGlobalScope('owned', static function (Builder $query) {
-            if (Auth::check() && !Auth::user()?->hasRole(config('filament-odk-link.roles.xlsform-admin'))) {
+            if (Auth::check() && ! Auth::user()?->hasRole(config('filament-odk-link.roles.xlsform-admin'))) {
                 $query->where(function (Builder $query) {
                     $query->whereHas('xlsformVersion', function (Builder $query) {
                         $query->whereHas('xlsform', function (Builder $query) {
                             $query->whereHas('owner', function (Builder $query) {
 
-                                //if xlsforms are owned by a user, return the user's forms directly.
-                                if (is_a($query->getModel(), User::class)) {
+                                // is the xlsform owned by a team/group that the logged-in user is linked to?
+                                $query->whereHas('users', function ($query) {
                                     $query->where('users.id', Auth::id());
-                                } else {
-                                    // is the xlsform owned by a team/group that the logged-in user is linked to?
-                                    $query->whereHas('users', function ($query) {
-                                        $query->where('users.id', Auth::id());
-                                    });
-                                }
+                                });
                             });
                         });
                     });
@@ -100,23 +96,27 @@ class Submission extends Model implements HasMedia
         $this->save();
     }
 
+    /** @return BelongsTo<XlsformVersion, $this> */
     public function xlsformVersion(): BelongsTo
     {
         return $this->belongsTo(XlsformVersion::class);
     }
 
-    public function xlsformTitle(): Attribute
+    /** @return Attribute<string, never> */
+    protected function xlsformTitle(): Attribute
     {
         return new Attribute(
-            get: fn () => $this->xlsformVersion->xlsform->title,
+            get: fn (): string => $this->xlsformVersion->xlsform->title,
         );
     }
 
+    /** @return HasMany<Entity, $this> */
     public function entities(): HasMany
     {
         return $this->hasMany(Entity::class);
     }
 
+    /** @return HasManyThrough<EntityValue, Entity, $this> */
     public function entityValues(): HasManyThrough
     {
         return $this->hasManyThrough(EntityValue::class, Entity::class);

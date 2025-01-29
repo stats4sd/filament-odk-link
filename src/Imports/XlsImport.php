@@ -7,13 +7,10 @@ use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-
 // Generic Import to enable reading of XLSForm templates
 class XlsImport implements ToCollection, WithHeadingRow
 {
     use Importable;
 
-    public function collection(Collection $collection)
-    {
-    }
+    public function collection(Collection $collection) {}
 }

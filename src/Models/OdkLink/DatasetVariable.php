@@ -13,11 +13,13 @@ class DatasetVariable extends Model
 
     protected $primaryKey = 'id';
 
+    /** @return BelongsTo<Dataset, $this> */
     public function dataset(): BelongsTo
     {
         return $this->belongsTo(Dataset::class);
     }
 
+    /** @return BelongsToMany<Entity, $this> */
     public function entities(): BelongsToMany
     {
         return $this->belongsToMany(Entity::class, 'entity_values')
@@ -25,9 +27,9 @@ class DatasetVariable extends Model
             ->withPivot('value');
     }
 
+    /** @return HasMany<EntityValue, $this> */
     public function values(): HasMany
     {
         return $this->hasMany(EntityValue::class, 'entity_id');
     }
-
 }

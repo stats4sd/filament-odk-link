@@ -37,30 +37,36 @@ class RequiredMedia extends Pivot implements HasMedia
         });
     }
 
-    public function status(): Attribute
+    /** @return Attribute<int, never> */
+    protected function status(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->dataset_id || $this->hasMedia() ? 1 : 0,
+            get: fn (): int => $this->dataset_id || $this->hasMedia() ? 1 : 0,
         );
     }
 
-    public function fullType(): Attribute
+    /** @return Attribute<string, never> */
+    protected function fullType(): Attribute
     {
         return new Attribute(
             get: fn (): string => $this->is_static ? $this->type : 'dataset',
         );
     }
 
+    /** @return BelongsTo<XlsformTemplate, $this> */
     public function xlsformTemplate(): BelongsTo
     {
         return $this->belongsTo(XlsformTemplate::class);
     }
 
+    /** @return BelongsTo<Dataset, $this> */
     public function dataset(): BelongsTo
     {
         return $this->belongsTo(Dataset::class);
     }
 
+    // *** ONLY HOLPA FOR NOW ***
+    /** @return BelongsTo<ChoiceList, $this> */
     public function choiceList(): BelongsTo
     {
         return $this->belongsTo(ChoiceList::class);

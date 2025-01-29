@@ -5,10 +5,11 @@ parameters:
     level: 4
     paths:
         - src
-        - config
         - database
+    databaseMigrationsPath:
+        - database/migrations
     tmpDir: build/phpstan
     checkOctaneCompatibility: true
     checkModelProperties: true
-    checkMissingIterableValueType: false
-
+    noUnnecessaryCollectionCallOnly: ['count', 'first']
+    noEnvCallsOutsideOfConfig: false

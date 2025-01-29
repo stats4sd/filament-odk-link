@@ -2,30 +2,22 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use Dflydev\DotAccessData\Data;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsFormDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsFormDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
-class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
+class XlsformTemplate extends HasXlsformDrafts implements HasMedia
 {
-    use HasXlsFormDrafts;
-    use InteractsWithMedia;
-    use PublishesToOdkCentral;
-
     protected $table = 'xlsform_templates';
-
 
     protected $casts = [
         'schema' => 'collection',
@@ -69,16 +61,19 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
 
     // ****************** RELATIONSHIPS ************************
 
+    /** @return HasManyThrough<Submission, Xlsform, $this> */
     public function submissions(): HasManyThrough
     {
         return $this->hasManyThrough(Submission::class, Xlsform::class);
     }
 
+    /** @return HasMany<Xlsform, $this> */
     public function xlsforms(): HasMany
     {
         return $this->hasMany(Xlsform::class);
     }
 
+    /** @return HasMany<Xlsform, $this> */
     public function activeXlsforms(): HasMany
     {
         return $this->hasMany(Xlsform::class)
@@ -91,24 +86,28 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
     }
 
     /** 1 entry created for each required item as given from ODK Central */
+    /** @return HasMany<RequiredMedia, $this> */
     public function requiredMedia(): HasMany
     {
         return $this->hasMany(RequiredMedia::class);
     }
 
     /** filtered Required Media to only show media with type "image", "video" or "audio" */
+    /** @return HasMany<RequiredMedia, $this> */
     public function requiredFixedMedia(): HasMany
     {
         return $this->hasMany(RequiredMedia::class)
             ->where('required_media.type', '!=', 'file');
     }
 
+    /** @return HasMany<RequiredMedia, $this> */
     public function requiredDataMedia(): HasMany
     {
         return $this->hasMany(RequiredMedia::class)
             ->where('required_media.type', '=', 'file');
     }
 
+    /** @return HasMany<RequiredMedia, $this> */
     public function attachedFixedMedia(): HasMany
     {
         return $this->hasMany(RequiredMedia::class)
@@ -116,6 +115,7 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
             ->whereHas('media');
     }
 
+    /** @return HasMany<RequiredMedia, $this> */
     public function attachedDataMedia(): HasMany
     {
         return $this->hasMany(RequiredMedia::class)
@@ -128,6 +128,7 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
 
     }
 
+    /** @return BelongsToMany<Dataset, $this> */
     public function datasets(): BelongsToMany
     {
         return $this->belongsToMany(Dataset::class, 'required_media')
@@ -140,17 +141,20 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
             ->using(RequiredMedia::class);
     }
 
+    /** @return HasMany<XlsformTemplateSection, $this> */
     public function xlsformTemplateSections(): HasMany
     {
         return $this->hasMany(XlsformTemplateSection::class);
     }
 
+    /** @return HasMany<XlsformTemplateSection, $this> */
     public function repeatingSections(): HasMany
     {
         return $this->hasMany(XlsformTemplateSection::class)
             ->where('is_repeat', true);
     }
 
+    /** @return HasOne<XlsformTemplateSection, $this> */
     public function rootSection(): HasOne
     {
         return $this->hasOne(XlsformTemplateSection::class)
@@ -186,15 +190,15 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
         return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . '/draft';
     }
 
-    public function extractSections()
+    /** @return Collection<XlsformTemplateSection> */
+    public function extractSections(): Collection
     {
 
         // set all existing sections to not current.
-        $this->repeatingSections()->each(fn($section) => $section->is_current = false);
-
+        $this->repeatingSections()->each(fn ($section) => $section->is_current = false);
 
         // create or find the repeat sections
-        $this->schema->filter(fn($item) => $item['type'] === 'repeat')
+        $this->schema->filter(fn ($item) => $item['type'] === 'repeat')
             ->each(function ($item) {
                 $this->repeatingSections()->updateOrCreate([
                     'structure_item' => $item['name'],
@@ -202,7 +206,7 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
                     'is_repeat' => true,
                     'is_current' => true,
                     'schema' => $this->schema->filter(
-                        fn($subItem) => Str::contains($subItem['path'], $item['path'] . '/')
+                        fn ($subItem) => Str::contains($subItem['path'], $item['path'] . '/')
                             && $subItem['path'] !== $item['path']
                             && $subItem['type'] !== 'repeat'
                     ),
@@ -229,14 +233,13 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
                 //
                 //                dump($reviewSection->schema);
                 $reviewSection->schema = $reviewSection->schema->filter(
-                    fn($item) => !Str::startsWith($item['path'], '/' . $reviewSection->structure_item . '/' . $section->structure_item . '/')
+                    fn ($item) => ! Str::startsWith($item['path'], '/' . $reviewSection->structure_item . '/' . $section->structure_item . '/')
                 );
 
                 $reviewSection->save();
 
             });
         });
-
 
         // find all ODK variable names of all repeating sections
         $repeatingSectionItemNames = [];
@@ -249,7 +252,6 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
             }
         }
 
-
         // create or find the 'root' section
         $rootSection = $this->xlsformTemplateSections()->updateOrCreate([
             'structure_item' => 'root',
@@ -260,9 +262,8 @@ class XlsformTemplate extends Model implements HasMedia, WithXlsFormDrafts
             // 1. structure type item
             // 2. repeat type item
             // 3. item names belong to ODK variable names of all repeating sections
-            'schema' => $this->schema->filter(fn($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && !in_array($item['name'], $repeatingSectionItemNames)),
+            'schema' => $this->schema->filter(fn ($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && ! in_array($item['name'], $repeatingSectionItemNames)),
         ]);
-
 
         // add the root as the parent of the repeating sections
         // TODO: update to handle nested repeats

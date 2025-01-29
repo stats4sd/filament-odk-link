@@ -13,7 +13,7 @@ return [
          * User can define custom Team model in .env file config item "ODK_TEAM_MODEL"
          */
         'team_model' => env('ODK_TEAM_MODEL', \Stats4sd\FilamentOdkLink\Models\TeamManagement\Team::class),
-        'user_model' => env('ODK_USER_MODEL', \App\Models\User::class)
+        'user_model' => env('ODK_USER_MODEL', '\App\Models\User'),
 
     ],
 
@@ -33,10 +33,10 @@ return [
          *
          * If you use a custom installation of ODK Central or Kobotoolbox, it will be the base url to your service.
          */
-        'url' => env('ODK_URL', null),
+        'url' => env('ODK_URL'),
         'base_endpoint' => env('ODK_URL', '') . '/v1',
 
-        'platform_project_id' => env('ODK_PLATFORM_PROJECT_ID', null),
+        'platform_project_id' => env('ODK_PLATFORM_PROJECT_ID'),
 
         /**
          * Username and password for the main platform account
@@ -75,14 +75,14 @@ return [
         // - a public static function;
         // - accept a OdkLink\Models\Submission object as the only required variable.;
         'process_method' => [
-            'class' => env('SUBMISSION_PROCESS_CLASS', null),
-            'method' => env('SUBMISSION_PROCESS_METHOD', null),
+            'class' => env('SUBMISSION_PROCESS_CLASS'),
+            'method' => env('SUBMISSION_PROCESS_METHOD'),
         ],
 
         // The class and method used to process foreign key records in the submissions.
         'foreign_key_process_method' => [
-            'class' => env('SUBMISSION_FOREIGN_KEY_PROCESS_CLASS', null),
-            'method' => env('SUBMISSION_FOREIGN_KEY_PROCESS_METHOD', null),
+            'class' => env('SUBMISSION_FOREIGN_KEY_PROCESS_CLASS'),
+            'method' => env('SUBMISSION_FOREIGN_KEY_PROCESS_METHOD'),
         ],
 
     ],
