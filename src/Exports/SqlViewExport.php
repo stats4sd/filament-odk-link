@@ -10,9 +10,7 @@ use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
 class SqlViewExport implements FromCollection, WithHeadings, WithStrictNullComparison
 {
-    public function __construct(public string $viewName, public mixed $owner = null, public ?string $ownerForeignKey = null)
-    {
-    }
+    public function __construct(public string $viewName, public mixed $owner = null, public ?string $ownerForeignKey = null) {}
 
     public function collection(): Collection
     {

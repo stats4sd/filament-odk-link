@@ -5,11 +5,12 @@ namespace Stats4sd\FilamentOdkLink\Forms\Components;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\Concerns\HasName;
 
-class HtmlBlock  extends Component
+class HtmlBlock extends Component
 {
     use HasName;
 
     protected string $view = 'filament-odk-link::filament.forms.components.html-block';
+
     protected mixed $content = null;
 
     final public function __construct(string $name)

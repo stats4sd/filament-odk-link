@@ -124,7 +124,6 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
         return [
             GetSubmissionsQuietly::class,
             PollForOdkData::class,
-            TestCsvMediaGeneration::class,
         ];
     }
 

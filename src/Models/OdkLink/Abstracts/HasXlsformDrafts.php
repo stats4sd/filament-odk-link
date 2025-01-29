@@ -7,13 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use JsonException;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Throwable;
 
+/**
+ * @property bool $has_draft
+ * @property string $title
+ * @property ?string $odk_id
+ * @property ?string $odk_draft_token
+ */
 abstract class HasXlsformDrafts extends Model
 {
-
-    public WithXlsforms $owner;
+    use PublishesToOdkCentral;
 
     public function owner(): MorphTo
     {

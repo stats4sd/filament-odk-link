@@ -3,7 +3,6 @@
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -13,16 +12,13 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WIthXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
-class XlsformTemplate extends Model implements WIthXlsformDrafts, HasMedia
+class XlsformTemplate extends HasXlsformDrafts implements HasMedia
 {
-    use HasXlsformDrafts;
     use InteractsWithMedia;
-    use PublishesToOdkCentral;
 
     protected $table = 'xlsform_templates';
 
@@ -68,7 +64,7 @@ class XlsformTemplate extends Model implements WIthXlsformDrafts, HasMedia
 
     // ****************** RELATIONSHIPS ************************
 
-    /** @return HasManyThrough<Submission, $this> */
+    /** @return HasManyThrough<Submission, Xlsform, $this> */
     public function submissions(): HasManyThrough
     {
         return $this->hasManyThrough(Submission::class, Xlsform::class);

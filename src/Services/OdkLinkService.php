@@ -21,6 +21,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WIthXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -156,7 +157,7 @@ class OdkLinkService
      *
      * @throws RequestException|ConnectionException
      */
-    public function createDraftForm(WIthXlsformDrafts $xlsform, bool $withMedia): array
+    public function createDraftForm(Xlsform | XlsformTemplate $xlsform, bool $withMedia = true): array
     {
         $token = $this->authenticate();
 
@@ -212,7 +213,7 @@ class OdkLinkService
      *
      * @throws RequestException|ConnectionException
      */
-    public function getDraftFormDetails(WIthXlsformDrafts $xlsform): array
+    public function getDraftFormDetails(Xlsform | XlsformTemplate $xlsform): array
     {
         $token = $this->authenticate();
 

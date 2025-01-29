@@ -11,16 +11,13 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WIthXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
-class Xlsform extends Model implements HasMedia, WIthXlsformDrafts
+class Xlsform extends HasXlsformDrafts implements HasMedia
 {
-    use HasXlsformDrafts;
     use InteractsWithMedia;
-    use PublishesToOdkCentral;
 
     protected $table = 'xlsforms';
 
@@ -64,18 +61,10 @@ class Xlsform extends Model implements HasMedia, WIthXlsformDrafts
     }
 
     /** @return Attribute<string, never> */
-    protected function ownedByName(): Attribute
-    {
-        return new Attribute(
-            get: fn (): string => $this->owner->{$this->getOwnerIdentifierAttributeName()} ?? '',
-        );
-    }
-
-    /** @return Attribute<string, never> */
     protected function currentVersion(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->xlsformVersions()->latest()->first()?->version ?? '',
+            get: fn (): string => $this->xlsformVersions()->latest()->first()->version ?? '',
         );
     }
 
@@ -119,7 +108,7 @@ class Xlsform extends Model implements HasMedia, WIthXlsformDrafts
         return $this->hasMany(XlsformVersion::class);
     }
 
-    /** @return HasManyThrough<Submission, $this> */
+    /** @return HasManyThrough<Submission, XlsformVersion, $this> */
     public function submissions(): HasManyThrough
     {
         return $this->hasManyThrough(Submission::class, XlsformVersion::class);
@@ -127,19 +116,19 @@ class Xlsform extends Model implements HasMedia, WIthXlsformDrafts
 
     // ***** RELATIONSHIPS VIA XLSFORM TEMPLATE *****
 
-    /** @return HasMany<RequiredMedia, $this> */
+    /** @return HasMany<RequiredMedia, XlsformTemplate> */
     public function requiredMedia(): HasMany
     {
         return $this->xlsformTemplate->requiredMedia();
     }
 
-    /** @return HasMany<RequiredMedia, $this> */
+    /** @return HasMany<RequiredMedia, XlsformTemplate> */
     public function attachedFixedMedia(): HasMany
     {
         return $this->xlsformTemplate->attachedFixedMedia();
     }
 
-    /** @return HasMany<RequiredMedia, $this> */
+    /** @return HasMany<RequiredMedia, XlsformTemplate> */
     public function attachedDataMedia(): HasMany
     {
         return $this->xlsformTemplate->attachedDataMedia();

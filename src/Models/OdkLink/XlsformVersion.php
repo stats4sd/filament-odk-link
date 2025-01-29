@@ -31,15 +31,6 @@ class XlsformVersion extends Model implements HasMedia
 
     // **************** COMPUTED ATTRIBUTES ***********************
 
-    // If no title is given, add a default title by combining the owner name and template title.
-    /** @return Attribute<string, never> */
-    protected function title(): Attribute
-    {
-        return new Attribute(
-            get: fn (): string => $this->team ? $this->team->name . ' - ' . $this->xlsform->title : '',
-        );
-    }
-
     /** @return Attribute<string, never> */
     protected function xlsfile(): Attribute
     {

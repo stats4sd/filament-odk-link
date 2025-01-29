@@ -116,7 +116,7 @@ class Submission extends Model implements HasMedia
         return $this->hasMany(Entity::class);
     }
 
-    /** @return HasManyThrough<EntityValue, $this> */
+    /** @return HasManyThrough<EntityValue, Entity, $this> */
     public function entityValues(): HasManyThrough
     {
         return $this->hasManyThrough(EntityValue::class, Entity::class);

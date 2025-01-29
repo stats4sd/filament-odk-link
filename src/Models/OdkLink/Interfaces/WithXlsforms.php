@@ -27,6 +27,4 @@ interface WithXlsforms
     public function odkProject(): MorphOne;
 
     public function createLinkedOdkProject(OdkLinkService $odkLinkService): void;
-
-    public function odkQrCode(): Attribute;
 }
