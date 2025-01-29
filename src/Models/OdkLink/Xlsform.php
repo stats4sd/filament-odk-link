@@ -5,16 +5,22 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Maatwebsite\Excel\Facades\Excel;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformWorkbookExport;
 use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
-class Xlsform extends HasXlsformDrafts implements HasMedia
+class Xlsform extends HasXlsformDrafts implements HasMedia, WithXlsformDrafts
 {
     protected $table = 'xlsforms';
 
@@ -26,11 +32,11 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     {
 
         // when the model is created;
-        static::saved(static function (Xlsform $xlsform) {
+        static::saved(static function (self $xlsform) {
             $xlsform->syncWithTemplate();
         });
 
-        static::deleting(static function (Xlsform $xlsform) {
+        static::deleting(static function (self $xlsform) {
             $odkLinkService = app()->make(OdkLinkService::class);
             $xlsform->deleteFromOdkCentral($odkLinkService);
         });
@@ -46,6 +52,23 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
             ->useDisk(config('filament-odk-link.storage.xlsforms'));
     }
 
+    public function generateXlsfile(): Media
+    {
+        $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
+        Excel::store(new XlsformWorkbookExport($this), $filePath, config('filament-odk-link.storage.xlsforms'));
+
+        $this->addMediaFromDisk($filePath, config('filament-odk-link.storage.xlsforms'))->toMediaCollection('xlsform_file');
+
+        // if the odk_project is not set, set it based on the given owner:
+        $this->odk_project_id = $this->owner->odkProject->id;
+        $this->has_latest_template = true;
+        $this->saveQuietly();
+
+        UpdateXlsformTitleInFile::dispatchSync($this);
+
+        return $this->xlsfile;
+    }
+
     // ****************** COMPUTED ATTRIBUTES ************************
 
     // Get an xlsformId string that is both human-readable and guaranteed to be unique within the platform
@@ -53,7 +76,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     protected function xlsformId(): Attribute
     {
         return new Attribute(
-            get: fn (): string => str($this->title)->slug() . '_' . $this->id,
+            get: fn(): string => str($this->title)->slug() . '_' . $this->id,
         );
     }
 
@@ -61,7 +84,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     protected function currentVersion(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->xlsformVersions()->latest()->first()->version ?? '',
+            get: fn(): string => $this->xlsformVersions()->latest()->first()->version ?? '',
         );
     }
 
@@ -70,7 +93,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     {
         return new Attribute(
             get: function (): string {
-                if (! $this->has_latest_template || ! $this->has_latest_media) {
+                if (!$this->has_latest_template || !$this->has_latest_media) {
                     return 'UPDATES AVAILABLE';
                 }
                 if ($this->is_active) {
@@ -135,7 +158,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
     public function getOdkLinkAttribute(): ?string
     {
-        $appends = ! $this->is_active ? '/draft' : '';
+        $appends = !$this->is_active ? '/draft' : '';
 
         return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
     }
@@ -143,20 +166,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     // make sure the xlsform is using the latest template
     public function syncWithTemplate(): void
     {
-        // copy the xlsfile from the template;
-
-        // TEMP fix for namespace clashes
-        // TODO - find a permanent fix for this
-        if (! $xlsfile = $this->xlsformTemplate->getFirstMedia('xlsform_file')) {
-
-            // check if \App\Models\XlsformTemplate exists
-            if (class_exists('\App\Models\XlsformTemplate')) {
-
-                $xlsfile = \App\Models\XlsformTemplate::find($this->xlsformTemplate->id)
-                    ->getFirstMedia('xlsform_file');
-
-            }
-        }
+        $xlsfile = $this->xlsformTemplate->getFirstMedia('xlsform_file');
 
         $xlsfile->copy($this, 'xlsform_file');
         $this->saveQuietly();
@@ -191,4 +201,22 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
             },
         );
     }
+
+    /**
+     * An Xlsform might have custom modules that are not part of the template.
+     * @deprecated - I think this will not be used. In the future, XlsformModules will either be linked to a template, or stand-alone. Xlsforms will be linked directly to the list of XlsformModuleVersions that will be used to generate the form.
+     * @return MorphMany<XlsformModule, $this>
+     */
+    public function xlsformModules(): MorphMany
+    {
+        return $this->morphMany(XlsformModule::class, 'form');
+    }
+
+    /** @return BelongsToMany<XlsformModuleVersion, $this> */
+    public function xlsformModuleVersions(): BelongsToMany
+    {
+        return $this->belongsToMany(XlsformModuleVersion::class, 'selected_xlsform_module_versions', 'xlsform_id', 'xlsform_module_version_id');
+    }
+
+
 }

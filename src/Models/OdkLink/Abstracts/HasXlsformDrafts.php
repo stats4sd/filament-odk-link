@@ -6,7 +6,11 @@ use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use JsonException;
+use Maatwebsite\Excel\Facades\Excel;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformWorkbookExport;
+use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Throwable;
@@ -62,7 +66,7 @@ abstract class HasXlsformDrafts extends Model
      */
     public function getDraftQrCodeStringAttribute(): ?string
     {
-        if (! $this->has_draft) {
+        if (!$this->has_draft) {
             return null;
         }
 

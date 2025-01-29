@@ -27,4 +27,8 @@ interface WithXlsforms
     public function odkProject(): MorphOne;
 
     public function createLinkedOdkProject(OdkLinkService $odkLinkService): void;
+
+    /** @return Attribute<bool, never> */
+    public function shouldReceiveAllXlsformTemplates(): Attribute;
+
 }

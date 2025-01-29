@@ -20,4 +20,12 @@ class Platform extends Model implements WithXlsforms
             get: fn (): string => config('app.name', 'Laravel Platform') . ' Platform.php' . $this->id,
         );
     }
+
+    /** @return Attribute<bool, never> */
+    public function shouldReceiveAllXlsformTemplates(): Attribute
+    {
+        return new Attribute(
+            get: fn (): bool => false,
+        );
+    }
 }
