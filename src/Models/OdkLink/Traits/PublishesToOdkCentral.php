@@ -11,7 +11,7 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 trait PublishesToOdkCentral
 {
     /** @return Attribute<Media, never> */
-    public function xlsfile(): Attribute
+    protected function xlsfile(): Attribute
     {
         return new Attribute(
             get: fn (): string => $this->getFirstMediaPath('xlsform_file'),

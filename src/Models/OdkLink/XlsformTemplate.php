@@ -20,7 +20,7 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
-class XlsformTemplate extends HasXlsformDrafts implements HasMedia, WithXlsformDrafts
+class XlsformTemplate extends HasXlsformDrafts implements HasMedia
 {
     use HasRelationships;
 
@@ -59,7 +59,7 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia, WithXlsformD
 
                         if (! $xlsform) {
                             $xlsform = $xlsformTemplate->xlsforms()->create([
-                                'owner_id' => $owner->id,
+                                'owner_id' => $owner->getKey(),
                                 'owner_type' => get_class($owner),
                                 'title' => $xlsformTemplate->title,
                             ]);
@@ -84,7 +84,10 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia, WithXlsformD
             ->useDisk(config('filament-odk-link.storage.xlsforms'));
     }
 
-    // ****************** COMPUTED ATTRIBUTES ************************
+    public function deployDraft(OdkLinkService $service, bool $withMedia = true): bool
+    {
+        return $this->sendDraftToOdkCentral($service, $withMedia);
+    }
 
     // ****************** RELATIONSHIPS ************************
 
@@ -376,7 +379,7 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia, WithXlsformD
     // for a template to be available in a locale, *every* module should be linked to that locale
 
     /** @return Attribute<Collection, never> */
-    public function locales(): Attribute
+    protected function locales(): Attribute
     {
         return new Attribute(
             get: function (): Collection {

@@ -10,16 +10,24 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Stats4sd\FilamentOdkLink\Filament\Resources\DatasetResource\Pages;
-use Stats4sd\FilamentOdkLink\Filament\Resources\DatasetResource\RelationManagers;
+use Illuminate\Support\Str;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages\CreateDataset;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages\EditDataset;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages\ListDatasets;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages\ViewDataset;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\RelationManagers\VariablesRelationManager;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\RelationManagers\XlsformTemplateSourcesRelationManager;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\RelationManagers\XlsformTemplatesRelationManager;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
+use Stats4sd\FilamentOdkLink\Services\HelperService;
 
 class DatasetResource extends Resource
 {
     protected static ?string $model = Dataset::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-code-bracket-square';
+
+    protected static ?string $navigationGroup = 'ODK Forms and Datasets';
 
     public static function form(Form $form): Form
     {
@@ -29,20 +37,25 @@ class DatasetResource extends Resource
 
     public static function getCreateFormFields(?Dataset $record = null): array
     {
+        $models = HelperService::getModels()
+            ->mapWithKeys(function ($model) {
+                return [
+                    $model => (new $model)->getTable(),
+                ];
+            });
+
         return [
             Forms\Components\TextInput::make('name')
-                ->required()
-                ->unique(ignoreRecord: true),
-            Forms\Components\TextInput::make('primary_key')
-                ->hint('')
-                ->helperText('NOTE: This key currently is not used for anything, but is intended to be used to link to other datasets in the future.')
+                ->label('Name of the dataset'),
+            Forms\Components\Select::make('entity_model')
+                ->label('Which Database table does this dataset represent?')
+                ->options($models),
+            Forms\Components\Textarea::make('description')
+                ->label('Enter a brief description of the dataset')
+                ->rows(3)
+                ->columnSpanFull(),
+            Forms\Components\Hidden::make('primary_key')
                 ->default('id'),
-            Forms\Components\Select::make('parent_id')
-                ->relationship('parent', 'name', function (Builder $query) use ($record) {
-                    if ($record) {
-                        $query->where('id', '!=', $record->id);
-                    }
-                }),
         ];
     }
 
@@ -51,9 +64,13 @@ class DatasetResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name'),
-                Tables\Columns\TextColumn::make('primary_key'),
-                Tables\Columns\TextColumn::make('description')
-                    ->limit(50),
+                Tables\Columns\TextColumn::make('entity_model')
+                    ->label('Database Table')
+                    ->formatStateUsing(fn ($state) => Str::of(collect(Str::ucsplit($state))->last())->lower()->plural()),
+                Tables\Columns\TextColumn::make('variables_count')
+                    ->label('# of Variables defined')
+                    ->counts('variables'),
+
             ])
             ->filters([
                 //
@@ -61,12 +78,14 @@ class DatasetResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->recordUrl(fn ($record) => static::getUrl('view', ['record' => $record]));
     }
 
     public static function infolist(Infolist $infolist): Infolist
@@ -90,18 +109,19 @@ class DatasetResource extends Resource
     public static function getRelations(): array
     {
         return [
-            \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\RelationManagers\XlsformTemplateSourcesRelationManager::class,
-            \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\RelationManagers\XlsformTemplatesRelationManager::class,
+            XlsformTemplateSourcesRelationManager::class,
+            XlsformTemplatesRelationManager::class,
+            VariablesRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages\ListDatasets::route('/'),
-            'create' => \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages\CreateDataset::route('/create'),
-            'edit' => \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages\EditDataset::route('/{record}/edit'),
-            'view' => \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages\ViewDataset::route('/{record}'),
+            'index' => ListDatasets::route('/'),
+            'create' => CreateDataset::route('/create'),
+            'edit' => EditDataset::route('/{record}/edit'),
+            'view' => ViewDataset::route('/{record}'),
         ];
     }
 }

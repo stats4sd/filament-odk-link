@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\HasLanguageStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\CanBeHiddenFromContext;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\IsLookupList;
+use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
 class ChoiceListEntry extends Model implements HasLanguageStrings
@@ -32,20 +32,13 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
         // When Filament has tenancy enabled, we want to scope the choice list entries to the current tenant.
         static::addGlobalScope('team', function (Builder $query) {
 
-            if (Filament::hasTenancy()) {
+            if ($owner = HelperService::getCurrentOwner()) {
 
-                $owner = Filament::getTenant();
-
-                if ($owner && class_implements($owner, HasXlsforms::class)) {
-
-                    $query->whereHasMorph('owner', '*', function (Builder $query) use ($owner) {
-                        $query->where('id', $owner->getKey());
-                    })
-                        ->orWhereNull('owner_id');
-
-                }
+                $query->whereHasMorph('owner', '*', function (Builder $query) use ($owner) {
+                    $query->where('id', $owner->getKey());
+                })
+                    ->orWhereNull('owner_id');
             }
-
         });
     }
 

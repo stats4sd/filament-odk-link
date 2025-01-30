@@ -35,7 +35,7 @@ class XlsformSurveyExport implements FromCollection, ShouldAutoSize, WithColumnW
         $this->locales = $xlsform->owner->locales;
 
         // Get list of XlsformModuleVersions to use
-        /** @var Collection<XlsformModuleVersion> $xlsformTemplate */
+        /** @var Collection<XlsformModuleVersion> $xlsformModuleVersions */
         $xlsformModuleVersions = $this->xlsform->xlsformModuleVersions()
             ->orderBy('xlsform_module_versions.id') // probably in the future we'll have a separate way of re-ordering the modules
             ->get();
@@ -104,7 +104,7 @@ class XlsformSurveyExport implements FromCollection, ShouldAutoSize, WithColumnW
                 $key = "$outputString::{$locale->language->name} ({$locale->language->iso_alpha2})";
                 $value = $row->languageStrings()
                     ->whereHas('languageStringType', fn ($query) => $query->where('name', $string))
-                    ->first()?->text ?? '';
+                    ->first()->text ?? '';
 
                 return [$key => $value];
             });

@@ -19,6 +19,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\RelationManagers\XlsformModuleRelationManager;
 use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
 use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
@@ -34,7 +35,9 @@ class XlsformTemplateResource extends resource
 {
     protected static ?string $model = XlsformTemplate::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-document-duplicate';
+
+    protected static ?string $navigationGroup = 'ODK Forms and Datasets';
 
     public static function getEloquentQuery(): Builder
     {
@@ -532,6 +535,13 @@ class XlsformTemplateResource extends resource
                     ]),
 
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            XlsformModuleRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

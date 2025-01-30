@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource\Pages\ListTeamXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 // Use this resource for a panel scoped to a team
@@ -71,7 +72,7 @@ class TeamXlsformTemplateResource extends Resource
                     ->form([
                         Forms\Components\TextInput::make('title')
                             ->label('Please give the form a title.')
-                            ->default(fn (XlsformTemplate $record) => Filament::getTenant()->getFilamentName() . ' - ' . $record->title)
+                            ->default(fn (XlsformTemplate $record) => HelperService::getCurrentOwner()->name . ' - ' . $record->title)
                             ->hint('Note that ODK form titles cannot be longer than 64 characters.'),
                     ])
                     ->action(function (XlsformTemplate $record, array $data) {

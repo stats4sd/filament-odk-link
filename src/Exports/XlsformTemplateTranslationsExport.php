@@ -187,22 +187,20 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
                 $type = $entry instanceof SurveyRow ? 'survey' : 'choices';
                 $row = collect([
                     $type,
-                    $entry->choiceList?->id ?? '',
+                    $entry->choiceList->id ?? '',
                     $entry->name,
                     $languageStringType->name,
                 ]);
 
                 $defaultLocaleStrings = $this->template->locales
                     ->filter(fn(Locale $locale) => $locale->is_default)
-                    ->map(function (Locale $locale) use ($row, $strings): string {
+                    ->map(function (Locale $locale) use ($strings): string {
                         // For each language in XlsformTemplateLanguage, add the corresponding text
                         // Find the language string for this language
                         $stringForLanguage = $strings->firstWhere('locale_id', $locale->id);
 
                         return $stringForLanguage ? $stringForLanguage->text : '';
                     });
-
-                ray($this->empty);
 
                 // Add the current template language's translation (unless $empty is false, which means we should return an empty template
                 if ($this->empty) {

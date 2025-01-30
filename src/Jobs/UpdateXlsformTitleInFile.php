@@ -28,7 +28,7 @@ class UpdateXlsformTitleInFile implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public function __construct(public WithXlsformDrafts | Xlsform | XlsformTemplate $xlsform) {}
+    public function __construct(public Xlsform | XlsformTemplate $xlsform) {}
 
     /**
      * @throws Exception

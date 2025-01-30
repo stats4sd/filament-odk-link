@@ -2,48 +2,52 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages;
 
-use App\Models\Reference\Country;
-use App\Models\Team;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Stats4sd\FilamentOdkLink\Models\Country;
 
 class Language extends Model
 {
-
-    public function xlsformTemplateLanguages(): HasMany
+    /** @return HasMany<XlsformModuleVersionLocale, $this> */
+    public function xlsformModuleVersionLocales(): HasMany
     {
         return $this->hasMany(XlsformModuleVersionLocale::class);
     }
 
+    /** @return HasMany<Locale, $this> */
     public function locales(): HasMany
     {
         return $this->hasMany(Locale::class);
     }
 
-    // Does this work?
+    /** @return HasOne<Locale, $this> */
     public function defaultLocale(): HasOne
     {
         return $this->hasOne(Locale::class)->where('is_default', true);
     }
 
+    // TODO: fix country!!
+
+    /** @return BelongsToMany<Country, $this> */
     public function countries(): BelongsToMany
     {
         return $this->belongsToMany(Country::class, 'country_language', 'language_id', 'country_id');
     }
 
+    /** @return Attribute<string, never> */
     public function languageLabel(): Attribute
     {
         return new Attribute(
-            get: fn() => "{$this->name} ({$this->iso_alpha2})",
+            get: fn () => "{$this->name} ({$this->iso_alpha2})",
         );
     }
 
-    public function teams(): BelongsToMany
+    /** @return HasMany<LanguageOwner, $this> */
+    public function languageOwners(): HasMany
     {
-        return $this->belongsToMany(Team::class)
-            ->withPivot('locale_id');
+        return $this->hasMany(LanguageOwner::class);
     }
 }

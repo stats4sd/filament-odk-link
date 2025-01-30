@@ -3,12 +3,12 @@
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages;
 
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Database\Eloquent\Model;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
+use Stats4sd\FilamentOdkLink\Filament\Traits\RedirectsToListAfterSave;
 
 class CreateDataset extends CreateRecord
 {
-    protected static string $resource = DatasetResource::class;
+    use RedirectsToListAfterSave;
 
+    protected static string $resource = DatasetResource::class;
 }

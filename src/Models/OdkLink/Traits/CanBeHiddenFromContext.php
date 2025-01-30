@@ -14,6 +14,7 @@ trait CanBeHiddenFromContext
         return $this->choiceList->can_be_hidden_from_context;
     }
 
+    // TODO: fix this to use polymorphic 'owner' instead of team reference.
     public function teamRemoved(): BelongsToMany
     {
         return $this->BelongsToMany(Team::class, 'choice_list_entries_removed');
@@ -26,6 +27,6 @@ trait CanBeHiddenFromContext
 
     public function toggleRemoved(WithXlsforms $team): array
     {
-        return $this->teamRemoved()->toggle([$team->id]);
+        return $this->teamRemoved()->toggle([$team->getKey()]);
     }
 }

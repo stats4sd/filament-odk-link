@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageOwner;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
@@ -81,6 +82,7 @@ trait HasXlsforms
         ]);
     }
 
+    /** @return Attribute<string, never> */
     protected function odkQrCode(): Attribute
     {
         return new Attribute(
@@ -93,5 +95,11 @@ trait HasXlsforms
                 return $this->odkProject->appUsers->first()->qr_code_string;
             }
         );
+    }
+
+    /** @return MorphMany<LanguageOwner, $this> */
+    public function languagesOwned(): MorphMany
+    {
+        return $this->morphMany(LanguageOwner::class, 'owner');
     }
 }

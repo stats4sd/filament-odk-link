@@ -57,7 +57,7 @@ class XlsformChoicesExport implements FromCollection, ShouldAutoSize, WithColumn
                     'id' => $row->id,
                     'list_name' => $row->choiceList->list_name,
                     'name' => Str::snake($row->name),
-                    ...$this->getLanguageStrings($row, 'label'),
+                    ...$this->getLanguageStrings($row),
                     ...$properties,
                 ]);
             });
@@ -102,7 +102,7 @@ class XlsformChoicesExport implements FromCollection, ShouldAutoSize, WithColumn
                 $key = "$string::{$locale->language->name} ({$locale->language->iso_alpha2})";
                 $value = $row->languageStrings()
                     ->whereHas('languageStringType', fn ($query) => $query->where('name', $string))
-                    ->first()?->text ?? null;
+                    ->first()->text ?? null;
 
                 return [$key => $value];
             });

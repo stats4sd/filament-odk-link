@@ -10,6 +10,7 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 interface WithXlsformDrafts
 {
+    /** @return MorphTo */
     public function owner(): MorphTo;
 
     public function deployDraft(OdkLinkService $service, bool $withMedia = true): bool;
@@ -22,7 +23,5 @@ interface WithXlsformDrafts
     public function getDraftQrCodeStringAttribute(): ?string;
 
     public function updateDraftFormDetails(OdkLinkService $odkLinkService): void;
-
-    public function xlsfile(): Attribute;
 
 }

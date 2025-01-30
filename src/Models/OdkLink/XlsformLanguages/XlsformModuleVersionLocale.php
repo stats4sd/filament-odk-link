@@ -7,24 +7,27 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
 class XlsformModuleVersionLocale extends Pivot
 {
-
     use \Znck\Eloquent\Traits\BelongsToThrough;
 
+    /** @return BelongsTo<XlsformModuleVersion, $this> */
     public function xlsformModule(): BelongsTo
     {
         return $this->belongsTo(XlsformModuleVersion::class);
     }
 
+    /** @return BelongsTo<Locale, $this> */
     public function locale(): BelongsTo
     {
         return $this->belongsTo(Locale::class);
     }
 
+    /** @return BelongsToThrough<Language, $this> */
     public function language(): BelongsToThrough
     {
         return $this->belongsToThrough(Language::class, Locale::class);
@@ -35,32 +38,40 @@ class XlsformModuleVersionLocale extends Pivot
         return $this->hasMany(LanguageString::class);
     }
 
-    public function getLocaleLanguageLabelAttribute()
+    /** @return Attribute<string, never>  */
+    protected function localeLanguageLabel(): Attribute
     {
-        return $this->locale->languageLabel;
+        return new Attribute(
+            get: fn () => $this->locale->languageLabel,
+        );
     }
 
     // was this created from importing a Xlsform template file?
     // if false, then this it was created through the platform as an extra translation
-    public function isAddedFromXlsformTemplate(): Attribute
+    /** @return Attribute<bool, never>  */
+    protected function isAddedFromXlsformTemplate(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->locale->is_default,
+            get: fn (): bool => $this->locale->is_default,
         );
     }
 
-    public function getStatusAttribute(): string
+    /** @return Attribute<string, never> */
+    protected function status(): Attribute
     {
-        if($this->has_language_strings && !$this->needs_update) {
-            return 'Ready for use';
-        }
-        elseif(!$this->has_language_strings) {
-            return 'Not added';
-        }
-        elseif($this->has_language_strings && $this->needs_update) {
-            return 'Out of date';
-        }
+        return new Attribute(
+            get: function (): string {
 
-        return 'Unknown';
+                if ($this->has_language_strings && ! $this->needs_update) {
+                    return 'Ready for use';
+                } elseif (! $this->has_language_strings) {
+                    return 'Not added';
+                } elseif ($this->has_language_strings && $this->needs_update) {
+                    return 'Out of date';
+                }
+
+                return 'Unknown';
+            }
+        );
     }
 }
