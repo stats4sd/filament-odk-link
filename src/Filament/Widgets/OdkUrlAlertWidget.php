@@ -6,7 +6,9 @@ use Filament\Widgets\Widget;
 
 class OdkUrlAlertWidget extends Widget
 {
+    protected int | string | array $columnSpan = 'full';
+
+    /** @phpstan-ignore-next-line  */
     protected static string $view = 'filament-odk-link::filament.widgets.odk-url-alert-widget';
 
-    protected int | string | array $columnSpan = 'full';
 }

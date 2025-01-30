@@ -4,10 +4,17 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Stats4sd\FilamentOdkLink\Models\ChoiceListEntryRemoved;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Language;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageOwner;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LocaleOwner;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
@@ -81,6 +88,7 @@ trait HasXlsforms
         ]);
     }
 
+    /** @return Attribute<string, never> */
     protected function odkQrCode(): Attribute
     {
         return new Attribute(
@@ -93,5 +101,41 @@ trait HasXlsforms
                 return $this->odkProject->appUsers->first()->qr_code_string;
             }
         );
+    }
+
+    /** @return MorphMany<LanguageOwner, $this> */
+    public function languagesOwned(): MorphMany
+    {
+        return $this->morphMany(LanguageOwner::class, 'owner');
+    }
+
+    /** @return MorphMany<LocaleOwner, $this> */
+    public function localesOwned(): MorphMany
+    {
+        return $this->morphMany(LocaleOwner::class, 'owner');
+    }
+
+    /** @return HasManyThrough<Locale, LocaleOwner, $this> */
+    public function locales(): HasManyThrough
+    {
+        return $this->hasManyThrough(Locale::class, LocaleOwner::class);
+    }
+
+    /** @return HasManyThrough<Language, LanguageOwner, $this> */
+    public function languages(): HasManyThrough
+    {
+        return $this->hasManyThrough(Language::class, LanguageOwner::class);
+    }
+
+    /** @return MorphMany<ChoiceListEntryRemoved, $this> */
+    public function choiceListEntriesRemoved(): MorphMany
+    {
+        return $this->morphMany(ChoiceListEntryRemoved::class, 'owner');
+    }
+
+    /** @return HasManyThrough<ChoiceListEntry, ChoiceListEntryRemoved, $this> */
+    public function choiceListEntriesRemovedFromContext(): HasManyThrough
+    {
+        return $this->hasManyThrough(ChoiceListEntry::class, ChoiceListEntryRemoved::class);
     }
 }

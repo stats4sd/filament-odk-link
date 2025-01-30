@@ -8,8 +8,7 @@ class CustomOdkTemplatesWidget extends Widget
 {
     protected int | string | array $columnSpan = 'full';
 
-    /**
-     * @var string
-     */
+    /** @phpstan-ignore-next-line  */
     protected static string $view = 'filament-odk-link::filament.widgets.custom-odk-templates-widget';
+
 }

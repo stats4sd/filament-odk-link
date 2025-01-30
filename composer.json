@@ -22,14 +22,19 @@
     "require": {
         "php": "^8.1|^8.2|^8.3",
         "awcodes/filament-table-repeater": "^2.0",
+        "awcodes/shout": "^2.0",
         "filament/filament": "^3.0",
         "filament/spatie-laravel-media-library-plugin": "^3.0",
+        "haydenpierce/class-finder": "^0.5.3",
         "illuminate/contracts": "^10.0|^11.0",
         "maatwebsite/excel": "^3.1",
+        "shiftonelabs/laravel-cascade-deletes": "^2.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-medialibrary": "^10.15|^11.4",
         "spatie/laravel-package-tools": "^1.15.0",
-        "spatie/laravel-permission": "^6.10"
+        "spatie/laravel-permission": "^6.10",
+        "staudenmeir/belongs-to-through": "^2.16",
+        "staudenmeir/eloquent-has-many-deep": "^1.20"
     },
     "require-dev": {
         "larastan/larastan": "^3.0",
@@ -72,7 +77,8 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Stats4sd\\FilamentOdkLink\\FilamentOdkLinkServiceProvider"
+                "Stats4sd\\FilamentOdkLink\\FilamentOdkLinkServiceProvider",
+                "Stats4sd\\FilamentOddkLink\\FilamentOdkLinkEventServiceProvider"
             ],
             "aliases": {
                 "FilamentOdkLink": "Stats4sd\\FilamentOdkLink\\Facades\\FilamentOdkLink"

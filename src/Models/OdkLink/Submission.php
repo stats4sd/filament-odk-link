@@ -10,10 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Testing\Fluent\Concerns\Has;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class Submission extends Model implements HasMedia
@@ -34,17 +34,15 @@ class Submission extends Model implements HasMedia
     protected static function booted(): void
     {
         static::addGlobalScope('owned', static function (Builder $query) {
-            if (Auth::check() && ! Auth::user()?->hasRole(config('filament-odk-link.roles.xlsform-admin'))) {
-                $query->where(function (Builder $query) {
-                    $query->whereHas('xlsformVersion', function (Builder $query) {
-                        $query->whereHas('xlsform', function (Builder $query) {
-                            $query->whereHas('owner', function (Builder $query) {
 
-                                // is the xlsform owned by a team/group that the logged-in user is linked to?
-                                $query->whereHas('users', function ($query) {
-                                    $query->where('users.id', Auth::id());
-                                });
-                            });
+            // if the current panel has tenancy, filter
+            if ($owner = HelperService::getCurrentOwner()) {
+
+                $query->where(function (Builder $query) use ($owner) {
+                    $query->whereHas('xlsformVersion', function (Builder $query) use ($owner) {
+                        $query->whereHas('xlsform', function (Builder $query) use ($owner) {
+                            $query->where('owner_id', $owner->getKey())
+                                ->where('owner_type', get_class($owner));
                         });
                     });
                 });

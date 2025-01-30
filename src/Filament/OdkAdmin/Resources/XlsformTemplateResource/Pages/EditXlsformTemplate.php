@@ -15,6 +15,12 @@ class EditXlsformTemplate extends EditRecord
 
     protected static string $resource = XlsformTemplateResource::class;
 
+    // return empty array, so that there is no relation manager showed in Edit page
+    public function getRelationManagers(): array
+    {
+        return [];
+    }
+
     /**
      * @phpstan-return XlsformTemplate
      */
