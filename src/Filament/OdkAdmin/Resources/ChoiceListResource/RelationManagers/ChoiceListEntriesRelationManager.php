@@ -12,6 +12,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
@@ -21,25 +22,33 @@ class ChoiceListEntriesRelationManager extends RelationManager
 {
     protected static string $relationship = 'ChoiceListEntries';
 
+    /** @phpstan-return ChoiceList */
+    public function getOwnerRecord(): ChoiceList
+    {
+        /** @var ChoiceList $record */
+        $record = parent::getOwnerRecord();
+
+        return $record;
+    }
+
     public function form(Form $form): Form
     {
         return $form
             ->columns(1)
             ->schema(function (ChoiceListEntriesRelationManager $livewire) {
 
-                /** @var ChoiceList $choiceList */
                 $choiceList = $this->getOwnerRecord();
 
-                if(isset($choiceList->properties['extra_properties'])) {
+                if (isset($choiceList->properties['extra_properties'])) {
                     $propFields = collect($choiceList->properties['extra_properties'])
-                        ->map(fn($property) => Forms\Components\TextInput::make('properties.' . $property['name'])
-                            ->label($property['label'])
-                            ->helperText($property['helper_text'])
+                        ->map(
+                            fn ($property) => Forms\Components\TextInput::make('properties.' . $property['name'])
+                                ->label($property['label'])
+                                ->helperText($property['helper_text'])
                         );
                 } else {
                     $propFields = collect([]);
                 }
-
 
                 /** @var Collection<Locale> $locales */
                 $locales = $choiceList->xlsformModuleVersion->locales;
@@ -49,14 +58,14 @@ class ChoiceListEntriesRelationManager extends RelationManager
                     Repeater::make('languageStrings')
                         ->label('Add Labels for the following languages:')
                         ->relationship('languageStrings')
-                        ->minItems(fn() => $locales->count())
-                        ->maxItems(fn() => $locales->count())
+                        ->minItems(fn () => $locales->count())
+                        ->maxItems(fn () => $locales->count())
                         ->formatStateUsing(function (?ChoiceListEntry $record, $state) use ($locales) {
                             if ($record) {
                                 return $state;
                             }
 
-                            return $locales->map(fn(Locale $locale) => [
+                            return $locales->map(fn (Locale $locale) => [
                                 'language_string_type_id' => LanguageStringType::where('name', 'label')->first()->id,
                                 'locale_id' => $locale->id,
                                 'text' => '',
@@ -68,6 +77,7 @@ class ChoiceListEntriesRelationManager extends RelationManager
                             TextInput::make('text')
                                 ->label(function (Get $get) use ($locales) {
                                     $locale = $locales->firstWhere('id', $get('locale_id'));
+
                                     return 'Label::' . $locale->language_label;
                                 })
                                 ->required(),

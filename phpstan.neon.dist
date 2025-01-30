@@ -13,3 +13,5 @@ parameters:
     checkModelProperties: true
     noUnnecessaryCollectionCallOnly: ['count', 'first']
     noEnvCallsOutsideOfConfig: false
+    ignoreErrors:
+        - '#Call to an undefined method Illuminate\\Database\\Schema\\ColumnDefinition::constrained\(\)#'

@@ -5,12 +5,10 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\IsLookupList;
 
 
 class ChoiceList extends Model
 {
-    use IsLookupList;
 
     protected $casts = [
         'properties' => 'collection',

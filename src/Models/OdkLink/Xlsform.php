@@ -111,7 +111,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                     return 'LIVE';
                 }
 
-                if ($this->odk_draft_tokwn) {
+                if ($this->odk_draft_token) {
                     return 'DRAFT';
                 }
 

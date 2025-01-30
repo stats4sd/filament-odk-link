@@ -41,7 +41,7 @@ class Submission extends Model implements HasMedia
                 $query->where(function (Builder $query) use ($owner) {
                     $query->whereHas('xlsformVersion', function (Builder $query) use ($owner) {
                         $query->whereHas('xlsform', function (Builder $query) use ($owner) {
-                            $query->where('owner_id', $owner->id)
+                            $query->where('owner_id', $owner->getKey())
                                 ->where('owner_type', get_class($owner));
                         });
                     });

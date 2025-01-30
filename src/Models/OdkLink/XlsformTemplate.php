@@ -51,7 +51,7 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             if ($xlsformTemplate->available) {
 
                 config('filament-odk-link.models.team_model')::all()
-                    ->filter(fn (WithXlsforms $owner) => $owner->shouldReceiveAllXlsformTemplates())
+                    ->filter(fn (WithXlsforms $owner) => $owner->should_receive_all_templates)
                     ->each(function (WithXlsforms $owner) use ($xlsformTemplate) {
                         $xlsform = $owner->xlsforms()->whereHas('xlsformTemplate', function ($query) use ($xlsformTemplate) {
                             $query->where('xlsform_templates.id', $xlsformTemplate->id);

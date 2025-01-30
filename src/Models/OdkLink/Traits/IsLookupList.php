@@ -8,30 +8,33 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 trait IsLookupList
 {
     // is the current entry a 'global' entry?
-    public function isGlobalEntry(): Attribute
+    /** @return Attribute<bool, never> */
+    protected function isGlobalEntry(): Attribute
     {
         return new Attribute(
             get: fn (): bool => $this->isGLobal(),
         );
     }
 
-    public function isGlobal(): bool
+    protected function isGlobal(): bool
     {
         return $this->owner_id === null;
     }
 
-    public function isCustomisedEntry(): Attribute
+    /** @return Attribute<bool, never> */
+    protected function isCustomisedEntry(): Attribute
     {
         return new Attribute(
             get: fn (): bool => $this->isCustomised(),
         );
     }
 
-    public function isCustomised(): bool
+    protected function isCustomised(): bool
     {
         return $this->owner_id !== null;
     }
 
+    /** @return MorphTo */
     public function owner(): MorphTo
     {
         return $this->morphTo();

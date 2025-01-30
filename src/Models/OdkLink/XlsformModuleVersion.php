@@ -2,7 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use App\Models\Team;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -112,7 +111,7 @@ class XlsformModuleVersion extends Model implements HasMedia
     }
 
     /** @return BelongsToMany<Xlsform, $this> */
-    public function xlsform(): BelongsToMany
+    public function xlsforms(): BelongsToMany
     {
         return $this->belongsToMany(Xlsform::class, 'selected_xlsform_module_versions');
     }

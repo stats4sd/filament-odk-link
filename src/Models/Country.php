@@ -2,32 +2,35 @@
 
 namespace Stats4sd\FilamentOdkLink\Models;
 
-use App\Models\Team;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\CountryOwner;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
-use Znck\Eloquent\Traits\BelongsToThrough;
+use Znck\Eloquent\Relations\BelongsToThrough;
 
 class Country extends Model
 {
-    use BelongsToThrough;
+    use \Znck\Eloquent\Traits\BelongsToThrough;
 
     protected $table = 'countries';
 
+    /** @return BelongsTo<Region, $this> */
     public function region(): BelongsTo
     {
         return $this->belongsTo(Region::class);
     }
 
-    public function continent(): \Znck\Eloquent\Relations\BelongsToThrough
+    /** @return BelongsToThrough<Continent, $this> */
+    public function continent(): BelongsToThrough
     {
         return $this->belongsToThrough(Continent::class, Region::class);
     }
 
-    public function teams(): HasMany
+    /** @return HasMany<CountryOwner, $this> */
+    public function countryOwners(): HasMany
     {
-        return $this->hasMany(Team::class);
+        return $this->hasMany(CountryOwner::class);
     }
 
     public function xlsformModuleVersions(): HasMany

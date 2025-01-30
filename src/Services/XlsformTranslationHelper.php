@@ -34,6 +34,23 @@ class XlsformTranslationHelper
         return $this->languages->firstWhere('iso_alpha2', $matches[3]);
     }
 
+    public function getTranslatableColumnsFromFile(string $filePath): Collection
+    {
+        // return a keyed collection for survey + choices headings.
+        return (new XlsformTemplateHeadingRowImport)
+            ->toCollection($filePath)
+            ->mapWithKeys(fn($value, $key) => [
+                $key => $value[0]
+                    ->map(fn($columnHeader) => self::isTranslatableColumn($columnHeader) ? $columnHeader : null)
+                    ->filter(),
+            ]);
+    }
+
+    private function isTranslatableColumn(string $columnHeader): bool
+    {
+        return preg_match($this->getRegexPattern(), $columnHeader);
+    }
+
     public function getRegexPattern(): string
     {
         $typeNames = $this->languageStringTypes->pluck('name')->toArray();

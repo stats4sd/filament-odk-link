@@ -9,14 +9,15 @@ use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\XlsformModuleVersionLocale;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 
-// ** This export ONLY works for HOLPA right now, as it uses a bunch of App\Models references etc. This will be reconciled later... */
 class ChoiceListModelsExport implements FromCollection, WithHeadings, WithStrictNullComparison
 {
-    /** @var Collection<ChoiceListentry> */
+    /** @var Collection<int, Collection<(int|string), mixed>> */
     public Collection $entries;
 
     // by default, we use the dataset variables as the columns. If you want to specify columns, you can pass them in as an array.
@@ -25,27 +26,22 @@ class ChoiceListModelsExport implements FromCollection, WithHeadings, WithStrict
         public WithXlsformDrafts | Xlsform $xlsform
     ) {
 
-        // get the template languages for the form chosen by the team
-        if ($xlsform->xlsformTemplate) {
-            $xlsformTemplateLanguages = $xlsform->xlsformTemplate->xlsformTemplateLanguages;
-        } else {
-            $xlsformTemplateLanguages = $xlsform->xlsformTemplateLanguages;
-        }
+        /** @var WithXlsforms $owner */
+        $owner = $xlsform->owner;
 
-        $xlsformTemplateLanguages = $xlsformTemplateLanguages
-            ->filter(fn (XlsformModuleVersionLocale $xlsformTemplateLanguage) => $xlsform->owner->locales->contains('id', $xlsformTemplateLanguage->locale->id));
+        $locales = $owner->locales;
 
         $this->entries = $choiceList->choiceListEntries
             // may not need explicit filter when running on front-end with Filament Tenancy, but won't hurt
             ->filter(fn (ChoiceListEntry $choiceListEntry) => $choiceListEntry->owner_id === $xlsform->owner->getKey() || $choiceListEntry->owner_id === null)
-            ->mapWithKeys(function (ChoiceListEntry $choiceListEntry) use ($xlsformTemplateLanguages) {
+            ->mapWithKeys(function (ChoiceListEntry $choiceListEntry) use ($locales) {
 
-                $labelColumns = $xlsformTemplateLanguages->mapWithKeys(function (XlsformModuleVersionLocale $xlsformTemplateLanguage) use ($choiceListEntry) {
+                $labelColumns = $locales->mapWithKeys(function (Locale $locale) use ($choiceListEntry) {
                     return $choiceListEntry
                         ->languageStrings
-                        ->filter(fn (LanguageString $languageString) => $languageString->xlsformTemplateLanguage->id === $xlsformTemplateLanguage->id)
+                        ->filter(fn (LanguageString $languageString) => $languageString->locale->id === $locale->id)
                         ->mapWithKeys(fn (LanguageString $languageString) => [
-                            "{$languageString->languageStringType->name}_{$xlsformTemplateLanguage->language->iso_alpha2}" => $languageString->text,
+                            "{$languageString->languageStringType->name}_{$locale->language->iso_alpha2}" => $languageString->text,
                         ]);
                 });
 

@@ -7,8 +7,14 @@ use HaydenPierce\ClassFinder\ClassFinder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+use Stats4sd\FilamentOdkLink\Exports\ChoiceListModelsExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 class HelperService
 {
@@ -45,6 +51,7 @@ class HelperService
         ];
     }
 
+    /** @return Collection<int, Collection<int|string, string|null>> */
     public static function importCsvFileToCollection(string $filePath): Collection
     {
         // Read CSV file content, call trim() to remove last blank line
@@ -63,9 +70,11 @@ class HelperService
         $header = collect(str_getcsv(array_shift($lines)));
 
         // Map through the rows and combine them with the header to produce the final collection.
-        return collect($lines)->map(function ($row) use ($header) {
+        $final = collect($lines)->map(function ($row) use ($header): Collection {
             return $header->combine(str_getcsv($row));
         });
+
+        return $final;
     }
 
     // helper function to return the currently selected team in a Filament panel.
@@ -73,6 +82,7 @@ class HelperService
     public static function getCurrentOwner(): WithXlsforms | Model | null
     {
         if (Filament::hasTenancy() && is_a(Filament::getTenant(), HasXlsforms::class)) {
+
             return Filament::getTenant();
         }
 

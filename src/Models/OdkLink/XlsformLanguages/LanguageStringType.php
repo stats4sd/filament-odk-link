@@ -9,6 +9,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
 class LanguageStringType extends Model
 {
 
+    /** @return HasMany<LanguageString, $this> */
     public function languageStrings(): HasMany
     {
         return $this->hasMany(LanguageString::class);

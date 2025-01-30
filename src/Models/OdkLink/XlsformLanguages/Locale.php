@@ -48,10 +48,10 @@ class Locale extends Model
         return $this->morphTo('creator');
     }
 
-    // TODO: fix to use polymorphic relationship.
-    public function teams(): BelongsToMany
+    /** @return HasMany<LocaleOwner, $this> */
+    public function localeOwners(): HasMany
     {
-        return $this->belongsToMany(Team::class, 'language_team', 'locale_id', 'team_id');
+        return $this->hasMany(LocaleOwner::class);
     }
 
     /** @return Attribute<string, never> */
@@ -70,7 +70,7 @@ class Locale extends Model
             get: function () {
 
                 $owner = HelperService::getCurrentOwner();
-                $xlsforms = collect();
+
                 if ($owner) {
                     $xlsforms = $owner->xlsforms;
                 } else {
@@ -94,6 +94,10 @@ class Locale extends Model
                     return 'Translations incomplete';
                 }
 
+                /** @phpstan-ignore-next-line
+                 * Ignoring because phpstan/larastan doesn't yet support easy handling of pivot values, and the workaround seem not worth it here.
+                 * https://github.com/larastan/larastan/issues/1774
+                 */
                 if ($moduleVersions->every(fn ($moduleVersion) => ! $moduleVersion->pivot->needs_update && $moduleVersion->pivot->has_language_strings)) {
                     return 'Ready for use';
                 }
@@ -116,7 +120,7 @@ class Locale extends Model
     protected function isEditable(): Attribute
     {
         return new Attribute(
-            get: fn () => $this->createdBy?->id === HelperService::getCurrentOwner()->id,
+            get: fn () => $this->creator?->getKey() === HelperService::getCurrentOwner()->getKey(),
         );
     }
 

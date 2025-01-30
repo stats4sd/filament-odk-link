@@ -22,6 +22,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -247,13 +248,13 @@ class OdkLinkService
      *
      * @throws RequestException|ConnectionException
      */
-    public function uploadMediaFileAttachments(WithXlsformDrafts $xlsform): bool
+    public function uploadMediaFileAttachments(XLsform | XlsformTemplate $xlsform): bool
     {
 
         // static files
         $requiredFixedMedia = $xlsform->attachedFixedMedia()->get();
 
-        if ($requiredFixedMedia && count($requiredFixedMedia) > 0) {
+        if (count($requiredFixedMedia) > 0) {
 
             foreach ($requiredFixedMedia as $requiredMediaItem) {
                 $this->uploadSingleMediaFile($xlsform, $requiredMediaItem->getFirstMedia()->getPath());
@@ -263,7 +264,7 @@ class OdkLinkService
         // dynamic files
         $requiredDataMedia = $xlsform->attachedDataMedia()->get();
 
-        if ($requiredDataMedia && count($requiredDataMedia) > 0) {
+        if (count($requiredDataMedia) > 0) {
             foreach ($requiredDataMedia as $requiredMediaItem) {
 
                 // if there is a static upload, use it;
@@ -286,7 +287,7 @@ class OdkLinkService
      *
      * @throws RequestException|ConnectionException
      */
-    public function uploadSingleMediaFile(WithXlsformDrafts $xlsform, string $filePath): array
+    public function uploadSingleMediaFile(Xlsform | XlsformTemplate $xlsform, string $filePath): array
     {
         $token = $this->authenticate();
         $file = file_get_contents($filePath);
@@ -382,7 +383,7 @@ class OdkLinkService
     /**
      * @throws RequestException
      */
-    public function deleteForm(WithXlsformDrafts $xlsform): bool
+    public function deleteForm(Xlsform | XlsformTemplate $xlsform): bool
     {
         $token = $this->authenticate();
 
@@ -434,7 +435,7 @@ class OdkLinkService
     }
 
     // update the schema of a template for xlsform from the latest draft version on ODK Central
-    public function updateSchema(WithXlsformDrafts $xlsform): void
+    public function updateSchema(Xlsform | XlsformTemplate $xlsform): void
     {
         $token = $this->authenticate();
 

@@ -2,10 +2,9 @@
 
 namespace Stats4sd\FilamentOdkLink\Listeners;
 
-use App\Models\Xlsforms\XlsformTemplate;
 use Illuminate\Support\Collection;
 use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XLsformModuleImport;
+use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformModuleImport;
 use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateChoiceListImport;
 use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateWorkbookImport;
 use Stats4sd\FilamentOdkLink\Jobs\FinishChoiceListEntryImport;
@@ -14,6 +13,7 @@ use Stats4sd\FilamentOdkLink\Jobs\ImportAllLanguageStrings;
 use Stats4sd\FilamentOdkLink\Jobs\LinkModuleVersionToLocales;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
 
 class HandleXlsformTemplateAdded
@@ -22,16 +22,15 @@ class HandleXlsformTemplateAdded
     {
         $model = $event->media->model;
 
-        // only process xlsform module vesrsions or templates
-        if (!$model instanceof XlsformModuleVersion && !$model instanceof XlsformTemplate) {
+        // only process xlsform module versions or templates
+        if (! $model instanceof XlsformModuleVersion && ! $model instanceof XlsformTemplate) {
             return;
         }
-
 
         $filePath = $event->media->getPath();
         $moduleVersions = collect();
 
-        // for xlsformtemplates, create all the included xlsformmodules.
+        // for xlsform templates, create all the included xlsform modules.
         if ($model instanceof XlsformTemplate) {
             $moduleVersions = $this->createModules($filePath, $model);
         }
@@ -48,22 +47,23 @@ class HandleXlsformTemplateAdded
     public function createModules(string $filePath, XlsformTemplate $model): Collection
     {
         // no queue as this is a small / quick import.
-        (new XLsformModuleImport($model))->import($filePath);
+        (new XlsformModuleImport($model))->import($filePath);
 
         // get the 'default' version of all xlsform module versions for each module linked to the xlsform template.
         return $model
             ->xlsformModules
-            ->map(fn(XlsformModule $module) => $module
-                ->xlsformModuleVersions
-                ->filter(fn(XlsformModuleVersion $xlsformModuleVersion) => $xlsformModuleVersion->is_default)
+            ->map(
+                fn (XlsformModule $module) => $module
+                    ->xlsformModuleVersions
+                    ->filter(fn (XlsformModuleVersion $xlsformModuleVersion) => $xlsformModuleVersion->is_default)
             )
             ->flatten();
     }
 
     public function processXlsformTemplate(string $filePath, Collection $moduleVersions): void
     {
-        // Get the translatable headings from the XLSform workbook;
-        $translatableHeadings = (new XlsformTranslationHelper())->getTreanslatableColumnsFromFile($filePath);
+        // Get the translatable headings from the Xlsform workbook;
+        $translatableHeadings = (new XlsformTranslationHelper)->getTranslatableColumnsFromFile($filePath);
 
         $moduleVersions->each(function (XlsformModuleVersion $moduleVersion) use ($translatableHeadings, $filePath) {
 
@@ -84,6 +84,4 @@ class HandleXlsformTemplateAdded
 
         });
     }
-
-
 }

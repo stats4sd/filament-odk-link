@@ -66,4 +66,6 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
     {
         return $this->morphTo();
     }
+
+
 }

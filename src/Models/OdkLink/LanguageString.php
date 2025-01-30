@@ -27,16 +27,19 @@ class LanguageString extends Model
         return $this->morphTo('linked_entry');
     }
 
+    /** @return BelongsTo<LanguageStringType, $this> */
     public function languageStringType(): BelongsTo
     {
         return $this->belongsTo(LanguageStringType::class);
     }
 
+    /** @return BelongsTo<Locale, $this> */
     public function locale(): BelongsTo
     {
         return $this->belongsTo(Locale::class);
     }
 
+    /** @return BelongsToThrough<Language, $this> */
     public function language(): BelongsToThrough
     {
         return $this->belongsToThrough(Language::class, Locale::class);
