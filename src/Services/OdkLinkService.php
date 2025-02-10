@@ -32,7 +32,9 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  */
 class OdkLinkService
 {
-    public function __construct(protected string $endpoint) {}
+    public function __construct(protected string $endpoint)
+    {
+    }
 
     /**
      * Creates a new session + auth token for communication with the ODK Central server
@@ -160,12 +162,14 @@ class OdkLinkService
      */
     public function createDraftForm(HasXlsformDrafts $xlsform, bool $withMedia = true): array
     {
+
+        ray('hi');
         $token = $this->authenticate();
 
         $filePath = $xlsform->getFirstMedia('xlsform_file')?->getPath();
 
-        if (! $filePath) {
-            abort(500, 'The XLSForm file is missing. Please upload the file again and try to deploy the form again.');
+        if (!$filePath) {
+            throw new \Exception('The XLSForm file is missing. Please upload the file again and try to deploy the form again.', 500);
         }
 
         $file = file_get_contents($filePath);
@@ -188,8 +192,7 @@ class OdkLinkService
         $responseBody = $response->json();
         // if the xlsform file is not valid, throw an error
         if (isset($responseBody['message']) && Str::startsWith($responseBody['message'], 'The given XLSForm file was not valid')) {
-
-            abort(500, $response->json()['details']['error']);
+            throw new \Exception($response->json()['details']['error'], 500);
         } elseif ($response->status() !== 200) {
 
             abort(500, 'An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
@@ -248,7 +251,7 @@ class OdkLinkService
      *
      * @throws RequestException|ConnectionException
      */
-    public function uploadMediaFileAttachments(XLsform | XlsformTemplate $xlsform): bool
+    public function uploadMediaFileAttachments(XLsform|XlsformTemplate $xlsform): bool
     {
 
         // static files
@@ -287,7 +290,7 @@ class OdkLinkService
      *
      * @throws RequestException|ConnectionException
      */
-    public function uploadSingleMediaFile(Xlsform | XlsformTemplate $xlsform, string $filePath): array
+    public function uploadSingleMediaFile(Xlsform|XlsformTemplate $xlsform, string $filePath): array
     {
         $token = $this->authenticate();
         $file = file_get_contents($filePath);
@@ -383,7 +386,7 @@ class OdkLinkService
     /**
      * @throws RequestException
      */
-    public function deleteForm(Xlsform | XlsformTemplate $xlsform): bool
+    public function deleteForm(Xlsform|XlsformTemplate $xlsform): bool
     {
         $token = $this->authenticate();
 
@@ -435,7 +438,7 @@ class OdkLinkService
     }
 
     // update the schema of a template for xlsform from the latest draft version on ODK Central
-    public function updateSchema(Xlsform | XlsformTemplate $xlsform): void
+    public function updateSchema(Xlsform|XlsformTemplate $xlsform): void
     {
         $token = $this->authenticate();
 
@@ -501,7 +504,7 @@ class OdkLinkService
         $xlsform->getMedia('xlsform_file')->first()->copy($xlsformVersion, 'xlsform_file');
 
         // copy any attached media
-        $xlsform->getMedia('attached_media')->each(fn ($media) => $media->copy($xlsformVersion, 'attached_media'));
+        $xlsform->getMedia('attached_media')->each(fn($media) => $media->copy($xlsformVersion, 'attached_media'));
 
         return $xlsformVersion;
     }
@@ -513,7 +516,7 @@ class OdkLinkService
             ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions");
 
         // simple error handling
-        if (! $results->ok()) {
+        if (!$results->ok()) {
             return null;
         }
 
@@ -539,7 +542,7 @@ class OdkLinkService
             // ******* CREATE SUBMISSION RECORD ******* //
             $xlsformVersion = $xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
 
-            if (! $xlsformVersion) {
+            if (!$xlsformVersion) {
 
                 $messageContent = collect([
                     'formVersion' => $entry['__system']['formVersion'],
@@ -548,7 +551,7 @@ class OdkLinkService
                     'ownerName' => $xlsform->owner->name,
                 ]);
 
-                abort(500, 'The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '));
+                abort(500, 'The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '));
             }
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
@@ -658,7 +661,7 @@ class OdkLinkService
 
             // dump($schemaItem['name'] . ' : ' . $value);
 
-            if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && ! is_array($value)) {
+            if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
                 // store ODK variable value as entity value record
                 EntityValue::create([
                     'entity_id' => $entity->id,
@@ -687,7 +690,7 @@ class OdkLinkService
             $model = new $class;
 
             // check database table existence
-            if (! Schema::hasTable($model->getTable())) {
+            if (!Schema::hasTable($model->getTable())) {
                 return null;
             }
 
@@ -722,7 +725,7 @@ class OdkLinkService
             // dump($dataArray);
 
             // create a new database record
-            if (! $isEmptyRecord) {
+            if (!$isEmptyRecord) {
                 $record = $class::create($dataArray);
 
                 // if there is a user-specified foreign key column name in model class, store the main survey id into array
@@ -786,7 +789,7 @@ class OdkLinkService
             }
 
             // hardcode temporary as a quick workaround for area_xxx_ha ODK variables
-            if (! is_array($value)) {
+            if (!is_array($value)) {
                 if ($value == 'NaN') {
                     $value = null;
                 }
@@ -893,7 +896,7 @@ class OdkLinkService
             // 3. it's value is not null
             if (
                 $schemaItem['type'] != 'geopoint' &&
-                ! in_array($schemaItem['name'], $odkVariablesToIgnore) &&
+                !in_array($schemaItem['name'], $odkVariablesToIgnore) &&
                 $value != null
             ) {
                 $result[$schemaItem['name']] = $value;
@@ -963,7 +966,7 @@ class OdkLinkService
                 // create entity record for each repeat group record
 
                 // if the section is not linked to a dataset, move on;
-                if (! $section->dataset) {
+                if (!$section->dataset) {
                     continue;
                 }
 
@@ -996,7 +999,7 @@ class OdkLinkService
                     $value = Arr::get($repeatGroupEntry, $fullItemPath);
                     // dump($schemaItem['name'] . ' : ' . $value);
 
-                    if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && ! is_array($value)) {
+                    if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
                         // store ODK variable value as entity value record
                         EntityValue::create([
                             'entity_id' => $entity->id,
@@ -1042,7 +1045,7 @@ class OdkLinkService
                 $model = new $class;
 
                 // check database table existence
-                if (! Schema::hasTable($model->getTable())) {
+                if (!Schema::hasTable($model->getTable())) {
                     return;
                 }
 
@@ -1092,7 +1095,7 @@ class OdkLinkService
                     // dump($dataArray);
 
                     // create a new database record
-                    if (! $isEmptyRecord) {
+                    if (!$isEmptyRecord) {
                         $class::create($dataArray);
                         // dump('Created ' . $model->getTable() . ' record.');
                     }
