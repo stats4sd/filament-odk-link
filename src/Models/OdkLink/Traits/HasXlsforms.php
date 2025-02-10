@@ -118,13 +118,13 @@ trait HasXlsforms
     /** @return HasManyThrough<Locale, LocaleOwner, $this> */
     public function locales(): HasManyThrough
     {
-        return $this->hasManyThrough(Locale::class, LocaleOwner::class);
+        return $this->hasManyThrough(Locale::class, LocaleOwner::class, 'owner_id', 'id', 'id', 'locale_id');
     }
 
     /** @return HasManyThrough<Language, LanguageOwner, $this> */
     public function languages(): HasManyThrough
     {
-        return $this->hasManyThrough(Language::class, LanguageOwner::class);
+        return $this->hasManyThrough(Language::class, LanguageOwner::class, 'owner_id', 'id', 'id', 'language_id');
     }
 
     /** @return MorphMany<ChoiceListEntryRemoved, $this> */
