@@ -51,13 +51,13 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             if ($xlsformTemplate->available) {
 
                 config('filament-odk-link.models.team_model')::all()
-                    ->filter(fn (WithXlsforms $owner) => $owner->should_receive_all_templates)
+                    ->filter(fn(WithXlsforms $owner) => $owner->should_receive_all_templates)
                     ->each(function (WithXlsforms $owner) use ($xlsformTemplate) {
                         $xlsform = $owner->xlsforms()->whereHas('xlsformTemplate', function ($query) use ($xlsformTemplate) {
                             $query->where('xlsform_templates.id', $xlsformTemplate->id);
                         })->first();
 
-                        if (! $xlsform) {
+                        if (!$xlsform) {
                             $xlsform = $xlsformTemplate->xlsforms()->create([
                                 'owner_id' => $owner->getKey(),
                                 'owner_type' => get_class($owner),
@@ -225,18 +225,42 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
     {
 
         // set all existing sections to not current.
-        $this->repeatingSections()->each(fn ($section) => $section->is_current = false);
+        $this->repeatingSections()->each(fn($section) => $section->is_current = false);
 
         // create or find the repeat sections
-        $this->schema->filter(fn ($item) => $item['type'] === 'repeat')
+        $this->schema->filter(fn($item) => $item['type'] === 'repeat')
             ->each(function ($item) {
+
+                // check if this is a nested repeat by reviewing previously created repeat sections
+                $parent = null; // for direct children of the root section, we update the parent_id after creating the root section.
+                $possibleParentNames = collect(explode('/', $item['path']))
+                ->filter(fn($name) => $name !== '')
+                ->filter(fn($name) => $name !== $item['name']);
+
+                if ($this->repeatingSections()->whereIn('name', $possibleParentNames->toArray())) {
+                    // get the most deep parent name:
+                    ray('finding parent');
+
+
+                    foreach ($possibleParentNames->reverse() as $possibleParentName) {
+                        $repeatParent = $this->repeatingSections()->where('structure_item', $possibleParentName)->first();
+
+                        if ($repeatParent) {
+                            $parent = $repeatParent;
+                            break;
+                        }
+                    }
+
+                }
+
                 $this->repeatingSections()->updateOrCreate([
                     'structure_item' => $item['name'],
                 ], [
+                    'parent_id' => $parent?->id ?? null,
                     'is_repeat' => true,
                     'is_current' => true,
                     'schema' => $this->schema->filter(
-                        fn ($subItem) => Str::contains($subItem['path'], $item['path'] . '/')
+                        fn($subItem) => Str::contains($subItem['path'], $item['path'] . '/')
                             && $subItem['path'] !== $item['path']
                             && $subItem['type'] !== 'repeat'
                     ),
@@ -254,16 +278,8 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                     return;
                 }
 
-                // remove all items from the review section that have the same initial path as the $section.
-
-                //                dump('Section x Seciton REveiw');
-                //                dump('Section: ' . $section);
-                //                dump('Rewveiw Section: ' . $reviewSection);
-                //
-                //
-                //                dump($reviewSection->schema);
                 $reviewSection->schema = $reviewSection->schema->filter(
-                    fn ($item) => ! Str::startsWith($item['path'], '/' . $reviewSection->structure_item . '/' . $section->structure_item . '/')
+                    fn($item) => !Str::startsWith($item['path'], '/' . $reviewSection->structure_item . '/' . $section->structure_item . '/')
                 );
 
                 $reviewSection->save();
@@ -292,13 +308,11 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             // 1. structure type item
             // 2. repeat type item
             // 3. item names belong to ODK variable names of all repeating sections
-            'schema' => $this->schema->filter(fn ($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && ! in_array($item['name'], $repeatingSectionItemNames)),
+            'schema' => $this->schema->filter(fn($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && !in_array($item['name'], $repeatingSectionItemNames)),
         ]);
 
-        // add the root as the parent of the repeating sections
-        // TODO: update to handle nested repeats
-
-        $this->repeatingSections()->update([
+        // add the root as the parent of the repeating sections that do not have a parent already.
+        $this->repeatingSections()->where('parent_id', null)->update([
             'parent_id' => $rootSection->id,
         ]);
 
@@ -386,7 +400,7 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
 
                 // get set of locales for each default module version
                 $locales = $this->xlsformModules->map(
-                    fn (XlsformModule $xlsformModule) => $xlsformModule
+                    fn(XlsformModule $xlsformModule) => $xlsformModule
                         ->defaultXlsformVersion
                         ->locales
                 );
