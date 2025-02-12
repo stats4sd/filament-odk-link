@@ -58,7 +58,7 @@ class Entity extends Model
     /** @return BelongsToMany<DatasetVariable, $this> */
     public function datasetVariables(): BelongsToMany
     {
-        return $this->belongsToMany(DatasetVariable::class, 'entity_values')
+        return $this->belongsToMany(DatasetVariable::class, 'entity_values', 'entity_id', 'dataset_variable_name')
             ->using(EntityValue::class)
             ->withPivot('value');
     }

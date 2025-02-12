@@ -668,9 +668,16 @@ class OdkLinkService
 
             if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
                 // store ODK variable value as entity value record
+
+                // TODO: get label from correct language String entry.
+                $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
+                    'name'  => $schemaItem['name'],
+                    'label' => $schemaItem['name'],
+                ]);
+
                 EntityValue::create([
                     'entity_id' => $entity->id,
-                    'dataset_variable_id' => $schemaItem['name'],
+                    'dataset_variable_name' => $datasetVariable->name,
                     'value' => $value,
                 ]);
             }
@@ -987,10 +994,17 @@ class OdkLinkService
                     $value = Arr::get($repeatGroupEntry, $fullItemPath);
 
                     if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
+
+                        // TODO: get label from correct language String entry.
+                        $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
+                            'name' => $schemaItem['name'],
+                            'label' => $schemaItem['name'],
+                        ]);
+
                         // store ODK variable value as entity value record
                         EntityValue::create([
                             'entity_id' => $entity->id,
-                            'dataset_variable_id' => $schemaItem['name'],
+                            'dataset_variable_name' => $datasetVariable->name,
                             'value' => $value,
                         ]);
                     }
