@@ -16,12 +16,14 @@ use Maatwebsite\Excel\Facades\Excel;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\DatasetVariable;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
@@ -554,13 +556,12 @@ class OdkLinkService
                 ]);
 
 
-                if(config('app.env') === 'local') {
+                if (config('app.env') === 'local') {
                     throw new \Exception('The system tried to get submission data for a form version that does not exist. LOCAL ENVIRONMENT: if you are testing a form that may have been updated on ODK Central directly, or through another app environment, please run `php artisan app:update-xlsform-versions-from-odk-central`, and try pulling the submissions again.');
                 }
                 throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '), 500);
             }
 
-            // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
             $submission = $xlsformVersion->submissions()->create([
                 'odk_id' => $entry['__id'],
                 'submitted_at' => (new Carbon($entry['__system']['submissionDate']))->toDateTimeString(),
@@ -665,8 +666,6 @@ class OdkLinkService
             $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
             $value = Arr::get($entry, $itemPath);
 
-            // dump($schemaItem['name'] . ' : ' . $value);
-
             if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
                 // store ODK variable value as entity value record
                 EntityValue::create([
@@ -710,7 +709,6 @@ class OdkLinkService
             $isEmptyRecord = true;
 
             foreach ($dataArray as $key => $value) {
-                // dump($key . '=' . $value);
 
                 // skip item "submission_id" as it must contain a value
                 if ($key == 'submission_id') {
@@ -728,7 +726,6 @@ class OdkLinkService
             // if database table has column "properties", prepare it as JSON content with all attribute values
             $dataArray = $this->getArr($model, $xlsform, $entry, $section, $schema, $submissionId, $dataArray);
 
-            // dump($dataArray);
 
             // create a new database record
             if (!$isEmptyRecord) {
@@ -739,7 +736,6 @@ class OdkLinkService
                     $mainSurveyId[$model->foreignKeyIdColumnName] = $record->id;
                 }
 
-                // dump('Created ' . $model->getTable() . ' record.');
             }
         }
 
@@ -785,13 +781,10 @@ class OdkLinkService
                 $lengthToCut = $pathLength - $position;
 
                 $itemPath = Str::substr($schemaItem['path'], ($position + 1) + Str::length($section->structure_item), $lengthToCut);
-                // dump('$itemPath : ' . $itemPath);
 
                 $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
-                // dump('$fullItemPath : ' . $fullItemPath);
 
                 $value = Arr::get($entry, $fullItemPath);
-                // dump($schemaItem['name'] . ' : ' . $value);
             }
 
             // hardcode temporary as a quick workaround for area_xxx_ha ODK variables
@@ -887,13 +880,10 @@ class OdkLinkService
                 $lengthToCut = $pathLength - $position;
 
                 $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
-                // dump('$itemPath : ' . $itemPath);
 
                 $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
-                // dump('$fullItemPath : ' . $fullItemPath);
 
                 $value = Arr::get($entry, $fullItemPath);
-                // dump($schemaItem['name'] . ' : ' . $value);
             }
 
             // put this item into $result if
@@ -949,25 +939,20 @@ class OdkLinkService
 
         // find the path of repeat group first item
         $schemaPaths = $schema->pluck('path')->toArray();
-        // dump($schemaPaths[0]);
 
         $position = Str::position($schemaPaths[0], '/' . $section->structure_item . '/');
 
         // construct the path for getting an array of repeat group
         $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . '.' . $section->structure_item;
-        // dump($repeatGroupArrayPath);
 
         // get the array for repeat group
         $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
-        // dump($repeatGroupArray);
 
         // it should be an array containing records for a repeat group
         if (is_array($repeatGroupArray)) {
-            // dump("This is an array");
 
             // handle each record in repeat group
             foreach ($repeatGroupArray as $repeatGroupRecord) {
-                // dump($repeatGroupRecord);
 
                 // create entity record for each repeat group record
 
@@ -990,20 +975,16 @@ class OdkLinkService
                 $repeatGroupEntry = ['rg' => $repeatGroupRecord];
 
                 foreach ($schema as $schemaItem) {
-                    // dump('$schemaItem[path] : ' . $schemaItem['path']);
 
                     $pathLength = Str::length($schemaItem['path']);
                     $position = Str::position($schemaItem['path'], '/' . $section->structure_item . '/');
                     $lengthToCut = $pathLength - $position;
 
                     $itemPath = Str::substr($schemaItem['path'], ($position + 1) + Str::length($section->structure_item), $lengthToCut);
-                    // dump('$itemPath : ' . $itemPath);
 
                     $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
-                    // dump('$fullItemPath : ' . $fullItemPath);
 
                     $value = Arr::get($repeatGroupEntry, $fullItemPath);
-                    // dump($schemaItem['name'] . ' : ' . $value);
 
                     if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
                         // store ODK variable value as entity value record
@@ -1026,21 +1007,17 @@ class OdkLinkService
 
         // find the path of repeat group first item
         $schemaPaths = $schema->pluck('path')->toArray();
-        // dump($schemaPaths[0]);
 
         $position = Str::position($schemaPaths[0], '/' . $section->structure_item . '/');
 
         // construct the path for getting an array of repeat group
         $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . '.' . $section->structure_item;
-        // dump($repeatGroupArrayPath);
 
         // get the array for repeat group
         $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
-        // dump($repeatGroupArray);
 
         // it should be an array containing records for a repeat group
         if (is_array($repeatGroupArray)) {
-            // dump("This is an array");
 
             // P.S. When deleting submission in application, we must delete related records for both generic approach and custom table approach
 
@@ -1075,7 +1052,6 @@ class OdkLinkService
                     $isEmptyRecord = true;
 
                     foreach ($dataArray as $key => $value) {
-                        // dump($key . '=' . $value);
 
                         // for soils database table nutrient_balances, it does not have columns for individual attribute.
                         // the return value from function prepareDataArray() will contain submission_id only.
@@ -1098,12 +1074,10 @@ class OdkLinkService
                     // if database table has column "properties", prepare it as JSON content with all attribute values
                     $dataArray = $this->getArr($model, $xlsform, $repeatGroupEntry, $section, $schema, $submissionId, $dataArray);
 
-                    // dump($dataArray);
 
                     // create a new database record
                     if (!$isEmptyRecord) {
                         $class::create($dataArray);
-                        // dump('Created ' . $model->getTable() . ' record.');
                     }
                 }
             }
@@ -1124,14 +1098,10 @@ class OdkLinkService
 
         // if database table has column "team_id", get owner id of xlsform, set it as team_id
         if (Schema::hasColumn($model->getTable(), 'team_id')) {
-            // dump($model->getTable() . ' has column team_id');
 
             $teamId = $xlsform->owner->getKey();
-            // dump('***** $xlsform->id: ' . $xlsform->id);
-            // dump('***** $xlsform->owner->id: ' . $teamId);
 
             $dataArray['team_id'] = $teamId;
-            // dump('***** ' . $dataArray['team_id']);
         }
 
         return $dataArray;
