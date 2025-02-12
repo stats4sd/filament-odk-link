@@ -327,6 +327,8 @@ class OdkLinkService
 
         $token = $this->authenticate();
 
+        ray("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=" . Carbon::now()->toDateTimeString());
+
         Http::withToken($token)
             ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=" . Carbon::now()->toDateTimeString())
             ->throw()

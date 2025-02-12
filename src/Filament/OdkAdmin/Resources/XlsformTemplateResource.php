@@ -179,7 +179,7 @@ class XlsformTemplateResource extends resource
                     //                    // for non-static media (linked to datasets)
                     //                    Forms\Components\Select::make('choice_list_id')
                     //                        ->label('Select a Choice List to link to')
-                    //                        ->relationship('choiceList', 'list_name', fn (Builder $query, ?RequiredMedia $record): Builder => $record ? $query->whereHasMorph('template', [\App\Models\Xlsforms\XlsformTemplate::class, XlsformTemplate::class], fn ($query) => $query->whereHas('requiredMedia', fn ($query) => $query->where('id', $record->id))) : $query)
+                    //                        ->relationship('choiceList', 'list_name', fn (Builder $query, ?RequiredMedia $record): Builder => $record ? $query->whereHasMorph('template', [\Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate::class, XlsformTemplate::class], fn ($query) => $query->whereHas('requiredMedia', fn ($query) => $query->where('id', $record->id))) : $query)
                     //                        ->visible(fn (Get $get): bool => ! $get('is_static')),
 
                 ]),

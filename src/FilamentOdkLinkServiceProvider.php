@@ -53,6 +53,8 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
         $this->app->singleton(OdkLinkService::class, function ($app) {
             return new OdkLinkService(config('filament-odk-link.odk.base_endpoint'));
         });
+
+        $this->app->register(FilamentOdkLinkEventServiceProvider::class);
     }
 
     public function packageBooted(): void
@@ -88,8 +90,8 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
         // get all files in the Commands directory
         $files = File::files(__DIR__ . '/Commands');
 
-        return collect($files)->map(fn ($file) => $file->getFilenameWithoutExtension())
-            ->map(fn ($filename) => "Stats4sd\\FilamentOdkLink\\Commands\\{$filename}")
+        return collect($files)->map(fn($file) => $file->getFilenameWithoutExtension())
+            ->map(fn($filename) => "Stats4sd\\FilamentOdkLink\\Commands\\{$filename}")
             ->toArray();
     }
 
