@@ -34,9 +34,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  */
 class OdkLinkService
 {
-    public function __construct(protected string $endpoint)
-    {
-    }
+    public function __construct(protected string $endpoint) {}
 
     /**
      * Creates a new session + auth token for communication with the ODK Central server
@@ -569,7 +567,12 @@ class OdkLinkService
                 'content' => $entry,
             ]);
 
-            $this->processEntry($submission, $entry, $xlsformVersion);
+            // old approach to process a submission, it can handle main survey section and one level of repeat group section
+            // $this->processEntry($submission, $entry, $xlsformVersion);
+
+            // new approach to process a submission, it can handle main survey section and any level of repeat group section
+            $this->processSubmission($submission, $entry, $xlsformVersion);
+
             $this->getAttachedMedia($entry, $token, $xlsform, $submission);
 
             // ******** CALL APP-SPECIFIC PROCESSING ******** //
@@ -585,6 +588,264 @@ class OdkLinkService
 
         return $resultsToAdd->count();
     }
+
+
+    /* ========== */
+
+
+    public function processSubmission(Submission $submission, array $entry, XlsformVersion $xlsformVersion): void
+    {
+        // ray('OdkLinkService.processSubmission()...');
+
+        // find xlsform via xlsform version
+        $xlsform = $xlsformVersion->xlsform;
+
+        // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
+        $rootEntry = ['root' => $entry];
+
+        // find the main survey section (root section) of this xlsform, which is the starting point of a submission
+        $rootSection = $xlsformVersion->xlsform->xlsformTemplate->rootSection;
+
+        // process the main survey section
+        $this->processRootSection($xlsform, $rootEntry, $rootSection, $submission->id);
+    }
+
+
+    private function processRootSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    {
+        // ray('OdkLinkService.processRootSection()...');
+        // ray('section: ' . $section->structure_item);
+
+        // TODO: create entities records, fill in $entityId as parent_id
+        $newEntityId = null;
+
+        // extract data from main survey section (root section)
+        if ($section->is_repeat == 0) {
+            // exclude structure items from section schema, as there is no value to be stored for a structure item
+            $schema = $section->schema->where('type', '!=', 'structure');
+
+            // create entity record for main survey (root)
+            $entity = Entity::create([
+                'dataset_id' => $section->dataset->id,
+                'submission_id' => $submissionId,
+                'model_type' => $section->dataset->entity_model,
+            ]);
+
+            $newEntityId = $entity->id;
+
+            // add polymorphic relationship
+            $entity->owner()->associate($xlsform->owner)->save();
+
+            // create entity_values records
+            // access the value of each ODK variable from a deeply nested array using "dot" notation
+            foreach ($schema as $schemaItem) {
+                $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+                $value = Arr::get($entry, $itemPath);
+
+                if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
+                    // store ODK variable value as entity value record
+
+                    // TODO: get label from correct language String entry.
+                    $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
+                        'name'  => $schemaItem['name'],
+                        'label' => $schemaItem['name'],
+                    ]);
+
+                    EntityValue::create([
+                        'entity_id' => $entity->id,
+                        'dataset_variable_name' => $datasetVariable->name,
+                        'value' => $value,
+                    ]);
+                }
+            }
+
+            // find all child sections of this section
+            $childSections = $xlsform->xlsformTemplate->repeatingSections
+                ->where('parent_id', $section->id);
+
+            // ray($childSections);
+
+            // process child sections one by one recursively
+            foreach ($childSections as $childSection) {
+                $this->processRepeatGroupSection($xlsform, $entry, $childSection, $submissionId, $newEntityId);
+            }
+        }
+    }
+
+
+    private function processRepeatGroupSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId, $entityId)
+    {
+        // ray('OdkLinkService.processRepeatGroupSection()...');
+        // ray('section: ' . $section->structure_item);
+        // ray('entityId: ' . $entityId);
+
+        // TODO: create entities records, fill in $entityId as parent_id
+        $newEntityId = null;
+
+        // extract data from repeat group section
+        if ($section->is_repeat == 1) {
+            // exclude structure items from section schema, as there is no value to be stored for a structure item
+            $schema = $section->schema->where('type', '!=', 'structure');
+
+            // find the path of repeat group first item
+            $schemaPaths = $schema->pluck('path')->toArray();
+            // ray($schemaPaths);
+
+            $position = Str::position($schemaPaths[0], '/' . $section->structure_item . '/');
+            // ray($position);
+
+            // construct the path for getting an array of repeat group
+            $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . '.' . $section->structure_item;
+            // ray($repeatGroupArrayPath);
+
+            // get the array for repeat group
+            $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
+            // ray($repeatGroupArray);
+
+            // it should be an array containing records for a repeat group
+            if (is_array($repeatGroupArray)) {
+
+                // handle each record in repeat group
+                foreach ($repeatGroupArray as $repeatGroupRecord) {
+
+                    // ray('repeatGroupRecord:');
+                    // ray($repeatGroupRecord);
+
+                    // create entity record for each repeat group record
+
+                    // if the section is not linked to a dataset, move on;
+                    if (!$section->dataset) {
+                        continue;
+                    }
+
+                    $entity = Entity::create([
+                        'dataset_id' => $section->dataset->id,
+                        'submission_id' => $submissionId,
+                        'parent_id' => $entityId,
+                        'model_type' => $section->dataset->entity_model,
+                    ]);
+
+                    $newEntityId = $entity->id;
+
+                    // add polymorphic relationship
+                    $entity->owner()->associate($xlsform->owner)->save();
+
+                    // get array element as record
+                    $repeatGroupEntry = ['rg' => $repeatGroupRecord];
+
+                    foreach ($schema as $schemaItem) {
+
+                        $pathLength = Str::length($schemaItem['path']);
+                        $position = Str::position($schemaItem['path'], '/' . $section->structure_item . '/');
+                        $lengthToCut = $pathLength - $position;
+
+                        $itemPath = Str::substr($schemaItem['path'], ($position + 1) + Str::length($section->structure_item), $lengthToCut);
+
+                        $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+
+                        $value = Arr::get($repeatGroupEntry, $fullItemPath);
+
+                        if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
+
+                            // TODO: get label from correct language String entry.
+                            $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
+                                'name' => $schemaItem['name'],
+                                'label' => $schemaItem['name'],
+                            ]);
+
+                            // store ODK variable value as entity value record
+                            EntityValue::create([
+                                'entity_id' => $entity->id,
+                                'dataset_variable_name' => $datasetVariable->name,
+                                'value' => $value,
+                            ]);
+                        }
+                    }
+
+
+
+                    // use repeatGroupRecord to construct a new entry, so that child section data inside different repeatGroupRecord can be extracted by path properly.
+                    // In theory, we will be able to handle nested repeat groups with any level.
+                    // P.S. In real life, we would recommend to have maximum two levels of nested repeat groups in an ODK form
+                    //
+                    // I understand that it is not desired to have a large section of comments in program source code.
+                    // But it would be easier to illustrate the idea with a real example submission here.
+                    //
+                    // if we construct each drinks_rpt record as a new entry,
+                    // drink_comment_rpt data inside each drinks_rpt record can be accessed by path "root\drinks_rpt\drinks_rpt_grp\drink_comment_rpt" properly
+                    //
+                    //     "drinks_rpt": [
+                    //         {
+                    //             "drink_id": "green_tea",
+                    //             "drinks_rpt_grp": {
+                    //                 "drink_comment_rpt": [{
+                    //                         "drink_comment": "r1",
+                    //                         "__id": "336a6d87d55031ca67e527490efdbc0a7cfdcef6"
+                    //                     }, {
+                    //                         "drink_comment": "r2",
+                    //                         "__id": "51523676c56ea5a1df8c6868a1414ff2d18a74f6"
+                    //                     }, {
+                    //                         "drink_comment": "r3",
+                    //                         "__id": "882715f50b92ba9b1d4fa0a6a5b406e5b40203ca"
+                    //                     }
+                    //                 ]
+                    //             },
+                    //         },
+                    //         {
+                    //             "drink_id": "cola",
+                    //             "drinks_rpt_grp": {
+                    //                 "drink_comment_rpt": [{
+                    //                         "drink_comment": "c1",
+                    //                         "__id": "2fc9c39b7627fe1d82844017bee2b61a6e73e226"
+                    //                     }, {
+                    //                         "drink_comment": "c2",
+                    //                         "__id": "740134d3b7878b5883a3d5936c006df26dbb0e2d"
+                    //                     }
+                    //                 ]
+                    //             },
+                    //         }
+
+
+
+                    // extract path into an array for constructing a new entry
+                    $arrayNames = explode('.', $repeatGroupArrayPath);
+                    $arraySize = count($arrayNames);
+
+                    $newEntry = [];
+
+                    // assign repeat group record to last array element
+                    $newEntry[$arrayNames[$arraySize - 1]] = $repeatGroupRecord;
+
+                    for ($i = $arraySize - 2; $i >= 0; $i--) {
+                        // assign data array to upper level array element
+                        $newEntry[$arrayNames[$i]] = $newEntry;
+
+                        // unset previous data array as it is no longer necessary
+                        unset($newEntry[$arrayNames[$i + 1]]);
+                    }
+
+                    // find all child sections of this section
+                    $childSections = $xlsform->xlsformTemplate->repeatingSections
+                        ->where('parent_id', $section->id);
+
+                    // process child sections one by one recursively
+                    foreach ($childSections as $childSection) {
+                        // ray('newEntityId: ' . $newEntityId);
+                        // ray('newEntry:');
+                        // ray($newEntry);
+
+                        $this->processRepeatGroupSection($xlsform, $newEntry, $childSection, $submissionId, $newEntityId);
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    /* ========== */
+
+
 
     // re-handle the updated submission content (submission content updated by user in front end)
     public function handleUpdatedSubmissionContent(Submission $submission)
@@ -742,7 +1003,6 @@ class OdkLinkService
                 if ($model->foreignKeyIdColumnName != '') {
                     $mainSurveyId[$model->foreignKeyIdColumnName] = $record->id;
                 }
-
             }
         }
 
