@@ -621,6 +621,7 @@ class OdkLinkService
 
         // extract data from main survey section (root section)
         if ($section->is_repeat == 0) {
+
             // exclude structure items from section schema, as there is no value to be stored for a structure item
             $schema = $section->schema->where('type', '!=', 'structure');
 
