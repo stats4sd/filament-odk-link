@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('choice_list_entries_removed', function (Blueprint $table) {
             $table->id();
             $table->foreignId('choice_list_entry_id')->constrained();
-            $table->foreignId('team_id')->constrained();
+            $table->morphs('owner');
             $table->timestamps();
         });
     }

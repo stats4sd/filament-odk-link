@@ -9,6 +9,9 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 
 class ChoiceListEntryRemoved extends Model
 {
+
+    protected $table = 'choice_list_entries_removed';
+
     /** @return BelongsTo<ChoiceListEntry, $this> */
     public function choiceListEntry(): BelongsTo
     {
