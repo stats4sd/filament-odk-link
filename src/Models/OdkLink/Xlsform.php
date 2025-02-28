@@ -80,6 +80,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         return $this->sendDraftToOdkCentral($service, $withMedia);
     }
 
+
     // ****************** COMPUTED ATTRIBUTES ************************
 
     // Get an xlsformId string that is both human-readable and guaranteed to be unique within the platform
@@ -104,18 +105,20 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     {
         return new Attribute(
             get: function (): string {
+
+                if(!$this->odk_draft_token) {
+                    return 'NOT DEPLOYED';
+                }
+
                 if (! $this->has_latest_template || ! $this->has_latest_media) {
                     return 'UPDATES AVAILABLE';
                 }
+
                 if ($this->is_active) {
                     return 'LIVE';
                 }
 
-                if ($this->odk_draft_token) {
-                    return 'DRAFT';
-                }
-
-                return 'NOT DEPLOYED';
+                return 'INACTIVE';
             },
         );
     }

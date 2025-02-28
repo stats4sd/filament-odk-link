@@ -36,7 +36,7 @@ trait HasXlsforms
         static::created(static function ($owner) use ($odkLinkService) {
 
             // check if we are in local-only (no-ODK link) mode
-            if (! config('filament-odk-link.odk.url')) {
+            if (!config('filament-odk-link.odk.url')) {
                 return;
             }
 
@@ -94,7 +94,7 @@ trait HasXlsforms
         return new Attribute(
             get: function (): ?string {
 
-                if (! $this->odkProject?->appUsers->first()) {
+                if (!$this->odkProject?->appUsers->first()) {
                     return null;
                 }
 
@@ -102,6 +102,40 @@ trait HasXlsforms
             }
         );
     }
+
+
+    // ********* LANGUAGES AND LOCALES *************** //
+
+    public function addLocale(Locale $locale): void
+    {
+        $this->localesOwned()
+            ->updateOrCreate([
+                'locale_id' => $locale->id,
+            ]);
+    }
+
+    public function removeLocale(Locale $locale): void
+    {
+        $this->localesOwned()
+            ->where('locale_id', $locale->id)
+            ->delete();
+    }
+
+    public function addLanguage(Language $language): void
+    {
+        $this->languagesOwned()
+            ->updateOrCreate([
+                'language_id' => $language->id,
+            ]);
+    }
+
+    public function removeLanguage(Language $language): void
+    {
+        $this->languagesOwned()
+            ->where('language_id', $language->id)
+            ->delete();
+    }
+
 
     /** @return MorphMany<LanguageOwner, $this> */
     public function languagesOwned(): MorphMany
@@ -118,13 +152,13 @@ trait HasXlsforms
     /** @return HasManyThrough<Locale, LocaleOwner, $this> */
     public function locales(): HasManyThrough
     {
-        return $this->hasManyThrough(Locale::class, LocaleOwner::class);
+        return $this->hasManyThrough(Locale::class, LocaleOwner::class, 'owner_id', 'id', 'id', 'locale_id');
     }
 
     /** @return HasManyThrough<Language, LanguageOwner, $this> */
     public function languages(): HasManyThrough
     {
-        return $this->hasManyThrough(Language::class, LanguageOwner::class);
+        return $this->hasManyThrough(Language::class, LanguageOwner::class, 'owner_id', 'id', 'id', 'language_id');
     }
 
     /** @return MorphMany<ChoiceListEntryRemoved, $this> */

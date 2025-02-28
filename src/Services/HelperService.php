@@ -81,7 +81,7 @@ class HelperService
     // useful because it always returns a Team::class (or null), so you can use it in a type hint.
     public static function getCurrentOwner(): WithXlsforms | Model | null
     {
-        if (Filament::hasTenancy() && is_a(Filament::getTenant(), HasXlsforms::class)) {
+        if (Filament::hasTenancy() && is_a(Filament::getTenant(), WithXlsforms::class)) {
 
             return Filament::getTenant();
         }

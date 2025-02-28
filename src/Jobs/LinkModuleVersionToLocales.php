@@ -36,8 +36,20 @@ class LinkModuleVersionToLocales implements ShouldQueue
      */
     public function handle(): void
     {
+
+        $locales = $this->languages->map(function (Language $language): Locale {
+
+            if($language->defaultLocale) {
+                return $language->defaultLocale;
+            }
+
+            // otherwise create it;
+            return $language->defaultLocale()->create(['is_default' => true]);
+
+        })->unique();
+
         $this->xlsformModuleVersion->locales()->syncWithPivotValues(
-            ids: $this->languages->map(fn (Language $language): int => $language->defaultLocale->id)->toArray(),
+            ids: $locales->pluck('id')->toArray(),
             values: ['has_language_strings' => true, 'needs_update' => false, 'updated_during_import' => true],
             detaching: false,
         );
