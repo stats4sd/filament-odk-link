@@ -32,11 +32,11 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
     protected static function booted(): void
     {
         // When Filament has tenancy enabled, we want to scope the choice list entries to the current tenant.
-        static::addGlobalScope('team', function (Builder $query) {
+        static::addGlobalScope('owner', function (Builder $query) {
 
             if ($owner = HelperService::getCurrentOwner()) {
 
-                $query->whereHasMorph('owner', '*', function (Builder $query) use ($owner) {
+                $query->where('owner_id', '*', function (Builder $query) use ($owner) {
                     $query->where('id', $owner->getKey());
                 })
                     ->orWhereNull('owner_id');

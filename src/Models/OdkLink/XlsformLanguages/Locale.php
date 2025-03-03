@@ -8,14 +8,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 
-class Locale extends Model
+class Locale extends Model implements HasMedia
 {
+    use InteractsWithMedia;
+
     protected $casts = [
         'is_default' => 'boolean',
     ];
@@ -23,6 +27,12 @@ class Locale extends Model
     protected $appends = [
         'language_label',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('xlsform_template_translation_files')
+            ->useDisk(config('filament-odk-link.storage.xlsforms'));
+    }
 
     /** @return BelongsTo<Language, $this> */
     public function language(): BelongsTo
@@ -44,9 +54,10 @@ class Locale extends Model
             ->withPivot(['has_language_strings', 'needs_update']);
     }
 
-    public function creator(): MorphTo
+    /** @return BelongsTo<HasXlsforms, $this> */
+    public function creator(): BelongsTo
     {
-        return $this->morphTo('creator');
+        return $this->belongsTo(config('filament-odk-link.models.team_model'), 'creator_id');
     }
 
     /** @return Attribute<string, never> */
