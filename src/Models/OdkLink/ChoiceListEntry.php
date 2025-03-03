@@ -6,10 +6,12 @@ use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\HasLanguageStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\CanBeHiddenFromContext;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\IsLookupList;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Znck\Eloquent\Relations\BelongsToThrough;
@@ -65,6 +67,18 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
     public function model(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /** @return BelongsTo<HasXlsforms | null, $this> */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
+    }
+
+    /** @return BelongsToMany<HasXlsforms, $this> */
+    public function ownersWhoRemovedFromContext(): BelongsToMany
+    {
+        return $this->belongsToMany(config('filament-odk-link.models.team_model'), 'choice_list_entries_removed_owner', 'choice_list_entry_id', 'owner_id');
     }
 
 

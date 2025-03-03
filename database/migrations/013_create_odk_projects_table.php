@@ -9,10 +9,11 @@ return new class extends Migration
     public function up(): void
     {
 
-        Schema::create('odk_projects', function (Blueprint $table) {
+        $teamTable = (new(config('filament-odk-link.models.team_model')))->getTable();
+
+        Schema::create('odk_projects', function (Blueprint $table) use ($teamTable) {
             $table->unsignedBigInteger('id')->primary();
-            $table->foreignId('owner_id');
-            $table->string('owner_type');
+            $table->foreignId('owner_id')->constrained($teamTable);
 
             $table->string('name');
             $table->text('description')->nullable();

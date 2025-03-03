@@ -8,11 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('entities', function (Blueprint $table) {
+
+        $teamTable = (new(config('filament-odk-link.models.team_model')))->getTable();
+
+        Schema::create('entities', function (Blueprint $table) use ($teamTable) {
             $table->id();
             $table->foreignId('dataset_id')->constrained('datasets');
             $table->foreignId('parent_id')->nullable()->constrained('entities')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->nullableMorphs('owner');
+            $table->foreignId('owner_id')->constrained($teamTable)->cascadeOnDelete()->cascadeOnUpdate();
             $table->nullableMorphs('model');
             $table->foreignId('submission_id')->constrained('submissions')->cascadeOnDelete()->cascadeOnUpdate();
             $table->timestamps();

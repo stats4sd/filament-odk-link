@@ -5,12 +5,14 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use JsonException;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Throwable;
@@ -28,10 +30,10 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
     use PublishesToOdkCentral;
 
 
-    /** @return MorphTo */
-    public function owner(): MorphTo
+    /** @return BelongsTo<HasXlsforms, $this> */
+    public function owner(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
     }
 
     public function sendDraftToOdkCentral(OdkLinkService $service, bool $withMedia = true): bool

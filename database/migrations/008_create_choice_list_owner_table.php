@@ -4,17 +4,18 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('choice_list_owner', function (Blueprint $table) {
+        $teamTable = new (config('filament-odk-link.models.team_model'))->getTable();
+
+        Schema::create('choice_list_owner', function (Blueprint $table) use ($teamTable) {
             $table->id();
-            $table->foreignId('team_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('choice_list_id')->constrained('choice_lists', 'id')->cascadeOnDelete();
+            $table->foreignId('owner_id')->constrained($teamTable)->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignId('choice_list_id')->constrained('choice_lists', 'id')->cascadeOnDelete()->cascadeOnUpdate();
             $table->boolean('is_complete')->default(false);
             $table->timestamps();
         });
