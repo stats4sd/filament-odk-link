@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $teamTable = new (config('filament-odk-link.models.team_model'))->getTable();
+        $teamTable = (new (config('filament-odk-link.models.team_model')))->getTable();
+
 
 
         Schema::create('language_owner', function (Blueprint $table) use ($teamTable) {

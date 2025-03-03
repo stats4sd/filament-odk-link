@@ -4,6 +4,8 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
@@ -25,11 +27,11 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
  */
 interface WithXlsforms
 {
-    public function xlsforms(): MorphMany;
+    public function xlsforms(): HasMany;
 
-    public function locales(): HasManyThrough;
+    public function locales(): BelongsToMany;
 
-    public function languages(): HasManyThrough;
+    public function languages(): BelongsToMany;
 
     // Private templates are owned by a single form owner.
     // All owners have access to all public templates (templates where available = 1)
@@ -38,7 +40,5 @@ interface WithXlsforms
     public function odkProject(): MorphOne;
 
     public function createLinkedOdkProject(OdkLinkService $odkLinkService): void;
-
-    public function choiceListEntriesRemoved(): MorphMany;
 
 }

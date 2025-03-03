@@ -10,14 +10,14 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        $teamTable  = (new(config('filament-odk-link.models.team_model')))->getTable();
+        $teamTable = (new (config('filament-odk-link.models.team_model')))->getTable();
 
         Schema::create('choice_list_entries', function (Blueprint $table) use ($teamTable) {
             $table->id();
             $table->foreignId('choice_list_id')->constrained()->onDelete('cascade');
 
             // entries might be global; or localised (localised ones have an owner)
-            $table->foreignId('owner_id')->constrained($teamTable);
+            $table->foreignId('owner_id')->nullable()->constrained($teamTable);
             $table->string('name');
             $table->json('properties')->nullable();
             $table->string('cascade_filter')->nullable();

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Stats4sd\FilamentOdkLink\Models\ChoiceListEntryRemoved;
 use Stats4sd\FilamentOdkLink\Models\Country;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
@@ -37,7 +38,7 @@ trait HasXlsforms
         $odkLinkService = app()->make(OdkLinkService::class);
 
         // when the model is created; automatically create an associated project on ODK Central;
-        static::created(static function ($owner) use ($odkLinkService) {
+        static::created(static function (self $owner) use ($odkLinkService) {
 
             // check if we are in local-only (no-ODK link) mode
             if (!config('filament-odk-link.odk.url')) {
@@ -55,7 +56,7 @@ trait HasXlsforms
     /** @return HasMany<Xlsform, $this> */
     public function xlsforms(): HasMany
     {
-        return $this->HasMany(Xlsform::class);
+        return $this->HasMany(Xlsform::class, 'owner_id');
     }
 
     // Private templates are owned by a single form owner.
@@ -115,15 +116,24 @@ trait HasXlsforms
     /** @return BelongsToMany<Locale, $this> */
     public function locales(): BelongsToMany
     {
-        return $this->BelongsToMany(Locale::class, 'locale_owner');
+        return $this->BelongsToMany(Locale::class, 'locale_owner', 'owner_id', 'locale_id');
     }
 
     /** @return BelongsToMany<Language, $this> */
     public function languages(): BelongsToMany
     {
-        return $this->belongsToMany(Language::class, 'language_owner');
+        return $this->belongsToMany(Language::class, 'language_owner', 'owner_id', 'language_id');
     }
 
+
+
+    // For tracking completion status of choice lists by team
+    /** @return BelongsToMany<ChoiceList, $this> */
+    public function choiceLists(): BelongsToMany
+    {
+        return $this->belongsToMany(ChoiceListEntry::class, 'choice_list_owner', 'owner_id', 'choice_list_id')
+            ->withPivot(['is_complete']);
+    }
 
     // Localised choice list entries
     /** @return HasMany<ChoiceListEntry, $this> */
@@ -141,6 +151,6 @@ trait HasXlsforms
     /** @return BelongsTo<Country, $this> */
     public function country(): BelongsTo
     {
-        return $this->belongsTo(Country::class);
+        return $this->belongsTo(Country::class, 'owner_id');
     }
 }
