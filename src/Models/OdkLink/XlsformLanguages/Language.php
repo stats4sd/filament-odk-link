@@ -51,6 +51,7 @@ class Language extends Model
     public function owners(): BelongsToMany
     {
         return $this->BelongsToMany
-        (config('filament-odk-link.models.team_model'), 'language_owner', 'language_id', 'owner_id');
+        (config('filament-odk-link.models.team_model'), 'language_owner', 'language_id', 'owner_id')
+            ->withPivot(['locale_id']);
     }
 }

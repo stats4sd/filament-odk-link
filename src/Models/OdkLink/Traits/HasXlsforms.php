@@ -122,7 +122,8 @@ trait HasXlsforms
     /** @return BelongsToMany<Language, $this> */
     public function languages(): BelongsToMany
     {
-        return $this->belongsToMany(Language::class, 'language_owner', 'owner_id', 'language_id');
+        return $this->belongsToMany(Language::class, 'language_owner', 'owner_id', 'language_id')
+            ->withPivot(['locale_id']);
     }
 
 
@@ -146,6 +147,28 @@ trait HasXlsforms
     public function choiceListEntriesRemovedFromContext(): BelongsToMany
     {
         return $this->belongsToMany(ChoiceListEntry::class, 'choice_list_entries_removed_owner', 'owner_id', 'choice_list_entry_id');
+    }
+
+    /** @return ?bool */
+    public function markLookupListAsComplete(ChoiceList $choiceList): ?bool
+    {
+        $this->choiceLists()->sync([$choiceList->id => ['is_complete' => 1]], detaching: false);
+
+        return $this->hasCompletedLookupList($choiceList);
+    }
+
+    /** @return ?bool */
+    public function markLookupListAsInComplete(ChoiceList $choiceList): ?bool
+    {
+        $this->choiceLists()->detach($choiceList->id);
+
+        return $this->hasCompletedLookupList($choiceList);
+    }
+
+    /** @return ?bool */
+    public function hasCompletedLookupList(ChoiceList $choiceList): ?bool
+    {
+        return $this->choiceLists()->where('choice_lists.id', $choiceList->id)->first()?->pivot->is_complete;
     }
 
     /** @return BelongsTo<Country, $this> */

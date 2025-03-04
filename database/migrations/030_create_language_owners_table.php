@@ -19,6 +19,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('language_id')->constrained('languages')->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreignId('owner_id')->constrained($teamTable)->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignId('locale_id')->nullable()->constrained('locales')->cascadeOnDelete()->cascadeOnUpdate();
             $table->timestamps();
         });
     }
