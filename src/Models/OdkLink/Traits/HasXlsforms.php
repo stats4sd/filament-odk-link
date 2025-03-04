@@ -111,19 +111,17 @@ trait HasXlsforms
         );
     }
 
-
-    // ********* LANGUAGES AND LOCALES *************** //
-    /** @return BelongsToMany<Locale, $this> */
-    public function locales(): BelongsToMany
-    {
-        return $this->BelongsToMany(Locale::class, 'locale_owner', 'owner_id', 'locale_id');
-    }
-
     /** @return BelongsToMany<Language, $this> */
     public function languages(): BelongsToMany
     {
         return $this->belongsToMany(Language::class, 'language_owner', 'owner_id', 'language_id')
             ->withPivot(['locale_id']);
+    }
+
+    /** @return HasMany<Locale, $this> */
+    public function createdLocales(): HasMany
+    {
+        return $this->hasMany(Locale::class, 'creator_id');
     }
 
 
