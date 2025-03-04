@@ -139,11 +139,4 @@ class Locale extends Model implements HasMedia
             get: fn() => $this->is_editable && $this->status !== 'Ready for use',
         );
     }
-
-    /** @return BelongsToMany<HasXlsforms, $this> */
-    public function owners(): BelongsToMany
-    {
-        return $this->BelongsToMany
-        (config('filament-odk-link.models.team_model'), 'language_owner', 'language_id', 'owner_id');
-    }
 }

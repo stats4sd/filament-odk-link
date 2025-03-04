@@ -28,9 +28,7 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 interface WithXlsforms
 {
     public function xlsforms(): HasMany;
-
-    public function locales(): BelongsToMany;
-
+    
     public function languages(): BelongsToMany;
 
     // Private templates are owned by a single form owner.
