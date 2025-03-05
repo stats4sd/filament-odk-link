@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Exports\XlsformExport;
 
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 

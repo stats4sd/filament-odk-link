@@ -15,6 +15,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformWorkbookExport;
+use Stats4sd\FilamentOdkLink\Jobs\PublishXlsformToOdkCentral;
 use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
@@ -58,16 +59,13 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     public function generateXlsfile(): void
     {
         $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
-        Excel::store(new XlsformWorkbookExport($this), $filePath, config('filament-odk-link.storage.xlsforms'));
 
-        $this->addMediaFromDisk($filePath, config('filament-odk-link.storage.xlsforms'))->toMediaCollection('xlsform_file');
+        Excel::queue(new XlsformWorkbookExport($this), $filePath, config('filament-odk-link.storage.xlsforms'))
+            ->chain([
+            new PublishXlsformToOdkCentral($this, $filePath),
+        ]);
 
-        // if the odk_project is not set, set it based on the given owner:
-        $this->odk_project_id = $this->owner->odkProject->id;
-        $this->has_latest_template = true;
-        $this->saveQuietly();
 
-        UpdateXlsformTitleInFile::dispatchSync($this);
     }
 
     /**

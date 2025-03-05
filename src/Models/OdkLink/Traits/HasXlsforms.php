@@ -118,6 +118,14 @@ trait HasXlsforms
             ->withPivot(['locale_id']);
     }
 
+    // Use the same pivot table as language...
+    /** @return BelongsToMany<Locale, $this> */
+    public function locales(): BelongsToMany
+    {
+        return $this->belongsToMany(Locale::class, 'language_owner', 'owner_id', 'locale_id')
+            ->withPivot(['language_id']);
+    }
+
     /** @return HasMany<Locale, $this> */
     public function createdLocales(): HasMany
     {
