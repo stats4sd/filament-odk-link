@@ -8,13 +8,14 @@ return [
     'models' => [
 
         /**
-         * Tells the system which Team model in use.
+         * Tells the system which Team model is in use.
          * By default it is "Stats4sd\FilamentOdkLink\Models\TeamManagement\Team"
          * User can define custom Team model in .env file config item "ODK_TEAM_MODEL"
+         * This model MUST implement the WithXlsforms trait.
+         * There can ONLY be one model that implements this trait. All Xlsforms must be owned by entities of this model.
          */
-        'team_model' => env('ODK_TEAM_MODEL', \Stats4sd\FilamentOdkLink\Models\TeamManagement\Team::class),
-        'user_model' => env('ODK_USER_MODEL', '\App\Models\User'),
-
+        'team_model' => env('ODK_TEAM_MODEL', 'App\Models\Team'),
+        'user_model' => env('ODK_USER_MODEL', 'App\Models\User'),
     ],
 
     'odk' => [

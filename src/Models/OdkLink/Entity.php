@@ -7,12 +7,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 
 class Entity extends Model
 {
     protected $table = 'entities';
 
     // e.g. for an entity created from a repeat group item, the parent entity will be the entity created from the repeat group's parent (the main form or, if it's a nested repeat group, the parent group).
+
     /** @return BelongsTo<self, $this> */
     public function parent(): BelongsTo
     {
@@ -37,10 +39,10 @@ class Entity extends Model
         return $this->belongsTo(Dataset::class);
     }
 
-    /** @return MorphTo */
-    public function owner(): MorphTo
+    /** @return BelongsTo<HasXlsforms, $this> */
+    public function owner(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
     }
 
     /** @return MorphTo */

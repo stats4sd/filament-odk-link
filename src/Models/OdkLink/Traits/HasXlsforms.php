@@ -4,10 +4,15 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Stats4sd\FilamentOdkLink\Models\ChoiceListEntryRemoved;
+use Stats4sd\FilamentOdkLink\Models\Country;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
@@ -33,7 +38,7 @@ trait HasXlsforms
         $odkLinkService = app()->make(OdkLinkService::class);
 
         // when the model is created; automatically create an associated project on ODK Central;
-        static::created(static function ($owner) use ($odkLinkService) {
+        static::created(static function (self $owner) use ($odkLinkService) {
 
             // check if we are in local-only (no-ODK link) mode
             if (!config('filament-odk-link.odk.url')) {
@@ -48,19 +53,22 @@ trait HasXlsforms
     // Xls Form titles are in the format `$owner->$nameAttribute . '-' . $xlsform->title`
     public string $identifiableAttribute = 'name';
 
-    public function xlsforms(): MorphMany
+    /** @return HasMany<Xlsform, $this> */
+    public function xlsforms(): HasMany
     {
-        return $this->morphMany(Xlsform::class, 'owner');
+        return $this->HasMany(Xlsform::class, 'owner_id');
     }
 
     // Private templates are owned by a single form owner.
     // All owners have access to all public templates (templates where available = 1)
+    // This is still a morph relationship because XlsformTemplates might be owned by multiple types of entity.
     /** @return MorphMany<XlsformTemplate, $this> */
     public function xlsformTemplates(): MorphMany
     {
         return $this->morphMany(XlsformTemplate::class, 'owner');
     }
 
+    // ODK projects might be owned by 'xlsform owners', or the platform itself.
     /** @return MorphOne<OdkProject, $this> */
     public function odkProject(): MorphOne
     {
@@ -103,73 +111,75 @@ trait HasXlsforms
         );
     }
 
-
-    // ********* LANGUAGES AND LOCALES *************** //
-
-    public function addLocale(Locale $locale): void
+    /** @return BelongsToMany<Language, $this> */
+    public function languages(): BelongsToMany
     {
-        $this->localesOwned()
-            ->updateOrCreate([
-                'locale_id' => $locale->id,
-            ]);
+        return $this->belongsToMany(Language::class, 'language_owner', 'owner_id', 'language_id')
+            ->withPivot(['locale_id']);
     }
 
-    public function removeLocale(Locale $locale): void
+    // Use the same pivot table as language...
+    /** @return BelongsToMany<Locale, $this> */
+    public function locales(): BelongsToMany
     {
-        $this->localesOwned()
-            ->where('locale_id', $locale->id)
-            ->delete();
+        return $this->belongsToMany(Locale::class, 'language_owner', 'owner_id', 'locale_id')
+            ->withPivot(['language_id']);
     }
 
-    public function addLanguage(Language $language): void
+    /** @return HasMany<Locale, $this> */
+    public function createdLocales(): HasMany
     {
-        $this->languagesOwned()
-            ->updateOrCreate([
-                'language_id' => $language->id,
-            ]);
-    }
-
-    public function removeLanguage(Language $language): void
-    {
-        $this->languagesOwned()
-            ->where('language_id', $language->id)
-            ->delete();
+        return $this->hasMany(Locale::class, 'creator_id');
     }
 
 
-    /** @return MorphMany<LanguageOwner, $this> */
-    public function languagesOwned(): MorphMany
+
+    // For tracking completion status of choice lists by team
+    /** @return BelongsToMany<ChoiceList, $this> */
+    public function choiceLists(): BelongsToMany
     {
-        return $this->morphMany(LanguageOwner::class, 'owner');
+        return $this->belongsToMany(ChoiceListEntry::class, 'choice_list_owner', 'owner_id', 'choice_list_id')
+            ->withPivot(['is_complete']);
     }
 
-    /** @return MorphMany<LocaleOwner, $this> */
-    public function localesOwned(): MorphMany
+    // Localised choice list entries
+    /** @return HasMany<ChoiceListEntry, $this> */
+    public function choiceListEntries(): HasMany
     {
-        return $this->morphMany(LocaleOwner::class, 'owner');
+        return $this->belongsToMany(ChoiceListEntry::class, 'owner_id');
     }
 
-    /** @return HasManyThrough<Locale, LocaleOwner, $this> */
-    public function locales(): HasManyThrough
+    /** @return BelongsToMany<ChoiceListEntry, $this> */
+    public function choiceListEntriesRemovedFromContext(): BelongsToMany
     {
-        return $this->hasManyThrough(Locale::class, LocaleOwner::class, 'owner_id', 'id', 'id', 'locale_id');
+        return $this->belongsToMany(ChoiceListEntry::class, 'choice_list_entries_removed_owner', 'owner_id', 'choice_list_entry_id');
     }
 
-    /** @return HasManyThrough<Language, LanguageOwner, $this> */
-    public function languages(): HasManyThrough
+    /** @return ?bool */
+    public function markLookupListAsComplete(ChoiceList $choiceList): ?bool
     {
-        return $this->hasManyThrough(Language::class, LanguageOwner::class, 'owner_id', 'id', 'id', 'language_id');
+        $this->choiceLists()->sync([$choiceList->id => ['is_complete' => 1]], detaching: false);
+
+        return $this->hasCompletedLookupList($choiceList);
     }
 
-    /** @return MorphMany<ChoiceListEntryRemoved, $this> */
-    public function choiceListEntriesRemoved(): MorphMany
+    /** @return ?bool */
+    public function markLookupListAsInComplete(ChoiceList $choiceList): ?bool
     {
-        return $this->morphMany(ChoiceListEntryRemoved::class, 'owner');
+        $this->choiceLists()->detach($choiceList->id);
+
+        return $this->hasCompletedLookupList($choiceList);
     }
 
-    /** @return HasManyThrough<ChoiceListEntry, ChoiceListEntryRemoved, $this> */
-    public function choiceListEntriesRemovedFromContext(): HasManyThrough
+    /** @return ?bool */
+    public function hasCompletedLookupList(ChoiceList $choiceList): ?bool
     {
-        return $this->hasManyThrough(ChoiceListEntry::class, ChoiceListEntryRemoved::class);
+        return $this->choiceLists()->where('choice_lists.id', $choiceList->id)->first()?->pivot->is_complete;
+    }
+
+    /** @return BelongsTo<Country, $this> */
+    public function country(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'owner_id');
     }
 }

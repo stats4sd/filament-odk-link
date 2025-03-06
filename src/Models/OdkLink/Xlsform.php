@@ -15,8 +15,10 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformWorkbookExport;
+use Stats4sd\FilamentOdkLink\Jobs\PublishXlsformToOdkCentral;
 use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class Xlsform extends HasXlsformDrafts implements HasMedia
@@ -57,16 +59,13 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     public function generateXlsfile(): void
     {
         $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
-        Excel::store(new XlsformWorkbookExport($this), $filePath, config('filament-odk-link.storage.xlsforms'));
 
-        $this->addMediaFromDisk($filePath, config('filament-odk-link.storage.xlsforms'))->toMediaCollection('xlsform_file');
+        Excel::queue(new XlsformWorkbookExport($this), $filePath, config('filament-odk-link.storage.xlsforms'))
+            ->chain([
+            new PublishXlsformToOdkCentral($this, $filePath),
+        ]);
 
-        // if the odk_project is not set, set it based on the given owner:
-        $this->odk_project_id = $this->owner->odkProject->id;
-        $this->has_latest_template = true;
-        $this->saveQuietly();
 
-        UpdateXlsformTitleInFile::dispatchSync($this);
     }
 
     /**
@@ -124,11 +123,6 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     }
 
     // ****************** RELATIONSHIPS ************************
-
-    public function owner(): MorphTo
-    {
-        return $this->morphTo();
-    }
 
     /** @return BelongsTo<XlsformTemplate, $this> */
     public function xlsformTemplate(): BelongsTo
@@ -214,18 +208,6 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                 return $this->getLiveSubmissionCount();
             },
         );
-    }
-
-    /**
-     * An Xlsform might have custom modules that are not part of the template.
-     *
-     * @deprecated - I think this will not be used. In the future, XlsformModules will either be linked to a template, or stand-alone. Xlsforms will be linked directly to the list of XlsformModuleVersions that will be used to generate the form.
-     *
-     * @return MorphMany<XlsformModule, $this>
-     */
-    public function xlsformModules(): MorphMany
-    {
-        return $this->morphMany(XlsformModule::class, 'form');
     }
 
     /** @return BelongsToMany<XlsformModuleVersion, $this> */

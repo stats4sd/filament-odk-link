@@ -4,19 +4,20 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
+        $teamTable = (new (config('filament-odk-link.models.team_model')))->getTable();
+
         /**
          * Table to store the individual team's forms (many-many pivot table between Xlsform and Team)
          */
-        Schema::create('xlsforms', function (Blueprint $table) {
+        Schema::create('xlsforms', function (Blueprint $table) use ($teamTable) {
             $table->id();
-            $table->foreignId('xlsform_template_id')->constrained('xlsform_templates');
+            $table->foreignId('xlsform_template_id')->constrained('xlsform_templates')->cascadeOnDelete()->cascadeOnUpdate();
 
-            $table->foreignId('owner_id');
-            $table->string('owner_type');
+            $table->foreignId('owner_id')->constrained($teamTable)->cascadeOnDelete()->cascadeOnUpdate();
+
             // direct link to the owner's project on ODK Central.
             $table->foreignId('odk_project_id')->nullable();
 
@@ -26,7 +27,7 @@ return new class extends Migration
             $table->string('odk_id')->nullable()->comment('The unique ID of the form on ODK service. If null, the form has not yet been pushed to ODK Central.');
             $table->string('odk_draft_token')->nullable()->comment('ODK Central only: The current draft token, required to generate a QR code for testing the draft in ODK Collect');
             $table->string('odk_version_id')->nullable()->comment('current or most recently deployed version on the ODK service. If null, the form has not yet been deployed on ODK Central.');
-            $table->string('has_draft')->nullable()->comment('Does the form have a deployed draft?');
+            $table->string('has_draft')->default('0')->comment('Does the form have a deployed draft?');
             $table->string('is_active')->nullable()->comment('is the form active and accepting submissions?');
             $table->string('enketo_draft_id')->nullable()->comment('unique id - part of the url to the enketo version - pulled from the ODK service if supported/enabled');
             $table->string('enketo_id')->nullable()->comment('unique id for the enketo version - pulled from the ODK service if supported/enabled');
@@ -46,7 +47,6 @@ return new class extends Migration
             $table->boolean('has_latest_media')->default(1);
 
             $table->timestamps();
-
         });
     }
 

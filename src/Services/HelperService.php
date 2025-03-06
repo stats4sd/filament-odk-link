@@ -79,6 +79,7 @@ class HelperService
 
     // helper function to return the currently selected team in a Filament panel.
     // useful because it always returns a Team::class (or null), so you can use it in a type hint.
+    /** @return WithXlsforms | Model | null */
     public static function getCurrentOwner(): WithXlsforms | Model | null
     {
         if (Filament::hasTenancy() && is_a(Filament::getTenant(), WithXlsforms::class)) {

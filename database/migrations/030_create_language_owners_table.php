@@ -11,10 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('language_owners', function (Blueprint $table) {
+        $teamTable = (new (config('filament-odk-link.models.team_model')))->getTable();
+
+
+
+        Schema::create('language_owner', function (Blueprint $table) use ($teamTable) {
             $table->id();
             $table->foreignId('language_id')->constrained('languages')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->morphs('owner');
+            $table->foreignId('owner_id')->constrained($teamTable)->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignId('locale_id')->nullable()->constrained('locales')->cascadeOnDelete()->cascadeOnUpdate();
             $table->timestamps();
         });
     }
@@ -24,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('language_owners');
+        Schema::dropIfExists('language_owner');
     }
 };
