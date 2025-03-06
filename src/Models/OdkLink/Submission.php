@@ -13,13 +13,16 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Testing\Fluent\Concerns\Has;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Znck\Eloquent\Relations\BelongsToThrough;
 
 class Submission extends Model implements HasMedia
 {
     use InteractsWithMedia;
     use SoftDeletes;
+    use \Znck\Eloquent\Traits\BelongsToThrough;
 
     protected $table = 'submissions';
 
@@ -41,8 +44,7 @@ class Submission extends Model implements HasMedia
                 $query->where(function (Builder $query) use ($owner) {
                     $query->whereHas('xlsformVersion', function (Builder $query) use ($owner) {
                         $query->whereHas('xlsform', function (Builder $query) use ($owner) {
-                            $query->where('owner_id', $owner->getKey())
-                                ->where('owner_type', get_class($owner));
+                            $query->where('owner_id', $owner->getKey());
                         });
                     });
                 });
@@ -118,5 +120,14 @@ class Submission extends Model implements HasMedia
     public function entityValues(): HasManyThrough
     {
         return $this->hasManyThrough(EntityValue::class, Entity::class);
+    }
+
+    /** @return BelongsToThrough<HasXlsforms, $this> */
+    public function owner(): BelongsToThrough
+    {
+        return $this->belongsToThrough(
+            config('filament-odk-link.models.team_model'),
+            [Xlsform::class, XlsformVersion::class],
+            foreignKeyLookup: [config('filament-odk-link.models.team_model') => 'owner_id']);
     }
 }

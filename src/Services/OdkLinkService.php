@@ -607,11 +607,11 @@ class OdkLinkService
         $rootSection = $xlsformVersion->xlsform->xlsformTemplate->rootSection;
 
         // process the main survey section
-        $this->processRootSection($xlsform, $rootEntry, $rootSection, $submission->id);
+        $this->processRootSection($xlsform, $rootEntry, $rootSection, $submission);
     }
 
 
-    private function processRootSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId)
+    private function processRootSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, Submission $submission)
     {
         // ray('OdkLinkService.processRootSection()...');
         // ray('section: ' . $section->structure_item);
@@ -628,7 +628,8 @@ class OdkLinkService
             // create entity record for main survey (root)
             $entity = Entity::create([
                 'dataset_id' => $section->dataset->id,
-                'submission_id' => $submissionId,
+                'submission_id' => $submission->id,
+                'owner_id' => $submission->owner->getKey(),
                 'model_type' => $section->dataset->entity_model,
             ]);
 
@@ -668,13 +669,13 @@ class OdkLinkService
 
             // process child sections one by one recursively
             foreach ($childSections as $childSection) {
-                $this->processRepeatGroupSection($xlsform, $entry, $childSection, $submissionId, $newEntityId);
+                $this->processRepeatGroupSection($xlsform, $entry, $childSection, $submission, $newEntityId);
             }
         }
     }
 
 
-    private function processRepeatGroupSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, $submissionId, $entityId)
+    private function processRepeatGroupSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, Submission $submission, $entityId)
     {
         // ray('OdkLinkService.processRepeatGroupSection()...');
         // ray('section: ' . $section->structure_item);
@@ -721,7 +722,8 @@ class OdkLinkService
 
                     $entity = Entity::create([
                         'dataset_id' => $section->dataset->id,
-                        'submission_id' => $submissionId,
+                        'submission_id' => $submission->id,
+                        'owner_id' => $submission->owner->getKey(),
                         'parent_id' => $entityId,
                         'model_type' => $section->dataset->entity_model,
                     ]);
@@ -835,7 +837,7 @@ class OdkLinkService
                         // ray('newEntry:');
                         // ray($newEntry);
 
-                        $this->processRepeatGroupSection($xlsform, $newEntry, $childSection, $submissionId, $newEntityId);
+                        $this->processRepeatGroupSection($xlsform, $newEntry, $childSection, $submission, $newEntityId);
                     }
                 }
             }
