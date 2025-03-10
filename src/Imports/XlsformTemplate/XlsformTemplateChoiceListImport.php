@@ -18,7 +18,7 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
 {
     use Importable;
 
-    public function __construct(public XlsformModuleVersion $xlsformModuleVersion) {}
+    public function __construct(public XlsformModuleVersion $xlsformModuleVersion, public string $moduleColumn = 'module') {}
 
     public function sheets(): array
     {
@@ -32,7 +32,9 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
         $row = collect($row);
 
         // only review the rows in the current module
-        if ($row['module'] !== $this->xlsformModuleVersion->xlsformModule->name) {
+        // skip entries not part of the current module
+        $moduleName = $this->xlsformModuleVersion->xlsformModule?->name ?? $this->xlsformModuleVersion->name;
+        if ($row[$this->moduleColumn] !== $moduleName) {
             return null;
         }
 

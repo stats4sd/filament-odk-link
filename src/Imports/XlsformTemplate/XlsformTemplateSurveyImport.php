@@ -20,7 +20,7 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
 {
     use RemembersRowNumber;
 
-    public function __construct(public XlsformModuleVersion $xlsformModuleVersion, public Collection $translatableHeadings)
+    public function __construct(public XlsformModuleVersion $xlsformModuleVersion, public Collection $translatableHeadings, public string $moduleColumn = 'module')
     {
     }
 
@@ -31,7 +31,8 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
         $row = collect($row);
 
         // skip entries not part of the current module
-        if ($row['module'] !== $this->xlsformModuleVersion->xlsformModule->name) {
+        $moduleName = $this->xlsformModuleVersion->xlsformModule?->name ?? $this->xlsformModuleVersion->name;
+        if ($row[$this->moduleColumn] !== $moduleName) {
             return null;
         }
 

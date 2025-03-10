@@ -60,20 +60,20 @@ class HandleXlsformTemplateAdded
             ->flatten();
     }
 
-    public function processXlsformTemplate(string $filePath, Collection $moduleVersions): void
+    public function processXlsformTemplate(string $filePath, Collection $moduleVersions, string $moduleColumn = 'module'): void
     {
         // Get the translatable headings from the Xlsform workbook;
         $translatableHeadings = (new XlsformTranslationHelper)->getTranslatableColumnsFromFile($filePath);
 
-        $moduleVersions->each(function (XlsformModuleVersion $moduleVersion) use ($translatableHeadings, $filePath) {
+        $moduleVersions->each(function (XlsformModuleVersion $moduleVersion) use ($translatableHeadings, $filePath, $moduleColumn) {
 
             // make sure all the choice_lists are imported;
-            (new XlsformTemplateChoiceListImport($moduleVersion))->queue($filePath);
+            (new XlsformTemplateChoiceListImport($moduleVersion, $moduleColumn))->queue($filePath);
 
             // TODO: add validation check to make sure all names are unique in Survey + choices sheet...
 
             // Import the XLSform workbook to survey rows and choice list entries;
-            (new XlsformTemplateWorkbookImport($moduleVersion, $translatableHeadings))->queue($filePath)
+            (new XlsformTemplateWorkbookImport($moduleVersion, $translatableHeadings, $moduleColumn))->queue($filePath)
                 ->chain([
                     new FinishSurveyRowImport($moduleVersion),
                     new FinishChoiceListEntryImport($moduleVersion),

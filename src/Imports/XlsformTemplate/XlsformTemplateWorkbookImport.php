@@ -21,7 +21,7 @@ class XlsformTemplateWorkbookImport implements WithMultipleSheets, ShouldQueue, 
     use RegistersEventListeners;
     use Importable;
 
-    public function __construct(public XlsformModuleVersion $xlsformModuleVersion, public Collection $translatableHeadings)
+    public function __construct(public XlsformModuleVersion $xlsformModuleVersion, public Collection $translatableHeadings, public string $moduleColumn = 'module')
     {
     }
 
@@ -29,7 +29,7 @@ class XlsformTemplateWorkbookImport implements WithMultipleSheets, ShouldQueue, 
     public function sheets(): array
     {
         return [
-            'survey' => new XlsformTemplateSurveyImport($this->xlsformModuleVersion, $this->translatableHeadings['survey']),
+            'survey' => new XlsformTemplateSurveyImport($this->xlsformModuleVersion, $this->translatableHeadings['survey'], $this->moduleColumn),
             'choices' => new XlsformTemplateChoicesImport($this->xlsformModuleVersion, $this->translatableHeadings['choices']),
         ];
     }
