@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,7 @@ use Stats4sd\FilamentOdkLink\Jobs\PublishXlsformToOdkCentral;
 use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
+use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class Xlsform extends HasXlsformDrafts implements HasMedia
@@ -39,6 +41,18 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         static::deleting(static function (self $xlsform) {
             $odkLinkService = app()->make(OdkLinkService::class);
             $xlsform->deleteFromOdkCentral($odkLinkService);
+        });
+
+        static::addGlobalScope('owned', static function (Builder $query) {
+
+            // if the current panel has tenancy, filter
+            if ($owner = HelperService::getCurrentOwner()) {
+
+                $query->where(function (Builder $query) use ($owner) {
+                    $query->where('owner_id', $owner->getKey());
+                });
+
+            }
         });
     }
 
@@ -62,8 +76,8 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
         Excel::queue(new XlsformWorkbookExport($this), $filePath, config('filament-odk-link.storage.xlsforms'))
             ->chain([
-            new PublishXlsformToOdkCentral($this, $filePath),
-        ]);
+                new PublishXlsformToOdkCentral($this, $filePath),
+            ]);
 
 
     }
@@ -87,7 +101,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     protected function xlsformId(): Attribute
     {
         return new Attribute(
-            get: fn (): string => str($this->title)->slug() . '_' . $this->id,
+            get: fn(): string => str($this->title)->slug() . '_' . $this->id,
         );
     }
 
@@ -95,7 +109,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     protected function currentVersion(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->xlsformVersions()->latest()->first()->version ?? '',
+            get: fn(): string => $this->xlsformVersions()->latest()->first()->version ?? '',
         );
     }
 
@@ -105,11 +119,11 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         return new Attribute(
             get: function (): string {
 
-                if(!$this->odk_draft_token) {
+                if (!$this->odk_draft_token) {
                     return 'NOT DEPLOYED';
                 }
 
-                if (! $this->has_latest_template || ! $this->has_latest_media) {
+                if (!$this->has_latest_template || !$this->has_latest_media) {
                     return 'UPDATES AVAILABLE';
                 }
 
@@ -166,7 +180,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
     public function getOdkLinkAttribute(): ?string
     {
-        $appends = ! $this->is_active ? '/draft' : '';
+        $appends = !$this->is_active ? '/draft' : '';
 
         return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
     }
@@ -174,13 +188,13 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     // make sure the xlsform is using the latest template
     public function syncWithTemplate(): void
     {
-        $xlsfile = $this->xlsformTemplate->getFirstMedia('xlsform_file');
 
-        $xlsfile->copy($this, 'xlsform_file');
-        $this->saveQuietly();
+        // if there are no moduleversions, copy over all from the template
+        if ($this->xlsformModuleVersions()->count() === 0) {
+            $this->xlsformModuleVersions()->sync($this->xlsformTemplate->xlsformModules->map(fn(XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion));
 
-        // update form title and ID in the file itself (ODK Central looks for these values in the XLS file)
-        UpdateXlsformTitleInFile::dispatchSync($this);
+        }
+
 
         // if the odk_project is not set, set it based on the given owner:
         $this->odk_project_id = $this->owner->odkProject->id;
@@ -213,6 +227,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     /** @return BelongsToMany<XlsformModuleVersion, $this> */
     public function xlsformModuleVersions(): BelongsToMany
     {
-        return $this->belongsToMany(XlsformModuleVersion::class, 'selected_xlsform_module_versions');
+        return $this->belongsToMany(XlsformModuleVersion::class, 'selected_xlsform_module_versions')
+            ->orderByPivot('order', 'asc');
     }
 }

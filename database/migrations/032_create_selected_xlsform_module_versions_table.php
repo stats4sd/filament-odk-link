@@ -15,7 +15,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->foreignId('xlsform_module_version_id')->constrained(indexName: 'sxmv_xlsform_module_version_id_foreign');
             $table->foreignId('xlsform_id')->constrained('xlsforms')->onUpdate('cascade')->onDelete('cascade');
-            $table->integer('order');
+            $table->integer('order')->nullable();
             $table->timestamps();
         });
     }

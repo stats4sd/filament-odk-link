@@ -20,6 +20,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Language;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageOwner;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LocaleOwner;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
@@ -182,4 +183,12 @@ trait HasXlsforms
     {
         return $this->belongsTo(Country::class, 'owner_id');
     }
+
+
+    /** @return HasMany<XlsformModuleVersion, $this> */
+    public function xlsformModuleVersions(): HasMany
+    {
+        return $this->hasMany(XlsformModuleVersion::class, 'owner_id');
+    }
+
 }
