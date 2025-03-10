@@ -37,8 +37,8 @@ class XlsformSurveyExport implements FromCollection, ShouldAutoSize, WithColumnW
 
         // Get list of XlsformModuleVersions to use
         /** @var Collection<XlsformModuleVersion> $xlsformModuleVersions */
-        $xlsformModuleVersions = $this->xlsform->xlsformModuleVersions
-            ->orderBy('xlsform_modules.id') // probably in the future we'll have a separate way of re-ordering the modules
+        $xlsformModuleVersions = $this->xlsform->xlsformModuleVersions()
+            ->orderByPivot('order') // probably in the future we'll have a separate way of re-ordering the modules
             ->get();
 
         $surveyRows = $xlsformModuleVersions->map(function (XlsformModuleVersion $xlsformModuleVersion) {
