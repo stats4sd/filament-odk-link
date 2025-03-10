@@ -31,8 +31,6 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
         'updated_during_import' => 'boolean',
     ];
 
-    protected $appends = ['label_array'];
-
     protected static function booted(): void
     {
         // When Filament has tenancy enabled, we want to scope the choice list entries to the current tenant.
@@ -40,9 +38,7 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
 
             if ($owner = HelperService::getCurrentOwner()) {
 
-                $query->where('owner_id', '*', function (Builder $query) use ($owner) {
-                    $query->where('id', $owner->getKey());
-                })
+                $query->where('owner_id', $owner->getKey())
                     ->orWhereNull('owner_id');
             }
         });
