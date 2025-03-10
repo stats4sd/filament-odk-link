@@ -2,12 +2,16 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Hoa\Compiler\Llk\Rule\Choice;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Collection;
 use ShiftOneLabs\LaravelCascadeDeletes\CascadesDeletes;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\HasLanguageStrings;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
 
 class SurveyRow extends Model implements HasLanguageStrings
 {
@@ -55,4 +59,9 @@ class SurveyRow extends Model implements HasLanguageStrings
         );
     }
 
+    /** @return BelongsTo<ChoiceList, $this> */
+    public function choiceList(): BelongsTo
+    {
+        return $this->belongsTo(ChoiceList::class);
+    }
 }

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('name');
 
             $table->string('type');
+            $table->foreignId('choice_list_id')->nullable()->constrained('choice_lists')->nullOnDelete()->cascadeOnUpdate();
             $table->boolean('required')->default(false);
             $table->text('relevant')->nullable();
             $table->text('appearance')->nullable();

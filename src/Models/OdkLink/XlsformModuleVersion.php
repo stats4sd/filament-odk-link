@@ -62,7 +62,7 @@ class XlsformModuleVersion extends Model implements HasMedia
     /** @return HasMany<SurveyRow, $this> */
     public function surveyRows(): HasMany
     {
-        return $this->hasMany(SurveyRow::class);
+        return $this->hasMany(SurveyRow::class)->orderBy('row_number');
     }
 
     /** @return HasMany<ChoiceList, $this> */

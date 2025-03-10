@@ -4,6 +4,7 @@ namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\RemembersRowNumber;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToModel;
@@ -19,7 +20,9 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
 {
     use RemembersRowNumber;
 
-    public function __construct(public XlsformModuleVersion $xlsformModuleVersion, public Collection $translatableHeadings) {}
+    public function __construct(public XlsformModuleVersion $xlsformModuleVersion, public Collection $translatableHeadings)
+    {
+    }
 
     public function model(array $row): ?SurveyRow
     {
@@ -35,13 +38,13 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
         // get the columns that are part of the XLSform spec (but are not translatable columns like 'label')
         /** @var Collection<int|string, int | mixed | null> $data */
         $data = $row
-            ->filter(fn ($value, $key) => in_array($key, $this->getSurveyRowHeaders()))
+            ->filter(fn($value, $key) => in_array($key, $this->getSurveyRowHeaders()))
             ->filter();
 
         // all non-xlsform-spec and non-translatable columns are considered properties and bundled as json.
         $props = $row
-            ->filter(fn ($value, $key) => ! $this->translatableHeadings->contains($key))
-            ->filter(fn ($value, $key) => ! in_array($key, $this->getSurveyRowHeaders()))
+            ->filter(fn($value, $key) => !$this->translatableHeadings->contains($key))
+            ->filter(fn($value, $key) => !in_array($key, $this->getSurveyRowHeaders()))
             ->filter();
 
         $data['row_number'] = $this->getRowNumber(); // make sure ordering from file is preserved even when it's changed since the first upload
@@ -50,9 +53,15 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
         $data['xlsform_module_version_id'] = $this->xlsformModuleVersion->id;
         $data['updated_during_import'] = true; // to make sure we don't delete this row after import.
 
+        // find the choice list for select questions
+        if (Str::contains($row['type'], ['select_one', 'select_multiple'])) {
+            $choiceListName = collect(explode(' ', $row['type']))->last();
+            $data['choice_list_id'] = $this->xlsformModuleVersion->choiceLists()->where('list_name', $choiceListName)->first()->id;
+        }
+
         // for end_group or end_repeats, the name might be empty.
         // In that case, we generate a unique name based on the type.
-        if (! isset($data['name']) || $data['name'] == '') {
+        if (!isset($data['name']) || $data['name'] == '') {
             $data['name'] = $data['type'] . '_' . $this->getRowNumber();
         }
 
@@ -62,7 +71,7 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
         if ($this->xlsformModuleVersion->name === 'custom' && $owner = HelperService::getCurrentOwner()) {
             $form = $this->xlsformModuleVersion
                 ->xlsforms
-                ->filter(fn (Xlsform $xlsform) => $xlsform->owner_id === $owner->getKey() && $xlsform->owner_type === get_class($owner))
+                ->filter(fn(Xlsform $xlsform) => $xlsform->owner_id === $owner->getKey() && $xlsform->owner_type === get_class($owner))
                 ->first();
 
             $team_name = strtolower(str_replace(' ', '_', $form->owner->name));
@@ -108,8 +117,8 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
 
     public function isEmptyWhen(array $row): bool
     {
-        return (! isset($row['name']) || $row['name'] === '')
-            && (! isset($row['type']) || $row['type'] === '');
+        return (!isset($row['name']) || $row['name'] === '')
+            && (!isset($row['type']) || $row['type'] === '');
     }
 
     public function chunkSize(): int

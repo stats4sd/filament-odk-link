@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\HasLanguageStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\CanBeHiddenFromContext;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\IsLookupList;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
@@ -28,6 +30,8 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
         'properties' => 'collection',
         'updated_during_import' => 'boolean',
     ];
+
+    protected $appends = ['label_array'];
 
     protected static function booted(): void
     {
