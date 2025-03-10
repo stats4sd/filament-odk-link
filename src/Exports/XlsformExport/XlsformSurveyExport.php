@@ -37,22 +37,9 @@ class XlsformSurveyExport implements FromCollection, ShouldAutoSize, WithColumnW
 
         // Get list of XlsformModuleVersions to use
         /** @var Collection<XlsformModuleVersion> $xlsformModuleVersions */
-        $xlsformModuleVersions = $this->xlsform->xlsformTemplate->xlsformModules()
+        $xlsformModuleVersions = $this->xlsform->xlsformModuleVersions
             ->orderBy('xlsform_modules.id') // probably in the future we'll have a separate way of re-ordering the modules
-            ->get()
-            ->map(function (XlsformModule $module) use ($xlsform) {
-
-                // manually check for a team-specific diet quality module
-                if($module->name === 'diet_quality' && $xlsform->owner->dietDiversityModuleVersion) {
-                    return $module->xlsform->owner->dietDiversityModuleVersion;
-                }
-
-                return $module->defaultXlsformVersion;
-
-            });
-
-        // TODO: bring in team custom modules
-
+            ->get();
 
         $surveyRows = $xlsformModuleVersions->map(function (XlsformModuleVersion $xlsformModuleVersion) {
             return $xlsformModuleVersion
