@@ -56,7 +56,7 @@ class CreateXlsformTemplate extends CreateRecord
                     $xlsformTemplate->addMedia(collect($files)->first())->toMediaCollection('xlsform_file');
 
                     // this was being triggered on afterCreate. Call it here instead/as well.
-                    $xlsformTemplate = $this->processRecord($xlsformTemplate);
+                    $xlsformTemplate = XlsformTemplateResource::processRecord($xlsformTemplate);
 
                     if (! $xlsformTemplate) {
                         return redirect($this->getResource()::getUrl('create') . '?step=1-xlsform&title=' . urlencode($get('title')));
@@ -76,40 +76,5 @@ class CreateXlsformTemplate extends CreateRecord
                 ->description('How should the collected data be handled?')
                 ->schema([]),
         ];
-    }
-
-    /**
-     * @throws RequestException
-     * @throws BindingResolutionException
-     */
-    protected function processRecord(XlsformTemplate $record): XlsformTemplate | bool
-    {
-        $odkLinkService = app()->make(OdkLinkService::class);
-
-        if (is_null(Filament::getTenant())) {
-            $record->owner()->associate(Platform::first());
-            $record->saveQuietly();
-        } else {
-            $record->owner()->associate(Filament::getTenant());
-            $record->saveQuietly();
-        }
-
-        // update form title in xlsfile to match user-given title
-        UpdateXlsformTitleInFile::dispatchSync($record);
-
-        $record->refresh();
-        $uploadResult = $record->deployDraft($odkLinkService);
-
-        if (! $uploadResult) {
-            return false;
-        }
-
-        // at this point, the draft form has been created in ODK Central
-        $record->getRequiredMedia($odkLinkService);
-
-        // TODO: We need to do the extract section when create and edit
-        $record->extractSections();
-
-        return $record;
     }
 }

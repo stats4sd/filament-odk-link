@@ -97,7 +97,7 @@ trait OdkFormService
                 $item['value_type'] = $row['type'];
 
                 // find the label and hint for all languages
-                $row->each(function ($value, $key) {
+                $row->each(function ($value, $key) use (&$item) {
                     if (Str::startsWith($key, 'label')) {
                         $item[$key] = $value;
                     }

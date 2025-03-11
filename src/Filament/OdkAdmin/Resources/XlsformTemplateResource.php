@@ -4,6 +4,7 @@ namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources;
 
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Tabs;
@@ -63,20 +64,32 @@ class XlsformTemplateResource extends resource
             ]);
     }
 
-    public static function processRecord(XlsformTemplate $record): XlsformTemplate
+    public static function processRecord(XlsformTemplate $record): XlsformTemplate | bool
     {
         $odkLinkService = app()->make(OdkLinkService::class);
+
+        if (is_null(Filament::getTenant())) {
+            $record->owner()->associate(Platform::first());
+            $record->saveQuietly();
+        } else {
+            $record->owner()->associate(Filament::getTenant());
+            $record->saveQuietly();
+        }
 
         // update form title in xlsfile to match user-given title
         UpdateXlsformTitleInFile::dispatchSync($record);
 
         $record->refresh();
-        $record->deployDraft($odkLinkService, withMedia: false);
+        $uploadResult = $record->deployDraft($odkLinkService);
+
+        if (! $uploadResult) {
+            return false;
+        }
+
+        // at this point, the draft form has been created in ODK Central
         $record->getRequiredMedia($odkLinkService);
 
-        // TODO: We need to do the extract section when create and edit
         $record->extractSections();
-        // mark all xlsforms using this template as not current
         $record->markAllAsNotCurrent();
 
         return $record;

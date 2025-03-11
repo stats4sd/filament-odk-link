@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
@@ -207,7 +208,7 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             ->where('structure_item', 'root');
     }
 
-     /** @return MorphMany<XlsformModule, $this> */
+    /** @return MorphMany<XlsformModule, $this> */
     public function xlsformModules(): MorphMany
     {
         return $this->morphMany(XlsformModule::class, 'form');
@@ -320,8 +321,6 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
 
                 if ($this->repeatingSections()->whereIn('name', $possibleParentNames->toArray())) {
                     // get the most deep parent name:
-                    ray('finding parent');
-
 
                     foreach ($possibleParentNames->reverse() as $possibleParentName) {
                         $repeatParent = $this->repeatingSections()->where('structure_item', $possibleParentName)->first();
@@ -346,10 +345,12 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                             && $subItem['type'] !== 'repeat'
                     ),
                 ]);
+
+
             });
 
         // the above approach is fine unless there are nested repeats. Then, the inner repeat items will *also* be in the outer repeat schema.
-        // To counter this, after each repeat group is created, we filter out any items that are in an innter repeat:
+        // To counter this, after each repeat group is created, we filter out any items that are in an inner repeat:
 
         $this->repeatingSections->each(function (XlsformTemplateSection $section) {
             $this->repeatingSections->each(function (XlsformTemplateSection $reviewSection) use ($section) {
@@ -396,6 +397,24 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
         $this->repeatingSections()->where('parent_id', null)->update([
             'parent_id' => $rootSection->id,
         ]);
+
+
+        // add dataset variables for any sections that are linked to datasets
+        $this->xlsformTemplateSections
+            ->filter(fn(XlsformTemplateSection $section) => $section->dataset)
+            ->each(function (XlsformTemplateSection $section) {
+
+                $variables = $section->schema
+                    ->filter(fn($item) => isset($item['value_type']) && $item['value_type'] !== 'note')
+                    ->map(fn($item) => [
+                    'name' => $item['name'],
+                    'label' => $item['name'],
+                    'dataset_id' => $section->dataset->id,
+                ]);
+
+                DatasetVariable::upsert($variables->toArray(), ['name', 'dataset_id'], ['label']);
+            });
+
 
         return $this->xlsformTemplateSections;
     }
