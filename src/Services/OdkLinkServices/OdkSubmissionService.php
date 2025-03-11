@@ -70,6 +70,8 @@ trait OdkSubmissionService
     /** Retrieve and process all new submissions for a given Xlsform */
     public function getSubmissions(Xlsform $xlsform): int
     {
+        ray('getSubmissions');
+
         $token = $this->authenticate();
         $oDataServiceUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}.svc";
 
@@ -130,6 +132,8 @@ trait OdkSubmissionService
     /** Process a single submission using the 'XlsformTemplateSections' schema */
     public function processSubmission(Submission $submission, array $entry, XlsformVersion $xlsformVersion): void
     {
+        ray('processSubmission: ' . $submission->id);
+
         $xlsform = $xlsformVersion->xlsform;
 
         // add $entry into array, to retrieve a value from a deeply nested array using "dot" notation
@@ -143,7 +147,7 @@ trait OdkSubmissionService
     /** Process the 'root' section of the survey based on the root XlsformTemplateSection schema */
     private function processRootSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, Submission $submission)
     {
-
+        ray('processRootSection For Submission: ' . $submission->id);
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
@@ -155,11 +159,10 @@ trait OdkSubmissionService
             'model_type' => $section->dataset->entity_model,
         ]);
 
-        // add polymorphic relationship
-        $entity->owner()->associate($xlsform->owner)->save();
-
         // create entity_values records
         // access the value of each ODK variable from a deeply nested array using "dot" notation
+        $entityValues = [];
+
         foreach ($schema as $schemaItem) {
             $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
             $value = Arr::get($entry, $itemPath);
@@ -167,19 +170,21 @@ trait OdkSubmissionService
             if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
                 // store ODK variable value as entity value record
 
-                // TODO: get label from correct language String entry.
-                $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
-                    'name' => $schemaItem['name'],
-                    'label' => $schemaItem['name'],
-                ]);
+//                // TODO: get label from correct language String entry.
+//                $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
+//                    'name' => $schemaItem['name'],
+//                    'label' => $schemaItem['name'],
+//                ]);
 
-                EntityValue::create([
+                $entityValues[] = [
                     'entity_id' => $entity->id,
-                    'dataset_variable_name' => $datasetVariable->name,
+                    'dataset_variable_name' => $schemaItem['name'],
                     'value' => $value,
-                ]);
+                ];
             }
         }
+
+        $entity->values()->insert($entityValues);
 
         // find all child sections of this section
         $childSections = $xlsform->xlsformTemplate->repeatingSections
@@ -194,6 +199,8 @@ trait OdkSubmissionService
     /** Recursive function to process each repeat group section using the specific XlsformTemplateSection schema */
     private function processRepeatGroupSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, Submission $submission, $entityId)
     {
+        ray('processRepeatGroupSection for submission : ' . $submission->id . ' - section: ' . $section->id);
+
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
@@ -208,7 +215,10 @@ trait OdkSubmissionService
         // get the array for repeat group
         $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
 
-        // it should be an array containing records for a repeat group
+        // if $repeatGroupArray is null, it means this section has no entries and so does not exist in the submission data
+        if(!$repeatGroupArray) {
+            return;
+        }
 
         // handle each record in repeat group
         foreach ($repeatGroupArray as $repeatGroupRecord) {
@@ -232,6 +242,8 @@ trait OdkSubmissionService
             // get array element as record
             $repeatGroupEntry = ['rg' => $repeatGroupRecord];
 
+            $entityValues = [];
+
             foreach ($schema as $schemaItem) {
 
                 $pathLength = Str::length($schemaItem['path']);
@@ -246,20 +258,22 @@ trait OdkSubmissionService
 
                 if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
 
-                    // TODO: get label from correct language String entry.
-                    $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
-                        'name' => $schemaItem['name'],
-                        'label' => $schemaItem['name'],
-                    ]);
+//                    // TODO: get label from correct language String entry.
+//                    $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
+//                        'name' => $schemaItem['name'],
+//                        'label' => $schemaItem['name'],
+//                    ]);
 
                     // store ODK variable value as entity value record
-                    EntityValue::create([
+                    $entityValues[] = [
                         'entity_id' => $entity->id,
-                        'dataset_variable_name' => $datasetVariable->name,
+                        'dataset_variable_name' => $schemaItem['name'],
                         'value' => $value,
-                    ]);
+                    ];
                 }
             }
+
+            $entity->values()->insert($entityValues);
 
             // extract path into an array for constructing a new entry
             $arrayNames = explode('.', $repeatGroupArrayPath);
