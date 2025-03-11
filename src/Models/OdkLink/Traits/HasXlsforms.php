@@ -29,8 +29,6 @@ trait HasXlsforms
     /** @throws BindingResolutionException */
     protected static function bootHasXlsforms(): void
     {
-        parent::booted();
-
         // check if we are in local-only (no-ODK link) mode
         if (config('filament-odk-link.odk.url') === null || config('filament-odk-link.odk.url') == '') {
             return;
