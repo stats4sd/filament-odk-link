@@ -60,14 +60,12 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                         if (!$xlsform) {
                             $xlsform = $xlsformTemplate->xlsforms()->create([
                                 'owner_id' => $owner->getKey(),
-                                'owner_type' => get_class($owner),
                                 'title' => $xlsformTemplate->title,
                             ]);
                         }
                     });
             }
         });
-
     }
 
     // setup media library collections:
@@ -155,7 +153,6 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                     // HOLPA CHANGE! In Holpa we have moved to using ChoiceList and ChoiceListEntry to manage custom lookup tables, instead of datasets. We need to decide if this is a good change that should be brought into the main package or if we should merge ChoiceList and Dataset somehow...
                     ->orWhere('required_media.choice_list_id', '!=', null);
             });
-
     }
 
     /** @return BelongsToMany<Dataset, $this> */
@@ -206,12 +203,10 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                 'exists_on_odk' => $mediaItem['exists'],
                 'updated_during_import' => true,
             ]);
-
         }
 
         // remove any media that are no longer needed
         $this->requiredMedia()->where('updated_during_import', false)->delete();
-
     }
 
     // get link to form in ODK Central
@@ -234,8 +229,8 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                 // check if this is a nested repeat by reviewing previously created repeat sections
                 $parent = null; // for direct children of the root section, we update the parent_id after creating the root section.
                 $possibleParentNames = collect(explode('/', $item['path']))
-                ->filter(fn($name) => $name !== '')
-                ->filter(fn($name) => $name !== $item['name']);
+                    ->filter(fn($name) => $name !== '')
+                    ->filter(fn($name) => $name !== $item['name']);
 
                 if ($this->repeatingSections()->whereIn('name', $possibleParentNames->toArray())) {
                     // get the most deep parent name:
@@ -250,7 +245,6 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                             break;
                         }
                     }
-
                 }
 
                 $this->repeatingSections()->updateOrCreate([
@@ -283,7 +277,6 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                 );
 
                 $reviewSection->save();
-
             });
         });
 
