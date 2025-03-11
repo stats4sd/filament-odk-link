@@ -27,7 +27,7 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 trait HasXlsforms
 {
     /** @throws BindingResolutionException */
-    protected static function booted(): void
+    protected static function bootHasXlsforms(): void
     {
         parent::booted();
 
@@ -46,7 +46,7 @@ trait HasXlsforms
                 return;
             }
 
-            $owner->createLinkedOdkProject($odkLinkService, $owner);
+            $owner->createLinkedOdkProject($odkLinkService);
         });
     }
 
