@@ -38,7 +38,7 @@ class PublishXlsformToOdkCentral implements ShouldQueue
 
         ray('3');
 
-        $this->xlsform->sendDraftToOdkCentral($odkLinkService, true);
+        $this->xlsform->deployDraft($odkLinkService, true);
 
         ray('4');
 

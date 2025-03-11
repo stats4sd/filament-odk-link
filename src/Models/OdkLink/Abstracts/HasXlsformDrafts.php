@@ -36,7 +36,7 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
         return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
     }
 
-    public function sendDraftToOdkCentral(OdkLinkService $service, bool $withMedia = true): bool
+    public function deployDraft(OdkLinkService $service, bool $withMedia = true): bool
     {
         try {
             $odkXlsFormDetails = $service->createDraftForm($this, $withMedia);

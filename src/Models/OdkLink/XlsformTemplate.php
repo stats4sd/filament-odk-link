@@ -70,10 +70,6 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
 
     }
 
-    // setup media library collections:
-    // - xlsformfile
-    // - attached media
-
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('xlsform_file')
@@ -84,9 +80,29 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             ->useDisk(config('filament-odk-link.storage.xlsforms'));
     }
 
-    public function deployDraft(OdkLinkService $service, bool $withMedia = true): bool
+    // ******************* COMPUTED ATTRIBUTES *****************
+
+    // for a template to be available in a locale, *every* module should be linked to that locale
+    /** @return Attribute<Collection, never> */
+    protected function locales(): Attribute
     {
-        return $this->sendDraftToOdkCentral($service, $withMedia);
+        return new Attribute(
+            get: function (): Collection {
+
+                // get set of locales for each default module version
+                $locales = $this->xlsformModules->map(
+                    fn(XlsformModule $xlsformModule) => $xlsformModule
+                        ->defaultXlsformVersion
+                        ->locales
+                );
+
+                // get list of locales present for *every* module
+                return $locales->reduce(function ($carry, $item) {
+                    return $carry->intersect($item);
+                }, $locales->first())
+                    ->values();
+            }
+        );
     }
 
     // ****************** RELATIONSHIPS ************************
@@ -191,6 +207,71 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             ->where('structure_item', 'root');
     }
 
+     /** @return MorphMany<XlsformModule, $this> */
+    public function xlsformModules(): MorphMany
+    {
+        return $this->morphMany(XlsformModule::class, 'form');
+    }
+
+    /** @return HasManyThrough<XlsformModuleVersion, XlsformModule, $this> */
+    public function xlsformModuleVersions(): HasManyThrough
+    {
+        return $this->hasManyThrough(XlsformModuleVersion::class, XlsformModule::class, 'form_id', 'xlsform_module_id')
+            ->where('xlsform_modules.form_type', static::class);
+    }
+
+    /** @return HasManyDeep<SurveyRow, $this> */
+    public function surveyRows(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            SurveyRow::class,
+            [XlsformModule::class, XlsformModuleVersion::class],
+            [['form_type', 'form_id'], null, 'xlsform_module_version_id']
+        );
+    }
+
+    /** @return HasManyDeep<ChoiceList, $this> */
+    public function choiceLists(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            ChoiceList::class,
+            [XlsformModule::class, XlsformModuleVersion::class],
+            [['form_type', 'form_id'], null, 'xlsform_module_version_id']
+        );
+    }
+
+    /** @return HasManyDeep<ChoiceListEntry, $this> */
+    public function choiceListEntries(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            ChoiceListEntry::class,
+            [XlsformModule::class, XlsformModuleVersion::class, ChoiceList::class],
+            [['form_type', 'form_id'], null, 'xlsform_module_version_id', 'choice_list_id']
+        );
+    }
+
+    // Split up language strings into 2 relationships as there are 2 paths between xlsformtemplates and language strings
+
+    /** @return HasManyDeep<LanguageString, $this> */
+    public function surveyLanguageStrings(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            LanguageString::class,
+            [XlsformModule::class, XlsformModuleVersion::class, SurveyRow::class],
+            [['form_type', 'form_id'], 'xlsform_module_id', 'xlsform_module_version_id', ['linked_entry_type', 'linked_entry_id']],
+        );
+    }
+
+    /** @return HasManyDeep<LanguageString, $this> */
+    public function choiceListEntryLanguageStrings(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            LanguageString::class,
+            [XlsformModule::class, XlsformModuleVersion::class, ChoiceList::class, ChoiceListEntry::class],
+            [['form_type', 'form_id'], 'xlsform_module_id', 'xlsform_module_version_id', 'choice_list_id', ['linked_entry_type', 'linked_entry_id']],
+        );
+    }
+
     // ****************** METHODS ************************
 
     // get required media from ODK Central and store in the database
@@ -234,8 +315,8 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                 // check if this is a nested repeat by reviewing previously created repeat sections
                 $parent = null; // for direct children of the root section, we update the parent_id after creating the root section.
                 $possibleParentNames = collect(explode('/', $item['path']))
-                ->filter(fn($name) => $name !== '')
-                ->filter(fn($name) => $name !== $item['name']);
+                    ->filter(fn($name) => $name !== '')
+                    ->filter(fn($name) => $name !== $item['name']);
 
                 if ($this->repeatingSections()->whereIn('name', $possibleParentNames->toArray())) {
                     // get the most deep parent name:
@@ -325,92 +406,4 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
         $this->xlsforms()->update(['has_latest_template' => false]);
     }
 
-    /** @return MorphMany<XlsformModule, $this> */
-    public function xlsformModules(): MorphMany
-    {
-        return $this->morphMany(XlsformModule::class, 'form');
-    }
-
-    /** @return HasManyThrough<XlsformModuleVersion, XlsformModule, $this> */
-    public function xlsformModuleVersions(): HasManyThrough
-    {
-        return $this->hasManyThrough(XlsformModuleVersion::class, XlsformModule::class, 'form_id', 'xlsform_module_id')
-            ->where('xlsform_modules.form_type', static::class);
-    }
-
-    /** @return HasManyDeep<SurveyRow, $this> */
-    public function surveyRows(): HasManyDeep
-    {
-        return $this->hasManyDeep(
-            SurveyRow::class,
-            [XlsformModule::class, XlsformModuleVersion::class],
-            [['form_type', 'form_id'], null, 'xlsform_module_version_id']
-        );
-    }
-
-    /** @return HasManyDeep<ChoiceList, $this> */
-    public function choiceLists(): HasManyDeep
-    {
-        return $this->hasManyDeep(
-            ChoiceList::class,
-            [XlsformModule::class, XlsformModuleVersion::class],
-            [['form_type', 'form_id'], null, 'xlsform_module_version_id']
-        );
-    }
-
-    /** @return HasManyDeep<ChoiceListEntry, $this> */
-    public function choiceListEntries(): HasManyDeep
-    {
-        return $this->hasManyDeep(
-            ChoiceListEntry::class,
-            [XlsformModule::class, XlsformModuleVersion::class, ChoiceList::class],
-            [['form_type', 'form_id'], null, 'xlsform_module_version_id', 'choice_list_id']
-        );
-    }
-
-    // Split up language strings into 2 relationships as there are 2 paths between xlsformtemplates and language strings.
-
-    /** @return HasManyDeep<LanguageString, $this> */
-    public function surveyLanguageStrings(): HasManyDeep
-    {
-        return $this->hasManyDeep(
-            LanguageString::class,
-            [XlsformModule::class, XlsformModuleVersion::class, SurveyRow::class],
-            [['form_type', 'form_id'], 'xlsform_module_id', 'xlsform_module_version_id', ['linked_entry_type', 'linked_entry_id']],
-        );
-    }
-
-    /** @return HasManyDeep<LanguageString, $this> */
-    public function choiceListEntryLanguageStrings(): HasManyDeep
-    {
-        return $this->hasManyDeep(
-            LanguageString::class,
-            [XlsformModule::class, XlsformModuleVersion::class, ChoiceList::class, ChoiceListEntry::class],
-            [['form_type', 'form_id'], 'xlsform_module_id', 'xlsform_module_version_id', 'choice_list_id', ['linked_entry_type', 'linked_entry_id']],
-        );
-    }
-
-    // for a template to be available in a locale, *every* module should be linked to that locale
-
-    /** @return Attribute<Collection, never> */
-    protected function locales(): Attribute
-    {
-        return new Attribute(
-            get: function (): Collection {
-
-                // get set of locales for each default module version
-                $locales = $this->xlsformModules->map(
-                    fn(XlsformModule $xlsformModule) => $xlsformModule
-                        ->defaultXlsformVersion
-                        ->locales
-                );
-
-                // get list of locales present for *every* module
-                return $locales->reduce(function ($carry, $item) {
-                    return $carry->intersect($item);
-                }, $locales->first())
-                    ->values();
-            }
-        );
-    }
 }

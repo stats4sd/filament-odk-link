@@ -31,6 +31,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         'schema' => 'collection',
     ];
 
+    // ******************* SETUP ***********************************
     protected static function booted(): void
     {
         // when the model is created;
@@ -65,34 +66,6 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         $this->addMediaCollection('attached_media')
             ->useDisk(config('filament-odk-link.storage.xlsforms'));
     }
-
-    /**
-     * @throws FileIsTooBig
-     * @throws FileDoesNotExist
-     */
-    public function generateXlsfile(): void
-    {
-        $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
-
-        Excel::queue(new XlsformWorkbookExport($this), $filePath, config('filament-odk-link.storage.xlsforms'))
-            ->chain([
-                new PublishXlsformToOdkCentral($this, $filePath),
-            ]);
-
-
-    }
-
-    /**
-     * @throws FileDoesNotExist
-     * @throws FileIsTooBig
-     */
-    public function deployDraft(OdkLinkService $service, bool $withMedia = true): bool
-    {
-        $this->generateXlsfile();
-
-        return $this->sendDraftToOdkCentral($service, $withMedia);
-    }
-
 
     // ****************** COMPUTED ATTRIBUTES ************************
 
@@ -176,7 +149,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         return $this->xlsformTemplate->attachedDataMedia();
     }
 
-    // *********************** FUNCTIONS ****************************
+    // *********************** METHODS ****************************
 
     public function getOdkLinkAttribute(): ?string
     {
@@ -229,5 +202,32 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     {
         return $this->belongsToMany(XlsformModuleVersion::class, 'selected_xlsform_module_versions')
             ->orderByPivot('order', 'asc');
+    }
+
+        /**
+     * @throws FileIsTooBig
+     * @throws FileDoesNotExist
+     */
+    public function generateXlsfile(): void
+    {
+        $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
+
+        Excel::queue(new XlsformWorkbookExport($this), $filePath, config('filament-odk-link.storage.xlsforms'))
+            ->chain([
+                new PublishXlsformToOdkCentral($this, $filePath),
+            ]);
+
+
+    }
+
+    /**
+     * @throws FileDoesNotExist
+     * @throws FileIsTooBig
+     */
+    public function deployDraft(OdkLinkService $service, bool $withMedia = true): bool
+    {
+        $this->generateXlsfile();
+
+        return parent::deployDraft($service, $withMedia);
     }
 }
