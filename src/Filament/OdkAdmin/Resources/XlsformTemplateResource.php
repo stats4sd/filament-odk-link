@@ -64,37 +64,6 @@ class XlsformTemplateResource extends resource
             ]);
     }
 
-    public static function processRecord(XlsformTemplate $record): XlsformTemplate | bool
-    {
-        $odkLinkService = app()->make(OdkLinkService::class);
-
-        if (is_null(Filament::getTenant())) {
-            $record->owner()->associate(Platform::first());
-            $record->saveQuietly();
-        } else {
-            $record->owner()->associate(Filament::getTenant());
-            $record->saveQuietly();
-        }
-
-        // update form title in xlsfile to match user-given title
-        UpdateXlsformTitleInFile::dispatchSync($record);
-
-        $record->refresh();
-        $uploadResult = $record->deployDraft($odkLinkService);
-
-        if (! $uploadResult) {
-            return false;
-        }
-
-        // at this point, the draft form has been created in ODK Central
-        $record->getRequiredMedia($odkLinkService);
-
-        $record->extractSections();
-        $record->markAllAsNotCurrent();
-
-        return $record;
-    }
-
     public static function getCreateFields(): array
     {
         return [
@@ -343,7 +312,9 @@ class XlsformTemplateResource extends resource
                         ];
                     })
                     ->action(function (array $data, XlsformTemplate $record) {
-                        XlsformTemplateResource::processRecord($record);
+                        $record->update([
+                            'title' => $data['title'],
+                        ]);
                     }),
                 Tables\Actions\EditAction::make()->label('Edit Media & Data'),
             ])

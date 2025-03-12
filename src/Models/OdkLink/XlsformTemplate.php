@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -14,6 +15,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
+use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
@@ -39,13 +41,31 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             $xlsformTemplate->deleteFromOdkCentral($odkLinkService);
         });
 
-        // if the media files are updated, we need to update the test form in ODK Central
-        static::updated(static function (XlsformTemplate $xlsformTemplate) {
+        static::saved(static function (XlsformTemplate $xlsformTemplate) {
             $odkLinkService = app()->make(OdkLinkService::class);
 
-            $xlsformTemplate->deployDraft($odkLinkService);
+            if (is_null(Filament::getTenant())) {
+                $xlsformTemplate->owner()->associate(Platform::first());
+                $xlsformTemplate->saveQuietly();
+            } else {
+                $xlsformTemplate->owner()->associate(Filament::getTenant());
+                $xlsformTemplate->saveQuietly();
+            }
 
-            // mark all other xlsforms using this template as not current
+            // update form title in xlsfile to match user-given title
+            UpdateXlsformTitleInFile::dispatchSync($xlsformTemplate);
+
+            $xlsformTemplate->refresh();
+            $uploadResult = $xlsformTemplate->deployDraft($odkLinkService);
+
+            if (!$uploadResult) {
+                return false;
+            }
+
+            // at this point, the draft form has been created in ODK Central
+            $xlsformTemplate->getRequiredMedia($odkLinkService);
+
+            $xlsformTemplate->extractSections();
             $xlsformTemplate->markAllAsNotCurrent();
 
             // If the template is available, add a version of it to all teams where `shouldReceiveAllXlsformTemplates` is true
@@ -59,7 +79,7 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                         })->first();
 
                         if (!$xlsform) {
-                            $xlsform = $xlsformTemplate->xlsforms()->create([
+                            $xlsformTemplate->xlsforms()->create([
                                 'owner_id' => $owner->getKey(),
                                 'owner_type' => get_class($owner),
                                 'title' => $xlsformTemplate->title,
@@ -407,10 +427,10 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                 $variables = $section->schema
                     ->filter(fn($item) => isset($item['value_type']) && $item['value_type'] !== 'note')
                     ->map(fn($item) => [
-                    'name' => $item['name'],
-                    'label' => $item['name'],
-                    'dataset_id' => $section->dataset->id,
-                ]);
+                        'name' => $item['name'],
+                        'label' => $item['name'],
+                        'dataset_id' => $section->dataset->id,
+                    ]);
 
                 DatasetVariable::upsert($variables->toArray(), ['name', 'dataset_id'], ['label']);
             });

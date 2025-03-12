@@ -55,9 +55,6 @@ class CreateXlsformTemplate extends CreateRecord
 
                     $xlsformTemplate->addMedia(collect($files)->first())->toMediaCollection('xlsform_file');
 
-                    // this was being triggered on afterCreate. Call it here instead/as well.
-                    $xlsformTemplate = XlsformTemplateResource::processRecord($xlsformTemplate);
-
                     if (! $xlsformTemplate) {
                         return redirect($this->getResource()::getUrl('create') . '?step=1-xlsform&title=' . urlencode($get('title')));
                     }

@@ -29,8 +29,7 @@ class ViewXlsformTemplate extends ViewRecord
         return self::getRecord()->title;
     }
 
-    protected function getHeaderActions(): array
-    {
+    protected function getHeaderActions(): array    {
         return [
             Actions\Action::make('make_template_available')
                 ->label('Make Template Available')
@@ -47,7 +46,9 @@ class ViewXlsformTemplate extends ViewRecord
                     'title' => self::getRecord()->title,
                 ])
                 ->action(function (array $data, XlsformTemplate $record, Get $get) {
-                    XlsformTemplateResource::processRecord($record);
+                    $record->update([
+                        'title' => $data['title'],
+                    ]);
                 }),
             Actions\EditAction::make()
                 ->icon('heroicon-o-pencil-square')
