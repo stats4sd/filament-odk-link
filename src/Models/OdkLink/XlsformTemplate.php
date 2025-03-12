@@ -56,15 +56,12 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             UpdateXlsformTitleInFile::dispatchSync($xlsformTemplate);
 
             $xlsformTemplate->refresh();
-            $uploadResult = $xlsformTemplate->deployDraft($odkLinkService);
-
-            if (!$uploadResult) {
-                return false;
-            }
+            $xlsformTemplate->deployDraftSync();
 
             // at this point, the draft form has been created in ODK Central
             $xlsformTemplate->getRequiredMedia($odkLinkService);
 
+            $xlsformTemplate->refresh();
             $xlsformTemplate->extractSections();
             $xlsformTemplate->markAllAsNotCurrent();
 
@@ -147,6 +144,7 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             ->where('is_active', true);
     }
 
+    /** @return MorphTo */
     public function owner(): MorphTo
     {
         return $this->morphTo();
@@ -339,9 +337,6 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                     ->filter(fn($name) => $name !== '')
                     ->filter(fn($name) => $name !== $item['name']);
 
-                if ($this->repeatingSections()->whereIn('name', $possibleParentNames->toArray())) {
-                    // get the most deep parent name:
-
                     foreach ($possibleParentNames->reverse() as $possibleParentName) {
                         $repeatParent = $this->repeatingSections()->where('structure_item', $possibleParentName)->first();
 
@@ -351,12 +346,10 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                         }
                     }
 
-                }
-
                 $this->repeatingSections()->updateOrCreate([
                     'structure_item' => $item['name'],
                 ], [
-                    'parent_id' => $parent?->id ?? null,
+                    'parent_id' => $parent->id ?? null,
                     'is_repeat' => true,
                     'is_current' => true,
                     'schema' => $this->schema->filter(

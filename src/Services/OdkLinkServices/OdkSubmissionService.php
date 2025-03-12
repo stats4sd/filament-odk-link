@@ -2,7 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
 
-
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
@@ -12,17 +11,14 @@ use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
-
 trait OdkSubmissionService
 {
-
     /** Get all attached media for a given submission + save into application storage (photos, videos, audio, etc captured during the survey) */
     public function getAttachedMedia($entry, string $token, Xlsform $xlsform, ?Submission $submission): void
     {
@@ -60,7 +56,7 @@ trait OdkSubmissionService
             ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions");
 
         // simple error handling
-        if (!$results->ok()) {
+        if (! $results->ok()) {
             return null;
         }
 
@@ -86,7 +82,7 @@ trait OdkSubmissionService
             // ******* CREATE SUBMISSION RECORD ******* //
             $xlsformVersion = $xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
 
-            if (!$xlsformVersion) {
+            if (! $xlsformVersion) {
 
                 $messageContent = collect([
                     'formVersion' => $entry['__system']['formVersion'],
@@ -95,11 +91,11 @@ trait OdkSubmissionService
                     'ownerName' => $xlsform->owner->name,
                 ]);
 
-
                 if (config('app.env') === 'local') {
                     throw new \Exception('The system tried to get submission data for a form version that does not exist. LOCAL ENVIRONMENT: if you are testing a form that may have been updated on ODK Central directly, or through another app environment, please run `php artisan app:update-xlsform-versions-from-odk-central`, and try pulling the submissions again.');
                 }
-                throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '), 500);
+
+                throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '), 500);
             }
 
             $submission = $xlsformVersion->submissions()->create([
@@ -162,14 +158,14 @@ trait OdkSubmissionService
             $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
             $value = Arr::get($entry, $itemPath);
 
-            if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
+            if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && ! is_array($value)) {
                 // store ODK variable value as entity value record
 
-//                // TODO: get label from correct language String entry.
-//                $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
-//                    'name' => $schemaItem['name'],
-//                    'label' => $schemaItem['name'],
-//                ]);
+                //                // TODO: get label from correct language String entry.
+                //                $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
+                //                    'name' => $schemaItem['name'],
+                //                    'label' => $schemaItem['name'],
+                //                ]);
 
                 $entityValues[] = [
                     'entity_id' => $entity->id,
@@ -209,7 +205,7 @@ trait OdkSubmissionService
         $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
 
         // if $repeatGroupArray is null, it means this section has no entries and so does not exist in the submission data
-        if(!$repeatGroupArray) {
+        if (! $repeatGroupArray) {
             return;
         }
 
@@ -217,7 +213,7 @@ trait OdkSubmissionService
         foreach ($repeatGroupArray as $repeatGroupRecord) {
 
             // if the section is not linked to a dataset, move on;
-            if (!$section->dataset) {
+            if (! $section->dataset) {
                 continue;
             }
 
@@ -249,13 +245,13 @@ trait OdkSubmissionService
 
                 $value = Arr::get($repeatGroupEntry, $fullItemPath);
 
-                if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
+                if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && ! is_array($value)) {
 
-//                    // TODO: get label from correct language String entry.
-//                    $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
-//                        'name' => $schemaItem['name'],
-//                        'label' => $schemaItem['name'],
-//                    ]);
+                    //                    // TODO: get label from correct language String entry.
+                    //                    $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
+                    //                        'name' => $schemaItem['name'],
+                    //                        'label' => $schemaItem['name'],
+                    //                    ]);
 
                     // store ODK variable value as entity value record
                     $entityValues[] = [

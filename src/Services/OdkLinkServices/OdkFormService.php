@@ -2,7 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
 
-
 use Carbon\Carbon;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
@@ -10,9 +9,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 
 trait OdkFormService
@@ -33,7 +31,7 @@ trait OdkFormService
 
         $filePath = $xlsform->getFirstMedia('xlsform_file')?->getPath();
 
-        if (!$filePath) {
+        if (! $filePath) {
             throw new \Exception('The XLSForm file is missing. Please upload the file again and try to deploy the form again.', 500);
         }
 
@@ -65,7 +63,7 @@ trait OdkFormService
 
         // when creating a new draft for an existing form, the full form details are not returned. In this case, the $xlsform record can remain unchanged
         if (isset($responseBody['xmlFormId'])) {
-            $xlsform->update(['odk_id' => $responseBody['xmlFormId']]);
+            $xlsform->updateQuietly(['odk_id' => $responseBody['xmlFormId']]);
         }
         $this->updateSchema($xlsform);
 
@@ -113,7 +111,6 @@ trait OdkFormService
         $xlsform->updateQuietly(['schema' => $schema]);
     }
 
-
     /**
      * Gets the draft form details for a given xlsform
      *
@@ -136,7 +133,7 @@ trait OdkFormService
      *
      * @throws RequestException
      */
-    public function publishForm(HasXlsformDrafts $xlsform): XlsformVersion
+    public function publishForm(Xlsform $xlsform): XlsformVersion
     {
 
         $token = $this->authenticate();
@@ -175,7 +172,7 @@ trait OdkFormService
     }
 
     // create a new xlsformVersion from an existing xlsform.
-    public function createNewVersion(HasXlsformDrafts $xlsform, array $versionDetails): XlsformVersion
+    public function createNewVersion(Xlsform $xlsform, array $versionDetails): XlsformVersion
     {
         $token = $this->authenticate();
 
@@ -193,7 +190,7 @@ trait OdkFormService
         $xlsform->getMedia('xlsform_file')->first()->copy($xlsformVersion, 'xlsform_file');
 
         // copy any attached media
-        $xlsform->getMedia('attached_media')->each(fn($media) => $media->copy($xlsformVersion, 'attached_media'));
+        $xlsform->getMedia('attached_media')->each(fn ($media) => $media->copy($xlsformVersion, 'attached_media'));
 
         return $xlsformVersion;
     }
@@ -258,6 +255,4 @@ trait OdkFormService
 
         return true;
     }
-
-
 }

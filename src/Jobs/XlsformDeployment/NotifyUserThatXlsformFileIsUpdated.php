@@ -26,7 +26,7 @@ class NotifyUserThatXlsformFileIsUpdated implements ShouldQueue
     {
         Notification::make('xlsform_file_updated')
             ->title('Xlsform File Updated')
-            ->body('The Xlsform ' . $xlsform->title . ' belonging to ' . $xlsform->owner->name . ' has been updated.')
+            ->body('The Xlsform ' . $this->xlsform->title . ' belonging to ' . $this->xlsform->owner->name . ' has been updated.')
             ->success()
             ->send();
     }

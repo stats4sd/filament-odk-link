@@ -32,7 +32,7 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
 {
     use InteractsWithMedia;
 
-    /** @return BelongsTo<HasXlsforms, $this> */
+    /** @return BelongsTo<Model, $this> */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
@@ -43,6 +43,11 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
     public function deployDraft(bool $withMedia = true): PendingDispatch
     {
         return DeployDraftXlsformToOdkCentral::dispatch($this, $withMedia);
+    }
+
+    public function deployDraftSync(bool $withMedia = true): void
+    {
+        DeployDraftXlsformToOdkCentral::dispatchSync($this, $withMedia);
     }
 
     /**
@@ -62,24 +67,6 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
     /**
      * @throws RequestException
      */
-    public function publishForm(OdkLinkService $odkLinkService): void
-    {
-
-        // if the draft was successfully created; publish it.
-        if ($this->has_draft) {
-            $odkLinkService->publishForm($this);
-
-            // update the xlsform to show that it's using the latest template and latest media
-            $this->updateQuietly([
-                'has_latest_template' => true,
-                'has_latest_media' => true,
-            ]);
-        }
-    }
-
-    /**
-     * @throws RequestException
-     */
     public function deleteFromOdkCentral(OdkLinkService $odkLinkService): void
     {
         $odkLinkService->deleteForm($this);
@@ -93,7 +80,7 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
      * @throws JsonException
      */
     /** @return Attribute<?string, never> */
-    protected function draftQrCodeString(): Attribute
+    public function draftQrCodeString(): Attribute
     {
 
         return new Attribute(
@@ -152,6 +139,8 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
             },
         );
     }
+
+
 
 
 }

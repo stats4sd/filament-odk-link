@@ -76,6 +76,8 @@ class ChoiceListEntriesRelationManager extends RelationManager
                             Hidden::make('language_string_type_id'),
                             TextInput::make('text')
                                 ->label(function (Get $get) use ($locales) {
+
+                                    /** @var Locale $locale */
                                     $locale = $locales->firstWhere('id', $get('locale_id'));
 
                                     return 'Label::' . $locale->language_label;

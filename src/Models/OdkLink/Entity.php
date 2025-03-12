@@ -39,7 +39,7 @@ class Entity extends Model
         return $this->belongsTo(Dataset::class);
     }
 
-    /** @return BelongsTo<HasXlsforms, $this> */
+    /** @return BelongsTo<Model, $this> */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');

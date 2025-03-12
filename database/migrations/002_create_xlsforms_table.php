@@ -18,9 +18,6 @@ return new class extends Migration {
 
             $table->foreignId('owner_id')->constrained($teamTable)->cascadeOnDelete()->cascadeOnUpdate();
 
-            // direct link to the owner's project on ODK Central.
-            $table->foreignId('odk_project_id')->nullable();
-
             $table->string('title')->nullable()->comment('If null, the system by default retrieves a title in the format $ownerName - $xlsformTemplateTitle');
 
             // ODK deployment stuff

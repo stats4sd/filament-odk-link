@@ -10,6 +10,8 @@ use Filament\Forms\Get;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
@@ -47,19 +49,25 @@ class CreateXlsformTemplate extends CreateRecord
                 )
                 ->afterValidation(function (Get $get) {
 
-                    $xlsformTemplate = XlsformTemplate::create([
-                        'title' => $get('title'),
-                    ]);
+                    try {
 
-                    $files = $get('xlsfile');
+                        // wait to trigger the saved event until the xlsform file is attached.
+                        $xlsformTemplate = XlsformTemplate::createQuietly([
+                            'title' => $get('title'),
+                        ]);
 
-                    $xlsformTemplate->addMedia(collect($files)->first())->toMediaCollection('xlsform_file');
+                        $files = $get('xlsfile');
 
-                    if (! $xlsformTemplate) {
+                        $xlsformTemplate->addMedia(collect($files)->first())->toMediaCollection('xlsform_file');
+                        $xlsformTemplate->save();
+
+                        return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
+                    } catch (RequestException $e) {
+
+                        ray($e->getMessage());
+
                         return redirect($this->getResource()::getUrl('create') . '?step=1-xlsform&title=' . urlencode($get('title')));
                     }
-
-                    return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
 
                 }),
 
