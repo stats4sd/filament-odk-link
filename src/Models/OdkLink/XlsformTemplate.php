@@ -39,6 +39,9 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
         static::deleting(static function (XlsformTemplate $xlsformTemplate) {
             $odkLinkService = app()->make(OdkLinkService::class);
             $xlsformTemplate->deleteFromOdkCentral($odkLinkService);
+
+
+            $xlsformTemplate->xlsformModules()->delete();
         });
 
         static::saved(static function (XlsformTemplate $xlsformTemplate) {
@@ -226,10 +229,10 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             ->where('structure_item', 'root');
     }
 
-    /** @return MorphMany<XlsformModule, $this> */
-    public function xlsformModules(): MorphMany
+    /** @return HasMany<XlsformModule, $this> */
+    public function xlsformModules(): HasMany
     {
-        return $this->morphMany(XlsformModule::class, 'form');
+        return $this->hasMany(XlsformModule::class, 'xlsform_template_id');
     }
 
     /** @return HasManyThrough<XlsformModuleVersion, XlsformModule, $this> */
