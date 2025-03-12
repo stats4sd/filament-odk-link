@@ -4,22 +4,21 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Foundation\Bus\PendingDispatch;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformWorkbookExport;
 use Stats4sd\FilamentOdkLink\Jobs\PublishXlsformToOdkCentral;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
+use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\DeployDraftXlsformToOdkCentral;
+use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\NotifyUserThatXlsformFileIsUpdated;
+use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\UpdateXlsformFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
@@ -37,6 +36,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         // when the model is created;
         static::saved(static function (self $xlsform) {
             $xlsform->syncWithTemplate();
+            $xlsform->deployDraft();
         });
 
         static::deleting(static function (self $xlsform) {
@@ -164,10 +164,12 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
         // if there are no moduleversions, copy over all from the template
         if ($this->xlsformModuleVersions()->count() === 0) {
-            $this->xlsformModuleVersions()->sync($this->xlsformTemplate->xlsformModules->map(fn(XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion));
-
+            $this->xlsformModuleVersions()
+                ->sync($this->xlsformTemplate
+                    ->xlsformModules
+                    ->map(fn(XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
+                );
         }
-
 
         // if the odk_project is not set, set it based on the given owner:
         $this->odk_project_id = $this->owner->odkProject->id;
@@ -208,15 +210,19 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      * @throws FileIsTooBig
      * @throws FileDoesNotExist
      */
-    public function generateXlsfile(): void
+    public function generateXlsfile(): PendingDispatch
     {
+        // mark form as unready
+        $this->update(['processing' => true]);
+
         $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
+        $user = auth()->user();
 
-        Excel::queue(new XlsformWorkbookExport($this), $filePath, config('filament-odk-link.storage.xlsforms'))
-            ->chain([
-                new PublishXlsformToOdkCentral($this, $filePath),
+        return Excel::queue(new XlsformWorkbookExport($this), $filePath, config('filament-odk-link.storage.xlsforms'))->chain(
+            [
+                new UpdateXlsformFile($this, $filePath),
+                new NotifyUserThatXlsformFileIsUpdated($this, $user),
             ]);
-
 
     }
 
@@ -224,10 +230,11 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      * @throws FileDoesNotExist
      * @throws FileIsTooBig
      */
-    public function deployDraft(OdkLinkService $service, bool $withMedia = true): bool
+    public function deployDraft(bool $withMedia = true): PendingDispatch
     {
-        $this->generateXlsfile();
-
-        return parent::deployDraft($service, $withMedia);
+        return $this->generateXlsfile()
+        ->chain([
+            new DeployDraftXlsformToOdkCentral($this, $withMedia),
+        ]);
     }
 }

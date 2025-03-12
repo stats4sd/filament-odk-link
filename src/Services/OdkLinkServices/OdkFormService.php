@@ -136,12 +136,10 @@ trait OdkFormService
      *
      * @throws RequestException
      */
-    public function publishForm(Xlsform $xlsform): XlsformVersion
+    public function publishForm(HasXlsformDrafts $xlsform): XlsformVersion
     {
 
         $token = $this->authenticate();
-
-        ray("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=" . Carbon::now()->toDateTimeString());
 
         Http::withToken($token)
             ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=" . Carbon::now()->toDateTimeString())
@@ -177,7 +175,7 @@ trait OdkFormService
     }
 
     // create a new xlsformVersion from an existing xlsform.
-    public function createNewVersion(Xlsform $xlsform, array $versionDetails): XlsformVersion
+    public function createNewVersion(HasXlsformDrafts $xlsform, array $versionDetails): XlsformVersion
     {
         $token = $this->authenticate();
 
@@ -205,7 +203,7 @@ trait OdkFormService
      *
      * @return array $xlsformDetails
      */
-    public function archiveForm(Xlsform $xlsform): array
+    public function archiveForm(HasXlsformDrafts $xlsform): array
     {
         $token = $this->authenticate();
 
@@ -223,7 +221,7 @@ trait OdkFormService
         return $result;
     }
 
-    public function unArchiveForm(Xlsform $xlsform)
+    public function unArchiveForm(HasXlsformDrafts $xlsform)
     {
         $token = $this->authenticate();
 
@@ -238,7 +236,7 @@ trait OdkFormService
     /**
      * @throws RequestException
      */
-    public function deleteForm(Xlsform|XlsformTemplate $xlsform): bool
+    public function deleteForm(HasXlsformDrafts $xlsform): bool
     {
         $token = $this->authenticate();
 
