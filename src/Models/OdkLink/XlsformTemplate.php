@@ -3,6 +3,7 @@
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -12,20 +13,26 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\FileAdder;
+use Spatie\MediaLibrary\MediaCollections\FileAdderFactory;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasUploadedXlsformFile;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-class XlsformTemplate extends HasXlsformDrafts implements HasMedia
+class XlsformTemplate extends HasXlsformDrafts
 {
     use HasRelationships;
+    use HasUploadedXlsformFile;
 
     protected $table = 'xlsform_templates';
 
@@ -35,6 +42,20 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
 
     protected static function booted(): void
     {
+        static::creating(static function (XlsformTemplate $xlsformTemplate) {
+
+        $xlsformTemplate->addMedia($xlsformTemplate->xlsfile_temp)->toMediaCollection('xlsform_file');
+
+        unset($xlsformTemplate->xlsfile_temp);
+
+        dd($xlsformTemplate, $xlsformTemplate->unAttachedMediaLibraryItems[0]['fileAdder']->pathToFile);
+
+        return true;
+
+            // return $xlsformTemplate->testOnOdkCentral();
+
+        });
+
 
         static::deleting(static function (XlsformTemplate $xlsformTemplate) {
             $odkLinkService = app()->make(OdkLinkService::class);
@@ -45,8 +66,7 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
         });
 
         static::saved(static function (XlsformTemplate $xlsformTemplate) {
-            $odkLinkService = app()->make(OdkLinkService::class);
-
+            ray('yo');
             if (is_null(Filament::getTenant())) {
                 $xlsformTemplate->owner()->associate(Platform::first());
                 $xlsformTemplate->saveQuietly();
@@ -55,28 +75,6 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                 $xlsformTemplate->saveQuietly();
             }
 
-            ray(1);
-            // update form title in xlsfile to match user-given title
-            UpdateXlsformTitleInFile::dispatchSync($xlsformTemplate);
-
-            $xlsformTemplate->refresh();
-
-            ray(2);
-            $xlsformTemplate->deployDraftSync();
-
-            $xlsformTemplate->refresh();
-            ray(3);
-            // at this point, the draft form has been created in ODK Central
-            $xlsformTemplate->getRequiredMedia($odkLinkService);
-
-            ray(4);
-            $xlsformTemplate->refresh();
-
-            ray(5);
-            $xlsformTemplate->extractSections();
-            ray(6);
-            $xlsformTemplate->markAllAsNotCurrent();
-            ray(7);
             // If the template is available, add a version of it to all teams where `shouldReceiveAllXlsformTemplates` is true
             if ($xlsformTemplate->available) {
 
@@ -243,11 +241,13 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
         return $this->hasMany(XlsformModule::class, 'xlsform_template_id');
     }
 
-    /** @return HasManyThrough<XlsformModuleVersion, XlsformModule, $this> */
-    public function xlsformModuleVersions(): HasManyThrough
+
+    /** @return Attribute<Collection<XlsformModuleVersion>, never> */
+    public function xlsformDefaultModuleVersions(): Attribute
     {
-        return $this->hasManyThrough(XlsformModuleVersion::class, XlsformModule::class, 'form_id', 'xlsform_module_id')
-            ->where('xlsform_modules.form_type', static::class);
+        return new Attribute(
+            get: fn() => $this->xlsformModules->map(fn(XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
+        );
     }
 
     /** @return HasManyDeep<SurveyRow, $this> */
@@ -305,8 +305,9 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
     // ****************** METHODS ************************
 
     // get required media from ODK Central and store in the database
-    public function getRequiredMedia(OdkLinkService $odkLinkService): void
+    public function getRequiredMedia(): void
     {
+        $odkLinkService = app()->make(OdkLinkService::class);
         $mediaItems = $odkLinkService->getRequiredMedia($this);
 
         foreach ($mediaItems as $mediaItem) {
@@ -447,6 +448,42 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
     public function markAllAsNotCurrent(): void
     {
         $this->xlsforms()->update(['has_latest_template' => false]);
+    }
+
+
+    public function testOnOdkCentral(): bool
+    {
+        try {
+
+            ray(1);
+
+
+            ray($this);
+            // update form title in xlsfile (save in place) to match user-given title
+            \Stats4sd\FilamentOdkLink\Services\UpdateXlsformTitleInFile::process($this);
+
+
+            ray(2);
+            $this->deployDraftSync();
+
+            ray(3);
+            $this->refresh();
+            $this->getRequiredMedia();
+
+            $this->refresh();
+            $this->extractSections();
+            $this->markAllAsNotCurrent();
+            ray(7);
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error($e);
+
+
+            return false;
+
+
+        }
     }
 
 }

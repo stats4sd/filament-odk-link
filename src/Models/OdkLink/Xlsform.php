@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Bus\PendingDispatch;
+use Illuminate\Http\Client\RequestException;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
@@ -21,6 +23,7 @@ use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\UpdateXlsformFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class Xlsform extends HasXlsformDrafts implements HasMedia
 {
@@ -28,6 +31,8 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
     protected $casts = [
         'schema' => 'collection',
+        'odk_draft_updated_at' => 'timestamp',
+        'odk_published_at' => 'timestamp',
     ];
 
     // ******************* SETUP ***********************************
@@ -36,6 +41,9 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         // when the model is created;
         static::saved(static function (self $xlsform) {
             $xlsform->syncWithTemplate();
+        });
+
+        static::created(static function (self $xlsform) {
             $xlsform->deployDraft();
         });
 
@@ -74,7 +82,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     protected function xlsformId(): Attribute
     {
         return new Attribute(
-            get: fn (): string => str($this->title)->slug() . '_' . $this->id,
+            get: fn(): string => str($this->title)->slug() . '_' . $this->id,
         );
     }
 
@@ -82,7 +90,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     protected function currentVersion(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->xlsformVersions()->latest()->first()->version ?? '',
+            get: fn(): string => $this->xlsformVersions()->latest()->first()->version ?? '',
         );
     }
 
@@ -92,11 +100,11 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         return new Attribute(
             get: function (): string {
 
-                if (! $this->odk_draft_token) {
+                if (!$this->odk_draft_token) {
                     return 'NOT DEPLOYED';
                 }
 
-                if (! $this->has_latest_template || ! $this->has_latest_media) {
+                if (!$this->has_latest_template || !$this->has_latest_media) {
                     return 'UPDATES AVAILABLE';
                 }
 
@@ -153,7 +161,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
     public function getOdkLinkAttribute(): ?string
     {
-        $appends = ! $this->is_active ? '/draft' : '';
+        $appends = !$this->is_active ? '/draft' : '';
 
         return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
     }
@@ -162,15 +170,12 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     public function syncWithTemplate(): void
     {
 
-        // if there are no moduleversions, copy over all from the template
-        if ($this->xlsformModuleVersions()->count() === 0) {
-            $this->xlsformModuleVersions()
-                ->sync(
-                    $this->xlsformTemplate
-                        ->xlsformModules
-                        ->map(fn (XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
-                );
-        }
+        // check through the template modules; If this form is missing any, add the default version
+
+        $this->xlsformTemplate->xlsformModules
+            ->filter(fn(XlsformModule $module) => $this->xlsformModuleVersions->doesntContain('module_id', $module->id))
+            ->each(fn(XlsformModule $xlsformModule) => $this->xlsformModuleVersions()->attach($xlsformModule->defaultXlsformVersion));
+
 
         $this->has_latest_template = true;
         $this->saveQuietly();
@@ -214,7 +219,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         ray('generateXlsfile for . ' . $this->title);
 
         // mark form as unready
-        $this->updateQuietly(['processing' => true]);
+        $this->update(['processing' => true]);
 
         $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
         $user = auth()->user();
@@ -238,16 +243,27 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
         return $this->generateXlsfile()
             ->chain([
-                new DeployDraftXlsformToOdkCentral($this, $withMedia),
-                new NotifyUserThatXlsformFileIsDeployedAsDraft($this, $user = auth()->user()),
+                new DeployDraftXlsformToOdkCentral($this, $withMedia, auth()->user()),
+                new NotifyUserThatXlsformFileIsDeployedAsDraft($this, auth()->user()),
             ]);
     }
 
-    public function publishForm()
+    /**
+     * @throws FileDoesNotExist
+     * @throws FileIsTooBig
+     * @throws RequestException
+     * @throws BindingResolutionException
+     */
+    public function publishForm(): XlsformVersion
     {
         ray('publishForm for . ' . $this->title);
 
         $odkLinkService = app()->make(OdkLinkService::class);
-        $odkLinkService->publishForm($this);
+        $newVersion = $odkLinkService->publishForm($this);
+
+        // immediately after publishing, create a new draft. We always want a draft version available to the platform and users.
+        $this->deployDraft();
+
+        return $newVersion;
     }
 }

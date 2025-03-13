@@ -12,6 +12,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Str;
 use JsonException;
+use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\DeployDraftXlsformToOdkCentral;
@@ -19,6 +20,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Throwable;
 
 /**
@@ -28,7 +30,7 @@ use Throwable;
  * @property ?string $odk_draft_token
  * @property ?string $enketo_draft_id
  */
-abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
+abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts, HasMedia
 {
     use InteractsWithMedia;
 
@@ -42,12 +44,12 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
 
     public function deployDraft(bool $withMedia = true): PendingDispatch
     {
-        return DeployDraftXlsformToOdkCentral::dispatch($this, $withMedia);
+        return DeployDraftXlsformToOdkCentral::dispatch($this, $file, $withMedia, auth()->user());
     }
 
     public function deployDraftSync(bool $withMedia = true): void
     {
-        DeployDraftXlsformToOdkCentral::dispatchSync($this, $withMedia);
+        DeployDraftXlsformToOdkCentral::dispatchSync($this, $withMedia, auth()->user());
     }
 
     /**
@@ -61,6 +63,7 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
         $this->update([
             'odk_draft_token' => $updated['draftToken'],
             'enketo_draft_id' => $updated['enketoId'],
+            'odk_draft_updated_at' => $updated['updatedAt'],
         ]);
     }
 
@@ -86,7 +89,7 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
         return new Attribute(
             get: function () {
 
-                if (! $this->has_draft) {
+                if (!$this->has_draft) {
                     return null;
                 }
 
@@ -112,7 +115,7 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
     protected function xlsfile(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->getFirstMediaPath('xlsform_file'),
+            get: fn (): string => $this->getFirstMediaPath('xlsform_file') ?? $this->unAtt,
         );
     }
 
@@ -120,7 +123,7 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
     protected function xlsfileName(): Attribute
     {
         return new Attribute(
-            get: fn (): ?string => $this->getFirstMedia('xlsform_file')?->file_name,
+            get: fn(): ?string => $this->getFirstMedia('xlsform_file')?->file_name,
         );
     }
 
@@ -130,7 +133,7 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
         return new Attribute(
             get: function () {
                 // if there is no enketo id in the database, retrieve it from ODK Central
-                if (! $this->enketo_draft_id || Str::endsWith($this->enketo_draft_id, '/-/')) {
+                if (!$this->enketo_draft_id || Str::endsWith($this->enketo_draft_id, '/-/')) {
                     $this->updateDraftDetails(app()->make(OdkLinkService::class));
                 }
 
@@ -139,8 +142,6 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
             },
         );
     }
-
-
 
 
 }

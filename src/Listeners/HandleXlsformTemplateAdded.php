@@ -20,10 +20,13 @@ class HandleXlsformTemplateAdded
 {
     public function handle(MediaHasBeenAddedEvent $event): void
     {
+        ray('hi');
+
         $model = $event->media->model;
+        ray($model);
 
         // only process xlsform module versions or templates
-        if (! $model instanceof XlsformModuleVersion && ! $model instanceof XlsformTemplate) {
+        if (!$model instanceof XlsformModuleVersion && !$model instanceof XlsformTemplate) {
             return;
         }
 
@@ -32,6 +35,13 @@ class HandleXlsformTemplateAdded
 
         // for xlsform templates, create all the included xlsform modules.
         if ($model instanceof XlsformTemplate) {
+            $isOk = $model->testOnOdkCentral();
+            if (!$isOk) {
+                ray('deleting');
+                $model->delete();
+            }
+            return;
+
             $moduleVersions = $this->createModules($filePath, $model);
         }
 
@@ -39,7 +49,6 @@ class HandleXlsformTemplateAdded
             $moduleVersions = collect([$model]);
         }
 
-        // for a single module version upload, just run the process once
         $this->processXlsformTemplate($filePath, $moduleVersions);
 
     }
@@ -53,9 +62,9 @@ class HandleXlsformTemplateAdded
         return $model
             ->xlsformModules
             ->map(
-                fn (XlsformModule $module) => $module
+                fn(XlsformModule $module) => $module
                     ->xlsformModuleVersions
-                    ->filter(fn (XlsformModuleVersion $xlsformModuleVersion) => $xlsformModuleVersion->is_default)
+                    ->filter(fn(XlsformModuleVersion $xlsformModuleVersion) => $xlsformModuleVersion->is_default)
             )
             ->flatten();
     }

@@ -7,13 +7,13 @@ use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
@@ -51,14 +51,30 @@ class CreateXlsformTemplate extends CreateRecord
 
                     try {
 
+                        $file = collect($get('xlsfile'))->first();
+
                         // wait to trigger the saved event until the xlsform file is attached.
-                        $xlsformTemplate = XlsformTemplate::createQuietly([
+                        $xlsformTemplate = XlsformTemplate::create([
                             'title' => $get('title'),
+                            'xlsfile_temp' => collect($get('xlsfile'))->first(),
                         ]);
 
-                        $files = $get('xlsfile');
+                        ray($xlsformTemplate);
 
-                        $xlsformTemplate->addMedia(collect($files)->first())->toMediaCollection('xlsform_file');
+                        dd('hi there');
+
+
+                        if (!$result) {
+                            $xlsformTemplate->delete();
+                            Notification::make('xlsform_template_not_saved')
+                                ->title('XLSForm Template Not Saved')
+                                ->body('There was an error saving the XLSForm Template. It looks like the uploaded Xlsfile is not a valid XLSForm file.')
+                                ->danger()
+                                ->send();
+
+                            return redirect($this->getResource()::getUrl('create') . '?step=1-xlsform&title=' . urlencode($get('title')));
+                        }
+
                         $xlsformTemplate->save();
 
                         return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));

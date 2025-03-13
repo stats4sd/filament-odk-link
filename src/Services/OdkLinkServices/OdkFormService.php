@@ -12,6 +12,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 trait OdkFormService
 {
@@ -24,14 +25,18 @@ trait OdkFormService
      *
      * @throws RequestException|ConnectionException
      */
-    public function createDraftForm(HasXlsformDrafts $xlsform, bool $withMedia = true): array
+    public function createDraftForm(HasXlsformDrafts $xlsform, ?UploadedFile $file = null, bool $withMedia = true): array
     {
 
         $token = $this->authenticate();
 
-        $filePath = $xlsform->getFirstMedia('xlsform_file')?->getPath();
+        if ($file) {
+            $filePath = $file->getRealPath();
+        } else {
+            $filePath = $xlsform->getFirstMedia('xlsform_file')?->getPath();
+        }
 
-        if (! $filePath) {
+        if (!$filePath) {
             throw new \Exception('The XLSForm file is missing. Please upload the file again and try to deploy the form again.', 500);
         }
 
@@ -63,7 +68,7 @@ trait OdkFormService
 
         // when creating a new draft for an existing form, the full form details are not returned. In this case, the $xlsform record can remain unchanged
         if (isset($responseBody['xmlFormId'])) {
-            $xlsform->updateQuietly(['odk_id' => $responseBody['xmlFormId']]);
+            $xlsform->update(['odk_id' => $responseBody['xmlFormId']]);
         }
         $this->updateSchema($xlsform);
 
@@ -108,7 +113,7 @@ trait OdkFormService
             return $item;
         })->toArray();
 
-        $xlsform->updateQuietly(['schema' => $schema]);
+        $xlsform->update(['schema' => $schema]);
     }
 
     /**
@@ -165,6 +170,7 @@ trait OdkFormService
             'has_draft' => false,
             'is_active' => true,
             'odk_version_id' => $xlsformVersion->version,
+            'odk_published_at' => Carbon::make($formDetails['publishedAt']),
         ]);
         $xlsform->save();
 
@@ -190,7 +196,7 @@ trait OdkFormService
         $xlsform->getMedia('xlsform_file')->first()->copy($xlsformVersion, 'xlsform_file');
 
         // copy any attached media
-        $xlsform->getMedia('attached_media')->each(fn ($media) => $media->copy($xlsformVersion, 'attached_media'));
+        $xlsform->getMedia('attached_media')->each(fn($media) => $media->copy($xlsformVersion, 'attached_media'));
 
         return $xlsformVersion;
     }
