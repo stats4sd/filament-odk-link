@@ -55,19 +55,28 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                 $xlsformTemplate->saveQuietly();
             }
 
+            ray(1);
             // update form title in xlsfile to match user-given title
             UpdateXlsformTitleInFile::dispatchSync($xlsformTemplate);
 
             $xlsformTemplate->refresh();
+
+            ray(2);
             $xlsformTemplate->deployDraftSync();
 
+            $xlsformTemplate->refresh();
+            ray(3);
             // at this point, the draft form has been created in ODK Central
             $xlsformTemplate->getRequiredMedia($odkLinkService);
 
+            ray(4);
             $xlsformTemplate->refresh();
-            $xlsformTemplate->extractSections();
-            $xlsformTemplate->markAllAsNotCurrent();
 
+            ray(5);
+            $xlsformTemplate->extractSections();
+            ray(6);
+            $xlsformTemplate->markAllAsNotCurrent();
+            ray(7);
             // If the template is available, add a version of it to all teams where `shouldReceiveAllXlsformTemplates` is true
             if ($xlsformTemplate->available) {
 
@@ -81,7 +90,6 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                         if (!$xlsform) {
                             $xlsformTemplate->xlsforms()->create([
                                 'owner_id' => $owner->getKey(),
-                                'owner_type' => get_class($owner),
                                 'title' => $xlsformTemplate->title,
                             ]);
                         }
@@ -340,14 +348,14 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                     ->filter(fn($name) => $name !== '')
                     ->filter(fn($name) => $name !== $item['name']);
 
-                    foreach ($possibleParentNames->reverse() as $possibleParentName) {
-                        $repeatParent = $this->repeatingSections()->where('structure_item', $possibleParentName)->first();
+                foreach ($possibleParentNames->reverse() as $possibleParentName) {
+                    $repeatParent = $this->repeatingSections()->where('structure_item', $possibleParentName)->first();
 
-                        if ($repeatParent) {
-                            $parent = $repeatParent;
-                            break;
-                        }
+                    if ($repeatParent) {
+                        $parent = $repeatParent;
+                        break;
                     }
+                }
 
                 $this->repeatingSections()->updateOrCreate([
                     'structure_item' => $item['name'],

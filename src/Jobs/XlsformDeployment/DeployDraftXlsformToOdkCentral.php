@@ -30,7 +30,7 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
 
         $odkLinkService = app()->make(OdkLinkService::class);
 
-       // try {
+        try {
             $odkXlsFormDetails = $odkLinkService->createDraftForm($this->xlsform, $this->withMedia);
 
             $this->xlsform->updateQuietly([
@@ -40,16 +40,16 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
                 'has_draft' => true,
                 'enketo_draft_id' => $odkXlsFormDetails['enketoId'],
             ]);
-//
-//        } catch (Throwable $e) {
-//
-//            Notification::make('draft-form-failed')
-//                ->title('There is an error in the XLS Form')
-//                ->body($e->getMessage())
-//                ->danger()
-//                ->persistent()
-//                ->send();
-//        }
+
+        } catch (Throwable $e) {
+
+            Notification::make('draft-form-failed')
+                ->title('There is an error in the XLS Form')
+                ->body($e->getMessage())
+                ->danger()
+                ->persistent()
+                ->send();
+        }
 
     }
 }

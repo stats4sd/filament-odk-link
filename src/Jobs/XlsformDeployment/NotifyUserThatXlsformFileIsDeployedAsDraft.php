@@ -11,7 +11,7 @@ use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
-class NotifyUserThatXlsformFileIsUpdated implements ShouldQueue
+class NotifyUserThatXlsformFileIsDeployedAsDraft implements ShouldQueue
 {
     use Queueable;
 
@@ -24,9 +24,9 @@ class NotifyUserThatXlsformFileIsUpdated implements ShouldQueue
      */
     public function handle(): void
     {
-        Notification::make('xlsform_file_updated')
-            ->title('Xlsform File Updated')
-            ->body('The Xlsform ' . $this->xlsform->title . ' belonging to ' . $this->xlsform->owner->name . ' has been updated.')
+        Notification::make('xlsform_form_deployed_as_draft')
+            ->title('Xlsform File Draft Ready')
+            ->body('The Xlsform ' . $this->xlsform->title . ' belonging to ' . $this->xlsform->owner->name . ' is now available as a draft to test.')
             ->success()
             ->broadcast($this->user);
     }

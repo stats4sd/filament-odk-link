@@ -15,6 +15,7 @@ use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformWorkbookExport;
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\DeployDraftXlsformToOdkCentral;
+use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\NotifyUserThatXlsformFileIsDeployedAsDraft;
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\NotifyUserThatXlsformFileIsUpdated;
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\UpdateXlsformFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
@@ -171,8 +172,6 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                 );
         }
 
-        // if the odk_project is not set, set it based on the given owner:
-        $this->odk_project_id = $this->owner->odkProject->id;
         $this->has_latest_template = true;
         $this->saveQuietly();
     }
@@ -212,8 +211,10 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      */
     public function generateXlsfile(): PendingDispatch
     {
+        ray('generateXlsfile for . ' . $this->title);
+
         // mark form as unready
-        $this->update(['processing' => true]);
+        $this->updateQuietly(['processing' => true]);
 
         $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
         $user = auth()->user();
@@ -233,14 +234,19 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      */
     public function deployDraft(bool $withMedia = true): PendingDispatch
     {
+        ray('deployDraft for . ' . $this->title);
+
         return $this->generateXlsfile()
             ->chain([
                 new DeployDraftXlsformToOdkCentral($this, $withMedia),
+                new NotifyUserThatXlsformFileIsDeployedAsDraft($this, $user = auth()->user()),
             ]);
     }
 
     public function publishForm()
     {
+        ray('publishForm for . ' . $this->title);
+
         $odkLinkService = app()->make(OdkLinkService::class);
         $odkLinkService->publishForm($this);
     }
