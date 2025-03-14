@@ -35,13 +35,6 @@ class HandleXlsformTemplateAdded
 
         // for xlsform templates, create all the included xlsform modules.
         if ($model instanceof XlsformTemplate) {
-            $isOk = $model->testOnOdkCentral();
-            if (!$isOk) {
-                ray('deleting');
-                $model->delete();
-            }
-            return;
-
             $moduleVersions = $this->createModules($filePath, $model);
         }
 

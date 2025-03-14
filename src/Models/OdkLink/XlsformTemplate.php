@@ -4,6 +4,7 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -12,9 +13,12 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Exception;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\FileAdder;
@@ -25,6 +29,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasUploadedXlsformFile;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Services\UpdateXlsformTitleInFile;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -38,25 +43,11 @@ class XlsformTemplate extends HasXlsformDrafts
 
     protected $casts = [
         'schema' => 'collection',
+        'odk_draft_updated_at' => 'timestamp',
     ];
 
     protected static function booted(): void
     {
-        static::creating(static function (XlsformTemplate $xlsformTemplate) {
-
-        $xlsformTemplate->addMedia($xlsformTemplate->xlsfile_temp)->toMediaCollection('xlsform_file');
-
-        unset($xlsformTemplate->xlsfile_temp);
-
-        dd($xlsformTemplate, $xlsformTemplate->unAttachedMediaLibraryItems[0]['fileAdder']->pathToFile);
-
-        return true;
-
-            // return $xlsformTemplate->testOnOdkCentral();
-
-        });
-
-
         static::deleting(static function (XlsformTemplate $xlsformTemplate) {
             $odkLinkService = app()->make(OdkLinkService::class);
             $xlsformTemplate->deleteFromOdkCentral($odkLinkService);
@@ -65,19 +56,21 @@ class XlsformTemplate extends HasXlsformDrafts
             $xlsformTemplate->xlsformModules()->delete();
         });
 
-        static::saved(static function (XlsformTemplate $xlsformTemplate) {
-            ray('yo');
-            if (is_null(Filament::getTenant())) {
-                $xlsformTemplate->owner()->associate(Platform::first());
-                $xlsformTemplate->saveQuietly();
-            } else {
-                $xlsformTemplate->owner()->associate(Filament::getTenant());
-                $xlsformTemplate->saveQuietly();
-            }
+        static::saving(static function (XlsformTemplate $xlsformTemplate) {
+            if ($xlsformTemplate->newXlsfile instanceof UploadedFile) {
+                $xlsformTemplate->addMedia($xlsformTemplate->newXlsfile)->toMediaCollection('xlsform_file');
 
+                unset($xlsformTemplate->newXlsfile);
+            }
+        });
+
+        static::created(static function (XlsformTemplate $xlsformTemplate) {
+            $xlsformTemplate->afterXlsformFileUpdated();
+        });
+
+        static::saved(static function (XlsformTemplate $xlsformTemplate) {
             // If the template is available, add a version of it to all teams where `shouldReceiveAllXlsformTemplates` is true
             if ($xlsformTemplate->available) {
-
                 config('filament-odk-link.models.team_model')::all()
                     ->filter(fn(WithXlsforms $owner) => $owner->should_receive_all_xlsform_templates)
                     ->each(function (WithXlsforms $owner) use ($xlsformTemplate) {
@@ -95,6 +88,14 @@ class XlsformTemplate extends HasXlsformDrafts
             }
         });
 
+    }
+
+    public function afterXlsformFileUpdated()
+    {
+        $this->getRequiredMedia();
+
+        $this->extractSections();
+        $this->markAllAsNotCurrent();
     }
 
     public function registerMediaCollections(): void
@@ -451,39 +452,22 @@ class XlsformTemplate extends HasXlsformDrafts
     }
 
 
-    public function testOnOdkCentral(): bool
+    /**
+     * @throws ConnectionException
+     * @throws RequestException
+     * @throws Exception
+     * @throws BindingResolutionException
+     */
+    public function testOnOdkCentral(): self
     {
-        try {
 
-            ray(1);
+        // update form title in xlsfile (save in place) to match user-given title
+        UpdateXlsformTitleInFile::process($this, $this->newXlsfile->getRealPath());
 
+        $odkLinkService = app()->make(OdkLinkService::class);
 
-            ray($this);
-            // update form title in xlsfile (save in place) to match user-given title
-            \Stats4sd\FilamentOdkLink\Services\UpdateXlsformTitleInFile::process($this);
+        return $odkLinkService->createDraftForm($this, $this->newXlsfile->getRealPath());
 
-
-            ray(2);
-            $this->deployDraftSync();
-
-            ray(3);
-            $this->refresh();
-            $this->getRequiredMedia();
-
-            $this->refresh();
-            $this->extractSections();
-            $this->markAllAsNotCurrent();
-            ray(7);
-
-            return true;
-        } catch (\Throwable $e) {
-            Log::error($e);
-
-
-            return false;
-
-
-        }
     }
 
 }

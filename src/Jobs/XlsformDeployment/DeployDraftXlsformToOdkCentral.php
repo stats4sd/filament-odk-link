@@ -11,7 +11,6 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Stats4sd\FilamentOdkLink\Services\UpdateXlsformTitleInFile;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Throwable;
 
@@ -30,12 +29,9 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
     {
         $this->xlsform->save();
 
-        UpdateXlsformTitleInFile::process($this->xlsform);
-
         $odkLinkService = app()->make(OdkLinkService::class);
 
-
-        $odkXlsFormDetails = $odkLinkService->createDraftForm($this->xlsform, $this->file, $this->withMedia);
+        $odkXlsFormDetails = $odkLinkService->createDraftForm($this->xlsform, $this->xlsform->xlsfile, $this->withMedia);
 
         $this->xlsform->update([
             'odk_id' => $odkXlsFormDetails['xmlFormId'],

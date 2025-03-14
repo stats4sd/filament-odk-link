@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Services;
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -15,22 +16,15 @@ class UpdateXlsformTitleInFile
     /**
      * @throws Exception
      */
-    public static function process(Xlsform|XlsformTemplate $xlsform): void
+    public static function process(Xlsform|XlsformTemplate $xlsform, string $filePath): void
     {
-
-        $filePath = $xlsform->xlsfile;
-
-        ray($filePath);
-        ray($xlsform->xlsfile);
-        ray($xlsform);
-        dd($xlsform);
 
         $spreadsheet = IOFactory::load($filePath);
 
         $worksheet = $spreadsheet->getSheetByName('settings');
 
         if (!$worksheet) {
-            abort(500, 'There is no settings sheet for this XLS Form');
+            throw new Exception('The file requires a "settings" worksheet.');
         }
 
         $titleUpdated = false;
