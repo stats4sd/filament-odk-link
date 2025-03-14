@@ -75,7 +75,11 @@ class XlsformChoicesExport implements FromCollection, ShouldAutoSize, WithColumn
         /** @var Collection $item */
         $item = $this->choiceListRows->first();
 
-        return $item->keys()->toArray();
+        if($item) {
+            return $item->keys()->toArray();
+        }
+
+        return [];
     }
 
     public function title(): string

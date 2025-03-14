@@ -33,7 +33,7 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
 
         // only review the rows in the current module
         // skip entries not part of the current module
-        $moduleName = $this->xlsformModuleVersion->xlsformModule?->name ?? $this->xlsformModuleVersion->name;
+        $moduleName = $this->xlsformModuleVersion->xlsformModule->name ?? $this->xlsformModuleVersion->name;
         if ($row[$this->moduleColumn] !== $moduleName) {
             return null;
         }

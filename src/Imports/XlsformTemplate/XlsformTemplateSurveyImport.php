@@ -31,7 +31,7 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
         $row = collect($row);
 
         // skip entries not part of the current module
-        $moduleName = $this->xlsformModuleVersion->xlsformModule?->name ?? $this->xlsformModuleVersion->name;
+        $moduleName = $this->xlsformModuleVersion->xlsformModule->name ?? $this->xlsformModuleVersion->name;
         if ($row[$this->moduleColumn] !== $moduleName) {
             return null;
         }
@@ -72,7 +72,7 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
         if ($this->xlsformModuleVersion->name === 'custom' && $owner = HelperService::getCurrentOwner()) {
             $form = $this->xlsformModuleVersion
                 ->xlsforms
-                ->filter(fn(Xlsform $xlsform) => $xlsform->owner_id === $owner->getKey() && $xlsform->owner_type === get_class($owner))
+                ->filter(fn(Xlsform $xlsform) => $xlsform->owner_id === $owner->getKey())
                 ->first();
 
             $team_name = strtolower(str_replace(' ', '_', $form->owner->name));

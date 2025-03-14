@@ -4,6 +4,7 @@ namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateRe
 
 use Filament\Actions;
 use Filament\Forms\Get;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Database\Eloquent\Model;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
@@ -16,7 +17,7 @@ class ViewXlsformTemplate extends ViewRecord
     /**
      * @phpstan-return XlsformTemplate
      */
-    public function getRecord(): Model | XlsformTemplate
+    public function getRecord(): Model|XlsformTemplate
     {
         /** @var XlsformTemplate $record */
         $record = parent::getRecord();
@@ -35,7 +36,7 @@ class ViewXlsformTemplate extends ViewRecord
             Actions\Action::make('make_template_available')
                 ->label('Make Template Available')
                 ->icon('heroicon-o-pencil')
-                ->disabled(fn ($record) => $record->available == true)
+                ->disabled(fn($record) => $record->available == true)
                 ->action(function (array $data, XlsformTemplate $record, Get $get) {
                     $this->makeTemplateAvailable($record);
                 }),
@@ -43,11 +44,37 @@ class ViewXlsformTemplate extends ViewRecord
                 ->label('Replace XLSForm')
                 ->icon('heroicon-o-document-arrow-up')
                 ->form(XlsformTemplateResource::getCreateFields())
-                ->fillForm(fn () => [
+                ->fillForm(fn() => [
                     'title' => self::getRecord()->title,
                 ])
-                ->action(function (array $data, XlsformTemplate $record, Get $get) {
-                    XlsformTemplateResource::processRecord($record);
+                ->action(function (array $data, XlsformTemplate $record) {
+                    try {
+
+                        ray('here');
+                        ray($data);
+
+                        $record->title = $data['title'];
+                        $record->newXlsfile = $data['newXlsfile'];
+
+                        ray($record);
+                        $record = $record->testOnOdkCentral();
+
+                        ray('last', $record);
+                        $record->save();
+                    } catch (\Exception $e) {
+                        ray($e);
+
+                        Notification::make('xlsform_template_not_saved')
+                            ->title('XLSForm Template Not Saved')
+                            ->body('There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage())
+                            ->danger()
+                            ->persistent()
+                            ->send();
+
+                        $this->getRecord()->refresh();
+
+                        $this->halt();
+                    }
                 }),
             Actions\EditAction::make()
                 ->icon('heroicon-o-pencil-square')

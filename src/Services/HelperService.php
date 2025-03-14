@@ -1,9 +1,12 @@
-<?php
+<?php /** @noinspection ALL */
+
+/** @noinspection PhpStanGlobal */
 
 namespace Stats4sd\FilamentOdkLink\Services;
 
 use Filament\Facades\Filament;
 use HaydenPierce\ClassFinder\ClassFinder;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
@@ -51,7 +54,9 @@ class HelperService
         ];
     }
 
-    /** @return Collection<int, Collection<int|string, string|null>> */
+    /** @return Collection<int, string|null>
+     * @throws FileNotFoundException
+     */
     public static function importCsvFileToCollection(string $filePath): Collection
     {
         // Read CSV file content, call trim() to remove last blank line
@@ -70,11 +75,9 @@ class HelperService
         $header = collect(str_getcsv(array_shift($lines)));
 
         // Map through the rows and combine them with the header to produce the final collection.
-        $final = collect($lines)->map(function ($row) use ($header): Collection {
+        return collect($lines)->map(function ($row) use ($header): Collection {
             return $header->combine(str_getcsv($row));
         });
-
-        return $final;
     }
 
     // helper function to return the currently selected team in a Filament panel.

@@ -2,7 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
 
-
 use Carbon\Carbon;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
@@ -10,10 +9,10 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 trait OdkFormService
 {
@@ -25,15 +24,14 @@ trait OdkFormService
      * @return array $xlsformDetails
      *
      * @throws RequestException|ConnectionException
+     * @throws \Exception
      */
-    public function createDraftForm(HasXlsformDrafts $xlsform, bool $withMedia = true): array
+    public function createDraftForm(HasXlsformDrafts $xlsform, string $filePath, bool $withMedia = true): HasXlsformDrafts
     {
 
         $token = $this->authenticate();
 
-        $filePath = $xlsform->getFirstMedia('xlsform_file')?->getPath();
-
-        if (!$filePath) {
+        if (!file_exists($filePath)) {
             throw new \Exception('The XLSForm file is missing. Please upload the file again and try to deploy the form again.', 500);
         }
 
@@ -60,36 +58,38 @@ trait OdkFormService
             throw new \Exception($response->json()['details']['error'], 500);
         } elseif ($response->status() !== 200) {
 
-            abort(500, 'An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
+            throw new \Exception('An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
         }
 
-        // when creating a new draft for an existing form, the full form details are not returned. In this case, the $xlsform record can remain unchanged
+        // when creating a new draft for an existing form, the full form details are not returned. But if they are, we should set the odk_id immediately.
         if (isset($responseBody['xmlFormId'])) {
-            $xlsform->update(['odk_id' => $responseBody['xmlFormId']]);
+            $xlsform->odk_id = $responseBody['xmlFormId'];
         }
-        $this->updateSchema($xlsform);
+
+        $xlsform = $this->updateSchema($xlsform);
 
         // deploy media files - only if with media is true.
         if ($withMedia) {
             $this->uploadMediaFileAttachments($xlsform);
         }
 
-        return $this->getDraftFormDetails($xlsform);
+        return $this->updateDraftFormDetails($xlsform);
+
     }
 
     // update the schema of a template for xlsform from the latest draft version on ODK Central
-    public function updateSchema(HasXlsformDrafts $xlsform): void
+    public function updateSchema(HasXlsformDrafts $xlsform): HasXlsformDrafts
     {
         $token = $this->authenticate();
 
-        // upddate the stored schema with the new draft;
+        // update the stored schema with the new draft;
         $schema = Http::withToken($token)
             ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/fields?odata=true")
             ->throw()
             ->json();
 
         // get the xlsform and merge in specific details to the schema returned from ODK Central
-        $surveyExcel = (new XlsImport)->toCollection($xlsform->getMedia('xlsform_file')->first()->getPathRelativeToRoot(), config('filament-odk-link.storage.xlsforms'), \Maatwebsite\Excel\Excel::XLSX)[0];
+        $surveyExcel = (new XlsImport)->toCollection($xlsform->newXlsfile, null, \Maatwebsite\Excel\Excel::XLSX)['survey'];
 
         $schema = collect($schema)->map(function (array $item) use ($surveyExcel): array {
 
@@ -97,7 +97,7 @@ trait OdkFormService
                 $item['value_type'] = $row['type'];
 
                 // find the label and hint for all languages
-                $row->each(function ($value, $key) {
+                $row->each(function ($value, $key) use (&$item) {
                     if (Str::startsWith($key, 'label')) {
                         $item[$key] = $value;
                     }
@@ -110,23 +110,30 @@ trait OdkFormService
             return $item;
         })->toArray();
 
-        $xlsform->updateQuietly(['schema' => $schema]);
+        $xlsform->schema = $schema;
+        return $xlsform;
     }
-
 
     /**
      * Gets the draft form details for a given xlsform
      *
      * @throws RequestException|ConnectionException
      */
-    public function getDraftFormDetails(HasXlsformDrafts $xlsform): array
+    public function updateDraftFormDetails(HasXlsformDrafts $xlsform): HasXlsformDrafts
     {
         $token = $this->authenticate();
 
-        return Http::withToken($token)
+        $updates = Http::withToken($token)
             ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft")
             ->throw()
             ->json();
+
+        $xlsform->odk_draft_token = $updates['draftToken'];
+        $xlsform->enketo_draft_id = $updates['enketoId'];
+        $xlsform->odk_draft_updated_at = new Carbon($updates['updatedAt']);
+        $xlsform->has_draft = true;
+
+        return $xlsform;
     }
 
     /**
@@ -140,8 +147,6 @@ trait OdkFormService
     {
 
         $token = $this->authenticate();
-
-        ray("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=" . Carbon::now()->toDateTimeString());
 
         Http::withToken($token)
             ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=" . Carbon::now()->toDateTimeString())
@@ -170,6 +175,7 @@ trait OdkFormService
             'has_draft' => false,
             'is_active' => true,
             'odk_version_id' => $xlsformVersion->version,
+            'odk_published_at' => Carbon::make($formDetails['publishedAt']),
         ]);
         $xlsform->save();
 
@@ -205,7 +211,7 @@ trait OdkFormService
      *
      * @return array $xlsformDetails
      */
-    public function archiveForm(Xlsform $xlsform): array
+    public function archiveForm(HasXlsformDrafts $xlsform): array
     {
         $token = $this->authenticate();
 
@@ -223,7 +229,7 @@ trait OdkFormService
         return $result;
     }
 
-    public function unArchiveForm(Xlsform $xlsform)
+    public function unArchiveForm(HasXlsformDrafts $xlsform)
     {
         $token = $this->authenticate();
 
@@ -238,7 +244,7 @@ trait OdkFormService
     /**
      * @throws RequestException
      */
-    public function deleteForm(Xlsform|XlsformTemplate $xlsform): bool
+    public function deleteForm(HasXlsformDrafts $xlsform): bool
     {
         $token = $this->authenticate();
 
@@ -260,6 +266,4 @@ trait OdkFormService
 
         return true;
     }
-
-
 }

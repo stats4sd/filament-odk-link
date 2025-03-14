@@ -117,7 +117,7 @@ class XlsformModuleVersion extends Model implements HasMedia
         return $this->belongsToMany(Xlsform::class, 'selected_xlsform_module_versions');
     }
 
-    /** @return BelongsTo<HasXlsforms, $this> */
+    /** @return BelongsTo<Model, $this> */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');

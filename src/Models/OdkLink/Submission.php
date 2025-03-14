@@ -122,7 +122,7 @@ class Submission extends Model implements HasMedia
         return $this->hasManyThrough(EntityValue::class, Entity::class);
     }
 
-    /** @return BelongsToThrough<HasXlsforms, $this> */
+    /** @return BelongsToThrough<Model, $this> */
     public function owner(): BelongsToThrough
     {
         return $this->belongsToThrough(

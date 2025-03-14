@@ -29,7 +29,7 @@ class Country extends Model
         return $this->belongsToThrough(Continent::class, Region::class);
     }
 
-    /** @return BelongsTo<HasXlsforms, $this> */
+    /** @return BelongsTo<Model, $this> */
     public function owners(): BelongsTo
     {
         return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
