@@ -2,18 +2,19 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages;
 
+use App\Services\HelperService;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
@@ -52,19 +53,29 @@ class CreateXlsformTemplate extends CreateRecord
                     try {
 
                         // wait to trigger the saved event until the xlsform file is attached.
-                        $xlsformTemplate = XlsformTemplate::createQuietly([
+                        /** @var XlsformTemplate $xlsformTemplate */
+                        $xlsformTemplate = XlsformTemplate::make([
                             'title' => $get('title'),
+                            'newXlsfile' => collect($get('newXlsfile'))->first(),
                         ]);
 
-                        $files = $get('xlsfile');
+                        $xlsformTemplate->owner()->associate(Platform::first());
 
-                        $xlsformTemplate->addMedia(collect($files)->first())->toMediaCollection('xlsform_file');
+                        $xlsformTemplate = $xlsformTemplate->testOnOdkCentral();
+
                         $xlsformTemplate->save();
 
                         return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
-                    } catch (RequestException $e) {
+                    } catch (\Throwable $e) {
 
-                        ray($e->getMessage());
+                        ray($e);
+
+                        Notification::make('xlsform_template_not_saved')
+                            ->title('XLSForm Template Not Saved')
+                            ->body('There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage())
+                            ->danger()
+                            ->persistent()
+                            ->send();
 
                         return redirect($this->getResource()::getUrl('create') . '?step=1-xlsform&title=' . urlencode($get('title')));
                     }

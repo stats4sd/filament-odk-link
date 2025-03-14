@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources;
 
+use Awcodes\Shout\Components\Shout;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Filament\Facades\Filament;
@@ -23,7 +24,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\RelationManagers\XlsformModuleRelationManager;
 use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
@@ -77,8 +77,12 @@ class XlsformTemplateResource extends resource
                     // get the title from url if it exists in the query string
                     return request()->query('title');
                 }),
-            Forms\Components\SpatieMediaLibraryFileUpload::make('xlsfile')
-                ->collection('xlsform_file')
+
+            Shout::make('file_info')
+                ->content(new HtmlString('Please upload a valid Xlsform file. Note that while in regular ODK the "settings" worksheet is optional, this system requires it, so please make sure you have a settings worksheet with at least the form_id and form_title variables added. See the <a href="https://docs.getodk.org/xlsform/#the-settings-sheet">ODK documentation here</a> for more information.')),
+            Forms\Components\FileUpload::make('newXlsfile')
+                ->storeFiles(false)
+                ->label('Upload your Xlsform File in Excel format')
                 ->preserveFilenames()
                 ->downloadable()
                 ->autofocus()

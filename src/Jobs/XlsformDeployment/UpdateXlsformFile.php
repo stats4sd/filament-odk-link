@@ -7,7 +7,6 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
@@ -27,7 +26,7 @@ class UpdateXlsformFile implements ShouldQueue
         try {
             $this->xlsform->addMediaFromDisk($this->filePath, config('filament-odk-link.storage.xlsforms'))->toMediaCollection('xlsform_file');
 
-            $this->xlsform->updateQuietly(['processing' => false]);
+            $this->xlsform->update(['processing' => false]);
 
         } catch (FileDoesNotExist $e) {
             Log::error('Trying to save file for Xlsform '.  $this->xlsform->id . ' that does not exist at path ' . $this->filePath);
