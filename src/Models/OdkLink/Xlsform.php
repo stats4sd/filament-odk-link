@@ -181,9 +181,22 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         $this->saveQuietly();
     }
 
+    /**
+     * @throws BindingResolutionException
+     * @throws \Exception
+     */
     public function getSubmissions(): int
     {
         return app()->make(OdkLinkService::class)->getSubmissions($this);
+    }
+
+    /**
+     * @throws BindingResolutionException
+     * @throws \Exception
+     */
+    public function getDraftSubmissions(): int
+    {
+        return app()->make(OdkLinkService::class)->getSubmissions($this, draft: true);
     }
 
     public function getLiveSubmissionCount(): ?int

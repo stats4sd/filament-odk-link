@@ -20,13 +20,19 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 trait OdkSubmissionService
 {
     /** Get all attached media for a given submission + save into application storage (photos, videos, audio, etc captured during the survey) */
-    public function getAttachedMedia($entry, string $token, Xlsform $xlsform, ?Submission $submission): void
+    public function getAttachedMedia($entry, string $token, Xlsform $xlsform, ?Submission $submission, bool $draft = false): void
     {
+        $endpoint = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}";
+
+        if($draft) {
+            $endpoint .= '/draft';
+        }
+
         // ******** PROCESS MEDIA ******** //
         // check if media is expected
         if ($entry['__system']['attachmentsPresent'] > 0) {
             $mediaPresent = Http::withToken($token)
-                ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments")
+                ->get("{$endpoint}/submissions/{$entry['__id']}/attachments")
                 ->throw()
                 ->json();
 
@@ -34,7 +40,7 @@ trait OdkSubmissionService
 
                 // download the attachment
                 $result = Http::withToken($token)
-                    ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions/${entry['__id']}/attachments/${mediaItem['name']}")
+                    ->get("{$endpoint}/submissions/{$entry['__id']}/attachments/{$mediaItem['name']}")
                     ->throw();
 
                 // store the attachment locally
@@ -64,13 +70,20 @@ trait OdkSubmissionService
     }
 
     /** Retrieve and process all new submissions for a given Xlsform */
-    public function getSubmissions(Xlsform $xlsform): int
+    public function getSubmissions(Xlsform $xlsform, bool $draft = false): int
     {
         $token = $this->authenticate();
-        $oDataServiceUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}.svc";
+
+        $oDataServiceUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}";
+
+        if($draft) {
+            $oDataServiceUrl .= '/draft';
+        }
+
+        ray($oDataServiceUrl . '.svc/Submissions?$expand=*');
 
         $results = Http::withToken($token)
-            ->get($oDataServiceUrl . '/Submissions?$expand=*')
+            ->get($oDataServiceUrl . '.svc/Submissions?$expand=*')
             ->throw()
             ->json();
 

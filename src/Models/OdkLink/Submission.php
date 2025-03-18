@@ -32,6 +32,7 @@ class Submission extends Model implements HasMedia
         'content' => 'array',
         'errors' => 'array',
         'entries' => 'array',
+        'from_draft' => 'boolean',
     ];
 
     protected static function booted(): void
@@ -78,6 +79,11 @@ class Submission extends Model implements HasMedia
         static::addGlobalScope('ignore_drafts', static function (Builder $query) {
             $query->where('from_draft', false);
         });
+    }
+
+    public function scopeOnlyDrafts(Builder $query): void
+    {
+       $query->withoutGlobalScope('ignore_drafts')->where('from_draft', true);
     }
 
     // $this->entries is an array of every Model entry created as a result of processing this submission.
