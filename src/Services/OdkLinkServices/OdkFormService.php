@@ -58,7 +58,7 @@ trait OdkFormService
             throw new \Exception($response->json()['details']['error'], 500);
         } elseif ($response->status() !== 200) {
 
-            throw new \Exception('An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists');
+            throw new \Exception('An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists. When contacting support, please include the following details: status: ' . $response->status() . '; message: ' . $response->json()['message']);
         }
 
         // when creating a new draft for an existing form, the full form details are not returned. But if they are, we should set the odk_id immediately.

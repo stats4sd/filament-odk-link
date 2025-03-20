@@ -18,7 +18,7 @@ class UpdateXlsformTitleInFile
      */
     public static function process(Xlsform|XlsformTemplate $xlsform, string $filePath): void
     {
-
+ray('hi');
         $spreadsheet = IOFactory::load($filePath);
 
         $worksheet = $spreadsheet->getSheetByName('settings');
@@ -37,12 +37,13 @@ class UpdateXlsformTitleInFile
             $cellIterator->setIterateOnlyExistingCells(true);
 
             foreach ($cellIterator as $cell) {
-                if ($cell->getValue() === 'form_id' || $cell->getValue() === 'id_string') {
+                if (trim($cell->getValue()) === 'form_id' || trim($cell->getValue()) === 'id_string') {
 
                     $coordinates = $cell->getCoordinate();
 
                     // if the form is already deployed, we must use the existing form_id on ODK:
                     $formId = $xlsform->odk_id ?? Str::slug($xlsform->title);
+                    ray($formId);
 
                     // assume that the headers are on row < 10 and column < AA
                     $coordinates = str_split($coordinates);
@@ -54,7 +55,7 @@ class UpdateXlsformTitleInFile
                     }
                 }
 
-                if ($cell->getValue() === 'form_title') {
+                if (trim($cell->getValue()) === 'form_title') {
 
                     $coordinates = $cell->getCoordinate();
 
