@@ -65,6 +65,13 @@ class CreateXlsformTemplate extends CreateRecord
 
                         $xlsformTemplate->save();
 
+                        Notification::make('xlsform_template_updated')
+                            ->title('XLSForm Template Updated')
+                            ->body('The XLSForm Template has been updated successfully.')
+                            ->success()
+                            ->persistent()
+                            ->send();
+
                         return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
                     } catch (\Throwable $e) {
 

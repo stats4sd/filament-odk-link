@@ -61,6 +61,9 @@ class XlsformTemplate extends HasXlsformDrafts
                 $xlsformTemplate->addMedia($xlsformTemplate->newXlsfile)->toMediaCollection('xlsform_file');
 
                 unset($xlsformTemplate->newXlsfile);
+
+
+
             }
         });
 
@@ -69,6 +72,12 @@ class XlsformTemplate extends HasXlsformDrafts
         });
 
         static::saved(static function (XlsformTemplate $xlsformTemplate) {
+
+            // if the draft form has been updated; do the post processing
+            if($xlsformTemplate->isDirty('odk_draft_updated_at')) {
+                $xlsformTemplate->afterXlsformFileUpdated();
+            }
+
             // If the template is available, add a version of it to all teams where `shouldReceiveAllXlsformTemplates` is true
             if ($xlsformTemplate->available) {
                 config('filament-odk-link.models.team_model')::all()

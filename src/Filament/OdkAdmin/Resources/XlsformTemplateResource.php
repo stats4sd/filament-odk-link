@@ -17,6 +17,7 @@ use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Infolists\Infolist;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -316,9 +317,38 @@ class XlsformTemplateResource extends resource
                         ];
                     })
                     ->action(function (array $data, XlsformTemplate $record) {
-                        $record->update([
-                            'title' => $data['title'],
-                        ]);
+                        try {
+
+
+
+                            $record->title = $data['title'];
+                            $record->newXlsfile = $data['newXlsfile'];
+
+                            $record = $record->testOnOdkCentral();
+
+                            $record->save();
+
+                            Notification::make('xlsform_template_updated')
+                                ->title('XLSForm Template Updated')
+                                ->body('The XLSForm Template has been updated successfully.')
+                                ->success()
+                                ->persistent()
+                                ->send();
+
+
+                        } catch (\Exception $e) {
+
+                            Notification::make('xlsform_template_not_saved')
+                                ->title('XLSForm Template Not Saved')
+                                ->body('There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage())
+                                ->danger()
+                                ->persistent()
+                                ->send();
+
+                            $this->getRecord()->refresh();
+
+                            $this->halt();
+                        }
                     }),
                 Tables\Actions\EditAction::make()->label('Edit Media & Data'),
             ])

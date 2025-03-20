@@ -20,10 +20,8 @@ class HandleXlsformTemplateAdded
 {
     public function handle(MediaHasBeenAddedEvent $event): void
     {
-        ray('hi');
 
         $model = $event->media->model;
-        ray($model);
 
         // only process xlsform module versions or templates
         if (!$model instanceof XlsformModuleVersion && !$model instanceof XlsformTemplate) {

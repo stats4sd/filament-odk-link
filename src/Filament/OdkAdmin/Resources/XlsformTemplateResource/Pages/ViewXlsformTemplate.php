@@ -50,19 +50,21 @@ class ViewXlsformTemplate extends ViewRecord
                 ->action(function (array $data, XlsformTemplate $record) {
                     try {
 
-                        ray('here');
-                        ray($data);
-
                         $record->title = $data['title'];
                         $record->newXlsfile = $data['newXlsfile'];
 
-                        ray($record);
                         $record = $record->testOnOdkCentral();
 
-                        ray('last', $record);
                         $record->save();
+
+                         Notification::make('xlsform_template_updated')
+                                ->title('XLSForm Template Updated')
+                                ->body('The XLSForm Template has been updated successfully.')
+                                ->success()
+                                ->persistent()
+                                ->send();
+
                     } catch (\Exception $e) {
-                        ray($e);
 
                         Notification::make('xlsform_template_not_saved')
                             ->title('XLSForm Template Not Saved')
