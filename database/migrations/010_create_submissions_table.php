@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         /**
@@ -23,6 +22,10 @@ return new class extends Migration
 
             // what data model entries were created when processing this submission? (e.g., if the application has custom data maps that populate tables from processed submissions.
             $table->json('entries')->nullable();
+
+            $table->boolean('draft_data')->default(0);
+            $table->boolean('test_data')->default(0);
+
             $table->timestamps();
             $table->softDeletes();
         });

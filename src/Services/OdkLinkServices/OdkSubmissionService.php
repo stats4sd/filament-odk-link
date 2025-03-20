@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
@@ -24,7 +25,7 @@ trait OdkSubmissionService
     {
         $endpoint = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}";
 
-        if($draft) {
+        if ($draft) {
             $endpoint .= '/draft';
         }
 
@@ -62,7 +63,7 @@ trait OdkSubmissionService
             ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions");
 
         // simple error handling
-        if (! $results->ok()) {
+        if (!$results->ok()) {
             return null;
         }
 
@@ -76,11 +77,9 @@ trait OdkSubmissionService
 
         $oDataServiceUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}";
 
-        if($draft) {
+        if ($draft) {
             $oDataServiceUrl .= '/draft';
         }
-
-        ray($oDataServiceUrl . '.svc/Submissions?$expand=*');
 
         $results = Http::withToken($token)
             ->get($oDataServiceUrl . '.svc/Submissions?$expand=*')
@@ -95,7 +94,7 @@ trait OdkSubmissionService
             // ******* CREATE SUBMISSION RECORD ******* //
             $xlsformVersion = $xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
 
-            if (! $xlsformVersion) {
+            if (!$xlsformVersion) {
 
                 $messageContent = collect([
                     'formVersion' => $entry['__system']['formVersion'],
@@ -108,7 +107,7 @@ trait OdkSubmissionService
                     throw new \Exception('The system tried to get submission data for a form version that does not exist. LOCAL ENVIRONMENT: if you are testing a form that may have been updated on ODK Central directly, or through another app environment, please run `php artisan app:update-xlsform-versions-from-odk-central`, and try pulling the submissions again.');
                 }
 
-                throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '), 500);
+                throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '), 500);
             }
 
             $submission = $xlsformVersion->submissions()->create([
@@ -167,24 +166,55 @@ trait OdkSubmissionService
         // access the value of each ODK variable from a deeply nested array using "dot" notation
         $entityValues = [];
 
+        // get all choices lists once to avoid multiple db calls when preparing select_multiple values
+        $choices = $xlsform->xlsformTemplate->choiceLists()
+            ->with('choiceListEntries', function ($query) use ($xlsform) {
+                $query
+                    ->whereHas('owner', function ($query) use ($xlsform) {
+                        $query->where('id', $xlsform->owner->id);
+                    })
+                    ->orWhereNull('owner_id');
+            })
+            ->get();
+
         foreach ($schema as $schemaItem) {
             $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
             $value = Arr::get($entry, $itemPath);
 
-            if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && ! is_array($value)) {
+            if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
                 // store ODK variable value as entity value record
 
-                //                // TODO: get label from correct language String entry.
-                //                $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
-                //                    'name' => $schemaItem['name'],
-                //                    'label' => $schemaItem['name'],
-                //                ]);
+                // TODO: get label from correct language String entry.
+                // $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
+                //     'name' => $schemaItem['name'],
+                //     'label' => $schemaItem['name'],
+                // ]);
 
                 $entityValues[] = [
                     'entity_id' => $entity->id,
                     'dataset_variable_name' => $schemaItem['name'],
                     'value' => $value,
                 ];
+
+
+                // for select_multiples, add binary/ boolean columns for each possible response
+                if (isset($schemaItem['value_type']) && Str::startsWith($schemaItem['value_type'], 'select_multiple')) {
+                    $choiceListName = Str::of($schemaItem['value_type'])->after('select_multiple ')->trim()->toString();
+
+
+                    /** @var ChoiceList $choiceList */
+                    $choiceList = $choices->filter(fn(ChoiceList $list) => $list->list_name === $choiceListName)->first();
+                    $choiceListEntries = $choiceList->choiceListEntries->unique('name');
+                    $choicesSelected = Str::of($value)->lower()->explode(' ');
+
+                    foreach ($choiceListEntries as $choiceListEntry) {
+                        $entityValues[] = [
+                            'entity_id' => $entity->id,
+                            'dataset_variable_name' => $schemaItem['name'] . '_' . Str::lower($choiceListEntry->name),
+                            'value' => $choicesSelected->contains(Str::lower($choiceListEntry->name)),
+                        ];
+                    }
+                }
             }
         }
 
@@ -218,7 +248,7 @@ trait OdkSubmissionService
         $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
 
         // if $repeatGroupArray is null, it means this section has no entries and so does not exist in the submission data
-        if (! $repeatGroupArray) {
+        if (!$repeatGroupArray) {
             return;
         }
 
@@ -226,7 +256,7 @@ trait OdkSubmissionService
         foreach ($repeatGroupArray as $repeatGroupRecord) {
 
             // if the section is not linked to a dataset, move on;
-            if (! $section->dataset) {
+            if (!$section->dataset) {
                 continue;
             }
 
@@ -258,7 +288,7 @@ trait OdkSubmissionService
 
                 $value = Arr::get($repeatGroupEntry, $fullItemPath);
 
-                if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && ! is_array($value)) {
+                if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
 
                     //                    // TODO: get label from correct language String entry.
                     //                    $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([

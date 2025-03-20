@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Testing\Fluent\Concerns\Has;
 use Spatie\MediaLibrary\HasMedia;
@@ -32,7 +33,8 @@ class Submission extends Model implements HasMedia
         'content' => 'array',
         'errors' => 'array',
         'entries' => 'array',
-        'from_draft' => 'boolean',
+        'draft_data' => 'boolean',
+        'test_data' => 'boolean',
     ];
 
     protected static function booted(): void
@@ -54,36 +56,42 @@ class Submission extends Model implements HasMedia
             // before updating submission record
             // P.S. model event can be triggered after saving the updated submission content in modal popup,
             // but it cannot be triggered if the editing is saved in a separated Edit page
-            static::updating(function ($record) {
-                // submission content has been updated by user, need to delete all related entities and entity_values records,
-                // because they contain values before editing
-                $entities = Entity::where('submission_id', $record->id)->orderByDesc('id')->get();
+            static::updating(function (self $submission) {
 
-                foreach ($entities as $entity) {
-                    EntityValue::where('entity_id', $entity->id)->delete();
+                if ($submission->isDirty('content')) {
+
+                    // submission content has been updated by user, need to delete all related entities and entity_values records,
+                    // because they contain values before editing
+                    $entities = $submission->entities;
+
+                    foreach ($entities as $entity) {
+                        $entity->entityValues()->delete();
+                        $entity->delete();
+                    }
+
+                    // Note: This is hard to find all related models inside a submission here,
+                    // it would be much easier to delete custom table records in OdkLinkService.processEntryFromSection()
+
+                    // handle the updated submission content again, this will create entities, entity_values and custom table records
+                    $odkLinkService = app()->make(OdkLinkService::class);
+                    $odkLinkService->handleUpdatedSubmissionContent($submission);
                 }
-
-                foreach ($entities as $entity) {
-                    $entity->delete();
-                }
-
-                // Note: This is hard to find all related models inside a submission here,
-                // it would be much easier to delete custom table records in OdkLinkService.processEntryFromSection()
-
-                // handle the updated submission content again, this will create entities, entity_values and custom table records
-                $odkLinkService = app()->make(OdkLinkService::class);
-                $odkLinkService->handleUpdatedSubmissionContent($record);
             });
         });
 
         static::addGlobalScope('ignore_drafts', static function (Builder $query) {
-            $query->where('from_draft', false);
+            $query->where('draft_data', false);
         });
     }
 
-    public function scopeOnlyDrafts(Builder $query): void
+    public function scopeOnlyDraftData(Builder $query): void
     {
-       $query->withoutGlobalScope('ignore_drafts')->where('from_draft', true);
+        $query->withoutGlobalScope('ignore_drafts')->where('draft_data', true);
+    }
+
+    public function scopeOnlyRealData(Builder $query): void
+    {
+        $query->where('test_data', false);
     }
 
     // $this->entries is an array of every Model entry created as a result of processing this submission.
@@ -112,7 +120,7 @@ class Submission extends Model implements HasMedia
     protected function xlsformTitle(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->xlsformVersion->xlsform->title,
+            get: fn(): string => $this->xlsformVersion->xlsform->title,
         );
     }
 
@@ -120,6 +128,13 @@ class Submission extends Model implements HasMedia
     public function entities(): HasMany
     {
         return $this->hasMany(Entity::class);
+    }
+
+    /** @return HasOne<Entity, $this> */
+    public function rootEntity(): HasOne
+    {
+        return $this->hasOne(Entity::class)
+            ->where('parent_id', null);
     }
 
     /** @return HasManyThrough<EntityValue, Entity, $this> */

@@ -20,7 +20,7 @@ class EntityValue extends Model
     /** @return BelongsTo<Entity, $this> */
     public function entity(): BelongsTo
     {
-        return $this->belongsTo(Entity::class);
+        return $this->belongsTo(Entity::class, 'entity_id');
     }
 
     /** @return BelongsTo<OdkProject, $this> */

@@ -267,7 +267,7 @@ class XlsformTemplate extends HasXlsformDrafts
         return $this->hasManyDeep(
             ChoiceList::class,
             [XlsformModule::class, XlsformModuleVersion::class],
-            [['form_type', 'form_id'], null, 'xlsform_module_version_id']
+            ['xlsform_template_id', null, 'xlsform_module_version_id']
         );
     }
 

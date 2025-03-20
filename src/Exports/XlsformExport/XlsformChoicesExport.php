@@ -56,7 +56,7 @@ class XlsformChoicesExport implements FromCollection, ShouldAutoSize, WithColumn
                 return collect([
                     'id' => $row->id,
                     'list_name' => $row->choiceList->list_name,
-                    'name' => Str::snake($row->name),
+                    'name' => Str::replace(' ', '_', $row->name),
                     ...$this->getLanguageStrings($row),
                     ...$properties,
                 ]);
