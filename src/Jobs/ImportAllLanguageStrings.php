@@ -31,10 +31,10 @@ class ImportAllLanguageStrings implements ShouldQueue
         // import the language strings for all the translatable headings in the surveys tab;
         foreach ($this->translatableHeadings as $sheet => $headings) {
             foreach ($headings as $heading) {
-                (new XlsformTemplateLanguageStringImport($this->xlsformModuleVersion, $heading, $sheet))->queue($this->filePath)
-                    ->chain([
-                        new FinishLanguageStringImport($this->xlsformModuleVersion, $heading),
-                    ]);
+                (new XlsformTemplateLanguageStringImport($this->xlsformModuleVersion, $heading, $sheet))->import($this->filePath);
+
+                FinishLanguageStringImport::dispatchSync($this->xlsformModuleVersion, $heading);
+
             }
         }
     }

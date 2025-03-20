@@ -124,6 +124,6 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
 
     public function chunkSize(): int
     {
-        return 500;
+        return 1000;
     }
 }

@@ -22,7 +22,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
 
-class XlsformTemplateLanguageStringImport implements ShouldQueue, SkipsEmptyRows, ToModel, WithChunkReading, WithEvents, WithHeadingRow, WithMultipleSheets, WithUpserts
+class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, WithChunkReading, WithEvents, WithHeadingRow, WithMultipleSheets, WithUpserts
 {
     use Importable;
     use RegistersEventListeners;
@@ -147,7 +147,7 @@ class XlsformTemplateLanguageStringImport implements ShouldQueue, SkipsEmptyRows
 
     public function chunkSize(): int
     {
-        return 500;
+        return 1000;
     }
 
     public function afterImport(AfterImport $event): void

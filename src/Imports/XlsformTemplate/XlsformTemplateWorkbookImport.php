@@ -36,7 +36,7 @@ class XlsformTemplateWorkbookImport implements WithMultipleSheets, ShouldQueue, 
 
     public function chunkSize(): int
     {
-        return 500;
+        return 1000;
     }
 
     public function afterImport(AfterImport $event): void

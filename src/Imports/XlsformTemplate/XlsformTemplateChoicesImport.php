@@ -54,7 +54,7 @@ class XlsformTemplateChoicesImport implements ShouldQueue, SkipsEmptyRows, ToMod
 
     public function chunkSize(): int
     {
-        return 500;
+        return 1000;
     }
 
     public function uniqueBy(): array

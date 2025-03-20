@@ -64,7 +64,7 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
 
     public function chunkSize(): int
     {
-        return 500;
+        return 1000;
     }
 
     public function isEmptyWhen(array $row): bool
