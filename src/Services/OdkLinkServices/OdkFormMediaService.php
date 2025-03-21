@@ -19,9 +19,6 @@ trait OdkFormMediaService
     public function getRequiredMedia(HasXlsformDrafts $xlsformTemplate): array
     {
         $token = $this->authenticate();
-
-        ray("{$this->endpoint}/projects/{$xlsformTemplate->owner->odkProject->id}/forms/{$xlsformTemplate->odk_id}/attachments");
-
         return Http::withToken($token)
             ->get("{$this->endpoint}/projects/{$xlsformTemplate->owner->odkProject->id}/forms/{$xlsformTemplate->odk_id}/attachments")
             ->throw()

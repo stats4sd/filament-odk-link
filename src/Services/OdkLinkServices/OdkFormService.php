@@ -95,8 +95,6 @@ trait OdkFormService
 
             if ($row = $surveyExcel->where('name', $item['name'])->first()) {
 
-                ray($row);
-
                 $item['value_type'] = $row['type'];
 
                 // find the label and hint for all languages

@@ -266,7 +266,7 @@ class XlsformTemplate extends HasXlsformDrafts
         return $this->hasManyDeep(
             SurveyRow::class,
             [XlsformModule::class, XlsformModuleVersion::class],
-            [['form_type', 'form_id'], null, 'xlsform_module_version_id']
+            ['xlsform_template_id', 'xlsform_module_id', 'xlsform_module_version_id']
         );
     }
 
@@ -276,7 +276,7 @@ class XlsformTemplate extends HasXlsformDrafts
         return $this->hasManyDeep(
             ChoiceList::class,
             [XlsformModule::class, XlsformModuleVersion::class],
-            ['xlsform_template_id', null, 'xlsform_module_version_id']
+            ['xlsform_template_id', 'xlsform_module_id', 'xlsform_module_version_id']
         );
     }
 
@@ -286,19 +286,19 @@ class XlsformTemplate extends HasXlsformDrafts
         return $this->hasManyDeep(
             ChoiceListEntry::class,
             [XlsformModule::class, XlsformModuleVersion::class, ChoiceList::class],
-            [['form_type', 'form_id'], null, 'xlsform_module_version_id', 'choice_list_id']
+            ['xlsform_template_id', 'xlsform_module_id', 'xlsform_module_version_id', 'choice_list_id']
         );
     }
 
     // Split up language strings into 2 relationships as there are 2 paths between xlsformtemplates and language strings
 
     /** @return HasManyDeep<LanguageString, $this> */
-    public function surveyLanguageStrings(): HasManyDeep
+public function surveyLanguageStrings(): HasManyDeep
     {
         return $this->hasManyDeep(
             LanguageString::class,
             [XlsformModule::class, XlsformModuleVersion::class, SurveyRow::class],
-            [['form_type', 'form_id'], 'xlsform_module_id', 'xlsform_module_version_id', ['linked_entry_type', 'linked_entry_id']],
+            ['xlsform_template_id', 'xlsform_module_id', 'xlsform_module_version_id', ['linked_entry_type', 'linked_entry_id']],
         );
     }
 
@@ -308,7 +308,7 @@ class XlsformTemplate extends HasXlsformDrafts
         return $this->hasManyDeep(
             LanguageString::class,
             [XlsformModule::class, XlsformModuleVersion::class, ChoiceList::class, ChoiceListEntry::class],
-            [['form_type', 'form_id'], 'xlsform_module_id', 'xlsform_module_version_id', 'choice_list_id', ['linked_entry_type', 'linked_entry_id']],
+            ['xlsform_template_id', 'xlsform_module_id', 'xlsform_module_version_id', 'choice_list_id', ['linked_entry_type', 'linked_entry_id']],
         );
     }
 
@@ -477,6 +477,14 @@ class XlsformTemplate extends HasXlsformDrafts
 
         return $odkLinkService->createDraftForm($this, $this->newXlsfile->getRealPath());
 
+    }
+
+    /** @return Attribute<string, never> */
+    public function fallbackModuleName(): Attribute
+    {
+        return new Attribute(
+            get: fn() => Str::slug($this->title) . '_main',
+        );
     }
 
 }

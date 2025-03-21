@@ -18,7 +18,6 @@ class UpdateXlsformTitleInFile
      */
     public static function process(Xlsform|XlsformTemplate $xlsform, string $filePath): void
     {
-ray('hi');
         $spreadsheet = IOFactory::load($filePath);
 
         $worksheet = $spreadsheet->getSheetByName('settings');

@@ -16,7 +16,7 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
 {
     use Importable;
 
-    public function __construct(public XlsformTemplate $xlsformTemplate) {}
+    public function __construct(public XlsformTemplate $xlsformTemplate, public string $moduleColumn = 'module') {}
 
     public function sheets(): array
     {
@@ -32,7 +32,7 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
         $collection = $collection
             ->map(function ($row) {
                 if (! isset($row['module'])) {
-                    $row['module'] = Str::slug($this->xlsformTemplate->title) . '_main';
+                    $row['module'] = $this->xlsformTemplate->fallback_module_name;
                 }
 
                 return $row;
