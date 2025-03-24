@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('xlsform_module_version_id')->constrained('xlsform_module_versions')->cascadeOnDelete()->cascadeOnUpdate();
             $table->bigInteger('row_number')->nullable();
             $table->string('name');
+            $table->string('path', 3000)->nullable();
 
             $table->string('type');
             $table->foreignId('choice_list_id')->nullable()->constrained('choice_lists')->nullOnDelete()->cascadeOnUpdate();

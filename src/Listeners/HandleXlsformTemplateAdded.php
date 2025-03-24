@@ -11,6 +11,7 @@ use Stats4sd\FilamentOdkLink\Jobs\FinishChoiceListEntryImport;
 use Stats4sd\FilamentOdkLink\Jobs\FinishSurveyRowImport;
 use Stats4sd\FilamentOdkLink\Jobs\ImportAllLanguageStrings;
 use Stats4sd\FilamentOdkLink\Jobs\LinkModuleVersionToLocales;
+use Stats4sd\FilamentOdkLink\Jobs\PrepareSurveyRowPaths;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
@@ -75,6 +76,7 @@ class HandleXlsformTemplateAdded
         // Import the XLSform workbook to survey rows and choice list entries;
         (new XlsformTemplateWorkbookImport($model, $translatableHeadings, $moduleColumn))->queue($filePath)
             ->chain([
+                new PrepareSurveyRowPaths($model),
                 new FinishSurveyRowImport($model),
                 new FinishChoiceListEntryImport($model),
                 new LinkModuleVersionToLocales($model, $translatableHeadings),
