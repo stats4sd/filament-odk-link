@@ -23,10 +23,15 @@ use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\UpdateXlsformFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
+use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class Xlsform extends HasXlsformDrafts implements HasMedia
 {
+
+    use HasRelationships;
+
     protected $table = 'xlsforms';
 
     protected $casts = [
@@ -222,6 +227,31 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         return $this->belongsToMany(XlsformModuleVersion::class, 'selected_xlsform_module_versions')
             ->orderByPivot('order', 'asc');
     }
+
+    public function surveyRows(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            SurveyRow::class,
+            ['selected_xlsform_module_versions', XlsformModuleVersion::class],
+        );
+    }
+
+    public function choiceLists(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            ChoiceList::class,
+            ['selected_xlsform_module_versions', XlsformModuleVersion::class],
+        );
+    }
+
+    public function choiceListEntries(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            ChoiceListEntry::class,
+            ['selected_xlsform_module_versions', XlsformModuleVersion::class, ChoiceList::class],
+        );
+    }
+
 
     /**
      * @throws FileIsTooBig
