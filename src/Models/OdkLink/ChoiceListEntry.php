@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\HasLanguageStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
@@ -58,6 +59,14 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
     public function languageStrings(): MorphMany
     {
         return $this->morphMany(LanguageString::class, 'linked_entry');
+    }
+
+    /** @return MorphOne<LanguageString, $this> */
+    public function defaultLabel(): MorphOne
+    {
+        return $this->morphOne(LanguageString::class, 'linked_entry')
+            ->whereHas('language', fn($query) => $query->where('languages.iso_alpha2', 'en'))
+            ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', 'label'));
     }
 
     // Some choice lists are linked to specific data models to let us add custom information.
