@@ -57,7 +57,7 @@ class PrepareSurveyRowPaths implements ShouldQueue
 
                 case 'begin repeat':
                 case 'begin_repeat':
-                    $repeatPaths->push($path . $surveyRow->name);
+                    $repeatPaths->push($path . $surveyRow->name . '/');
                     $path = '/';
                     $surveyRow->update([
                         'path' => $path,
@@ -68,6 +68,10 @@ class PrepareSurveyRowPaths implements ShouldQueue
                 case 'end repeat':
                 case 'end_repeat':
                     $path = $repeatPaths->pop();
+
+                    $path = substr($path, 0, -1);
+                    $path = substr($path, 0, strrpos($path, '/') + 1);
+
                     $surveyRow->update([
                         'path' => $path,
                         'repeat_group_path' => $repeatPaths->last() ?? null,

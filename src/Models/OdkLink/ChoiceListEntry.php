@@ -36,8 +36,8 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
 
             if ($owner = HelperService::getCurrentOwner()) {
 
-                $query->where('owner_id', $owner->getKey())
-                    ->orWhereNull('owner_id');
+                $query->where('choice_list_entries.owner_id', $owner->getKey())
+                    ->orWhereNull('choice_list_entries.owner_id');
             }
         });
     }

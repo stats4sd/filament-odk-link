@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Collection;
 use ShiftOneLabs\LaravelCascadeDeletes\CascadesDeletes;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\HasLanguageStrings;
@@ -37,15 +39,12 @@ class SurveyRow extends Model implements HasLanguageStrings
         return $this->morphMany(LanguageString::class, 'linked_entry');
     }
 
-    /** @return Attribute<string, never> */
-    public function defaultLabel(): Attribute
+    /** @return MorphOne<LanguageString, $this> */
+    public function defaultLabel(): MorphOne
     {
-        return new Attribute(
-            get: fn() => $this->languageStrings()
-                ->whereHas('language', fn($query) => $query->where('languages.iso_alpha2', 'en'))
-                ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', 'label'))
-                ->first()?->text
-        );
+        return $this->morphOne(LanguageString::class, 'linked_entry')
+            ->whereHas('language', fn($query) => $query->where('languages.iso_alpha2', 'en'))
+            ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', 'label'));
     }
 
     /** @return Attribute<string, never> */
