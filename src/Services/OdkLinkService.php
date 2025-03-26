@@ -4,10 +4,12 @@ namespace Stats4sd\FilamentOdkLink\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Response;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkFormMediaService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkFormService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkProjectService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkSubmissionService;
+use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkUserService;
 
 /**
  * All ODK Aggregation services should be able to handle ODK forms, so this interface should always be used.
@@ -15,6 +17,7 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkSubmissionService;
 class OdkLinkService
 {
     use OdkProjectService;
+    use OdkUserService;
     use OdkFormMediaService;
     use OdkFormService;
     use OdkSubmissionService;
@@ -40,6 +43,12 @@ class OdkLinkService
 
             return $response['token'];
         });
+    }
+
+    public function authenticateAsUser($data): \Illuminate\Http\Client\Response
+    {
+        return Http::post("{$this->endpoint}/sessions", $data)
+            ->throw();
     }
 
 }

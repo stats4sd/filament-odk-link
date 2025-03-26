@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Stats4sd\FilamentOdkLink\Models\Country;
@@ -71,7 +72,7 @@ interface WithXlsforms
 
     public function xlsformTemplates(): MorphMany;
 
-    public function odkProject(): MorphOne;
+    public function odkProject(): HasOne;
 
     public function createLinkedOdkProject(OdkLinkService $odkLinkService): void;
 

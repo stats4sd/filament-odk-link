@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 
 class OdkProject extends Model
@@ -21,10 +22,10 @@ class OdkProject extends Model
         'odk_url',
     ];
 
-    /** @return MorphTo<Model, $this> */
-    public function owner(): MorphTo
+    /** @return BelongsTo<WithXlsforms, $this> */
+    public function owner(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
     }
 
     /** @return HasMany<AppUser, $this> */

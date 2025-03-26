@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Stats4sd\FilamentOdkLink\Models\Country;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Language;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
@@ -24,6 +26,13 @@ trait HasXlsforms
     // Used as the human-readable label for the owners of forms. Uses the same variable name that some Laravel Backpack fields expect (e.g. Relationship)
     // Xls Form titles are in the format `$owner->$nameAttribute . '-' . $xlsform->title`
     public string $identifiableAttribute = 'name';
+
+    /** @return HasOne<OdkProject, $this> */
+    public function odkProject(): HasOne
+    {
+        return $this->hasOne(OdkProject::class, 'owner_id');
+    }
+
 
     /** @return HasMany<Xlsform, $this> */
     public function xlsforms(): HasMany
