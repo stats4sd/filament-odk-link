@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Stats4sd\FilamentOdkLink\Models\Country;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
@@ -27,10 +28,11 @@ trait HasXlsforms
     // Xls Form titles are in the format `$owner->$nameAttribute . '-' . $xlsform->title`
     public string $identifiableAttribute = 'name';
 
-    /** @return HasOne<OdkProject, $this> */
-    public function odkProject(): HasOne
+    // ODK projects might be owned by 'xlsform owners', or the platform itself.
+    /** @return MorphOne<OdkProject, $this> */
+    public function odkProject(): MorphOne
     {
-        return $this->hasOne(OdkProject::class, 'owner_id');
+        return $this->morphOne(OdkProject::class, 'owner');
     }
 
 

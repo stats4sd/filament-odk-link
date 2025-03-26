@@ -22,10 +22,10 @@ class OdkProject extends Model
         'odk_url',
     ];
 
-    /** @return BelongsTo<WithXlsforms, $this> */
-    public function owner(): BelongsTo
+     /** @return MorphTo<Model, $this> */
+    public function owner(): MorphTo
     {
-        return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
+        return $this->morphTo();
     }
 
     /** @return HasMany<AppUser, $this> */

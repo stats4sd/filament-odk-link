@@ -36,7 +36,6 @@ trait HasOdkCentralAccount
 
         foreach ($this->teams as $team) {
             $odkLinkService->addUserToProject($this, $team->odkProject);
-
         }
 
 

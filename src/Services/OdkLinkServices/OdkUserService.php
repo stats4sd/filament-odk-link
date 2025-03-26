@@ -85,6 +85,8 @@ trait OdkUserService
     {
         $token = $this->authenticate();
 
+        ray('adding to OIDK Centrak');
+
         return Http::withToken($token)
             ->post("{$this->endpoint}/projects/{$odkProject->id}/assignments/manager/{$user->odk_id}")
             ->throw()
