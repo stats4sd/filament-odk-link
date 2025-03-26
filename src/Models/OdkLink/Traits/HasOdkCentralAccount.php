@@ -25,7 +25,7 @@ trait HasOdkCentralAccount
      * @throws BindingResolutionException
      * @throws ConnectionException
      */
-    public function syncWithOdkCentral()
+    public function syncWithOdkCentral(): void
     {
         $odkLinkService = app()->make(OdkLinkService::class);
 
@@ -37,8 +37,26 @@ trait HasOdkCentralAccount
         foreach ($this->teams as $team) {
             $odkLinkService->addUserToProject($this, $team->odkProject);
         }
+    }
 
+    /**
+     *
+     *
+     * @throws ConnectionException
+     * @throws RequestException
+     * @throws BindingResolutionException
+     */
+    public function registerOnOdkCentral(string $password): void
+    {
+        $odkService = app()->make(OdkLinkService::class);
+        $response = $odkService->createUser(
+            $this->email,
+            $password
+        );
 
+        // match user roles
+        $this->update(['odk_id' => $response['id']]);
+        $this->syncWithOdkCentral();
     }
 
 }

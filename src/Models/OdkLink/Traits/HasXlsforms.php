@@ -35,7 +35,6 @@ trait HasXlsforms
         return $this->morphOne(OdkProject::class, 'owner');
     }
 
-
     /** @return HasMany<Xlsform, $this> */
     public function xlsforms(): HasMany
     {

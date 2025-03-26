@@ -72,7 +72,7 @@ interface WithXlsforms
 
     public function xlsformTemplates(): MorphMany;
 
-    public function odkProject(): HasOne;
+    public function odkProject(): MorphOne;
 
     public function createLinkedOdkProject(OdkLinkService $odkLinkService): void;
 

@@ -24,24 +24,34 @@ trait OdkUserService
      *
      * @throws RequestException|ConnectionException
      */
-    public function createUser(array $userData): array
+    public function createUser(string $email, string $password): array
     {
         $token = $this->authenticate();
 
         try {
 
-            return Http::withToken($token)
-                ->post("{$this->endpoint}/users", $userData)
+            $result = Http::withToken($token)
+                ->post("{$this->endpoint}/users", [
+                    'email' => $email,
+                    'password' =>  $password
+                ])
                 ->throw()
                 ->json();
+
+            ray($result);
+            return $result;
 
         } catch (RequestException $e) {
             if ($e->getCode() === 409) {
                 // the user already exists; so get the odk ID
-                return Http::withToken($token)
-                    ->get("{$this->endpoint}/users?q={$userData['email']}")
+                $result = Http::withToken($token)
+                    ->get("{$this->endpoint}/users?q={$email}")
                     ->throw()
                     ->json()[0];
+
+                ray('user already exists');
+                ray($result);
+                return $result;
             }
 
             throw $e;
@@ -74,10 +84,23 @@ trait OdkUserService
     {
         $token = $this->authenticate();
 
+        try {
+
         return Http::withToken($token)
             ->post("{$this->endpoint}/assignments/{$role}/{$user->odk_id}")
             ->throw()
             ->json();
+        } catch(RequestException $e) {
+            if($e->getCode() === 409) {
+                // user already has role;
+
+                return [
+                    'success' => true,
+                ];
+            }
+
+            throw $e;
+        }
 
     }
 
@@ -85,10 +108,34 @@ trait OdkUserService
     {
         $token = $this->authenticate();
 
-        ray('adding to OIDK Centrak');
+        try {
 
         return Http::withToken($token)
             ->post("{$this->endpoint}/projects/{$odkProject->id}/assignments/manager/{$user->odk_id}")
+            ->throw()
+            ->json();
+        } catch(RequestException $e) {
+            if($e->getCode() === 409) {
+                return [
+                    'success' => true,
+                ];
+            }
+
+            throw $e;
+        }
+
+    }
+
+    /**
+     * @throws RequestException
+     * @throws ConnectionException
+     */
+    public function removeUserFromProject(WithOdkCentralAccount $user, OdkProject $odkProject): array
+    {
+        $token = $this->authenticate();
+
+        return Http::withToken($token)
+            ->delete("{$this->endpoint}/projects/{$odkProject->id}/assignments/manager/{$user->odk_id}")
             ->throw()
             ->json();
 
