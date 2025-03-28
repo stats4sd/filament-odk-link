@@ -2,7 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -11,10 +10,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Testing\Fluent\Concerns\Has;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Znck\Eloquent\Relations\BelongsToThrough;
@@ -116,6 +114,12 @@ class Submission extends Model implements HasMedia
         return $this->belongsTo(XlsformVersion::class);
     }
 
+    /** @return BelongsToThrough<Xlsform, $this> */
+    public function xlsform(): BelongsToThrough
+    {
+        return $this->belongsToThrough(Xlsform::class, XlsformVersion::class);
+    }
+
     /** @return Attribute<string, never> */
     protected function xlsformTitle(): Attribute
     {
@@ -143,12 +147,31 @@ class Submission extends Model implements HasMedia
         return $this->hasManyThrough(EntityValue::class, Entity::class);
     }
 
-    /** @return BelongsToThrough<Model, $this> */
+    /** @return BelongsToThrough<WithXlsforms, $this> */
     public function owner(): BelongsToThrough
     {
         return $this->belongsToThrough(
             config('filament-odk-link.models.team_model'),
             [Xlsform::class, XlsformVersion::class],
             foreignKeyLookup: [config('filament-odk-link.models.team_model') => 'owner_id']);
+    }
+
+    /** @return Attribute<string, never> */
+    public function odkCentralViewPageUrl(): Attribute
+    {
+        return new Attribute(
+            get: fn() => config('filament-odk-link.odk.url') . "/#/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}"
+        );
+
+    }
+
+    /** @return Attribute<string, never> */
+    protected function enketoEditUrl(): Attribute
+    {
+        $url = config('filament-odk-link.odk.base_endpoint') . "/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}/edit";
+
+        return new Attribute(
+            get: fn() => $url
+        );
     }
 }
