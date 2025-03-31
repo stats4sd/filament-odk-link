@@ -176,6 +176,7 @@ trait OdkFormService
             'has_draft' => false,
             'is_active' => true,
             'odk_version_id' => $xlsformVersion->version,
+            'enketo_id' => $formDetails['enketoId'],
             'odk_published_at' => Carbon::make($formDetails['publishedAt']),
         ]);
         $xlsform->save();

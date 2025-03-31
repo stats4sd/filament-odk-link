@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Exports\XlsformExport;
 
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -18,7 +19,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 
-class XlsformChoicesExport implements FromCollection, ShouldAutoSize, WithColumnWidths, WithHeadings, WithStyles, WithTitle
+class XlsformChoicesExport implements FromCollection, ShouldAutoSize, WithColumnWidths, WithHeadings, WithStyles, WithTitle, ShouldQueue
 {
     /** @var Collection<Collection> */
     public Collection $choiceListRows;

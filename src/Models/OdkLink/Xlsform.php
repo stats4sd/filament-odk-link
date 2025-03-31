@@ -259,10 +259,8 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      */
     public function generateXlsfile(): PendingDispatch
     {
-        ray('generateXlsfile for . ' . $this->title);
-
         // mark form as unready
-        $this->update(['processing' => true]);
+        $this->updateQuietly(['processing' => true]);
 
         $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
         $user = auth()->user();
@@ -282,8 +280,6 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      */
     public function deployDraft(bool $withMedia = true): PendingDispatch
     {
-        ray('deployDraft for . ' . $this->title);
-
         return $this->generateXlsfile()
             ->chain([
                 new DeployDraftXlsformToOdkCentral($this, $withMedia, auth()->user()),

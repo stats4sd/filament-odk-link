@@ -2,7 +2,11 @@
 
 namespace Stats4sd\FilamentOdkLink\Exports\XlsformExport;
 
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -35,6 +39,20 @@ class XlsformSurveyExport implements FromCollection, ShouldAutoSize, WithColumnW
     {
         $this->locales = $xlsform->owner->locales;
 
+    }
+
+    public function collection(): Collection
+    {
+        return $this->getRows();
+    }
+
+    public function headings(): array
+    {
+        return $this->getRows()->first()->keys()->toArray();
+    }
+
+    public function getRows()
+    {
         // Get list of XlsformModuleVersions to use
         /** @var Collection<XlsformModuleVersion> $xlsformModuleVersions */
         $xlsformModuleVersions = $this->xlsform->xlsformModuleVersions()
@@ -43,52 +61,47 @@ class XlsformSurveyExport implements FromCollection, ShouldAutoSize, WithColumnW
 
         $surveyRows = $xlsformModuleVersions->map(function (XlsformModuleVersion $xlsformModuleVersion) {
             return $xlsformModuleVersion
-                ->surveyRows
-                ->sortBy('id')
-                ->load('languageStrings');
+                ->surveyRows()
+                ->orderBy('row_number')
+                ->with('languageStrings')
+                ->lazy();
         })->flatten(1);
 
         $propertyHeadings = $this->getHeadingsFromProperties($surveyRows);
 
-        $this->rows = $surveyRows
-            ->map(function (SurveyRow $row) use ($propertyHeadings) {
 
-                $properties = $propertyHeadings->mapWithKeys(fn(string $heading) => [$heading => $row->properties[Str::replace(':', '', $heading)] ?? null]);
+        return Cache::remember('surveyRows_' . $this->xlsform->id, now()->addMinutes(5), function () use ($surveyRows, $propertyHeadings) {
+            return $surveyRows
+                ->map(function (LazyCollection $row) use ($propertyHeadings) {
 
-                return collect([
-                    'id' => $row->id,
-                    'type' => $row->type,
-                    'name' => $row->name,
-                    ...$this->getLanguageStrings($row, 'label'),
-                    ...$this->getLanguageStrings($row, 'hint'),
-                    'required' => $row->required,
-                    ...$this->getLanguageStrings($row, 'required_message'),
-                    'calculation' => $row->calculation,
-                    'relevant' => $row->relevant,
-                    ...$this->getLanguageStrings($row, 'relevant_message'),
-                    'appearance' => $row->appearance,
-                    'constraint' => $row->constraint,
-                    ...$this->getLanguageStrings($row, 'constraint_message'),
-                    'choice_filter' => $row->choice_filter,
-                    'repeat_count' => $row->repeat_count,
-                    ...$this->getLanguageStrings($row, 'mediaimage'),
-                    'default' => $row->default,
-                    ...$properties, // includes media items that are not per-language (e.g. "media::image")
-                ]);
-            });
+                    ray($row);
 
-        $this->dynamicStylesRowLists = $this->getDynamicStylesRowLists($this->rows);
+                    $properties = $propertyHeadings->mapWithKeys(fn(string $heading) => [$heading => $row->properties[Str::replace(':', '', $heading)] ?? null]);
 
-    }
+                    return collect([
+                        'id' => $row->id,
+                        'type' => $row->type,
+                        'name' => $row->name,
+                        ...$this->getLanguageStrings($row, 'label'),
+                        ...$this->getLanguageStrings($row, 'hint'),
+                        'required' => $row->required,
+                        ...$this->getLanguageStrings($row, 'required_message'),
+                        'calculation' => $row->calculation,
+                        'relevant' => $row->relevant,
+                        ...$this->getLanguageStrings($row, 'relevant_message'),
+                        'appearance' => $row->appearance,
+                        'constraint' => $row->constraint,
+                        ...$this->getLanguageStrings($row, 'constraint_message'),
+                        'choice_filter' => $row->choice_filter,
+                        'repeat_count' => $row->repeat_count,
+                        ...$this->getLanguageStrings($row, 'mediaimage'),
+                        'default' => $row->default,
+                        ...$properties, // includes media items that are not per-language (e.g. "media::image")
+                    ]);
+                });
 
-    public function collection(): Collection
-    {
-        return $this->rows;
-    }
+        });
 
-    public function headings(): array
-    {
-        return $this->rows->first()->keys()->toArray();
     }
 
     public function title(): string
@@ -113,11 +126,13 @@ class XlsformSurveyExport implements FromCollection, ShouldAutoSize, WithColumnW
 
     private function getHeadingsFromProperties(Collection $surveyRows): Collection
     {
-        return $surveyRows
-            ->map(fn($surveyRow) => $surveyRow
-                ->properties
-                ?->mapWithKeys(fn(string $value, string $key) => [$this->expandMediaColumnHeaders($key) => $value])
-                ->keys())
+        return $surveyRows->each->map(function (SurveyRow $surveyRow) {
+
+            ray($surveyRow);
+
+            return $surveyRow->properties?->mapWithKeys(fn($value, $key) => [$this->expandMediaColumnHeaders($key) => $value])
+                ->keys();
+        })
             ->filter()
             ->flatten()
             ->unique();
@@ -207,6 +222,8 @@ class XlsformSurveyExport implements FromCollection, ShouldAutoSize, WithColumnW
         $wrapHintList = $this->locales->map(fn(Locale $language, $index) => chr(67 + $languageCount + $index));
 
         // **** APPLY STYLES ****
+        $dynamicStylesRowLists = $this->getDynamicStylesRowLists($this->getRows());
+
 
         $sheet->getStyle('1:1')->getFont()->setBold(true);
 
@@ -218,19 +235,19 @@ class XlsformSurveyExport implements FromCollection, ShouldAutoSize, WithColumnW
             $sheet->getStyle($column . ':' . $column)->applyFromArray($wrapStyle);
         }
 
-        foreach ($this->dynamicStylesRowLists['beginGroupRows'] as $row) {
+        foreach ($dynamicStylesRowLists['beginGroupRows'] as $row) {
             $sheet->getStyle($row . ':' . $row)->applyFromArray($beginGroupStyle);
         }
 
-        foreach ($this->dynamicStylesRowLists['endGroupRows'] as $row) {
+        foreach ($dynamicStylesRowLists['endGroupRows'] as $row) {
             $sheet->getStyle($row . ':' . $row)->applyFromArray($endGroupStyle);
         }
 
-        foreach ($this->dynamicStylesRowLists['beginRepeatRows'] as $row) {
+        foreach ($dynamicStylesRowLists['beginRepeatRows'] as $row) {
             $sheet->getStyle($row . ':' . $row)->applyFromArray($beginRepeatStyle);
         }
 
-        foreach ($this->dynamicStylesRowLists['endRepeatRows'] as $row) {
+        foreach ($dynamicStylesRowLists['endRepeatRows'] as $row) {
             $sheet->getStyle($row . ':' . $row)->applyFromArray($endRepeatStyle);
         }
 
@@ -238,10 +255,10 @@ class XlsformSurveyExport implements FromCollection, ShouldAutoSize, WithColumnW
 
     private function getDynamicStylesRowLists(Collection $surveyRows): Collection
     {
-        $beginGroupRows = $surveyRows->filter(fn(Collection $surveyRow) => $surveyRow['type'] === 'begin_group')->pluck('id');
-        $endGroupRows = $surveyRows->filter(fn(Collection $surveyRow) => $surveyRow['type'] === 'end_group')->pluck('id');
-        $beginRepeatRows = $surveyRows->filter(fn(Collection $surveyRow) => $surveyRow['type'] === 'begin_repeat')->pluck('id');
-        $endRepeatRows = $surveyRows->filter(fn(Collection $surveyRow) => $surveyRow['type'] === 'end_repeat')->pluck('id');
+        $beginGroupRows = $surveyRows->each->filter(fn(Collection $surveyRow) => $surveyRow['type'] === 'begin_group')->pluck('id');
+        $endGroupRows = $surveyRows->each->filter(fn(Collection $surveyRow) => $surveyRow['type'] === 'end_group')->pluck('id');
+        $beginRepeatRows = $surveyRows->each->filter(fn(Collection $surveyRow) => $surveyRow['type'] === 'begin_repeat')->pluck('id');
+        $endRepeatRows = $surveyRows->each->filter(fn(Collection $surveyRow) => $surveyRow['type'] === 'end_repeat')->pluck('id');
 
         return collect([
             'beginGroupRows' => $beginGroupRows->map(fn($id) => $id + 1),
