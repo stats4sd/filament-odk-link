@@ -3,6 +3,7 @@
 namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
@@ -12,7 +13,9 @@ use Maatwebsite\Excel\Facades\Excel;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
@@ -167,7 +170,7 @@ trait OdkSubmissionService
         $entityValues = [];
 
         // get all choices lists once to avoid multiple db calls when preparing select_multiple values
-        $choices = $xlsform->xlsformTemplate->choiceLists()
+        $choices = $xlsform->choiceLists()
             ->with('choiceListEntries', function ($query) use ($xlsform) {
                 $query
                     ->whereHas('owner', function ($query) use ($xlsform) {
@@ -198,23 +201,8 @@ trait OdkSubmissionService
 
 
                 // for select_multiples, add binary/ boolean columns for each possible response
-                if (isset($schemaItem['value_type']) && Str::startsWith($schemaItem['value_type'], 'select_multiple')) {
-                    $choiceListName = Str::of($schemaItem['value_type'])->after('select_multiple ')->trim()->toString();
-
-
-                    /** @var ChoiceList $choiceList */
-                    $choiceList = $choices->filter(fn(ChoiceList $list) => $list->list_name === $choiceListName)->first();
-                    $choiceListEntries = $choiceList->choiceListEntries->unique('name');
-                    $choicesSelected = Str::of($value)->lower()->explode(' ');
-
-                    foreach ($choiceListEntries as $choiceListEntry) {
-                        $entityValues[] = [
-                            'entity_id' => $entity->id,
-                            'dataset_variable_name' => $schemaItem['name'] . '_' . Str::lower($choiceListEntry->name),
-                            'value' => $choicesSelected->contains(Str::lower($choiceListEntry->name)),
-                        ];
-                    }
-                }
+                $booleanEntityValues = $this->makeMultiSelectBooleans($entity, $schemaItem, $choices, $value);
+                $entityValues = array_merge($entityValues, $booleanEntityValues);
             }
         }
 
@@ -268,8 +256,17 @@ trait OdkSubmissionService
                 'model_type' => $section->dataset->entity_model,
             ]);
 
-            // add polymorphic relationship
-            $entity->owner()->associate($xlsform->owner)->save();
+            // get all choices lists once to avoid multiple db calls when preparing select_multiple values
+            $choices = $xlsform->xlsformTemplate->choiceLists()
+                ->with('choiceListEntries', function ($query) use ($xlsform) {
+                    $query
+                        ->whereHas('owner', function ($query) use ($xlsform) {
+                            $query->where('id', $xlsform->owner->id);
+                        })
+                        ->orWhereNull('owner_id');
+                })
+                ->get();
+
 
             // get array element as record
             $repeatGroupEntry = ['rg' => $repeatGroupRecord];
@@ -290,11 +287,11 @@ trait OdkSubmissionService
 
                 if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
 
-                    //                    // TODO: get label from correct language String entry.
-                    //                    $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
-                    //                        'name' => $schemaItem['name'],
-                    //                        'label' => $schemaItem['name'],
-                    //                    ]);
+                    // TODO: get label from correct language String entry.
+                    // $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
+                    //    'name' => $schemaItem['name'],
+                    //    'label' => $schemaItem['name'],
+                    // ]);
 
                     // store ODK variable value as entity value record
                     $entityValues[] = [
@@ -302,6 +299,10 @@ trait OdkSubmissionService
                         'dataset_variable_name' => $schemaItem['name'],
                         'value' => $value,
                     ];
+
+                    // for select_multiples, add binary/ boolean columns for each possible response
+                    $booleanEntityValues = $this->makeMultiSelectBooleans($entity, $schemaItem, $choices, $value);
+                    $entityValues = array_merge($entityValues, $booleanEntityValues);
                 }
             }
 
@@ -354,5 +355,65 @@ trait OdkSubmissionService
     public function exportAsExcelFile(Xlsform $xlsform): BinaryFileResponse
     {
         return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
+    }
+
+    /**
+     * @param mixed $schemaItem
+     * @param Collection $choices
+     * @param mixed $value
+     * @return array
+     */
+
+
+    public function makeMultiSelectBooleans(Entity $entity, mixed $schemaItem, Collection $choices, mixed $value): array
+    {
+        $booleanEntityValues = [];
+
+        if (isset($schemaItem['value_type']) && Str::startsWith($schemaItem['value_type'], 'select_multiple')) {
+
+            $choiceListName = Str::of($schemaItem['value_type'])->after('select_multiple ')->trim()->toString();
+
+            /** @var ChoiceList $choiceList */
+            $choiceList = $choices->filter(fn(ChoiceList $list) => $list->list_name === $choiceListName)->first();
+            $choiceListEntries = $choiceList->choiceListEntries->unique('name');
+            $choicesSelected = Str::of($value)->lower()->explode(' ');
+
+            foreach ($choiceListEntries as $choiceListEntry) {
+                $booleanEntityValues[] = [
+                    'entity_id' => $entity['id'],
+                    'dataset_variable_name' => $schemaItem['name'] . '_' . Str::lower($choiceListEntry->name),
+                    'value' => $choicesSelected->contains(Str::lower($choiceListEntry->name)),
+                ];
+            }
+        }
+
+        return $booleanEntityValues;
+    }
+
+    // TODO: merge with the above item.
+    // Currently, we have 2 ways to know the contents of an Xlsform. The schema, and the survey_rows.
+    // We should harmonise and use survey_row, as it is more suited to the custom-build ODK forms that we are working towards.
+    public function makeMultiSelectBooleansFromSurveyRow(Entity $entity, SurveyRow $surveyRow, mixed $value): \Illuminate\Support\Collection
+    {
+        $booleanEntityValues = collect();
+
+        if (Str::startsWith(trim($surveyRow->type), 'select_multiple')) {
+            $choiceListEntries = $surveyRow->choiceList->choiceListEntries;
+
+            $choicesSelected = Str::of($value)->lower()->explode(' ');
+
+            foreach ($choiceListEntries as $choiceListEntry) {
+                $booleanEntityValues->push(
+                    EntityValue::make([
+                        'entity_id' => $entity['id'],
+                        'dataset_variable_name' => $surveyRow->name . '_' . Str::lower($choiceListEntry->name),
+                        'value' => $choicesSelected->contains(Str::lower($choiceListEntry->name)),
+                    ])
+                );
+            }
+
+        }
+
+        return $booleanEntityValues;
     }
 }

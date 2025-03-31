@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
+use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class Entity extends Model
 {
@@ -87,10 +88,13 @@ class Entity extends Model
      */
     public function addChildEntities(Collection $entities, Dataset $dataset): Collection
     {
+        // get all xlsform elements once to avoid multiple db calls when preparing select_multiple values
+        $surveyRows = $this->submission->xlsform->surveyRows->load('choiceList.choiceListEntries.owner');
+
         return $entities->map(
 
         /** @phpstan-param Collection<array<string>> $values */
-            function (array $values) use ($dataset) {
+            function (array $values) use ($dataset, $surveyRows) {
 
                 $entity = Entity::create([
                     'parent_id' => $this->id,
@@ -99,16 +103,38 @@ class Entity extends Model
                     'submission_id' => $this->submission_id,
                 ]);
 
-                $values = collect($values)->map(function (mixed $value, string $key) use ($entity) {
-                    return EntityValue::make([
-                        'entity_id' => $entity->id,
-                        'dataset_variable_name' => $key,
-                        'value' => $value,
-                    ]);
-                })
-                ->filter(fn(EntityValue $value) => ! is_null($value->value));
+                $preparedValues = collect();
 
-                $entity->addValues($values);
+                foreach ($values as $key => $value) {
+
+                    if(!$value) {
+                        continue;
+                    }
+
+                    $preparedValues->push(
+                        EntityValue::make([
+                            'entity_id' => $entity->id,
+                            'dataset_variable_name' => $key,
+                            'value' => $value,
+                        ])
+                    );
+
+                    $surveyRow = $surveyRows->firstWhere('name', $key);
+
+                    // ignore items not in the schema; e.g. "__id" fields in repeats.
+                    if (!$surveyRow) {
+                        continue;
+                    }
+
+                    $odkLinkService = app()->make(OdkLinkService::class);
+
+                    $booleanValues = $odkLinkService->makeMultiSelectBooleansFromSurveyRow($entity, $surveyRow, $value);
+
+                    $preparedValues = $preparedValues->merge($booleanValues);
+
+                }
+
+                $entity->addValues($preparedValues);
 
                 return $entity;
             });
