@@ -12,11 +12,12 @@ return new class extends Migration {
          */
         Schema::create('submissions', function (Blueprint $table) {
             $table->id();
-            $table->string('odk_original_id')->unique()->comment('The ODK Central ID of the submission.');
-            $table->string('odk_latest_version_id')->comment('If the submission has been edited on ODK, this is the latest version ID.');
+            $table->string('odk_id')->unique()->comment('The ODK Central ID of the submission.');
+            $table->string('odk_latest_version_id')->nullable()->comment('If the submission has been edited on ODK, this is the latest version ID.');
             $table->foreignId('xlsform_version_id')->constrained('xlsform_versions');
             $table->timestamp('submitted_at');
             $table->string('submitted_by')->nullable();
+            $table->string('updated_by')->nullable();
             $table->longtext('content'); // This is explicitly not json so the ordering of variables is preserved (at the expense of not being able to query the content in SQL);
             $table->json('errors')->nullable();
             $table->boolean('processed')->default(0);

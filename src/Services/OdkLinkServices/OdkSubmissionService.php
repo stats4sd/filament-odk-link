@@ -104,14 +104,35 @@ trait OdkSubmissionService
             ->first();
 
         $submission->update([
-            'content' => $result
+            'content' => $result,
         ]);
     }
 
     /** Retrieve and process all new submissions for a given Xlsform */
     public function getSubmissions(Xlsform $xlsform, bool $draft = false): int
     {
+        $currentSubmissions = $xlsform->submissions()->withTrashed()->get();
+
+        $currentSubmissionIds = $currentSubmissions->pluck('odk_id');
+        $currentSubmissionLatestIds = $currentSubmissions->pluck('odk_latest_version_id');
+
+
         $token = $this->authenticate();
+
+
+        $submissionMetadata = Http::withToken($token)
+            ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions")
+            ->throw()
+            ->json();
+
+
+        $newSubmissions = collect($submissionMetadata)
+            ->filter(fn(array $result) => $currentSubmissionIds->doesntContain($result['instanceId']));
+
+        $updatedSubmissions = collect($submissionMetadata)
+            ->filter(fn(array $result) => $currentSubmissionIds->contains($result['instanceId']) &&
+                $currentSubmissionLatestIds->doesntContain(['currentVersion']['instanceId'])
+            );
 
         $oDataServiceUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}";
 
@@ -124,8 +145,17 @@ trait OdkSubmissionService
             ->throw()
             ->json();
 
-        // only process new submissions
-        $resultsToAdd = Collect($results['value'])->whereNotIn('__id', $xlsform->submissions()->withTrashed()->pluck('odk_id')->toArray());
+        // merge with metadata
+        $resultsToAdd = collect($results['value'])
+            ->filter(fn(array $result) => $newSubmissions->contains('instanceId', $result['__id']) ||
+                $updatedSubmissions->contains('instanceId', $result['__id'])
+            )
+            ->map(function (array $result) use ($submissionMetadata) {
+                $result['odk_id'] = $result['__id'];
+                $result['odk_latest_version_id'] = collect($submissionMetadata)->firstWhere('instanceId', $result['__id'])['currentVersion']['instanceId'];
+
+                return $result;
+            });
 
         foreach ($resultsToAdd as $entry) {
 
@@ -148,12 +178,14 @@ trait OdkSubmissionService
                 throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '), 500);
             }
 
-            $submission = $xlsformVersion->submissions()->create([
-                'odk_id' => $entry['__id'],
-                'submitted_at' => (new Carbon($entry['__system']['submissionDate']))->toDateTimeString(),
-                'submitted_by' => $entry['__system']['submitterName'],
-                'content' => $entry,
-            ]);
+            $submission = $xlsformVersion->submissions()->updateOrCreate(
+                ['odk_id' => $entry['odk_id']],
+                [
+                    'odk_latest_version_id' => $entry['odk_latest_version_id'],
+                    'submitted_at' => (new Carbon($entry['__system']['submissionDate']))->toDateTimeString(),
+                    'submitted_by' => $entry['__system']['submitterName'],
+                    'content' => $entry,
+                ]);
 
             $this->processSubmission($submission, $entry, $xlsformVersion);
 
