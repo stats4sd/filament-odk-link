@@ -12,7 +12,8 @@ return new class extends Migration {
          */
         Schema::create('submissions', function (Blueprint $table) {
             $table->id();
-            $table->string('odk_id')->unique();
+            $table->string('odk_original_id')->unique()->comment('The ODK Central ID of the submission.');
+            $table->string('odk_latest_version_id')->comment('If the submission has been edited on ODK, this is the latest version ID.');
             $table->foreignId('xlsform_version_id')->constrained('xlsform_versions');
             $table->timestamp('submitted_at');
             $table->string('submitted_by')->nullable();

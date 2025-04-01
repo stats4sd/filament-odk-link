@@ -10,6 +10,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Session;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
@@ -50,31 +55,26 @@ class Submission extends Model implements HasMedia
                     });
                 });
             }
+        });
 
-            // before updating submission record
-            // P.S. model event can be triggered after saving the updated submission content in modal popup,
-            // but it cannot be triggered if the editing is saved in a separated Edit page
-            static::updating(function (self $submission) {
+        // before updating submission record
+        // P.S. model event can be triggered after saving the updated submission content in modal popup,
+        // but it cannot be triggered if the editing is saved in a separated Edit page
+        static::updating(function (self $submission) {
 
-                if ($submission->isDirty('content')) {
+            if ($submission->isDirty('content')) {
 
-                    // submission content has been updated by user, need to delete all related entities and entity_values records,
-                    // because they contain values before editing
-                    $entities = $submission->entities;
+                // submission content has been updated by user, need to delete all related entities and entity_values records,
+                // because they contain values before editing
+                $submission->entities()->delete();
 
-                    foreach ($entities as $entity) {
-                        $entity->entityValues()->delete();
-                        $entity->delete();
-                    }
+                // Note: This is hard to find all related models inside a submission here,
+                // it would be much easier to delete custom table records in OdkLinkService.processEntryFromSection()
 
-                    // Note: This is hard to find all related models inside a submission here,
-                    // it would be much easier to delete custom table records in OdkLinkService.processEntryFromSection()
-
-                    // handle the updated submission content again, this will create entities, entity_values and custom table records
-                    $odkLinkService = app()->make(OdkLinkService::class);
-                    $odkLinkService->handleUpdatedSubmissionContent($submission);
-                }
-            });
+                // handle the updated submission content again, this will create entities, entity_values and custom table records
+                $odkLinkService = app()->make(OdkLinkService::class);
+                $odkLinkService->handleUpdatedSubmissionContent($submission);
+            }
         });
 
         static::addGlobalScope('ignore_drafts', static function (Builder $query) {
@@ -168,10 +168,43 @@ class Submission extends Model implements HasMedia
     /** @return Attribute<string, never> */
     protected function enketoEditUrl(): Attribute
     {
-        $url = config('filament-odk-link.odk.base_endpoint') . "/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}/edit";
 
         return new Attribute(
-            get: fn() => $url
+            get: fn() => config('filament-odk-link.odk.base_endpoint') . "/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}/edit",
+        );
+    }
+
+    public function editOnEnketo(string $returnUrl): Redirector|RedirectResponse
+    {
+        $linkService = app()->make(OdkLinkService::class);
+        $token = $linkService->authenticate();
+
+        Session::put('submission_return_url', $returnUrl);
+
+
+        // Prime Enketo for editing
+        // We don't care about the response; only the status - but this is required to load up the form in Enketo and make sure the $enketoUrl below works.
+        $response = Http::withToken($token)
+            ->get($this->enketo_edit_url);
+        // TODO: handle 409 response
+        // TODO: handle 404 response
+
+        ray($response->status());
+
+        $enketoUrl = config('filament-odk-link.odk.url') . '/-/edit/' . $this->xlsform->enketo_id . '?instance_id=' . $this->odk_latest_version_id . '&return_url=' . route('submission.update', ['submission' => $this]);
+
+
+        $url = config('filament-odk-link.odk.url') . '/#/login?next=' . urlencode($enketoUrl);
+
+        // Manually return the editing url
+        return redirect($enketoUrl);
+    }
+
+    /** @return Attribute<?Carbon, never> */
+    protected function ifUpdatedAt(): Attribute
+    {
+        return new Attribute(
+            get: fn() => $this->updated_by ? $this->updated_at : null,
         );
     }
 }

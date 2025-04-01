@@ -39,6 +39,7 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
             });
 
         $package->hasConfigFile();
+        $package->hasRoute('web');
         $package->hasMigrations($this->getMigrations());
 
         // TODO: add translations

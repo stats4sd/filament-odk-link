@@ -73,6 +73,41 @@ trait OdkSubmissionService
         return count($results->json());
     }
 
+    public function updateSubmission(Submission $submission)
+    {
+        $token = $this->authenticate();
+
+        // get updated metadata
+        $response = Http::withToken($token)
+            ->withHeaders([
+                'X-Extended-Metadata' => 'true',
+            ])
+            ->get("{$this->endpoint}/projects/{$submission->xlsform->owner->odkProject->id}/forms/{$submission->xlsform->odk_id}/submissions/{$submission->odk_id}")
+            ->throw()
+            ->json();
+
+        $submission->update([
+            'odk_latest_version_id' => $response['currentVersion']['instanceId'],
+            'updated_at' => $response['updatedAt'],
+            'updated_by' => $response['currentVersion']['submitter']['displayName'],
+        ]);
+
+        $oDataServiceUrl = "{$this->endpoint}/projects/{$submission->xlsform->owner->odkProject->id}/forms/{$submission->xlsform->odk_id}";
+
+        $results = Http::withToken($token)
+            ->get($oDataServiceUrl . '.svc/Submissions?$expand=*&$filter=__system/updatedAt ge ' . $submission->updated_at->toISOString() . ' and __system/updatedAt le ' . $submission->updated_at->addSeconds(1)->toISOString())
+            ->throw()
+            ->json();
+
+        $result = collect($results['value'])
+            ->filter(fn($content) => $content['__id'] === $submission->odk_id)
+            ->first();
+
+        $submission->update([
+            'content' => $result
+        ]);
+    }
+
     /** Retrieve and process all new submissions for a given Xlsform */
     public function getSubmissions(Xlsform $xlsform, bool $draft = false): int
     {
@@ -356,14 +391,6 @@ trait OdkSubmissionService
     {
         return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
     }
-
-    /**
-     * @param mixed $schemaItem
-     * @param Collection $choices
-     * @param mixed $value
-     * @return array
-     */
-
 
     public function makeMultiSelectBooleans(Entity $entity, mixed $schemaItem, Collection $choices, mixed $value): array
     {
