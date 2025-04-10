@@ -204,19 +204,13 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         return app()->make(OdkLinkService::class)->getSubmissions($this, draft: true);
     }
 
-    public function getLiveSubmissionCount(): ?int
-    {
-        return app()->make(OdkLinkService::class)->getSubmissionCount($this);
-    }
-
-    // Get the live submissions count from ODK Central
 
     /** @return Attribute<?int, never> */
     protected function liveSubmissionsCount(): Attribute
     {
         return new Attribute(
             get: function (): ?int {
-                return $this->getLiveSubmissionCount();
+                return app()->make(OdkLinkService::class)->getSubmissionCount($this);
             },
         );
     }
