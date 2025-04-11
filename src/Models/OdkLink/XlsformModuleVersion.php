@@ -114,7 +114,8 @@ class XlsformModuleVersion extends Model implements HasMedia
     /** @return BelongsToMany<Xlsform, $this> */
     public function xlsforms(): BelongsToMany
     {
-        return $this->belongsToMany(Xlsform::class, 'selected_xlsform_module_versions');
+        return $this->belongsToMany(Xlsform::class, 'selected_xlsform_module_versions')
+            ->withPivot(['order']);
     }
 
     /** @return BelongsTo<Model, $this> */

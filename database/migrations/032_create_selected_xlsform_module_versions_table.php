@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -17,6 +16,8 @@ return new class extends Migration
             $table->foreignId('xlsform_id')->constrained('xlsforms')->onUpdate('cascade')->onDelete('cascade');
             $table->integer('order')->nullable();
             $table->timestamps();
+
+            $table->unique(['xlsform_module_version_id', 'xlsform_id'], name: 'unique_selected_modules');
         });
     }
 

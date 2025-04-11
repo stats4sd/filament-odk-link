@@ -177,8 +177,9 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
         // check through the template modules; If this form is missing any, add the default version
 
+        ray($this->id);
         $this->xlsformTemplate->xlsformModules
-            ->filter(fn(XlsformModule $module) => $this->xlsformModuleVersions->doesntContain('module_id', $module->id))
+            ->filter(fn(XlsformModule $module) => $this->xlsformModuleVersions->doesntContain('xlsform_module_id', $module->id))
             ->each(fn(XlsformModule $xlsformModule) => $this->xlsformModuleVersions()->attach($xlsformModule->defaultXlsformVersion));
 
 
@@ -262,7 +263,6 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         return Excel::queue(new XlsformWorkbookExport($this), $filePath, config('filament-odk-link.storage.xlsforms'))->chain(
             [
                 new UpdateXlsformFile($this, $filePath),
-                new NotifyUserThatXlsformFileIsUpdated($this, $user),
             ]
         );
 
@@ -277,7 +277,6 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         return $this->generateXlsfile()
             ->chain([
                 new DeployDraftXlsformToOdkCentral($this, $withMedia, auth()->user()),
-                new NotifyUserThatXlsformFileIsDeployedAsDraft($this, auth()->user()),
             ]);
     }
 

@@ -6,6 +6,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
@@ -18,20 +19,20 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public Xlsform|XlsformTemplate $xlsform, public bool $withMedia, public Authenticatable $user)
+    public function __construct(public Xlsform|XlsformTemplate $xlsform, public bool $withMedia, public ?Authenticatable $user)
     {
     }
 
     /**
      * Execute the job.
      */
-    public function process(): void
+    public function handle(): void
     {
         $this->xlsform->save();
 
         $odkLinkService = app()->make(OdkLinkService::class);
 
-        $odkXlsFormDetails = $odkLinkService->createDraftForm($this->xlsform, $this->xlsform->xlsfile, $this->withMedia);
+        $odkXlsFormDetails = $odkLinkService->createDraftForm($this->xlsform, $this->xlsform->xlsfile->get, $this->withMedia);
 
         $this->xlsform->update([
             'odk_id' => $odkXlsFormDetails['xmlFormId'],
@@ -45,10 +46,14 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
 
     public function failed(?Throwable $exception = null): void
     {
-        Notification::make('xlsform_file_deployment_failed')
-            ->title('Draft Form Failed to Deploy')
-            ->body('The Xlsform ' . $this->xlsform->title . ' belonging to ' . $this->xlsform->owner->name . ' failed to upload to ODK Central. Please check other error messages and review the form to confirm it is a valid ODK form.')
-            ->danger()
-            ->broadcast($this->user);
+        Log::error('Xlsform Deployment Failed', ['exception' => $exception]);
+
+        if ($this->user) {
+            Notification::make('xlsform_file_deployment_failed')
+                ->title('Draft Form Failed to Deploy')
+                ->body('The Xlsform ' . $this->xlsform->title . ' belonging to ' . $this->xlsform->owner->name . ' failed to upload to ODK Central. Please check other error messages and review the form to confirm it is a valid ODK form.')
+                ->danger()
+                ->broadcast($this->user);
+        }
     }
 }

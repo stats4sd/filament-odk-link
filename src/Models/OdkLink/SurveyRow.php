@@ -63,4 +63,69 @@ class SurveyRow extends Model implements HasLanguageStrings
     {
         return $this->belongsTo(ChoiceList::class);
     }
+
+
+    //* *************** FOR EXPORT TO XLSFORM FILE *****************
+
+    public function generateXlsformRow(): array
+    {
+        return [
+            'id' => $this->id,
+            'type' => $this->type,
+            'name' => $this->name,
+            ...$this->getLanguageStrings('label'),
+            ...$this->getLanguageStrings('hint'),
+            'required' => $this->required,
+            ...$this->getLanguageStrings('required_message'),
+            'calculation' => $this->calculation,
+            'relevant' => $this->relevant,
+            ...$this->getLanguageStrings('relevant_message'),
+            'appearance' => $this->appearance,
+            'constraint' => $this->constraint,
+            ...$this->getLanguageStrings('constraint_message'),
+            'choice_filter' => $this->choice_filter,
+            'repeat_count' => $this->repeat_count,
+            ...$this->getLanguageStrings('mediaimage'),
+            'default' => $this->default,
+            ...$this->properties->toArray(), // includes media items that are not per-language (e.g. "media::image")
+        ];
+    }
+
+    public function getLanguageStrings(string $type): array
+    {
+        return $this->languageStrings()
+            ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', $type))
+            ->get()
+            ->mapWithKeys(function ($languageString) {
+
+
+                $key = $this->expandMediaColumnHeaders($languageString->languageStringType->name);
+                $key = "$key::{$languageString->language->name} ({$languageString->language->iso_alpha2})";
+
+                $value = $languageString->text;
+
+                return [$key => $value];
+
+            })->toArray();
+
+    }
+
+    public function expandMediaColumnHeaders(string $type)
+    {
+
+        // fix for mediaimage needing to be media::image, etc.
+        if ($type === 'mediaimage') {
+            return 'media::image';
+        }
+
+        if ($type === 'mediaaudio') {
+            return 'media::audio';
+        }
+
+        if ($type === 'mediavideo') {
+            return 'media::video';
+        }
+
+        return $type;
+    }
 }
