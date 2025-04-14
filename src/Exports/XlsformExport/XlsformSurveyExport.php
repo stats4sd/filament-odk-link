@@ -30,14 +30,10 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths, WithHeadings, WithStyles, WithTitle, WithMapping, ShouldQueue
 {
 
+    use ExportsXlsformContent;
+
     /** @var Collection<Locale> */
     public Collection $locales;
-
-    /** @var Collection<Collection> */
-    public Collection $rows;
-
-    /** @var Collection<Collection> */
-    public Collection $dynamicStylesRowLists;
 
     /** @var Collection<string> */
     public Collection $propertyHeadings;
@@ -45,7 +41,7 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
     public function __construct(public Xlsform $xlsform)
     {
         $this->locales = $xlsform->owner->locales;
-        $this->propertyHeadings = $this->getHeadingsFromProperties();
+        $this->propertyHeadings = $this->getHeadingsFromProperties('surveyRows');
 
     }
 
@@ -97,10 +93,7 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
         ];
     }
 
-    public function mapPropertiesToPropertyHeadings(SurveyRow $surveyRow): array
-    {
-        return $this->propertyHeadings->mapWithKeys(fn(string $heading) => [$heading => $surveyRow->properties[$heading] ?? null])->toArray();
-    }
+
 
     public function headings(): array
     {
@@ -132,42 +125,6 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
     }
 
 
-    public function getLanguageStringHeaders(string $string): Collection
-    {
-        return $this->locales
-            ->map(function (Locale $locale) use ($string) {
-                $outputString = $this->expandMediaColumnHeaders($string);
-                return "$outputString::{$locale->language->name} ({$locale->language->iso_alpha2})";
-            });
-    }
-
-    private function getLanguageStrings(SurveyRow $row, string $string): Collection
-    {
-        return $this->locales
-            ->mapWithKeys(function (Locale $locale) use ($row, $string) {
-                $outputString = $this->expandMediaColumnHeaders($string);
-
-                $key = "$outputString::{$locale->language->name} ({$locale->language->iso_alpha2})";
-                $value = $row->languageStrings()
-                    ->whereHas('languageStringType', fn($query) => $query->where('name', $string))
-                    ->first()->text ?? '';
-
-                return [$key => $value];
-            });
-    }
-
-    private function getHeadingsFromProperties(): Collection
-    {
-        return $this->xlsform->surveyRows()
-            ->selectRaw('json_keys(properties) as headings')
-            ->whereNotNull('properties')
-            ->get()
-            ->pluck('headings')
-            ->filter()
-            ->map(fn($heading) => collect(json_decode($heading, true)))
-            ->flatten()
-            ->unique();
-    }
 
     public function columnWidths(): array
     {
@@ -300,23 +257,3 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
             'endRepeatRows' => $endRepeatRows->map(fn($id) => $id + 1),
         ]);
     }
-
-    public function expandMediaColumnHeaders(string $string): string
-    {
-        // fix for mediaimage needing to be media::image, etc.
-
-        if ($string === 'mediaimage') {
-            return 'media::image';
-        }
-
-        if ($string === 'mediaaudio') {
-            return 'media::audio';
-        }
-
-        if ($string === 'mediavideo') {
-            return 'media::video';
-        }
-
-        return $string;
-    }
-}
