@@ -88,8 +88,15 @@ trait OdkFormService
             ->throw()
             ->json();
 
+        // For newly uploaded templates, use the temp property. Otherwise, get the file from the default "xlsfile" prop.
+        if ($xlsform->newXlsfile) {
+            $file = $xlsform->newXlsfile;
+        } else {
+            $file = $xlsform->xlsfile->getPath();
+        }
+
         // get the xlsform and merge in specific details to the schema returned from ODK Central
-        $surveyExcel = (new XlsImport)->toCollection($xlsform->newXlsfile, null, \Maatwebsite\Excel\Excel::XLSX)['survey'];
+        $surveyExcel = (new XlsImport)->toCollection($file, null, \Maatwebsite\Excel\Excel::XLSX)['survey'];
 
         $schema = collect($schema)->map(function (array $item) use ($surveyExcel): array {
 

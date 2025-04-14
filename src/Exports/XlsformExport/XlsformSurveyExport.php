@@ -41,7 +41,7 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
     public function __construct(public Xlsform $xlsform)
     {
         $this->locales = $xlsform->owner->locales;
-        $this->propertyHeadings = $this->getHeadingsFromProperties('surveyRows');
+        $this->propertyHeadings = $this->getHeadingsFromPropertyList($this->getHeadingsFromProperties());
 
     }
 
@@ -94,7 +94,6 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
     }
 
 
-
     public function headings(): array
     {
         return [
@@ -123,7 +122,6 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
     {
         return 'survey';
     }
-
 
 
     public function columnWidths(): array
@@ -257,3 +255,13 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
             'endRepeatRows' => $endRepeatRows->map(fn($id) => $id + 1),
         ]);
     }
+
+    public function getHeadingsFromProperties(): Collection
+    {
+        return $this->xlsform->surveyRows()
+            ->selectRaw('json_keys(survey_rows.properties) as headings')
+            ->whereNotNull('survey_rows.properties')
+            ->get();
+    }
+
+}

@@ -59,12 +59,10 @@ trait ExportsXlsformContent
         return $string;
     }
 
-    private function getHeadingsFromProperties(string $relation): Collection
+    // processes a list of property headings to return a filtered, flattened, unique list of them to be used as headers.
+    private function getHeadingsFromPropertyList(Collection $entries): Collection
     {
-        return $this->xlsform->$relation()
-            ->selectRaw('json_keys(properties) as headings')
-            ->whereNotNull('properties')
-            ->get()
+        return $entries
             ->pluck('headings')
             ->filter()
             ->map(fn($heading) => collect(json_decode($heading, true)))

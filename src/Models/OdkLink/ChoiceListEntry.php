@@ -52,7 +52,14 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
     /** @return BelongsToThrough<XlsformModuleVersion, $this> */
     public function xlsformModuleVersion(): BelongsToThrough
     {
-        return $this->belongsToThrough(XlsformModuleVersion::class, ChoiceList::class);
+        return $this->belongsToThrough(
+            XlsformModuleVersion::class,
+            ChoiceList::class,
+            foreignKeyLookup: [
+                XlsformModuleVersion::class => 'xlsform_module_version_id',
+                ChoiceList::class => 'choice_list_id',
+            ],
+        );
     }
 
     /** @return MorphMany<LanguageString, $this> */

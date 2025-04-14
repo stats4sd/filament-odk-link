@@ -32,7 +32,7 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
 
         $odkLinkService = app()->make(OdkLinkService::class);
 
-        $odkXlsFormDetails = $odkLinkService->createDraftForm($this->xlsform, $this->xlsform->xlsfile->get, $this->withMedia);
+        $odkXlsFormDetails = $odkLinkService->createDraftForm($this->xlsform, $this->xlsform->xlsfile->getPath(), $this->withMedia);
 
         $this->xlsform->update([
             'odk_id' => $odkXlsFormDetails['xmlFormId'],

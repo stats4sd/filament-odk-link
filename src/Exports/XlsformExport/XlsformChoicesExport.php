@@ -36,32 +36,41 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
     public function __construct(public Xlsform $xlsform)
     {
         $this->locales = $xlsform->owner->locales;
-        $this->propertyHeadings = $this->getHeadingsFromProperties('choiceListEntries');
+        $this->propertyHeadings = $this->getHeadingsFromPropertyList($this->getHeadingsFromProperties());
     }
 
     public function query()
     {
         return ChoiceListEntry::query()
-            ->leftJoinRelationship('xlsformModuleVersion.xlsforms')
+            ->leftJoinRelationship('choiceList.xlsformModuleVersion.xlsforms')
             ->select([
                 'choice_list_entries.id',
-                'choice_list_entries.list_name',
+                'choice_list_entries.choice_list_id',
+                'choice_lists.list_name',
                 'choice_list_entries.name',
                 'choice_list_entries.properties',
                 'choice_list_entries.cascade_filter',
+                'choice_lists.id',
+                'choice_lists.xlsform_module_version_id',
+                'xlsform_module_versions.id',
+                'xlsforms.id',
             ])
             ->distinct()
 
             // only global entries and entries owned by the current form owner
             ->where(fn(Builder $query) => $query
-                ->where('owner_id', $this->xlsform->owner->getKey())
-                ->orWhere('owner_id', null)
+                ->where('choice_list_entries.owner_id', $this->xlsform->owner->getKey())
+                ->orWhere('choice_list_entries.owner_id', null)
             )
 
             // only entries in lists linked to a module version of the current form
-            ->whereHas('xlsformModuleVersion', fn(XlsformModuleVersion $query) => $query->whereHas('xlsforms', fn(Xlsform $query) => $query->where('xlsforms.id', $this->xlsform->id)))
+            ->whereHas('xlsformModuleVersion', fn(Builder $query) => $query
+                ->whereHas('xlsforms', fn(Builder $query) => $query
+                    ->where('xlsforms.id', $this->xlsform->id)
+                )
+            )
             ->with(['languageStrings', 'xlsformModuleVersion.xlsforms'])
-            ->orderBy('choice_list_entries.list_name')
+            ->orderBy('choice_lists.list_name')
             ->orderBy('choice_list_entries.name');
     }
 
@@ -69,10 +78,10 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
     {
         return [
             'id' => $row->id,
-            'list_name' => $row->list_name,
+            'list_name' => $row->choiceList->list_name,
             'name' => Str::replace(' ', '_', $row->name),
-            ...$this->getLanguageStrings($row),
-            ...$this->mapPropertiesToPropertyHeadings($row, 'label'),
+            ...$this->getLanguageStrings($row, 'label'),
+            ...$this->mapPropertiesToPropertyHeadings($row),
         ];
     }
 
@@ -137,5 +146,12 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
         ];
     }
 
+    public function getHeadingsFromProperties(): Collection
+    {
+        return $this->xlsform->choiceListEntries()
+            ->selectRaw('json_keys(choice_list_entries.properties) as headings')
+            ->whereNotNull('choice_list_entries.properties')
+            ->get();
+    }
 
 }

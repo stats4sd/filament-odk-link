@@ -18,7 +18,7 @@ class XlsformWorkbookExport implements WithMultipleSheets, ShouldQueue
     {
         return [
             new XlsformSurveyExport($this->xlsform),
-          //  new XlsformChoicesExport($this->xlsform),
+            new XlsformChoicesExport($this->xlsform),
             new XlsformSettingsExport($this->xlsform),
         ];
 
