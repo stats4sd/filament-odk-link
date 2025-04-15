@@ -2,6 +2,9 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -10,46 +13,73 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Exception;
 use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\FileAdder;
+use Spatie\MediaLibrary\MediaCollections\FileAdderFactory;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasUploadedXlsformFile;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Services\UpdateXlsformTitleInFile;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-class XlsformTemplate extends HasXlsformDrafts implements HasMedia
+class XlsformTemplate extends HasXlsformDrafts
 {
     use HasRelationships;
+    use HasUploadedXlsformFile;
 
     protected $table = 'xlsform_templates';
 
     protected $casts = [
         'schema' => 'collection',
+        'odk_draft_updated_at' => 'timestamp',
     ];
 
     protected static function booted(): void
     {
-
         static::deleting(static function (XlsformTemplate $xlsformTemplate) {
             $odkLinkService = app()->make(OdkLinkService::class);
             $xlsformTemplate->deleteFromOdkCentral($odkLinkService);
+
+
+            $xlsformTemplate->xlsformModules()->delete();
         });
 
-        // if the media files are updated, we need to update the test form in ODK Central
-        static::updated(static function (XlsformTemplate $xlsformTemplate) {
-            $odkLinkService = app()->make(OdkLinkService::class);
+        static::saving(static function (XlsformTemplate $xlsformTemplate) {
+            if ($xlsformTemplate->newXlsfile instanceof UploadedFile) {
+                $xlsformTemplate->addMedia($xlsformTemplate->newXlsfile)->toMediaCollection('xlsform_file');
 
-            $xlsformTemplate->deployDraft($odkLinkService);
+                unset($xlsformTemplate->newXlsfile);
 
-            // mark all other xlsforms using this template as not current
-            $xlsformTemplate->markAllAsNotCurrent();
+
+
+            }
+        });
+
+        static::created(static function (XlsformTemplate $xlsformTemplate) {
+            $xlsformTemplate->afterXlsformFileUpdated();
+        });
+
+        static::saved(static function (XlsformTemplate $xlsformTemplate) {
+
+            // if the draft form has been updated; do the post processing
+            if($xlsformTemplate->isDirty('odk_draft_updated_at')) {
+                $xlsformTemplate->afterXlsformFileUpdated();
+            }
 
             // If the template is available, add a version of it to all teams where `shouldReceiveAllXlsformTemplates` is true
             if ($xlsformTemplate->available) {
-
                 config('filament-odk-link.models.team_model')::all()
                     ->filter(fn(WithXlsforms $owner) => $owner->should_receive_all_xlsform_templates)
                     ->each(function (WithXlsforms $owner) use ($xlsformTemplate) {
@@ -58,7 +88,7 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                         })->first();
 
                         if (!$xlsform) {
-                            $xlsform = $xlsformTemplate->xlsforms()->create([
+                            $xlsformTemplate->xlsforms()->create([
                                 'owner_id' => $owner->getKey(),
                                 'title' => $xlsformTemplate->title,
                             ]);
@@ -68,9 +98,13 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
         });
     }
 
-    // setup media library collections:
-    // - xlsformfile
-    // - attached media
+    public function afterXlsformFileUpdated()
+    {
+        $this->getRequiredMedia();
+
+        $this->extractSections();
+        $this->markAllAsNotCurrent();
+    }
 
     public function registerMediaCollections(): void
     {
@@ -82,9 +116,29 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             ->useDisk(config('filament-odk-link.storage.xlsforms'));
     }
 
-    public function deployDraft(OdkLinkService $service, bool $withMedia = true): bool
+    // ******************* COMPUTED ATTRIBUTES *****************
+
+    // for a template to be available in a locale, *every* module should be linked to that locale
+    /** @return Attribute<Collection, never> */
+    protected function locales(): Attribute
     {
-        return $this->sendDraftToOdkCentral($service, $withMedia);
+        return new Attribute(
+            get: function (): Collection {
+
+                // get set of locales for each default module version
+                $locales = $this->xlsformModules->map(
+                    fn(XlsformModule $xlsformModule) => $xlsformModule
+                        ->defaultXlsformVersion
+                        ->locales
+                );
+
+                // get list of locales present for *every* module
+                return $locales->reduce(function ($carry, $item) {
+                    return $carry->intersect($item);
+                }, $locales->first())
+                    ->values();
+            }
+        );
     }
 
     // ****************** RELATIONSHIPS ************************
@@ -108,6 +162,7 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             ->where('is_active', true);
     }
 
+    /** @return MorphTo */
     public function owner(): MorphTo
     {
         return $this->morphTo();
@@ -188,11 +243,79 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             ->where('structure_item', 'root');
     }
 
+    /** @return HasMany<XlsformModule, $this> */
+    public function xlsformModules(): HasMany
+    {
+        return $this->hasMany(XlsformModule::class, 'xlsform_template_id');
+    }
+
+
+    /** @return Attribute<Collection<XlsformModuleVersion>, never> */
+    public function xlsformDefaultModuleVersions(): Attribute
+    {
+        return new Attribute(
+            get: fn() => $this->xlsformModules->map(fn(XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
+        );
+    }
+
+    /** @return HasManyDeep<SurveyRow, $this> */
+    public function surveyRows(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            SurveyRow::class,
+            [XlsformModule::class, XlsformModuleVersion::class],
+            ['xlsform_template_id', 'xlsform_module_id', 'xlsform_module_version_id']
+        );
+    }
+
+    /** @return HasManyDeep<ChoiceList, $this> */
+    public function choiceLists(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            ChoiceList::class,
+            [XlsformModule::class, XlsformModuleVersion::class],
+            ['xlsform_template_id', 'xlsform_module_id', 'xlsform_module_version_id']
+        );
+    }
+
+    /** @return HasManyDeep<ChoiceListEntry, $this> */
+    public function choiceListEntries(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            ChoiceListEntry::class,
+            [XlsformModule::class, XlsformModuleVersion::class, ChoiceList::class],
+            ['xlsform_template_id', 'xlsform_module_id', 'xlsform_module_version_id', 'choice_list_id']
+        );
+    }
+
+    // Split up language strings into 2 relationships as there are 2 paths between xlsformtemplates and language strings
+
+    /** @return HasManyDeep<LanguageString, $this> */
+public function surveyLanguageStrings(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            LanguageString::class,
+            [XlsformModule::class, XlsformModuleVersion::class, SurveyRow::class],
+            ['xlsform_template_id', 'xlsform_module_id', 'xlsform_module_version_id', ['linked_entry_type', 'linked_entry_id']],
+        );
+    }
+
+    /** @return HasManyDeep<LanguageString, $this> */
+    public function choiceListEntryLanguageStrings(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            LanguageString::class,
+            [XlsformModule::class, XlsformModuleVersion::class, ChoiceList::class, ChoiceListEntry::class],
+            ['xlsform_template_id', 'xlsform_module_id', 'xlsform_module_version_id', 'choice_list_id', ['linked_entry_type', 'linked_entry_id']],
+        );
+    }
+
     // ****************** METHODS ************************
 
     // get required media from ODK Central and store in the database
-    public function getRequiredMedia(OdkLinkService $odkLinkService): void
+    public function getRequiredMedia(): void
     {
+        $odkLinkService = app()->make(OdkLinkService::class);
         $mediaItems = $odkLinkService->getRequiredMedia($this);
 
         foreach ($mediaItems as $mediaItem) {
@@ -232,25 +355,19 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                     ->filter(fn($name) => $name !== '')
                     ->filter(fn($name) => $name !== $item['name']);
 
-                if ($this->repeatingSections()->whereIn('name', $possibleParentNames->toArray())) {
-                    // get the most deep parent name:
-                    ray('finding parent');
+                foreach ($possibleParentNames->reverse() as $possibleParentName) {
+                    $repeatParent = $this->repeatingSections()->where('structure_item', $possibleParentName)->first();
 
-
-                    foreach ($possibleParentNames->reverse() as $possibleParentName) {
-                        $repeatParent = $this->repeatingSections()->where('structure_item', $possibleParentName)->first();
-
-                        if ($repeatParent) {
-                            $parent = $repeatParent;
-                            break;
-                        }
+                    if ($repeatParent) {
+                        $parent = $repeatParent;
+                        break;
                     }
                 }
 
                 $this->repeatingSections()->updateOrCreate([
                     'structure_item' => $item['name'],
                 ], [
-                    'parent_id' => $parent?->id ?? null,
+                    'parent_id' => $parent->id ?? null,
                     'is_repeat' => true,
                     'is_current' => true,
                     'schema' => $this->schema->filter(
@@ -259,10 +376,12 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                             && $subItem['type'] !== 'repeat'
                     ),
                 ]);
+
+
             });
 
         // the above approach is fine unless there are nested repeats. Then, the inner repeat items will *also* be in the outer repeat schema.
-        // To counter this, after each repeat group is created, we filter out any items that are in an innter repeat:
+        // To counter this, after each repeat group is created, we filter out any items that are in an inner repeat:
 
         $this->repeatingSections->each(function (XlsformTemplateSection $section) {
             $this->repeatingSections->each(function (XlsformTemplateSection $reviewSection) use ($section) {
@@ -309,6 +428,24 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             'parent_id' => $rootSection->id,
         ]);
 
+
+        // add dataset variables for any sections that are linked to datasets
+        $this->xlsformTemplateSections
+            ->filter(fn(XlsformTemplateSection $section) => $section->dataset)
+            ->each(function (XlsformTemplateSection $section) {
+
+                $variables = $section->schema
+                    ->filter(fn($item) => isset($item['value_type']) && $item['value_type'] !== 'note')
+                    ->map(fn($item) => [
+                        'name' => $item['name'],
+                        'label' => $item['name'],
+                        'dataset_id' => $section->dataset->id,
+                    ]);
+
+                DatasetVariable::upsert($variables->toArray(), ['name', 'dataset_id'], ['label']);
+            });
+
+
         return $this->xlsformTemplateSections;
     }
 
@@ -318,92 +455,31 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
         $this->xlsforms()->update(['has_latest_template' => false]);
     }
 
-    /** @return MorphMany<XlsformModule, $this> */
-    public function xlsformModules(): MorphMany
+
+    /**
+     * @throws ConnectionException
+     * @throws RequestException
+     * @throws Exception
+     * @throws BindingResolutionException
+     */
+    public function testOnOdkCentral(): self
     {
-        return $this->morphMany(XlsformModule::class, 'form');
+
+        // update form title in xlsfile (save in place) to match user-given title
+        UpdateXlsformTitleInFile::process($this, $this->newXlsfile->getRealPath());
+
+        $odkLinkService = app()->make(OdkLinkService::class);
+
+        return $odkLinkService->createDraftForm($this, $this->newXlsfile->getRealPath());
+
     }
 
-    /** @return HasManyThrough<XlsformModuleVersion, XlsformModule, $this> */
-    public function xlsformModuleVersions(): HasManyThrough
-    {
-        return $this->hasManyThrough(XlsformModuleVersion::class, XlsformModule::class, 'form_id', 'xlsform_module_id')
-            ->where('xlsform_modules.form_type', static::class);
-    }
-
-    /** @return HasManyDeep<SurveyRow, $this> */
-    public function surveyRows(): HasManyDeep
-    {
-        return $this->hasManyDeep(
-            SurveyRow::class,
-            [XlsformModule::class, XlsformModuleVersion::class],
-            [['form_type', 'form_id'], null, 'xlsform_module_version_id']
-        );
-    }
-
-    /** @return HasManyDeep<ChoiceList, $this> */
-    public function choiceLists(): HasManyDeep
-    {
-        return $this->hasManyDeep(
-            ChoiceList::class,
-            [XlsformModule::class, XlsformModuleVersion::class],
-            [['form_type', 'form_id'], null, 'xlsform_module_version_id']
-        );
-    }
-
-    /** @return HasManyDeep<ChoiceListEntry, $this> */
-    public function choiceListEntries(): HasManyDeep
-    {
-        return $this->hasManyDeep(
-            ChoiceListEntry::class,
-            [XlsformModule::class, XlsformModuleVersion::class, ChoiceList::class],
-            [['form_type', 'form_id'], null, 'xlsform_module_version_id', 'choice_list_id']
-        );
-    }
-
-    // Split up language strings into 2 relationships as there are 2 paths between xlsformtemplates and language strings.
-
-    /** @return HasManyDeep<LanguageString, $this> */
-    public function surveyLanguageStrings(): HasManyDeep
-    {
-        return $this->hasManyDeep(
-            LanguageString::class,
-            [XlsformModule::class, XlsformModuleVersion::class, SurveyRow::class],
-            [['form_type', 'form_id'], 'xlsform_module_id', 'xlsform_module_version_id', ['linked_entry_type', 'linked_entry_id']],
-        );
-    }
-
-    /** @return HasManyDeep<LanguageString, $this> */
-    public function choiceListEntryLanguageStrings(): HasManyDeep
-    {
-        return $this->hasManyDeep(
-            LanguageString::class,
-            [XlsformModule::class, XlsformModuleVersion::class, ChoiceList::class, ChoiceListEntry::class],
-            [['form_type', 'form_id'], 'xlsform_module_id', 'xlsform_module_version_id', 'choice_list_id', ['linked_entry_type', 'linked_entry_id']],
-        );
-    }
-
-    // for a template to be available in a locale, *every* module should be linked to that locale
-
-    /** @return Attribute<Collection, never> */
-    protected function locales(): Attribute
+    /** @return Attribute<string, never> */
+    public function fallbackModuleName(): Attribute
     {
         return new Attribute(
-            get: function (): Collection {
-
-                // get set of locales for each default module version
-                $locales = $this->xlsformModules->map(
-                    fn(XlsformModule $xlsformModule) => $xlsformModule
-                        ->defaultXlsformVersion
-                        ->locales
-                );
-
-                // get list of locales present for *every* module
-                return $locales->reduce(function ($carry, $item) {
-                    return $carry->intersect($item);
-                }, $locales->first())
-                    ->values();
-            }
+            get: fn() => Str::slug($this->title) . '_main',
         );
     }
+
 }
