@@ -62,8 +62,17 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts, HasM
      */
     public function updateDraftDetails(OdkLinkService $odkLinkService): void
     {
-        $updated = $odkLinkService->updateDraftFormDetails($this);
-        $updated->save();
+        $odkXlsFormDetails = $odkLinkService->getXlsformDraftDetails($this);
+
+        $this->update([
+            'odk_id' => $odkXlsFormDetails['xmlFormId'],
+            'odk_draft_token' => $odkXlsFormDetails['draftToken'],
+            'odk_version_id' => $odkXlsFormDetails['version'],
+            'has_draft' => true,
+            'enketo_draft_id' => $odkXlsFormDetails['enketoId'],
+            'odk_draft_updated_at' => new Carbon($odkXlsFormDetails['updatedAt']),
+            'needs_update' => false,
+        ]);
     }
 
     /**

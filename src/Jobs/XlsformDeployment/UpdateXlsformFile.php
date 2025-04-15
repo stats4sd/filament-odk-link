@@ -26,7 +26,7 @@ class UpdateXlsformFile implements ShouldQueue
         try {
             $this->xlsform->addMediaFromDisk($this->filePath, config('filament-odk-link.storage.xlsforms'))->toMediaCollection('xlsform_file');
 
-            $this->xlsform->update(['processing' => false]);
+            $this->xlsform->updateQuietly(['processing' => false]);
 
         } catch (FileDoesNotExist $e) {
             Log::error('Trying to save file for Xlsform '.  $this->xlsform->id . ' that does not exist at path ' . $this->filePath);

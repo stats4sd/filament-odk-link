@@ -5,6 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
 use Carbon\Carbon;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
@@ -26,7 +27,7 @@ trait OdkFormService
      * @throws RequestException|ConnectionException
      * @throws \Exception
      */
-    public function createDraftForm(HasXlsformDrafts $xlsform, string $filePath, bool $withMedia = true): HasXlsformDrafts
+    public function createDraftForm(HasXlsformDrafts $xlsform, string $filePath, bool $withMedia = true): array
     {
 
         $token = $this->authenticate();
@@ -73,7 +74,7 @@ trait OdkFormService
             $this->uploadMediaFileAttachments($xlsform);
         }
 
-        return $this->updateDraftFormDetails($xlsform);
+        return $this->getXlsformDraftDetails($xlsform);
 
     }
 
@@ -127,21 +128,14 @@ trait OdkFormService
      *
      * @throws RequestException|ConnectionException
      */
-    public function updateDraftFormDetails(HasXlsformDrafts $xlsform): HasXlsformDrafts
+    public function getXlsformDraftDetails(HasXlsformDrafts $xlsform): array
     {
         $token = $this->authenticate();
 
-        $updates = Http::withToken($token)
+        return Http::withToken($token)
             ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft")
             ->throw()
             ->json();
-
-        $xlsform->odk_draft_token = $updates['draftToken'];
-        $xlsform->enketo_draft_id = $updates['enketoId'];
-        $xlsform->odk_draft_updated_at = new Carbon($updates['updatedAt']);
-        $xlsform->has_draft = true;
-
-        return $xlsform;
     }
 
     /**

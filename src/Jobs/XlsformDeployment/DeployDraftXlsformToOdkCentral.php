@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment;
 
+use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -40,6 +41,8 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
             'odk_version_id' => $odkXlsFormDetails['version'],
             'has_draft' => true,
             'enketo_draft_id' => $odkXlsFormDetails['enketoId'],
+            'odk_draft_updated_at' => new Carbon($odkXlsFormDetails['updatedAt']),
+            'needs_update' => false,
         ]);
 
     }

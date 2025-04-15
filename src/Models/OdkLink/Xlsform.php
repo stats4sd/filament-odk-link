@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use App\Events\XlsformDraftWasDeployed;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -46,6 +47,15 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         // when the model is created;
         static::saved(static function (self $xlsform) {
             $xlsform->syncWithTemplate();
+
+            // check if the needs_up date was updated from true to false
+            if ($xlsform->wasChanged('needs_update') && !$xlsform->needs_update) {
+                XlsformDraftWasDeployed::dispatch($xlsform);
+
+                ray('was changed - needs update');
+            }
+
+
         });
 
         static::created(static function (self $xlsform) {
