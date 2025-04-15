@@ -28,4 +28,10 @@ class ChoiceList extends Model
         return $this->belongsTo(XlsformModuleVersion::class);
     }
 
+    /** @return HasMany<SurveyRow, $this> */
+    public function surveyRows(): HasMany
+    {
+        return $this->hasMany(SurveyRow::class);
+    }
+
 }

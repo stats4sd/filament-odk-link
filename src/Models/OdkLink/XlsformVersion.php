@@ -17,6 +17,7 @@ class XlsformVersion extends Model implements HasMedia
 
     protected $casts = [
         'schema' => 'collection',
+        'is_draft' => 'boolean',
     ];
 
     public function registerMediaCollections(): void

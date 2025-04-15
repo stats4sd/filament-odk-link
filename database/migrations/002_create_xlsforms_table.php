@@ -18,19 +18,24 @@ return new class extends Migration {
 
             $table->foreignId('owner_id')->constrained($teamTable)->cascadeOnDelete()->cascadeOnUpdate();
 
-            // direct link to the owner's project on ODK Central.
-            $table->foreignId('odk_project_id')->nullable();
-
             $table->string('title')->nullable()->comment('If null, the system by default retrieves a title in the format $ownerName - $xlsformTemplateTitle');
 
             // ODK deployment stuff
             $table->string('odk_id')->nullable()->comment('The unique ID of the form on ODK service. If null, the form has not yet been pushed to ODK Central.');
+
+            // ODK Central Draft
             $table->string('odk_draft_token')->nullable()->comment('ODK Central only: The current draft token, required to generate a QR code for testing the draft in ODK Collect');
-            $table->string('odk_version_id')->nullable()->comment('current or most recently deployed version on the ODK service. If null, the form has not yet been deployed on ODK Central.');
             $table->string('has_draft')->default('0')->comment('Does the form have a deployed draft?');
-            $table->string('is_active')->nullable()->comment('is the form active and accepting submissions?');
             $table->string('enketo_draft_id')->nullable()->comment('unique id - part of the url to the enketo version - pulled from the ODK service if supported/enabled');
+            $table->timestamp('odk_draft_updated_at')->nullable()->comment('The last time the draft was updated on ODK Central');
+
+            // ODK Central Active
+            $table->string('odk_version_id')->nullable()->comment('current or most recently deployed version on the ODK service. If null, the form has not yet been deployed on ODK Central.');
+            $table->string('is_active')->nullable()->comment('is the form active and accepting submissions?');
             $table->string('enketo_id')->nullable()->comment('unique id for the enketo version - pulled from the ODK service if supported/enabled');
+            $table->timestamp('odk_published_at')->nullable()->comment('The last time the form was published on ODK Central');
+
+            // Processing
             $table->boolean('processing')->default(0)->comment('Is the form currently being processed? (helps to avoid duplicate deployments)');
             $table->text('odk_error')->nullable()->comment('If an xlsfile upload returns an error from the ODK Aggregate service, it will be stored here');
 
@@ -45,6 +50,8 @@ return new class extends Migration {
             // - a new media file is added to the form_template
             // - the owner updates entries in their lookup dataset entries that are linked to this form.
             $table->boolean('has_latest_media')->default(1);
+
+            $table->boolean('needs_update')->default(0);
 
             $table->timestamps();
         });

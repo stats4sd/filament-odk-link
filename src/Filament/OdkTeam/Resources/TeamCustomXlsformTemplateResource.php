@@ -3,6 +3,8 @@
 namespace Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources;
 
 use Awcodes\FilamentTableRepeater\Components\TableRepeater;
+use Awcodes\TableRepeater\Components\TableRepeater;
+use Awcodes\TableRepeater\Header;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\IconEntry;
@@ -176,6 +178,10 @@ class TeamCustomXlsformTemplateResource extends Resource
                                                 ->deletable(false)
                                                 ->reorderable(false)
                                                 ->addable(false)
+                                                ->headers([
+                                                    Header::make('name'),
+                                                    Header::make('type'),
+                                                ])
                                                 ->schema([
                                                     TextInput::make('name')->disabled()->hiddenLabel(),
                                                     TextInput::make('type')->disabled()->hiddenLabel(),
@@ -224,6 +230,10 @@ class TeamCustomXlsformTemplateResource extends Resource
                                                             ->deletable(false)
                                                             ->reorderable(false)
                                                             ->addable(false)
+                                                            ->headers([
+                                                                Header::make('name'),
+                                                                Header::make('type'),
+                                                            ])
                                                             ->schema([
                                                                 TextInput::make('name')->disabled()->hiddenLabel(),
                                                                 TextInput::make('type')->disabled()->hiddenLabel(),

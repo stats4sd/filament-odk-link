@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Models\Country;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\XlsformModuleVersionLocale;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
@@ -62,7 +63,7 @@ class XlsformModuleVersion extends Model implements HasMedia
     /** @return HasMany<SurveyRow, $this> */
     public function surveyRows(): HasMany
     {
-        return $this->hasMany(SurveyRow::class);
+        return $this->hasMany(SurveyRow::class)->orderBy('row_number');
     }
 
     /** @return HasMany<ChoiceList, $this> */
@@ -113,6 +114,13 @@ class XlsformModuleVersion extends Model implements HasMedia
     /** @return BelongsToMany<Xlsform, $this> */
     public function xlsforms(): BelongsToMany
     {
-        return $this->belongsToMany(Xlsform::class, 'selected_xlsform_module_versions');
+        return $this->belongsToMany(Xlsform::class, 'selected_xlsform_module_versions')
+            ->withPivot(['order']);
+    }
+
+    /** @return BelongsTo<Model, $this> */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
     }
 }

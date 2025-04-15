@@ -8,17 +8,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\HasLanguageStrings;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\CanBeHiddenFromContext;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\IsLookupList;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
+use Stats4sd\FilamentOdkLink\Tests\Models\Team;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
 class ChoiceListEntry extends Model implements HasLanguageStrings
 {
-    use CanBeHiddenFromContext;
     use IsLookupList;
     use \Znck\Eloquent\Traits\BelongsToThrough;
 
@@ -36,10 +37,8 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
 
             if ($owner = HelperService::getCurrentOwner()) {
 
-                $query->where('owner_id', '*', function (Builder $query) use ($owner) {
-                    $query->where('id', $owner->getKey());
-                })
-                    ->orWhereNull('owner_id');
+                $query->where('choice_list_entries.owner_id', $owner->getKey())
+                    ->orWhereNull('choice_list_entries.owner_id');
             }
         });
     }
@@ -53,13 +52,28 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
     /** @return BelongsToThrough<XlsformModuleVersion, $this> */
     public function xlsformModuleVersion(): BelongsToThrough
     {
-        return $this->belongsToThrough(XlsformModuleVersion::class, ChoiceList::class);
+        return $this->belongsToThrough(
+            XlsformModuleVersion::class,
+            ChoiceList::class,
+            foreignKeyLookup: [
+                XlsformModuleVersion::class => 'xlsform_module_version_id',
+                ChoiceList::class => 'choice_list_id',
+            ],
+        );
     }
 
     /** @return MorphMany<LanguageString, $this> */
     public function languageStrings(): MorphMany
     {
         return $this->morphMany(LanguageString::class, 'linked_entry');
+    }
+
+    /** @return MorphOne<LanguageString, $this> */
+    public function defaultLabel(): MorphOne
+    {
+        return $this->morphOne(LanguageString::class, 'linked_entry')
+            ->whereHas('language', fn($query) => $query->where('languages.iso_alpha2', 'en'))
+            ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', 'label'));
     }
 
     // Some choice lists are linked to specific data models to let us add custom information.
@@ -69,17 +83,34 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
         return $this->morphTo();
     }
 
-    /** @return BelongsTo<HasXlsforms | null, $this> */
+    /** @return BelongsTo<Model, $this> */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
     }
 
-    /** @return BelongsToMany<HasXlsforms, $this> */
+    /** @return BelongsToMany<Model, $this> */
     public function ownersWhoRemovedFromContext(): BelongsToMany
     {
         return $this->belongsToMany(config('filament-odk-link.models.team_model'), 'choice_list_entries_removed_owner', 'choice_list_entry_id', 'owner_id');
     }
 
+    public function canBeHiddenFromContext(): bool
+    {
+        return $this->choiceList->can_be_hidden_from_context;
+    }
 
+    public function isRemoved(WithXlsforms $team): bool
+    {
+        return $team->choiceListEntriesRemovedFromContext->contains($this);
+    }
+
+    public function toggleRemoved(WithXlsforms $team): void
+    {
+        if ($this->isRemoved($team)) {
+            $team->choiceListEntriesRemovedFromContext()->detach($this);
+        } else {
+            $team->choiceListEntriesRemovedFromContext()->attach($this);
+        }
+    }
 }

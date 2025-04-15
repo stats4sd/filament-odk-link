@@ -8,6 +8,7 @@ use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -20,9 +21,10 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Language;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
 
-class XlsformTemplateLanguageStringImport implements ShouldQueue, SkipsEmptyRows, ToModel, WithChunkReading, WithEvents, WithHeadingRow, WithMultipleSheets, WithUpserts
+class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, WithChunkReading, WithEvents, WithHeadingRow, WithMultipleSheets, WithUpserts, WithBatchInserts
 {
     use Importable;
     use RegistersEventListeners;
@@ -37,7 +39,7 @@ class XlsformTemplateLanguageStringImport implements ShouldQueue, SkipsEmptyRows
 
     public ?string $relationship;
 
-    public function __construct(public XlsformModuleVersion $xlsformModuleVersion, public string $heading, public string $sheet)
+    public function __construct(public XlsformModuleVersion | XlsformTemplate $model, public string $heading, public string $sheet)
     {
 
         // init translation helper and get needed props from the provided heading;
@@ -89,7 +91,7 @@ class XlsformTemplateLanguageStringImport implements ShouldQueue, SkipsEmptyRows
         $class = $this->class;
         $relationship = $this->relationship;
 
-        $items = $this->xlsformModuleVersion->$relationship
+        $items = $this->model->$relationship
             ->filter(fn ($item) => (string) $item->name === (string) $row['name']);
 
         // filter survey row entries by type as well as name
@@ -132,6 +134,7 @@ class XlsformTemplateLanguageStringImport implements ShouldQueue, SkipsEmptyRows
         // make sure the default locale for this language exists
         $locale = $this->language->locales()->firstOrCreate([
             'is_default' => true,
+            'description' => $this->language->name . '(Default)'
         ]);
 
         return new LanguageString([
@@ -147,7 +150,7 @@ class XlsformTemplateLanguageStringImport implements ShouldQueue, SkipsEmptyRows
 
     public function chunkSize(): int
     {
-        return 500;
+        return 1000;
     }
 
     public function afterImport(AfterImport $event): void
@@ -160,7 +163,7 @@ class XlsformTemplateLanguageStringImport implements ShouldQueue, SkipsEmptyRows
         };
 
         // find all Survey Rows linked to the XlsformTemplate that were not updated during the import... and delete them.
-        $toDelete = $this->xlsformModuleVersion
+        $toDelete = $this->model
             ->choiceListEntryLanguageStrings()
             ->where('language_string_type_id', $this->languageStringType->id)
             ->where('locale_id', $this->language->defaultLocale->id)
@@ -172,7 +175,7 @@ class XlsformTemplateLanguageStringImport implements ShouldQueue, SkipsEmptyRows
             })
             ->get();
 
-        $toDeleteToo = $this->xlsformModuleVersion
+        $toDeleteToo = $this->model
             ->surveyLanguageStrings()
             ->where('language_string_type_id', $this->languageStringType->id)
             ->where('locale_id', $this->language->defaultLocale->id)
@@ -184,5 +187,10 @@ class XlsformTemplateLanguageStringImport implements ShouldQueue, SkipsEmptyRows
         $toDelete->each(fn (LanguageString $languageString) => $languageString->delete());
         $toDeleteToo->each(fn (LanguageString $languageString) => $languageString->delete());
 
+    }
+
+    public function batchSize(): int
+    {
+        return 1000;
     }
 }
