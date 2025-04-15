@@ -27,7 +27,7 @@ interface WithXlsformDrafts
 {
     public function owner(): BelongsTo;
 
-    public function deployDraft(bool $withMedia = true): PendingDispatch;
+    public function deployDraft(bool $withMedia = true): ?PendingDispatch;
 
     public function deployDraftSync(bool $withMedia = true): void;
 

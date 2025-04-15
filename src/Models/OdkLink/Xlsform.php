@@ -50,7 +50,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
             // check if the needs_up date was updated from true to false
             if ($xlsform->wasChanged('needs_update') && !$xlsform->needs_update) {
-                XlsformDraftWasDeployed::dispatch($xlsform);
+                XlsformDraftWasDeployed::dispatch($xlsform->id);
 
                 ray('was changed - needs update');
             }
@@ -282,8 +282,13 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      * @throws FileDoesNotExist
      * @throws FileIsTooBig
      */
-    public function deployDraft(bool $withMedia = true): PendingDispatch
+    public function deployDraft(bool $withMedia = true): ?PendingDispatch
     {
+        // if the form is already mid-processing, do not requeue.
+        if($this->processing) {
+            return null;
+        }
+
         return $this->generateXlsfile()
             ->chain([
                 new DeployDraftXlsformToOdkCentral($this, $withMedia, auth()->user()),

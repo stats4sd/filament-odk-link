@@ -46,7 +46,7 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts, HasM
 
     /**************** METHODS *************************/
 
-    public function deployDraft(bool $withMedia = true): PendingDispatch
+    public function deployDraft(bool $withMedia = true): ?PendingDispatch
     {
         return DeployDraftXlsformToOdkCentral::dispatch($this, $withMedia, auth()->user());
     }
