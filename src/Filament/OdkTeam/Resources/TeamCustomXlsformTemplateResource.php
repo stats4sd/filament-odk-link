@@ -3,6 +3,7 @@
 namespace Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources;
 
 use Awcodes\FilamentTableRepeater\Components\TableRepeater;
+use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\TextInput;
@@ -68,7 +69,7 @@ class TeamCustomXlsformTemplateResource extends Resource
                     ->sortable(),
                 Tables\Columns\IconColumn::make('has_version')
                     ->label('Deployed?')
-                    ->state(fn(Xlsformtemplate $record) => $record->xlsforms->count() > 0)
+                    ->state(fn (Xlsformtemplate $record) => $record->xlsforms->count() > 0)
                     ->boolean(),
 
             ])
@@ -95,10 +96,10 @@ class TeamCustomXlsformTemplateResource extends Resource
                     ->schema([
                         TextEntry::make('title'),
                         TextEntry::make('xlsfile_name')
-                            ->url(fn(?XlsformTemplate $record): string => $record?->getFirstMediaUrl('xlsform_file')),
+                            ->url(fn (?XlsformTemplate $record): string => $record?->getFirstMediaUrl('xlsform_file')),
                         IconEntry::make('available')
                             ->label('Available to Platform users?')
-                            ->icon(fn(bool $state): string => match ($state) {
+                            ->icon(fn (bool $state): string => match ($state) {
                                 false => 'heroicon-o-no-symbol',
                                 true => 'heroicon-o-check-circle',
                             }),
@@ -114,14 +115,14 @@ class TeamCustomXlsformTemplateResource extends Resource
                         RepeatableEntry::make('requiredFixedMedia')
                             ->schema([
                                 TextEntry::make('name')
-                                    ->url(fn(?RequiredMedia $record): string => $record->getFirstMediaUrl()),
+                                    ->url(fn (?RequiredMedia $record): string => $record->getFirstMediaUrl()),
                                 TextEntry::make('type'),
                                 IconEntry::make('status')
-                                    ->icon(fn(int $state): string => match ($state) {
+                                    ->icon(fn (int $state): string => match ($state) {
                                         1 => 'heroicon-o-check-circle',
                                         default => 'heroicon-o-question-circle',
                                     })
-                                    ->color(fn(int $state): string => match ($state) {
+                                    ->color(fn (int $state): string => match ($state) {
                                         1 => 'success',
                                         default => 'gray',
 
@@ -136,14 +137,14 @@ class TeamCustomXlsformTemplateResource extends Resource
                         RepeatableEntry::make('requiredDataMedia')
                             ->schema([
                                 TextEntry::make('name')
-                                    ->url(fn(?RequiredMedia $record): string => $record->getFirstMediaUrl()),
+                                    ->url(fn (?RequiredMedia $record): string => $record->getFirstMediaUrl()),
                                 TextEntry::make('full_type'),
                                 IconEntry::make('status')
-                                    ->icon(fn(int $state): string => match ($state) {
+                                    ->icon(fn (int $state): string => match ($state) {
                                         1 => 'heroicon-o-check-circle',
                                         default => 'heroicon-o-x-circle',
                                     })
-                                    ->color(fn(int $state): string => match ($state) {
+                                    ->color(fn (int $state): string => match ($state) {
                                         1 => 'success',
                                         default => 'gray',
                                     }),
@@ -162,7 +163,7 @@ class TeamCustomXlsformTemplateResource extends Resource
                                 TextEntry::make('name')->hiddenLabel(),
                                 TextEntry::make('type')->hiddenLabel(),
                             ])
-                            ->visible(fn(?XlsformTemplate $record): bool => $record->rootSection->schema->count() < 5),
+                            ->visible(fn (?XlsformTemplate $record): bool => $record->rootSection->schema->count() < 5),
 
                         ViewEntry::make('schema')
                             ->view('filament-odk-link::filament.infolists.components.xlsform-section-schema-modal-link')
@@ -195,7 +196,7 @@ class TeamCustomXlsformTemplateResource extends Resource
                                     ->modalSubmitAction(false)
                                     ->modalCancelActionLabel('Close'),
                             ])
-                            ->visible(fn(?XlsformTemplate $record): bool => $record->rootSection->schema->count() >= 5),
+                            ->visible(fn (?XlsformTemplate $record): bool => $record->rootSection->schema->count() >= 5),
 
                         TextEntry::make('rootSection.dataset.name')->label('Submission data is added to:')
                             ->placeholder('No dataset linked')
@@ -239,7 +240,7 @@ class TeamCustomXlsformTemplateResource extends Resource
                                                             ]),
                                                     ];
                                                 })
-                                                ->fillForm(fn(?XlsformTemplateSection $record): array => [
+                                                ->fillForm(fn (?XlsformTemplateSection $record): array => [
                                                     'schema' => $record->schema,
                                                 ])
                                                 ->modalSubmitAction(false)
@@ -253,7 +254,7 @@ class TeamCustomXlsformTemplateResource extends Resource
                             }),
 
                     ])
-                    ->visible(fn(?XlsformTemplate $record): bool => $record->repeatingSections->count() > 0),
+                    ->visible(fn (?XlsformTemplate $record): bool => $record->repeatingSections->count() > 0),
 
                 Section::make('Draft Testing')
                     ->collapsed()
@@ -270,7 +271,7 @@ class TeamCustomXlsformTemplateResource extends Resource
 
                         // open URL in browser new tab
                         TextEntry::make('enketo_draft_url')->label('Click below link to view ODK form in browser')
-                            ->url(fn(?XlsformTemplate $record): string => $record->enketo_draft_url)
+                            ->url(fn (?XlsformTemplate $record): string => $record->enketo_draft_url)
                             ->openUrlInNewTab(),
 
                     ]),

@@ -5,13 +5,14 @@ namespace Stats4sd\FilamentOdkLink\Jobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
 
 class FinishLanguageStringImport implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public XlsformModuleVersion $xlsformModuleVersion, public string $heading)
+    public function __construct(public XlsformModuleVersion | XlsformTemplate $model, public string $heading)
     {
     }
 
@@ -26,13 +27,13 @@ class FinishLanguageStringImport implements ShouldQueue
         $language = $xlsformTranslationHelper->getLanguageFromColumnHeader($this->heading);
         $languageStringType = $xlsformTranslationHelper->getLanguageStringTypeFromColumnHeader($this->heading);
 
-        $this->xlsformModuleVersion
+        $this->model
             ->surveyLanguageStrings()
             ->where('language_string_type_id', $languageStringType->id)
             ->where('locale_id', $language->defaultLocale->id)
             ->update(['language_strings.updated_during_import' => false]);
 
-        $this->xlsformModuleVersion
+        $this->model
             ->choiceListEntryLanguageStrings()
             ->where('language_string_type_id', $languageStringType->id)
             ->where('locale_id', $language->defaultLocale->id)

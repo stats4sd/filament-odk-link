@@ -47,7 +47,7 @@ class Language extends Model
         );
     }
 
-    /** @return BelongsToMany<HasXlsforms, $this> */
+    /** @return BelongsToMany<Model, $this> */
     public function owners(): BelongsToMany
     {
         return $this->BelongsToMany

@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
@@ -54,7 +54,7 @@ class Locale extends Model implements HasMedia
             ->withPivot(['has_language_strings', 'needs_update']);
     }
 
-    /** @return BelongsTo<HasXlsforms, $this> */
+    /** @return BelongsTo<Model, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(config('filament-odk-link.models.team_model'), 'creator_id');
@@ -86,10 +86,10 @@ class Locale extends Model implements HasMedia
                 $moduleVersions = $this->xlsformModuleVersions;
                 $allModuleVersions = $xlsforms
                     ->map(
-                        fn(Xlsform $xlsform) => $xlsform
+                        fn (Xlsform $xlsform) => $xlsform
                             ->xlsformTemplate
                             ->xlsformModules
-                            ->map(fn(XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
+                            ->map(fn (XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
                     )->flatten();
 
                 if ($moduleVersions->count() === 0) {
@@ -104,7 +104,7 @@ class Locale extends Model implements HasMedia
                  * Ignoring because phpstan/larastan doesn't yet support easy handling of pivot values, and the workaround seem not worth it here.
                  * https://github.com/larastan/larastan/issues/1774
                  */
-                if ($moduleVersions->every(fn($moduleVersion) => !$moduleVersion->pivot->needs_update && $moduleVersion->pivot->has_language_strings)) {
+                if ($moduleVersions->every(fn ($moduleVersion) => ! $moduleVersion->pivot->needs_update && $moduleVersion->pivot->has_language_strings)) {
                     return 'Ready for use';
                 }
 
@@ -117,7 +117,7 @@ class Locale extends Model implements HasMedia
     protected function odkLabel(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->language->name . ' (' . $this->language->iso_alpha2 . ')',
+            get: fn () => $this->language->name . ' (' . $this->language->iso_alpha2 . ')',
         );
     }
 
@@ -125,7 +125,7 @@ class Locale extends Model implements HasMedia
     protected function isEditable(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->creator?->getKey() === HelperService::getCurrentOwner()->getKey(),
+            get: fn () => $this->creator?->getKey() === HelperService::getCurrentOwner()->getKey(),
         );
     }
 
@@ -135,7 +135,7 @@ class Locale extends Model implements HasMedia
     protected function isEditing(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->is_editable && $this->status !== 'Ready for use',
+            get: fn () => $this->is_editable && $this->status !== 'Ready for use',
         );
     }
 }

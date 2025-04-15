@@ -3,22 +3,37 @@
 namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
+use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithUpserts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, ToModel, WithChunkReading, WithHeadingRow, WithMultipleSheets, WithUpserts
 {
     use Importable;
+    use GetsModuleNamesPerRow;
 
-    public function __construct(public XlsformModuleVersion $xlsformModuleVersion, public string $moduleColumn = 'module') {}
+    /**
+     * @throws \Exception
+     */
+    public function __construct(public XlsformTemplate|XlsformModuleVersion $model, public string $moduleColumn = 'module')
+    {
+        if ($model instanceof XlsformTemplate) {
+            $model->load('xlsformModules.xlsformModuleVersions.choiceLists');
+        }
+    }
 
     public function sheets(): array
     {
@@ -31,19 +46,17 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
     {
         $row = collect($row);
 
-        // only review the rows in the current module
-        // skip entries not part of the current module
-        $moduleName = $this->xlsformModuleVersion->xlsformModule?->name ?? $this->xlsformModuleVersion->name;
-        if ($row[$this->moduleColumn] !== $moduleName) {
+        // skip non-select questions
+        if(! Str::startsWith(trim($row['type']), 'select_') ) {
             return null;
         }
 
-        // only process select questions
-        if (! Str::startsWith($row['type'], 'select_')) {
-            return null;
-        }
+        // get current module
+        $moduleVersion = $this->getModuleVersionAndNameFromRow($row, $this->model, $this->moduleColumn);
 
-        if (isset($row['localisable'])) {
+        $listName = Str::of($row['type'])->trim()->afterLast(' ')->toString();
+
+         if (isset($row['localisable'])) {
             $localisable = match ($row['localisable']) {
                 'true', 'yes', 'TRUE', 'YES', 'Yes', 'True', '1', 1, true => true,
                 default => false,
@@ -52,28 +65,32 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
             $localisable = false;
         }
 
-        // extract the list name from the type (e.g. "select_multiple crops" or "select_one farms")
-        $listName = Str::afterLast($row['type'], ' ');
 
         return new ChoiceList([
-            'xlsform_module_version_id' => $this->xlsformModuleVersion->id,
-            'list_name' => $listName,
+           'xlsform_module_version_id' => $moduleVersion->id,
+           'list_name' => $listName,
             'is_localisable' => $localisable,
         ]);
+
     }
 
     public function chunkSize(): int
     {
-        return 500;
+        return 1000;
     }
 
     public function isEmptyWhen(array $row): bool
     {
-        return ! isset($row['type']) || $row['type'] === '';
+        return !isset($row['type']) || $row['type'] === '';
     }
 
     public function uniqueBy(): array
     {
         return ['xlsform_module_version_id', 'list_name'];
+    }
+
+    public function batchSize(): int
+    {
+        return 1000;
     }
 }

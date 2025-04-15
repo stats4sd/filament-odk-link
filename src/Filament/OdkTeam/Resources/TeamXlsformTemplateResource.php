@@ -10,6 +10,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource\Pages\ListTeamXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
@@ -85,7 +86,7 @@ class TeamXlsformTemplateResource extends Resource
 
                         // publish the new form
                         $xlsform->refresh();
-                        $xlsform->publishForm(app()->make(OdkLinkService::class));
+                        $xlsform->publishForm();
 
                     }),
                 Tables\Actions\Action::make('download file')

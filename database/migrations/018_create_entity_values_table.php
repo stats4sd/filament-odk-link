@@ -15,6 +15,9 @@ return new class extends Migration
             $table->text('value');
             $table->timestamps();
 
+            $table->index('dataset_variable_name');
+            $table->unique(['entity_id', 'dataset_variable_name']);
+
         });
     }
 

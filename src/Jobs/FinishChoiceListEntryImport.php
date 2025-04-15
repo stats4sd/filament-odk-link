@@ -5,12 +5,13 @@ namespace Stats4sd\FilamentOdkLink\Jobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 class FinishChoiceListEntryImport implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public XlsformModuleVersion $xlsformModuleVersion)
+    public function __construct(public XlsformModuleVersion | XlsformTemplate $model)
     {
     }
 
@@ -19,7 +20,7 @@ class FinishChoiceListEntryImport implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->xlsformModuleVersion->choiceListEntries()
+        $this->model->choiceListEntries()
             ->update(['updated_during_import' => false]);
 
     }

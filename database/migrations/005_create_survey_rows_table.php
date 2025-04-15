@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -16,6 +15,9 @@ return new class extends Migration
             $table->foreignId('xlsform_module_version_id')->constrained('xlsform_module_versions')->cascadeOnDelete()->cascadeOnUpdate();
             $table->bigInteger('row_number')->nullable();
             $table->string('name');
+
+            $table->string('repeat_group_path', 3000)->nullable()->comment('If this survey row is inside a repeat group, what is the path to that repeat group?');
+            $table->string('path', 3000)->nullable();
 
             $table->string('type');
             $table->foreignId('choice_list_id')->nullable()->constrained('choice_lists')->nullOnDelete()->cascadeOnUpdate();
