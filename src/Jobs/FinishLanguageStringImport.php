@@ -12,6 +12,7 @@ class FinishLanguageStringImport implements ShouldQueue
 {
     use Queueable;
 
+
     public function __construct(public XlsformModuleVersion | XlsformTemplate $model, public string $heading)
     {
     }
