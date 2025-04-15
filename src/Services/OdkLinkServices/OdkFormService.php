@@ -12,6 +12,7 @@ use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -67,6 +68,7 @@ trait OdkFormService
             $xlsform->odk_id = $responseBody['xmlFormId'];
         }
 
+        // TODO: swap this to update Draft Schema; differentiate between latest draft schema and published versions schemas...
         $xlsform = $this->updateSchema($xlsform);
 
         // deploy media files - only if with media is true.
@@ -119,7 +121,13 @@ trait OdkFormService
             return $item;
         })->toArray();
 
+
         $xlsform->schema = $schema;
+
+        if ($xlsform instanceof Xlsform) {
+            $xlsform->xlsformDraftVersion->schema = $schema;
+        }
+
         return $xlsform;
     }
 
@@ -170,6 +178,9 @@ trait OdkFormService
         $xlsform->xlsformVersions()->update([
             'active' => false,
         ]);
+
+        // get schema from latest draft version;
+        $formDetails['schema'] = $xlsform->xlsformDraftVersion->schema;
 
         $xlsformVersion = $this->createNewVersion($xlsform, $formDetails);
 

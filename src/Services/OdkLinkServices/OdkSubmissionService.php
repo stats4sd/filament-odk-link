@@ -119,9 +119,18 @@ trait OdkSubmissionService
 
         $token = $this->authenticate();
 
+        $metadataUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions";
+        $oDataServiceUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}";
+
+
+        if ($draft) {
+            $metadataUrl = Str::replaceLast('/submissions', '/draft/submissions', $metadataUrl);
+            $oDataServiceUrl .= '/draft';
+        }
+
 
         $submissionMetadata = Http::withToken($token)
-            ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions")
+            ->get($metadataUrl)
             ->throw()
             ->json();
 
@@ -133,12 +142,6 @@ trait OdkSubmissionService
             ->filter(fn(array $result) => $currentSubmissionIds->contains($result['instanceId']) &&
                 $currentSubmissionLatestIds->doesntContain(['currentVersion']['instanceId'])
             );
-
-        $oDataServiceUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}";
-
-        if ($draft) {
-            $oDataServiceUrl .= '/draft';
-        }
 
         $results = Http::withToken($token)
             ->get($oDataServiceUrl . '.svc/Submissions?$expand=*')
@@ -185,11 +188,12 @@ trait OdkSubmissionService
                     'submitted_at' => (new Carbon($entry['__system']['submissionDate']))->toDateTimeString(),
                     'submitted_by' => $entry['__system']['submitterName'],
                     'content' => $entry,
+                    'draft_data' => $draft,
                 ]);
 
             $this->processSubmission($submission, $entry, $xlsformVersion);
 
-            $this->getAttachedMedia($entry, $token, $xlsform, $submission);
+            $this->getAttachedMedia($entry, $token, $xlsform, $submission, $draft);
 
             // ******** CALL APP-SPECIFIC PROCESSING ******** //
 

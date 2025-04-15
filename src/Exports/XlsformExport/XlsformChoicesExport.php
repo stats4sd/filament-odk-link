@@ -50,10 +50,7 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
                 'choice_list_entries.name',
                 'choice_list_entries.properties',
                 'choice_list_entries.cascade_filter',
-                'choice_lists.id',
                 'choice_lists.xlsform_module_version_id',
-                'xlsform_module_versions.id',
-                'xlsforms.id',
             ])
             ->distinct()
 

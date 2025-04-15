@@ -45,6 +45,19 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
             'needs_update' => false,
         ]);
 
+        // only ever keep 1 "draft" version; we don't need to store all iterations of drafts as we don't keep the old submissions either
+        $this->xlsform->xlsformVersions()->updateOrCreate(
+            [
+                'is_draft' => true,
+            ],
+            [
+                'version' => $odkXlsFormDetails['version'],
+                'odk_version' => $odkXlsFormDetails['version'],
+                'schema' => $odkXlsFormDetails['schema'],
+                'active' => true,
+            ]
+        );
+
     }
 
     public function failed(?Throwable $exception = null): void

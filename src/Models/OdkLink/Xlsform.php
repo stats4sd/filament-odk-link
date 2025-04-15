@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Http\Client\RequestException;
 use Maatwebsite\Excel\Facades\Excel;
@@ -144,6 +145,12 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     public function xlsformVersions(): HasMany
     {
         return $this->hasMany(XlsformVersion::class);
+    }
+
+    /** @return HasOne<XlsformVersion, $this> */
+    public function xlsformDraftVersion(): HasOne
+    {
+        return $this->hasOne(XlsformVersion::class)->where('is_draft', true);
     }
 
     /** @return HasManyThrough<Submission, XlsformVersion, $this> */
