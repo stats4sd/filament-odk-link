@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('has_draft')->nullable()->comment('Does the form have a deployed draft?');
             $table->string('enketo_draft_id')->nullable()->comment('id component of the enketo version - pulled from the ODK service if supported/enabled');
             $table->boolean('draft_needs_updating')->default(0)->comment('Set to true if the form has been updated since the last draft was deployed to ODK Central');
+            $table->timestamp('odk_draft_updated_at')->nullable();
             $table->text('odk_error')->nullable()->comment('If a xlsfile upload results in an ODK syntax error, it will be stored here. For working forms, this will be null');
             $table->string('odk_version_id')->nullable();
 

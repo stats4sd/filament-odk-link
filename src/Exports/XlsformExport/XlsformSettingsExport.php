@@ -3,6 +3,7 @@
 namespace Stats4sd\FilamentOdkLink\Exports\XlsformExport;
 
 use Carbon\Carbon;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -13,7 +14,7 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 
-class XlsformSettingsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithStyles, WithTitle
+class XlsformSettingsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithStyles, WithTitle, ShouldQueue
 {
     public function __construct(public Xlsform $xlsform) {}
 

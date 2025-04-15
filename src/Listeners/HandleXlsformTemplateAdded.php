@@ -11,6 +11,7 @@ use Stats4sd\FilamentOdkLink\Jobs\FinishChoiceListEntryImport;
 use Stats4sd\FilamentOdkLink\Jobs\FinishSurveyRowImport;
 use Stats4sd\FilamentOdkLink\Jobs\ImportAllLanguageStrings;
 use Stats4sd\FilamentOdkLink\Jobs\LinkModuleVersionToLocales;
+use Stats4sd\FilamentOdkLink\Jobs\PrepareSurveyRowPaths;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
@@ -20,15 +21,17 @@ class HandleXlsformTemplateAdded
 {
     public function handle(MediaHasBeenAddedEvent $event): void
     {
+
+        /** @var XlsformModuleVersion | XlsformTemplate $model */
         $model = $event->media->model;
 
         // only process xlsform module versions or templates
-        if (! $model instanceof XlsformModuleVersion && ! $model instanceof XlsformTemplate) {
+        if (!$model instanceof XlsformModuleVersion && !$model instanceof XlsformTemplate) {
             return;
         }
 
         $filePath = $event->media->getPath();
-        $moduleVersions = collect();
+        $moduleVersion = null;
 
         // for xlsform templates, create all the included xlsform modules.
         if ($model instanceof XlsformTemplate) {
@@ -36,11 +39,10 @@ class HandleXlsformTemplateAdded
         }
 
         if ($model instanceof XlsformModuleVersion) {
-            $moduleVersions = collect([$model]);
+            $moduleVersion = $model;
         }
 
-        // for a single module version upload, just run the process once
-        $this->processXlsformTemplate($filePath, $moduleVersions);
+        $this->processXlsformTemplate($filePath, $model);
 
     }
 
@@ -53,35 +55,35 @@ class HandleXlsformTemplateAdded
         return $model
             ->xlsformModules
             ->map(
-                fn (XlsformModule $module) => $module
+                fn(XlsformModule $module) => $module
                     ->xlsformModuleVersions
-                    ->filter(fn (XlsformModuleVersion $xlsformModuleVersion) => $xlsformModuleVersion->is_default)
+                    ->filter(fn(XlsformModuleVersion $xlsformModuleVersion) => $xlsformModuleVersion->is_default)
             )
             ->flatten();
     }
 
-    public function processXlsformTemplate(string $filePath, Collection $moduleVersions, string $moduleColumn = 'module'): void
+    public function processXlsformTemplate(string $filePath, XlsformModuleVersion | XlsformTemplate $model, string $moduleColumn = 'module'): void
     {
         // Get the translatable headings from the Xlsform workbook;
         $translatableHeadings = (new XlsformTranslationHelper)->getTranslatableColumnsFromFile($filePath);
 
-        $moduleVersions->each(function (XlsformModuleVersion $moduleVersion) use ($translatableHeadings, $filePath, $moduleColumn) {
 
-            // make sure all the choice_lists are imported;
-            (new XlsformTemplateChoiceListImport($moduleVersion, $moduleColumn))->queue($filePath);
+        // make sure all the choice_lists are imported;
+        (new XlsformTemplateChoiceListImport($model, $moduleColumn))->queue($filePath);
 
-            // TODO: add validation check to make sure all names are unique in Survey + choices sheet...
+        // TODO: add validation check to make sure all names are unique in Survey + choices sheet...
 
-            // Import the XLSform workbook to survey rows and choice list entries;
-            (new XlsformTemplateWorkbookImport($moduleVersion, $translatableHeadings, $moduleColumn))->queue($filePath)
-                ->chain([
-                    new FinishSurveyRowImport($moduleVersion),
-                    new FinishChoiceListEntryImport($moduleVersion),
-                    new LinkModuleVersionToLocales($moduleVersion, $translatableHeadings),
+        // Import the XLSform workbook to survey rows and choice list entries;
+        (new XlsformTemplateWorkbookImport($model, $translatableHeadings, $moduleColumn))->queue($filePath)
+            ->chain([
+                new PrepareSurveyRowPaths($model),
+                new FinishSurveyRowImport($model),
+                new FinishChoiceListEntryImport($model),
+                new LinkModuleVersionToLocales($model, $translatableHeadings),
 
-                    new ImportAllLanguageStrings($filePath, $moduleVersion, $translatableHeadings),
-                ]);
+                new ImportAllLanguageStrings($filePath, $model, $translatableHeadings),
+            ]);
 
-        });
+
     }
 }

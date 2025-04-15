@@ -4,13 +4,16 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 
-class Platform extends Model implements WithXlsforms
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsformTemplates;
+
+class Platform extends Model implements WithXlsformTemplates
 {
-    use HasXlsforms;
+    use HasXlsformTemplates;
 
     protected $table = 'platforms';
 
@@ -30,4 +33,5 @@ class Platform extends Model implements WithXlsforms
             get: fn (): bool => false,
         );
     }
+
 }

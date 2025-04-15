@@ -7,6 +7,7 @@ use Filament\Resources\Pages\ListRecords;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Filament\Widgets\OdkLinkUrlAlert;
 use Stats4sd\FilamentOdkLink\Filament\Widgets\OdkUrlAlertWidget;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 
 class ListXlsformTemplates extends ListRecords
 {
@@ -28,6 +29,11 @@ class ListXlsformTemplates extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+
+            Actions\Action::make('view-platform-templates-on-odk-central')
+            ->label('View Platform Templates on ODK Central')
+            ->url(Platform::first()->odkProject->odk_url)
+            ->openUrlInNewTab(),
             Actions\CreateAction::make(),
         ];
     }

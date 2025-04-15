@@ -7,7 +7,7 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 
 
-class XlsformWorkbookExport implements WithMultipleSheets
+class XlsformWorkbookExport implements WithMultipleSheets, ShouldQueue
 {
 
     public function __construct(public Xlsform $xlsform)

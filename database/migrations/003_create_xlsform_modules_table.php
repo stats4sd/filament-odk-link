@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('xlsform_modules', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('xlsform_template_id')->constrained();
+            $table->foreignId('xlsform_template_id')->constrained()->cascadeOnDelete()->cascadeOnUpdate();
             $table->string('label');
             $table->string('name');
             $table->timestamps();

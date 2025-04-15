@@ -15,7 +15,7 @@ return new class extends Migration
 
         Schema::create('xlsform_module_versions', function (Blueprint $table) use ($teamTable) {
             $table->id();
-            $table->foreignId('xlsform_module_id')->nullable()->constrained('xlsform_modules')->cascadeOnUpdate()->nullOnDelete();
+            $table->foreignId('xlsform_module_id')->nullable()->constrained('xlsform_modules')->cascadeOnUpdate()->cascadeOnDelete();
 
             // A team might add their own custom xlsform version
             $table->foreignId('owner_id')->nullable()->constrained($teamTable)->cascadeOnUpdate()->nullOnDelete();

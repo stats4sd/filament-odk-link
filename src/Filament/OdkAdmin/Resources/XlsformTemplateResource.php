@@ -2,8 +2,10 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources;
 
+use Awcodes\Shout\Components\Shout;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Tabs;
@@ -15,6 +17,7 @@ use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Infolists\Infolist;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -22,7 +25,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\RelationManagers\XlsformModuleRelationManager;
 use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
@@ -63,25 +65,6 @@ class XlsformTemplateResource extends resource
             ]);
     }
 
-    public static function processRecord(XlsformTemplate $record): XlsformTemplate
-    {
-        $odkLinkService = app()->make(OdkLinkService::class);
-
-        // update form title in xlsfile to match user-given title
-        UpdateXlsformTitleInFile::dispatchSync($record);
-
-        $record->refresh();
-        $record->deployDraft($odkLinkService, withMedia: false);
-        $record->getRequiredMedia($odkLinkService);
-
-        // TODO: We need to do the extract section when create and edit
-        $record->extractSections();
-        // mark all xlsforms using this template as not current
-        $record->markAllAsNotCurrent();
-
-        return $record;
-    }
-
     public static function getCreateFields(): array
     {
         return [
@@ -95,8 +78,12 @@ class XlsformTemplateResource extends resource
                     // get the title from url if it exists in the query string
                     return request()->query('title');
                 }),
-            Forms\Components\SpatieMediaLibraryFileUpload::make('xlsfile')
-                ->collection('xlsform_file')
+
+            Shout::make('file_info')
+                ->content(new HtmlString('Please upload a valid Xlsform file. Note that while in regular ODK the "settings" worksheet is optional, this system requires it, so please make sure you have a settings worksheet with at least the form_id and form_title variables added. See the <a href="https://docs.getodk.org/xlsform/#the-settings-sheet">ODK documentation here</a> for more information.')),
+            Forms\Components\FileUpload::make('newXlsfile')
+                ->storeFiles(false)
+                ->label('Upload your Xlsform File in Excel format')
                 ->preserveFilenames()
                 ->downloadable()
                 ->autofocus()
@@ -330,7 +317,38 @@ class XlsformTemplateResource extends resource
                         ];
                     })
                     ->action(function (array $data, XlsformTemplate $record) {
-                        XlsformTemplateResource::processRecord($record);
+                        try {
+
+
+
+                            $record->title = $data['title'];
+                            $record->newXlsfile = $data['newXlsfile'];
+
+                            $record = $record->testOnOdkCentral();
+
+                            $record->save();
+
+                            Notification::make('xlsform_template_updated')
+                                ->title('XLSForm Template Updated')
+                                ->body('The XLSForm Template has been updated successfully.')
+                                ->success()
+                                ->persistent()
+                                ->send();
+
+
+                        } catch (\Exception $e) {
+
+                            Notification::make('xlsform_template_not_saved')
+                                ->title('XLSForm Template Not Saved')
+                                ->body('There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage())
+                                ->danger()
+                                ->persistent()
+                                ->send();
+
+                            $this->getRecord()->refresh();
+
+                            $this->halt();
+                        }
                     }),
                 Tables\Actions\EditAction::make()->label('Edit Media & Data'),
             ])

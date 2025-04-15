@@ -2,12 +2,15 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Collection;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
+use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class Entity extends Model
 {
@@ -39,7 +42,7 @@ class Entity extends Model
         return $this->belongsTo(Dataset::class);
     }
 
-    /** @return BelongsTo<HasXlsforms, $this> */
+    /** @return BelongsTo<Model, $this> */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
@@ -65,33 +68,75 @@ class Entity extends Model
             ->withPivot('value');
     }
 
-    // Dan: comment getAttribute() function temporary to avoid throwing error when adding polymorphic relationship
 
-    // /*
-    //  * Override getAttribute() to check the entity_values table first.
-    //  */
-    // public function getAttribute($key)
-    // {
+    // Value Handling Functions
 
-    //     // if the default getAttribute() returns something, great! Do that
-    //     if ($value = parent::getAttribute($key)) {
-    //         return $value;
-    //     }
+    /** @phpstan-param Collection<EntityValue> $entries */
+    public function addValues(Collection $entries): bool
+    {
+        $entries = $entries->map(function (EntityValue $entry) {
+            $entry['entity_id'] = $this->id;
+            return $entry;
+        });
 
-    //     /*
-    //      * If the requested attribute is in the dataset variables list, check the values() relationship
-    //      */
-    //     if ($this->getVariableList()->contains($key)) {
-    //         return $this->values()->whereHas('datasetVariable', function (Builder $query) use ($key) {
-    //             $query->where('dataset_variables.name', $key);
-    //         })->first()?->value;
-    //     }
+        return $this->values()->insert($entries->toArray());
+    }
 
-    //     /*
-    //      * Otherwise, attempt to defer to the linked model:
-    //      */
-    //     return $this->model->getAttribute($key);
+    /**
+     * @phpstan-param Collection<array> $entities
+     * @return Collection<Entity>
+     */
+    public function addChildEntities(Collection $entities, Dataset $dataset): Collection
+    {
+        // get all xlsform elements once to avoid multiple db calls when preparing select_multiple values
+        $surveyRows = $this->submission->xlsform->surveyRows->load('choiceList.choiceListEntries.owner');
 
-    // }
+        return $entities->map(
 
+        /** @phpstan-param Collection<array<string>> $values */
+            function (array $values) use ($dataset, $surveyRows) {
+
+                $entity = Entity::create([
+                    'parent_id' => $this->id,
+                    'dataset_id' => $dataset->id,
+                    'owner_id' => $this->owner_id,
+                    'submission_id' => $this->submission_id,
+                ]);
+
+                $preparedValues = collect();
+
+                foreach ($values as $key => $value) {
+
+                    if(!$value) {
+                        continue;
+                    }
+
+                    $preparedValues->push(
+                        EntityValue::make([
+                            'entity_id' => $entity->id,
+                            'dataset_variable_name' => $key,
+                            'value' => $value,
+                        ])
+                    );
+
+                    $surveyRow = $surveyRows->firstWhere('name', $key);
+
+                    // ignore items not in the schema; e.g. "__id" fields in repeats.
+                    if (!$surveyRow) {
+                        continue;
+                    }
+
+                    $odkLinkService = app()->make(OdkLinkService::class);
+
+                    $booleanValues = $odkLinkService->makeMultiSelectBooleansFromSurveyRow($entity, $surveyRow, $value);
+
+                    $preparedValues = $preparedValues->merge($booleanValues);
+
+                }
+
+                $entity->addValues($preparedValues);
+
+                return $entity;
+            });
+    }
 }

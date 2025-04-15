@@ -2,16 +2,19 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages;
 
+use App\Services\HelperService;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Jobs\UpdateXlsformTitleInFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
@@ -47,22 +50,42 @@ class CreateXlsformTemplate extends CreateRecord
                 )
                 ->afterValidation(function (Get $get) {
 
-                    $xlsformTemplate = XlsformTemplate::create([
-                        'title' => $get('title'),
-                    ]);
+                    try {
 
-                    $files = $get('xlsfile');
+                        // wait to trigger the saved event until the xlsform file is attached.
+                        /** @var XlsformTemplate $xlsformTemplate */
+                        $xlsformTemplate = XlsformTemplate::make([
+                            'title' => $get('title'),
+                            'newXlsfile' => collect($get('newXlsfile'))->first(),
+                        ]);
 
-                    $xlsformTemplate->addMedia(collect($files)->first())->toMediaCollection('xlsform_file');
+                        $xlsformTemplate->owner()->associate(Platform::first());
 
-                    // this was being triggered on afterCreate. Call it here instead/as well.
-                    $xlsformTemplate = $this->processRecord($xlsformTemplate);
+                        $xlsformTemplate = $xlsformTemplate->testOnOdkCentral();
 
-                    if (! $xlsformTemplate) {
+                        $xlsformTemplate->save();
+
+                        Notification::make('xlsform_template_updated')
+                            ->title('XLSForm Template Updated')
+                            ->body('The XLSForm Template has been updated successfully.')
+                            ->success()
+                            ->persistent()
+                            ->send();
+
+                        return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
+                    } catch (\Throwable $e) {
+
+                        ray($e);
+
+                        Notification::make('xlsform_template_not_saved')
+                            ->title('XLSForm Template Not Saved')
+                            ->body('There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage())
+                            ->danger()
+                            ->persistent()
+                            ->send();
+
                         return redirect($this->getResource()::getUrl('create') . '?step=1-xlsform&title=' . urlencode($get('title')));
                     }
-
-                    return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
 
                 }),
 
@@ -76,40 +99,5 @@ class CreateXlsformTemplate extends CreateRecord
                 ->description('How should the collected data be handled?')
                 ->schema([]),
         ];
-    }
-
-    /**
-     * @throws RequestException
-     * @throws BindingResolutionException
-     */
-    protected function processRecord(XlsformTemplate $record): XlsformTemplate | bool
-    {
-        $odkLinkService = app()->make(OdkLinkService::class);
-
-        if (is_null(Filament::getTenant())) {
-            $record->owner()->associate(Platform::first());
-            $record->saveQuietly();
-        } else {
-            $record->owner()->associate(Filament::getTenant());
-            $record->saveQuietly();
-        }
-
-        // update form title in xlsfile to match user-given title
-        UpdateXlsformTitleInFile::dispatchSync($record);
-
-        $record->refresh();
-        $uploadResult = $record->deployDraft($odkLinkService);
-
-        if (! $uploadResult) {
-            return false;
-        }
-
-        // at this point, the draft form has been created in ODK Central
-        $record->getRequiredMedia($odkLinkService);
-
-        // TODO: We need to do the extract section when create and edit
-        $record->extractSections();
-
-        return $record;
     }
 }
