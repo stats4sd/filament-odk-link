@@ -64,7 +64,7 @@ class Locale extends Model implements HasMedia
     protected function languageLabel(): Attribute
     {
         return new Attribute(
-            get: fn () => $this->description ?? $this->language->name . ' (default)',
+            get: fn() => $this->is_default ? $this->language->name . ' (default)' : $this->description,
         );
     }
 
@@ -111,7 +111,6 @@ class Locale extends Model implements HasMedia
                 return 'Needs update';
             }
         );
-
     }
 
     /** @return Attribute<string, never> */
