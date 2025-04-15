@@ -2,19 +2,20 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 
 class Locale extends Model implements HasMedia
 {
@@ -38,6 +39,11 @@ class Locale extends Model implements HasMedia
     public function language(): BelongsTo
     {
         return $this->belongsTo(Language::class);
+    }
+
+    public function languageStrings(): HasMany
+    {
+        return $this->hasMany(LanguageString::class);
     }
 
     /** @return HasMany<XlsformModuleVersionLocale, $this> */
