@@ -46,9 +46,6 @@ class Submission extends Model implements HasMedia
 
             // if the current panel has tenancy, filter
             if ($owner = HelperService::getCurrentOwner()) {
-
-                ray($owner->id);
-
                 $query->where(function (Builder $query) use ($owner) {
                     $query->whereHas('xlsformVersion', function (Builder $query) use ($owner) {
                         $query->whereHas('xlsform', function (Builder $query) use ($owner) {
@@ -190,8 +187,6 @@ class Submission extends Model implements HasMedia
             ->get($this->enketo_edit_url);
         // TODO: handle 409 response
         // TODO: handle 404 response
-
-        ray($response->status());
 
         $enketoUrl = config('filament-odk-link.odk.url') . '/-/edit/' . $this->xlsform->enketo_id . '?instance_id=' . $this->odk_latest_version_id . '&return_url=' . route('submission.update', ['submission' => $this]);
 
