@@ -163,7 +163,9 @@ trait OdkSubmissionService
         foreach ($resultsToAdd as $entry) {
 
             // ******* CREATE SUBMISSION RECORD ******* //
-            $xlsformVersion = $xlsform->xlsformVersions()->firstWhere('version', $entry['__system']['formVersion']);
+            $xlsformVersion = $xlsform->xlsformVersions()
+                ->with('submissions')
+                ->firstWhere('version', $entry['__system']['formVersion']);
 
             if (!$xlsformVersion) {
 

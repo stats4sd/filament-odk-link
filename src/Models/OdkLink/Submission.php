@@ -47,6 +47,8 @@ class Submission extends Model implements HasMedia
             // if the current panel has tenancy, filter
             if ($owner = HelperService::getCurrentOwner()) {
 
+                ray($owner->id);
+
                 $query->where(function (Builder $query) use ($owner) {
                     $query->whereHas('xlsformVersion', function (Builder $query) use ($owner) {
                         $query->whereHas('xlsform', function (Builder $query) use ($owner) {
