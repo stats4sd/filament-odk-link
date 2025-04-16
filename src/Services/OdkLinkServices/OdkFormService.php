@@ -121,15 +121,8 @@ trait OdkFormService
             return $item;
         })->toArray();
 
-
         $xlsform->schema = $schema;
-
-        if ($xlsform instanceof Xlsform) {
-
-            $draftVersion = $xlsform->xlsformDraftVersion;
-            $draftVersion->schema = $schema;
-            $draftVersion->save();
-        }
+        $xlsform->saveQuietly();
 
         return $xlsform;
     }
