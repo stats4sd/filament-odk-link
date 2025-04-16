@@ -24,9 +24,7 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
     use RemembersRowNumber;
     use GetsModuleNamesPerRow;
 
-    public function __construct(public XlsformModuleVersion|XlsformTemplate $model, public Collection $translatableHeadings, public string $moduleColumn = 'module')
-    {
-    }
+    public function __construct(public XlsformModuleVersion|XlsformTemplate $model, public Collection $translatableHeadings, public string $moduleColumn = 'module') {}
 
     public function model(array $row): ?SurveyRow
     {
@@ -71,7 +69,9 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
         if ($this->model instanceof XlsformModuleVersion && $this->model->owner_id !== null) {
 
             $team_name = strtolower(str_replace(' ', '_', $this->model->owner->name));
-            $data['name'] = $team_name . '_' . $moduleVersion->xlsformModule->id . '_' . $data['name'];
+
+            // find alternative way to avoid using $moduleVersion->xlsformModule->id as it may be null value
+            $data['name'] = $team_name . '_' . $moduleVersion->id . '_' . $data['name'];
         }
 
         // check 'required' is a bool
@@ -80,7 +80,6 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
                 'true', 'yes', '1' => 1,
                 default => 0,
             };
-
         }
 
         return new SurveyRow([
@@ -105,7 +104,6 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
 
 
         ]);
-
     }
 
     private function getSurveyRowHeaders(): array
