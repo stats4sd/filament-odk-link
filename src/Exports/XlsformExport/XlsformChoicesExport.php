@@ -44,12 +44,14 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
         return ChoiceListEntry::query()
             ->selectRaw(
                 'max(choice_list_entries.id) as id,
-                choice_list_entries.choice_list_id,
+                max(choice_list_entries.choice_list_id) as choice_list_id,
+                choice_lists.list_name,
                 choice_list_entries.name,
                 choice_list_entries.properties,
                 choice_list_entries.cascade_filter')
+            ->leftJoinRelationship('choiceList')
             ->groupBy([
-                'choice_list_entries.choice_list_id',
+                'choice_lists.list_name',
                 'choice_list_entries.name',
                 'choice_list_entries.properties',
                 'choice_list_entries.cascade_filter',
@@ -68,7 +70,7 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
                 )
             )
             ->with(['languageStrings', 'choiceList.xlsformModuleVersion.xlsforms'])
-            ->orderBy('choice_list_entries.choice_list_id')
+            ->orderBy('choice_lists.list_name')
             ->orderBy('choice_list_entries.name');
     }
 
