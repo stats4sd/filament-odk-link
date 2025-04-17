@@ -53,7 +53,6 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
             [
                 'version' => $odkXlsFormDetails['version'],
                 'odk_version' => $odkXlsFormDetails['version'],
-                'schema' => $odkXlsFormDetails['schema'],
                 'active' => true,
             ]
         );

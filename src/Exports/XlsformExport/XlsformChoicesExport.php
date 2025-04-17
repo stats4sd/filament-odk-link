@@ -42,17 +42,19 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
     public function query()
     {
         return ChoiceListEntry::query()
-            ->leftJoinRelationship('choiceList.xlsformModuleVersion.xlsforms')
-            ->select([
-                'choice_list_entries.id',
+//            ->leftJoinRelationship('choiceList.xlsformModuleVersion.xlsforms')
+            ->selectRaw(
+                'max(choice_list_entries.id) as id,
+                choice_list_entries.choice_list_id,
+                choice_list_entries.name,
+                choice_list_entries.properties,
+                choice_list_entries.cascade_filter')
+            ->groupBy([
                 'choice_list_entries.choice_list_id',
-                'choice_lists.list_name',
                 'choice_list_entries.name',
                 'choice_list_entries.properties',
                 'choice_list_entries.cascade_filter',
-                'choice_lists.xlsform_module_version_id',
             ])
-            ->distinct()
 
             // only global entries and entries owned by the current form owner
             ->where(fn(Builder $query) => $query
@@ -66,15 +68,14 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
                     ->where('xlsforms.id', $this->xlsform->id)
                 )
             )
-            ->with(['languageStrings', 'xlsformModuleVersion.xlsforms'])
-            ->orderBy('choice_lists.list_name')
+            ->with(['languageStrings', 'choiceList.xlsformModuleVersion.xlsforms'])
+            ->orderBy('choice_list_entries.choice_list_id')
             ->orderBy('choice_list_entries.name');
     }
 
     public function map($row): array
     {
         return [
-            'id' => $row->id,
             'list_name' => $row->choiceList->list_name,
             'name' => Str::replace(' ', '_', $row->name),
             ...$this->getLanguageStrings($row, 'label'),
@@ -85,7 +86,6 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
     public function headings(): array
     {
         return [
-            'id',
             'list_name',
             'name',
             ...$this->getLanguageStringHeaders('label'),
@@ -136,9 +136,8 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
         $labelColumns = $this->locales->mapWithKeys(fn(Locale $locale, $index) => [Coordinate::stringFromColumnIndex(4 + $index) => 60]);
 
         return [
-            'A' => 5, // id
-            'B' => 30, // list_name
-            'C' => 30, // name
+            'A' => 30, // list_name
+            'B' => 30, // name
             ...$labelColumns->toArray(),
         ];
     }
