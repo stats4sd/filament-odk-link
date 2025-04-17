@@ -42,7 +42,6 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
     public function query()
     {
         return ChoiceListEntry::query()
-//            ->leftJoinRelationship('choiceList.xlsformModuleVersion.xlsforms')
             ->selectRaw(
                 'max(choice_list_entries.id) as id,
                 choice_list_entries.choice_list_id,
