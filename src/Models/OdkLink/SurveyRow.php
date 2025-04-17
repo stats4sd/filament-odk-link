@@ -47,15 +47,12 @@ class SurveyRow extends Model implements HasLanguageStrings
             ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', 'label'));
     }
 
-    /** @return Attribute<string, never> */
-    public function defaultHint(): Attribute
+    /** @return MorphOne<LanguageString, $this> */
+    public function defaultHint(): MorphOne
     {
-        return new Attribute(
-            get: fn() => $this->languageStrings()
-                ->whereHas('language', fn($query) => $query->where('languages.iso_alpha2', 'en'))
-                ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', 'hint'))
-                ->first()?->text
-        );
+        return $this->morphOne(LanguageString::class, 'linked_entry')
+            ->whereHas('language', fn($query) => $query->where('languages.iso_alpha2', 'en'))
+            ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', 'hint'));
     }
 
     /** @return BelongsTo<ChoiceList, $this> */
