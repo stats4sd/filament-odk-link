@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->string('odk_id')->unique()->comment('The ODK Central ID of the submission.');
             $table->string('odk_latest_version_id')->nullable()->comment('If the submission has been edited on ODK, this is the latest version ID.');
             $table->foreignId('xlsform_version_id')->constrained('xlsform_versions');
+            $table->nullableMorphs('primary_data_subject', 'subject');
             $table->timestamp('submitted_at');
             $table->string('submitted_by')->nullable();
             $table->string('updated_by')->nullable();
