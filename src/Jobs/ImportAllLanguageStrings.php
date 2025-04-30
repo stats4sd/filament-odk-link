@@ -29,19 +29,11 @@ class ImportAllLanguageStrings implements ShouldQueue
      */
     public function handle(): void
     {
-        // TODO: custom questions excel file has been stored by Spatie media library, get the updated file path first
-
-        // there is no current owner in a queue, it returns null
-        $currentOwner = HelperService::getCurrentOwner();
-        ray($currentOwner);
-
-        // hardcode to get Team 1 as "P1 Test Team" is used for testing
-        $currentOwner = Team::find(1);
-        ray($currentOwner);
+        // custom questions excel file has been stored by Spatie media library, use model to find the corresponding team
+        $currentOwner = Team::find($this->model->owner->id);
 
         // get the file path of custom questions excel file stored by Spatie media library
         $newFilePath = $currentOwner->getFirstMediaPath('custom_questions');
-        ray($newFilePath);
 
         // update filePath for testing, no error occurred. All jobs completed.
         $this->filePath = $newFilePath;
