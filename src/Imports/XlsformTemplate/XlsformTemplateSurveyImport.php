@@ -65,14 +65,16 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
             $data['name'] = $data['type'] . '_' . $this->getRowNumber();
         }
 
-        // check if this is a custom module import, adjust survey row name to ensure uniqueness across teams...
-        if ($this->model instanceof XlsformModuleVersion && $this->model->owner_id !== null) {
+        // TODO: find alternative way to ensure uniqueness across teams without changing survey row name quietly
+        // Question: survey_rows has a constraint "unique_survey_rows" with composite key xlsform_module_version_id, name, type, is it the alternative way that we are looking for?
+        // // check if this is a custom module import, adjust survey row name to ensure uniqueness across teams...
+        // if ($this->model instanceof XlsformModuleVersion && $this->model->owner_id !== null) {
 
-            $team_name = strtolower(str_replace(' ', '_', $this->model->owner->name));
+        //     $team_name = strtolower(str_replace(' ', '_', $this->model->owner->name));
 
-            // find alternative way to avoid using $moduleVersion->xlsformModule->id as it may be null value
-            $data['name'] = $team_name . '_' . $moduleVersion->id . '_' . $data['name'];
-        }
+        //     // find alternative way to avoid using $moduleVersion->xlsformModule->id as it may be null value
+        //     $data['name'] = $team_name . '_' . $moduleVersion->id . '_' . $data['name'];
+        // }
 
         // check 'required' is a bool
         if (isset($data['required'])) {
