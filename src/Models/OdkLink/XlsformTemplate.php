@@ -56,9 +56,18 @@ class XlsformTemplate extends HasXlsformDrafts
             $xlsformTemplate->xlsformModules()->delete();
         });
 
+        static::creating(static function (XlsformTemplate $xlsformTemplate) {
+            ray('woah there');
+        });
+
         static::saving(static function (XlsformTemplate $xlsformTemplate) {
+
+            ray('well hello there');
+            ray($xlsformTemplate->newXlsfile);
             if ($xlsformTemplate->newXlsfile instanceof UploadedFile) {
                 $xlsformTemplate->addMedia($xlsformTemplate->newXlsfile)->toMediaCollection('xlsform_file');
+
+                ray('this is a file;');
 
                 unset($xlsformTemplate->newXlsfile);
 

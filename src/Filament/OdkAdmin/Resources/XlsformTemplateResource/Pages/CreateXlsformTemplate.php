@@ -52,6 +52,8 @@ class CreateXlsformTemplate extends CreateRecord
 
                     try {
 
+                        ray('hi');
+
                         // wait to trigger the saved event until the xlsform file is attached.
                         /** @var XlsformTemplate $xlsformTemplate */
                         $xlsformTemplate = XlsformTemplate::make([
@@ -59,9 +61,16 @@ class CreateXlsformTemplate extends CreateRecord
                             'newXlsfile' => collect($get('newXlsfile'))->first(),
                         ]);
 
+                        ray('ok');
+
                         $xlsformTemplate->owner()->associate(Platform::first());
 
+                        ray('do');
+
+
                         $xlsformTemplate = $xlsformTemplate->testOnOdkCentral();
+
+                        ray('you');
 
                         $xlsformTemplate->save();
 
