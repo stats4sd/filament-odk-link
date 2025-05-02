@@ -51,7 +51,8 @@ return new class extends Migration {
             // - the owner updates entries in their lookup dataset entries that are linked to this form.
             $table->boolean('has_latest_media')->default(1);
 
-            $table->boolean('needs_update')->default(0);
+            $table->boolean('draft_needs_update')->default(0);
+            $table->boolean('live_needs_update')->default(0);
 
             $table->timestamps();
         });
