@@ -102,9 +102,17 @@ class SurveyRow extends Model implements HasLanguageStrings
                 $value = $languageString->text;
 
                 return [$key => $value];
-
             })->toArray();
+    }
 
+    public function getLanguageString(string $type, string $language): string
+    {
+        $languageString = $this->languageStrings()
+            ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', $type))
+            ->whereHas('language', fn($query) => $query->where('languages.iso_alpha2', $language))
+            ->first();
+
+        return $languageString == null ? '' : $languageString->text;
     }
 
     public function expandMediaColumnHeaders(string $type)
