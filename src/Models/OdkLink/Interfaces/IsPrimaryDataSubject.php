@@ -12,4 +12,6 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 interface IsPrimaryDataSubject
 {
     public function submissions(): MorphMany;
+
+    public function updateCompletionStatus(): void;
 }
