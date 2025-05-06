@@ -74,10 +74,29 @@ class Entity extends Model
     /** @phpstan-param Collection<EntityValue> $entries */
     public function addValues(Collection $entries): bool
     {
-        $entries = $entries->map(function (EntityValue $entry) {
+        $datasetVariableNames = collect([]);
+
+        $entries = $entries->map(function (EntityValue $entry) use (&$datasetVariableNames) {
             $entry['entity_id'] = $this->id;
+
+            $count = 0;
+            while($datasetVariableNames->contains($entry['dataset_variable_name'])) {
+                $count++;
+                $entry['dataset_variable_name'] = $entry['dataset_variable_name'] . ".{$count}";
+
+                if($count > 500) {
+                    dd('warning - infinite loop detected in Entity::addValues()');
+                }
+            }
+
+            $datasetVariableNames->push($entry['dataset_variable_name']);
+
             return $entry;
         });
+
+
+
+
 
         return $this->values()->insert($entries->toArray());
     }
@@ -107,7 +126,7 @@ class Entity extends Model
 
                 foreach ($values as $key => $value) {
 
-                    if(!$value) {
+                    if (!$value) {
                         continue;
                     }
 

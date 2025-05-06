@@ -266,11 +266,10 @@ trait OdkSubmissionService
                 //     'label' => $schemaItem['name'],
                 // ]);
 
-                $entityValues[] = [
-                    'entity_id' => $entity->id,
+                $entityValues[] = EntityValue::make([
                     'dataset_variable_name' => $schemaItem['name'],
                     'value' => $value,
-                ];
+                ]);
 
 
                 // for select_multiples, add binary/ boolean columns for each possible response
@@ -279,7 +278,7 @@ trait OdkSubmissionService
             }
         }
 
-        $entity->values()->insert($entityValues);
+        $entity->addValues(collect($entityValues));
 
         // find all child sections of this section
         $childSections = $xlsform->xlsformTemplate->repeatingSections
@@ -367,11 +366,10 @@ trait OdkSubmissionService
                     // ]);
 
                     // store ODK variable value as entity value record
-                    $entityValues[] = [
-                        'entity_id' => $entity->id,
+                    $entityValues[] = EntityValue::make([
                         'dataset_variable_name' => $schemaItem['name'],
                         'value' => $value,
-                    ];
+                    ]);
 
                     // for select_multiples, add binary/ boolean columns for each possible response
                     $booleanEntityValues = $this->makeMultiSelectBooleans($entity, $schemaItem, $choices, $value);
@@ -379,7 +377,7 @@ trait OdkSubmissionService
                 }
             }
 
-            $entity->values()->insert($entityValues);
+            $entity->addValues(collect($entityValues));
 
             // extract path into an array for constructing a new entry
             $arrayNames = explode('.', $repeatGroupArrayPath);
@@ -444,11 +442,10 @@ trait OdkSubmissionService
             $choicesSelected = Str::of($value)->lower()->explode(' ');
 
             foreach ($choiceListEntries as $choiceListEntry) {
-                $booleanEntityValues[] = [
-                    'entity_id' => $entity['id'],
+                $booleanEntityValues[] = EntityValue::make([
                     'dataset_variable_name' => $schemaItem['name'] . '_' . Str::lower($choiceListEntry->name),
                     'value' => $choicesSelected->contains(Str::lower($choiceListEntry->name)),
-                ];
+                ]);
             }
         }
 
