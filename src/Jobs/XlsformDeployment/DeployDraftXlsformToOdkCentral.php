@@ -33,18 +33,13 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
 
         $odkLinkService = app()->make(OdkLinkService::class);
 
-        $odkXlsFormDetails = $odkLinkService->createDraftForm($this->xlsform, $this->xlsform->xlsfile->getPath(), $this->withMedia);
+        $this->xlsform = $odkLinkService->createDraftForm($this->xlsform, $this->xlsform->xlsfile->getPath(), $this->withMedia);
 
-        $this->xlsform->update([
-            'odk_id' => $odkXlsFormDetails['xmlFormId'],
-            'odk_draft_token' => $odkXlsFormDetails['draftToken'],
-            'odk_version_id' => $odkXlsFormDetails['version'],
-            'has_draft' => true,
-            'enketo_draft_id' => $odkXlsFormDetails['enketoId'],
-            'odk_draft_updated_at' => new Carbon($odkXlsFormDetails['updatedAt']),
-            'draft_needs_update' => false,
-            'live_needs_update' => !$this->published, //if this draft was created immediately after the form was published, it will be identical to the published version. Otherwise, mark the form so users know the draft is different to the live.
-        ]);
+        if ($this->xlsform instanceof Xlsform) {
+            $this->xlsform->needs_update = true;
+        }
+
+        $this->xlsform->save();
 
         // only ever keep 1 "draft" version; we don't need to store all iterations of drafts as we don't keep the old submissions either
         $this->xlsform->xlsformVersions()->updateOrCreate(

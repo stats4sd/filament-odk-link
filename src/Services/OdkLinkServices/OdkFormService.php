@@ -28,7 +28,7 @@ trait OdkFormService
      * @throws RequestException|ConnectionException
      * @throws \Exception
      */
-    public function createDraftForm(HasXlsformDrafts $xlsform, string $filePath, bool $withMedia = true): array
+    public function createDraftForm(HasXlsformDrafts $xlsform, string $filePath, bool $withMedia = true): HasXlsformDrafts
     {
 
         $token = $this->authenticate();
@@ -76,7 +76,16 @@ trait OdkFormService
             $this->uploadMediaFileAttachments($xlsform);
         }
 
-        return $this->getXlsformDraftDetails($xlsform);
+        $draftDetails = $this->getXlsformDraftDetails($xlsform);
+        $xlsform->odk_id = $draftDetails['xmlFormId'];
+        $xlsform->odk_draft_token = $draftDetails['draftToken'];
+        $xlsform->odk_version_id = $draftDetails['version'];
+        $xlsform->has_draft = true;
+        $xlsform->enketo_draft_id = $draftDetails['enketoId'];
+        $xlsform->odk_draft_updated_at = new Carbon($draftDetails['updatedAt']);
+
+
+        return $xlsform;
 
     }
 
