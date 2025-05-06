@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
+use Stats4sd\FilamentOdkLink\Jobs\OdkSubmissions\ProcessOdkSubmission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
@@ -193,19 +194,21 @@ trait OdkSubmissionService
                     'draft_data' => $draft,
                 ]);
 
-            $this->processSubmission($submission, $entry, $xlsformVersion);
+            // Queue processing
+            ProcessOdkSubmission::dispatch($submission, $entry, $xlsformVersion);
+            //$this->processSubmission($submission, $entry, $xlsformVersion);
 
             $this->getAttachedMedia($entry, $token, $xlsform, $submission, $draft);
 
             // ******** CALL APP-SPECIFIC PROCESSING ******** //
 
-            // if app developer has defined a method of processing submission content, call that method:
-            $class = config('filament-odk-link.submission.process_method.class');
-            $method = config('filament-odk-link.submission.process_method.method');
-
-            if ($class && $method) {
-                $class::$method($submission);
-            }
+//            // if app developer has defined a method of processing submission content, call that method:
+//            $class = config('filament-odk-link.submission.process_method.class');
+//            $method = config('filament-odk-link.submission.process_method.method');
+//
+//            if ($class && $method) {
+//                $class::$method($submission);
+//            }
         }
 
         return $resultsToAdd->count();
