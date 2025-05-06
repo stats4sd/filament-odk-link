@@ -131,7 +131,6 @@ trait OdkFormService
         })->toArray();
 
         $xlsform->schema = $schema;
-        $xlsform->saveQuietly();
 
         return $xlsform;
     }
