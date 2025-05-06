@@ -50,10 +50,15 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
             $xlsform->syncWithTemplate();
 
             // check if the needs_up date was updated from true to false
-            if ($xlsform->wasChanged('needs_update') && !$xlsform->needs_update) {
-                XlsformDraftWasDeployed::dispatch($xlsform->id);
+            if ($xlsform->wasChanged('draft_needs_update') && !$xlsform->draft_needs_update) {
 
-                ray('was changed - needs update');
+                // if only draft was deployed
+                if ($xlsform->live_needs_update) {
+                    XlsformDraftWasDeployed::dispatch($xlsform->id);
+                }
+
+                // TODO: do we need a Published notification here?
+
             }
 
 
@@ -193,8 +198,6 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     {
 
         // check through the template modules; If this form is missing any, add the default version
-
-        ray($this->id);
         $this->xlsformTemplate->xlsformModules
             ->filter(fn(XlsformModule $module) => $this->xlsformModuleVersions->doesntContain('xlsform_module_id', $module->id))
             ->each(fn(XlsformModule $xlsformModule) => $this->xlsformModuleVersions()->attach($xlsformModule->defaultXlsformVersion));
@@ -289,16 +292,16 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      * @throws FileDoesNotExist
      * @throws FileIsTooBig
      */
-    public function deployDraft(bool $withMedia = true): ?PendingDispatch
+    public function deployDraft(bool $withMedia = true, bool $published = false): ?PendingDispatch
     {
         // if the form is already mid-processing, do not requeue.
-        if($this->processing) {
+        if ($this->processing) {
             return null;
         }
 
         return $this->generateXlsfile()
             ->chain([
-                new DeployDraftXlsformToOdkCentral($this, $withMedia, auth()->user()),
+                new DeployDraftXlsformToOdkCentral($this, $withMedia, $published, auth()->user()),
             ]);
     }
 
@@ -316,7 +319,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         $newVersion = $odkLinkService->publishForm($this);
 
         // immediately after publishing, create a new draft. We always want a draft version available to the platform and users.
-        $this->deployDraft();
+        $this->deployDraft(published: true);
 
         return $newVersion;
     }

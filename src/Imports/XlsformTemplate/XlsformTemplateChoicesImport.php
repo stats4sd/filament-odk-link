@@ -38,7 +38,6 @@ class XlsformTemplateChoicesImport implements ShouldQueue, SkipsEmptyRows, ToCol
                 ->filter(fn(ChoiceList $choiceList) => $choiceList->list_name === $row['list_name']);
 
             if ($rowChoiceLists->count() === 0) {
-                ray('no choice list found for ' . $row['list_name']);
                 return null;
             }
 

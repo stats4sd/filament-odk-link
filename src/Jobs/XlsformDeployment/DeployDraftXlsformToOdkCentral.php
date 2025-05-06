@@ -20,7 +20,7 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public Xlsform|XlsformTemplate $xlsform, public bool $withMedia, public ?Authenticatable $user)
+    public function __construct(public Xlsform|XlsformTemplate $xlsform, public bool $withMedia, public bool $published, public ?Authenticatable $user)
     {
     }
 
@@ -42,7 +42,8 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
             'has_draft' => true,
             'enketo_draft_id' => $odkXlsFormDetails['enketoId'],
             'odk_draft_updated_at' => new Carbon($odkXlsFormDetails['updatedAt']),
-            'needs_update' => false,
+            'draft_needs_update' => false,
+            'live_needs_update' => !$this->published, //if this draft was created immediately after the form was published, it will be identical to the published version. Otherwise, mark the form so users know the draft is different to the live.
         ]);
 
         // only ever keep 1 "draft" version; we don't need to store all iterations of drafts as we don't keep the old submissions either

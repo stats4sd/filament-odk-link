@@ -38,7 +38,6 @@ trait OdkUserService
                 ->throw()
                 ->json();
 
-            ray($result);
             return $result;
 
         } catch (RequestException $e) {
@@ -49,8 +48,6 @@ trait OdkUserService
                     ->throw()
                     ->json()[0];
 
-                ray('user already exists');
-                ray($result);
                 return $result;
             }
 

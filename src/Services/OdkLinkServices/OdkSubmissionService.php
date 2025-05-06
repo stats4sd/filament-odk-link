@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
+use Stats4sd\FilamentOdkLink\Jobs\OdkSubmissions\ProcessOdkSubmission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
@@ -193,19 +194,21 @@ trait OdkSubmissionService
                     'draft_data' => $draft,
                 ]);
 
-            $this->processSubmission($submission, $entry, $xlsformVersion);
+            // Queue processing
+            ProcessOdkSubmission::dispatch($submission, $entry, $xlsformVersion);
+            //$this->processSubmission($submission, $entry, $xlsformVersion);
 
             $this->getAttachedMedia($entry, $token, $xlsform, $submission, $draft);
 
             // ******** CALL APP-SPECIFIC PROCESSING ******** //
 
-            // if app developer has defined a method of processing submission content, call that method:
-            $class = config('filament-odk-link.submission.process_method.class');
-            $method = config('filament-odk-link.submission.process_method.method');
-
-            if ($class && $method) {
-                $class::$method($submission);
-            }
+//            // if app developer has defined a method of processing submission content, call that method:
+//            $class = config('filament-odk-link.submission.process_method.class');
+//            $method = config('filament-odk-link.submission.process_method.method');
+//
+//            if ($class && $method) {
+//                $class::$method($submission);
+//            }
         }
 
         return $resultsToAdd->count();
@@ -266,11 +269,10 @@ trait OdkSubmissionService
                 //     'label' => $schemaItem['name'],
                 // ]);
 
-                $entityValues[] = [
-                    'entity_id' => $entity->id,
+                $entityValues[] = EntityValue::make([
                     'dataset_variable_name' => $schemaItem['name'],
                     'value' => $value,
-                ];
+                ]);
 
 
                 // for select_multiples, add binary/ boolean columns for each possible response
@@ -279,7 +281,7 @@ trait OdkSubmissionService
             }
         }
 
-        $entity->values()->insert($entityValues);
+        $entity->addValues(collect($entityValues));
 
         // find all child sections of this section
         $childSections = $xlsform->xlsformTemplate->repeatingSections
@@ -367,11 +369,10 @@ trait OdkSubmissionService
                     // ]);
 
                     // store ODK variable value as entity value record
-                    $entityValues[] = [
-                        'entity_id' => $entity->id,
+                    $entityValues[] = EntityValue::make([
                         'dataset_variable_name' => $schemaItem['name'],
                         'value' => $value,
-                    ];
+                    ]);
 
                     // for select_multiples, add binary/ boolean columns for each possible response
                     $booleanEntityValues = $this->makeMultiSelectBooleans($entity, $schemaItem, $choices, $value);
@@ -379,7 +380,7 @@ trait OdkSubmissionService
                 }
             }
 
-            $entity->values()->insert($entityValues);
+            $entity->addValues(collect($entityValues));
 
             // extract path into an array for constructing a new entry
             $arrayNames = explode('.', $repeatGroupArrayPath);
@@ -444,11 +445,10 @@ trait OdkSubmissionService
             $choicesSelected = Str::of($value)->lower()->explode(' ');
 
             foreach ($choiceListEntries as $choiceListEntry) {
-                $booleanEntityValues[] = [
-                    'entity_id' => $entity['id'],
+                $booleanEntityValues[] = EntityValue::make([
                     'dataset_variable_name' => $schemaItem['name'] . '_' . Str::lower($choiceListEntry->name),
                     'value' => $choicesSelected->contains(Str::lower($choiceListEntry->name)),
-                ];
+                ]);
             }
         }
 

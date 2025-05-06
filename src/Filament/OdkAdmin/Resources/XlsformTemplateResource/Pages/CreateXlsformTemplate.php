@@ -75,8 +75,6 @@ class CreateXlsformTemplate extends CreateRecord
                         return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
                     } catch (\Throwable $e) {
 
-                        ray($e);
-
                         Notification::make('xlsform_template_not_saved')
                             ->title('XLSForm Template Not Saved')
                             ->body('There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage())

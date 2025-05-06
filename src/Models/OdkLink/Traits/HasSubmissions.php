@@ -13,6 +13,6 @@ trait HasSubmissions
     /** @return MorphMany<Submission, $this> */
     public function submissions(): MorphMany
     {
-        return $this->morphMany(Submission::class, 'data_subject_id');
+        return $this->morphMany(Submission::class, 'primary_data_subject');
     }
 }
