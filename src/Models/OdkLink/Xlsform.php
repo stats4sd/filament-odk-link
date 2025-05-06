@@ -198,8 +198,6 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     {
 
         // check through the template modules; If this form is missing any, add the default version
-
-        ray($this->id);
         $this->xlsformTemplate->xlsformModules
             ->filter(fn(XlsformModule $module) => $this->xlsformModuleVersions->doesntContain('xlsform_module_id', $module->id))
             ->each(fn(XlsformModule $xlsformModule) => $this->xlsformModuleVersions()->attach($xlsformModule->defaultXlsformVersion));
