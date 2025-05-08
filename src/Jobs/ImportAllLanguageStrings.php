@@ -19,24 +19,32 @@ class ImportAllLanguageStrings implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        public string               $filePath,
-        public XlsformModuleVersion | XlsformTemplate $model,
-        public Collection           $translatableHeadings,
-    ) {}
+        public string                               $filePath,
+        public XlsformModuleVersion|XlsformTemplate $model,
+        public Collection                           $translatableHeadings,
+    )
+    {
+    }
 
     /**
      * Execute the job.
      */
     public function handle(): void
     {
-        // custom questions excel file has been stored by Spatie media library, use model to find the corresponding team
-        $currentOwner = Team::find($this->model->owner->id);
 
-        // get the file path of custom questions excel file stored by Spatie media library
-        $newFilePath = $currentOwner->getFirstMediaPath('custom_questions');
+        // Workaround to find the correct file for processing if we're importing an xlsform module version owned by a team
+        // TODO: ideally, this should be handled outside of this job, and the correct file path passed into the job in the first place.
+        if ($this->model instanceof XlsformModuleVersion) {
 
-        // update filePath for testing, no error occurred. All jobs completed.
-        $this->filePath = $newFilePath;
+            // custom questions excel file has been stored by Spatie media library, use model to find the corresponding team
+            $currentOwner = Team::find($this->model->owner->id);
+
+            // get the file path of custom questions excel file stored by Spatie media library
+            $newFilePath = $currentOwner->getFirstMediaPath('custom_questions');
+
+            // update filePath for testing, no error occurred. All jobs completed.
+            $this->filePath = $newFilePath;
+        }
 
 
         // import the language strings for all the translatable headings in the surveys tab;
