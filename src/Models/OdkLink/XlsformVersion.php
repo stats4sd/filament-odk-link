@@ -17,6 +17,7 @@ class XlsformVersion extends Model implements HasMedia
 
     protected $casts = [
         'schema' => 'collection',
+        'is_draft' => 'boolean',
     ];
 
     public function registerMediaCollections(): void
@@ -35,7 +36,7 @@ class XlsformVersion extends Model implements HasMedia
     protected function xlsfile(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->getFirstMediaPath('xlsform_file'),
+            get: fn(): string => $this->getFirstMediaPath('xlsform_file'),
         );
     }
 
@@ -43,7 +44,7 @@ class XlsformVersion extends Model implements HasMedia
     protected function xlsfile_name(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->getFirstMedia('xlsform_file')->file_name,
+            get: fn(): string => $this->getFirstMedia('xlsform_file')->file_name,
         );
     }
 
@@ -58,6 +59,19 @@ class XlsformVersion extends Model implements HasMedia
     /** @return HasMany<Submission, $this> */
     public function submissions(): HasMany
     {
+        return $this->hasMany(Submission::class)
+            ->withoutGlobalScope('ignore_drafts');
+    }
+
+    public function liveSubmissions(): HasMany
+    {
         return $this->hasMany(Submission::class);
+    }
+
+    public function draftSubmissions(): HasMany
+    {
+        return $this->hasMany(Submission::class)
+            ->withoutGlobalScope('ignore_drafts')
+            ->OnlyDraftData();
     }
 }

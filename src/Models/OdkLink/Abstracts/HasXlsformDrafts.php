@@ -2,17 +2,27 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts;
 
+use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Str;
 use JsonException;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\DeployDraftXlsformToOdkCentral;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Throwable;
 
 /**
@@ -21,46 +31,59 @@ use Throwable;
  * @property ?string $odk_id
  * @property ?string $odk_draft_token
  * @property ?string $enketo_draft_id
+ * @property ?Carbon $odk_draft_updated_at
+ * @property Media|UploadedFile|null $xlsfile
  */
-abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
+abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts, HasMedia
 {
     use InteractsWithMedia;
-    use PublishesToOdkCentral;
 
-
-    /** @return MorphTo */
-    public function owner(): MorphTo
+    /** @return BelongsTo<Model, $this> */
+    public function owner(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
     }
 
-    public function sendDraftToOdkCentral(OdkLinkService $service, bool $withMedia = true): bool
+    /**************** METHODS *************************/
+
+    public function deployDraft(bool $withMedia = true): ?PendingDispatch
     {
-        try {
-            $odkXlsFormDetails = $service->createDraftForm($this, $withMedia);
+        return DeployDraftXlsformToOdkCentral::dispatch($this, $withMedia, auth()->user());
+    }
 
-        } catch (Throwable $e) {
+    public function deployDraftSync(bool $withMedia = true): void
+    {
+        DeployDraftXlsformToOdkCentral::dispatchSync($this, $withMedia, auth()->user());
+    }
 
-            Notification::make('draft-form-failed')
-                ->title('There is an error in the XLS Form')
-                ->body($e->getMessage())
-                ->danger()
-                ->persistent()
-                ->send();
+    /**
+     * @throws RequestException
+     * @throws ConnectionException
+     */
+    public function updateDraftDetails(OdkLinkService $odkLinkService): void
+    {
+        $odkXlsFormDetails = $odkLinkService->getXlsformDraftDetails($this);
 
-            return false;
-        }
-
-        $this->updateQuietly([
+        $this->update([
             'odk_id' => $odkXlsFormDetails['xmlFormId'],
             'odk_draft_token' => $odkXlsFormDetails['draftToken'],
             'odk_version_id' => $odkXlsFormDetails['version'],
             'has_draft' => true,
             'enketo_draft_id' => $odkXlsFormDetails['enketoId'],
+            'odk_draft_updated_at' => new Carbon($odkXlsFormDetails['updatedAt']),
+            'draft_needs_update' => false,
         ]);
-
-        return true;
     }
+
+    /**
+     * @throws RequestException
+     */
+    public function deleteFromOdkCentral(OdkLinkService $odkLinkService): void
+    {
+        $odkLinkService->deleteForm($this);
+    }
+
+    /******************** COMPUTED ATTRIBUTES ******************/
 
     /**
      * Method to retrieve the encoded settings for the current draft version on ODK Central
@@ -68,13 +91,13 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
      * @throws JsonException
      */
     /** @return Attribute<?string, never> */
-    protected function draftQrCodeString(): Attribute
+    public function draftQrCodeString(): Attribute
     {
 
         return new Attribute(
             get: function () {
 
-                if (! $this->has_draft) {
+                if (!$this->has_draft) {
                     return null;
                 }
 
@@ -96,17 +119,38 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
 
     }
 
-    /**
-     * @throws RequestException
-     * @throws ConnectionException
-     */
-    public function updateDraftFormDetails(OdkLinkService $odkLinkService): void
+    /** @return Attribute<Media, never> */
+    protected function xlsfile(): Attribute
     {
-        $updated = $odkLinkService->getDraftFormDetails($this);
-
-        $this->update([
-            'odk_draft_token' => $updated['draftToken'],
-            'enketo_draft_id' => $updated['enketoId'],
-        ]);
+        return new Attribute(
+            get: fn (): Media => $this->getFirstMedia('xlsform_file'),
+        );
     }
+
+    /** @return Attribute<string, never> */
+    protected function xlsfileName(): Attribute
+    {
+        return new Attribute(
+            get: fn(): ?string => $this->getFirstMedia('xlsform_file')?->file_name,
+        );
+    }
+
+    /** @return Attribute<string, never> */
+    protected function enketoDraftUrl(): Attribute
+    {
+        return new Attribute(
+            get: function () {
+                // if there is no enketo id in the database, retrieve it from ODK Central
+                if (!$this->enketo_draft_id || Str::endsWith($this->enketo_draft_id, '/-/')) {
+                    $this->updateDraftDetails(app()->make(OdkLinkService::class));
+                    $this->refresh();
+                }
+
+                return config('filament-odk-link.odk.url') . '/-/' . $this->enketo_draft_id;
+
+            },
+        );
+    }
+
+
 }

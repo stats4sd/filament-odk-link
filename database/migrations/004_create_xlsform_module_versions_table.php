@@ -11,9 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('xlsform_module_versions', function (Blueprint $table) {
+         $teamTable = (new (config('filament-odk-link.models.team_model')))->getTable();
+
+        Schema::create('xlsform_module_versions', function (Blueprint $table) use ($teamTable) {
             $table->id();
-            $table->foreignId('xlsform_module_id');
+            $table->foreignId('xlsform_module_id')->nullable()->constrained('xlsform_modules')->cascadeOnUpdate()->cascadeOnDelete();
+
+            // A team might add their own custom xlsform version
+            $table->foreignId('owner_id')->nullable()->constrained($teamTable)->cascadeOnUpdate()->nullOnDelete();
             $table->string('name');
             $table->boolean('is_default')->default(false);
             $table->timestamps();

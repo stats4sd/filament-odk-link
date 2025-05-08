@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
+namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces;
 
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 

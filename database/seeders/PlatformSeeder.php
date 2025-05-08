@@ -14,11 +14,6 @@ class PlatformSeeder extends Seeder
     public function run(): void
     {
 
-        // force exit unless in local env
-        if (app()->environment() !== 'local') {
-            abort(403, 'This seeder can only be run in the local environment.');
-        }
-
         // check config item existence, and check empty config item
         if (config('filament-odk-link.odk.url') === null || config('filament-odk-link.odk.url') === '') {
             return;

@@ -36,9 +36,9 @@ class TestRemoveSub extends Command
         $option = $this->choice('Do you want to completely clear the submissions, entities and entity_values tables, or only remove submissions from a specific xlsform?', ['All', 'Specific'], 'All');
 
         if ($option === 'Specific') {
-            $teamName = $this->choice('Which team does the form belong to?', Team::all()->pluck('name', 'id')->toArray());
+            $teamName = $this->choice('Which team does the form belong to?', config('filament-odk-link.models.team_model')::all()->pluck('name', 'id')->toArray());
 
-            $team = Team::firstWhere('name', $teamName);
+            $team = config('filament-odk-link.models.team_model')::firstWhere('name', $teamName);
 
             $xlsformTitle = $this->choice('Which xlsform does the form belong to?', $team->xlsforms->pluck('title', 'id')->toArray());
 

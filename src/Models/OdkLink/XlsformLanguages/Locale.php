@@ -2,19 +2,23 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
-use Stats4sd\FilamentOdkLink\Services\HelperService;
 
-class Locale extends Model
+class Locale extends Model implements HasMedia
 {
+    use InteractsWithMedia;
+
     protected $casts = [
         'is_default' => 'boolean',
     ];
@@ -23,10 +27,21 @@ class Locale extends Model
         'language_label',
     ];
 
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('xlsform_template_translation_files')
+            ->useDisk(config('filament-odk-link.storage.xlsforms'));
+    }
+
     /** @return BelongsTo<Language, $this> */
     public function language(): BelongsTo
     {
         return $this->belongsTo(Language::class);
+    }
+
+    public function languageStrings(): HasMany
+    {
+        return $this->hasMany(LanguageString::class);
     }
 
     /** @return HasMany<XlsformModuleVersionLocale, $this> */
@@ -43,22 +58,17 @@ class Locale extends Model
             ->withPivot(['has_language_strings', 'needs_update']);
     }
 
-    public function creator(): MorphTo
+    /** @return BelongsTo<Model, $this> */
+    public function creator(): BelongsTo
     {
-        return $this->morphTo('creator');
-    }
-
-    /** @return HasMany<LocaleOwner, $this> */
-    public function localeOwners(): HasMany
-    {
-        return $this->hasMany(LocaleOwner::class);
+        return $this->belongsTo(config('filament-odk-link.models.team_model'), 'creator_id');
     }
 
     /** @return Attribute<string, never> */
     protected function languageLabel(): Attribute
     {
         return new Attribute(
-            get: fn () => $this->description ?? $this->language->name . ' (default)',
+            get: fn() => $this->is_default ? $this->language->name . ' (default)' : $this->description,
         );
     }
 
@@ -105,7 +115,6 @@ class Locale extends Model
                 return 'Needs update';
             }
         );
-
     }
 
     /** @return Attribute<string, never> */

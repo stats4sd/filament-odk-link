@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('choice_list_entries_removed', function (Blueprint $table) {
+        $teamTable = (new (config('filament-odk-link.models.team_model')))->getTable();
+
+        Schema::create('choice_list_entries_removed_owner', function (Blueprint $table) use ($teamTable) {
             $table->id();
-            $table->foreignId('choice_list_entry_id')->constrained();
-            $table->foreignId('team_id')->constrained();
+            $table->foreignId('choice_list_entry_id')->constrained()->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignId('owner_id')->constrained($teamTable)->cascadeOnDelete()->cascadeOnUpdate();
             $table->timestamps();
         });
     }
@@ -24,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('choice_list_entries_removed');
+        Schema::dropIfExists('choice_list_entries_removed_owner');
     }
 };
