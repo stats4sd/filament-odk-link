@@ -57,6 +57,7 @@ class XlsformTemplate extends HasXlsformDrafts
         });
 
         static::saving(static function (XlsformTemplate $xlsformTemplate) {
+
             if ($xlsformTemplate->newXlsfile instanceof UploadedFile) {
                 $xlsformTemplate->addMedia($xlsformTemplate->newXlsfile)->toMediaCollection('xlsform_file');
 

@@ -2,12 +2,14 @@
 
 namespace Stats4sd\FilamentOdkLink\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use App\Models\Team;
+use App\Services\HelperService;
 use Illuminate\Support\Collection;
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateLanguageStringImport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateLanguageStringImport;
 
 class ImportAllLanguageStrings implements ShouldQueue
 {
@@ -17,9 +19,9 @@ class ImportAllLanguageStrings implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        public string               $filePath,
-        public XlsformModuleVersion | XlsformTemplate $model,
-        public Collection           $translatableHeadings,
+        public string                               $filePath,
+        public XlsformModuleVersion|XlsformTemplate $model,
+        public Collection                           $translatableHeadings,
     )
     {
     }
@@ -29,13 +31,28 @@ class ImportAllLanguageStrings implements ShouldQueue
      */
     public function handle(): void
     {
+
+        // Workaround to find the correct file for processing if we're importing an xlsform module version owned by a team
+        // TODO: ideally, this should be handled outside of this job, and the correct file path passed into the job in the first place.
+        if ($this->model instanceof XlsformModuleVersion) {
+
+            // custom questions excel file has been stored by Spatie media library, use model to find the corresponding team
+            $currentOwner = Team::find($this->model->owner->id);
+
+            // get the file path of custom questions excel file stored by Spatie media library
+            $newFilePath = $currentOwner->getFirstMediaPath('custom_questions');
+
+            // update filePath for testing, no error occurred. All jobs completed.
+            $this->filePath = $newFilePath;
+        }
+
+
         // import the language strings for all the translatable headings in the surveys tab;
         foreach ($this->translatableHeadings as $sheet => $headings) {
             foreach ($headings as $heading) {
                 (new XlsformTemplateLanguageStringImport($this->model, $heading, $sheet))->import($this->filePath);
 
                 FinishLanguageStringImport::dispatchSync($this->model, $heading);
-
             }
         }
     }
