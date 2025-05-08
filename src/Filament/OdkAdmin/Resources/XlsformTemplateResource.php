@@ -87,7 +87,7 @@ class XlsformTemplateResource extends resource
                 ->preserveFilenames()
                 ->downloadable()
                 ->autofocus()
-                ->required()
+                ->hiddenOn(['edit'])
                 ->disabledOn(['edit'])
                 ->placeholder(__('File')),
         ];

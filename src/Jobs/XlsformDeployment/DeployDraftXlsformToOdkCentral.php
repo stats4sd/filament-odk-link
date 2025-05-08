@@ -20,7 +20,7 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public Xlsform|XlsformTemplate $xlsform, public bool $withMedia, public ?Authenticatable $user)
+    public function __construct(public Xlsform|XlsformTemplate $xlsform, public bool $withMedia, public bool $published, public ?Authenticatable $user)
     {
     }
 
@@ -35,8 +35,8 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
 
         $this->xlsform = $odkLinkService->createDraftForm($this->xlsform, $this->xlsform->xlsfile->getPath(), $this->withMedia);
 
-        if($this->xlsform instanceof Xlsform) {
-            $this->xlsform->needs_update = true;
+        if ($this->xlsform instanceof Xlsform) {
+            $this->xlsform->live_needs_update = true;
         }
 
         $this->xlsform->save();
@@ -47,8 +47,8 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
                 'is_draft' => true,
             ],
             [
-                'version' => $odkXlsFormDetails['version'],
-                'odk_version' => $odkXlsFormDetails['version'],
+                'version' => $this->xlsform->current_version,
+                'odk_version' => $this->xlsform->current_version,
                 'active' => true,
             ]
         );

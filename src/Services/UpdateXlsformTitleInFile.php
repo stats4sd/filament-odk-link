@@ -42,7 +42,6 @@ class UpdateXlsformTitleInFile
 
                     // if the form is already deployed, we must use the existing form_id on ODK:
                     $formId = $xlsform->odk_id ?? Str::slug($xlsform->title);
-                    ray($formId);
 
                     // assume that the headers are on row < 10 and column < AA
                     $coordinates = str_split($coordinates);

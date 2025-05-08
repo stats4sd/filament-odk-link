@@ -71,7 +71,7 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts, HasM
             'has_draft' => true,
             'enketo_draft_id' => $odkXlsFormDetails['enketoId'],
             'odk_draft_updated_at' => new Carbon($odkXlsFormDetails['updatedAt']),
-            'needs_update' => false,
+            'draft_needs_update' => false,
         ]);
     }
 

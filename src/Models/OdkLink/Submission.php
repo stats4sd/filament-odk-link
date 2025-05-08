@@ -76,6 +76,13 @@ class Submission extends Model implements HasMedia
                 $odkLinkService = app()->make(OdkLinkService::class);
                 $odkLinkService->handleUpdatedSubmissionContent($submission);
             }
+
+            // if a submission is moved from test to live data, check and update the linked farm.
+            if ($submission->isDirty('test_data')) {
+                $subject = $submission->primaryDataSubject;
+                $subject->updateCompletionStatus();
+            }
+
         });
 
         static::addGlobalScope('ignore_drafts', static function (Builder $query) {
@@ -93,14 +100,20 @@ class Submission extends Model implements HasMedia
         $query->where('test_data', false);
     }
 
-    /** @return MorphTo<Model, $this> */
+    /** @return MorphTo<Model|IsPrimaryDataSubject, $this> */
     public function primaryDataSubject(): MorphTo
     {
         return $this->morphTo();
     }
 
-    // $this->entries is an array of every Model entry created as a result of processing this submission.
-    // This helper function makes it easy to update this array.
+    /** @return MorphTo<Model|IsPrimaryDataSubject, $this> */
+    public function parent(): BelongsToThrough
+    {
+        return $this->belongsToThrough();
+    }
+
+// $this->entries is an array of every Model entry created as a result of processing this submission.
+// This helper function makes it easy to update this array.
     public function addEntry(string $model, array $ids): void
     {
         $value = $this->entries;
