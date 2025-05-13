@@ -3,6 +3,7 @@
 namespace Stats4sd\FilamentOdkLink\Exports\XlsformExport;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
@@ -13,7 +14,13 @@ trait ExportsXlsformContent
 
     public function mapPropertiesToPropertyHeadings(SurveyRow|ChoiceListEntry $entry): array
     {
-        return $this->propertyHeadings->mapWithKeys(fn(string $heading) => [$heading => $entry->properties[$heading] ?? null])->toArray();
+        return $this->propertyHeadings->mapWithKeys(function (string $heading) use ($entry) {
+
+            // formatting for media:: headings
+            $key = Str::replace('::', '', $heading);
+
+            return [$heading => $entry->properties[$key] ?? null];
+        })->toArray();
     }
 
     public function getLanguageStringHeaders(string $string): Collection
@@ -67,6 +74,7 @@ trait ExportsXlsformContent
             ->filter()
             ->map(fn($heading) => collect(json_decode($heading, true)))
             ->flatten()
+            ->map(fn($heading) => $this->expandMediaColumnHeaders($heading))
             ->unique();
     }
 
