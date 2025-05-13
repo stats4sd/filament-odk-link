@@ -14,6 +14,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\HasLanguageStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\IsLookupList;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Tests\Models\Team;
 use Znck\Eloquent\Relations\BelongsToThrough;
@@ -112,5 +113,14 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
         } else {
             $team->choiceListEntriesRemovedFromContext()->attach($this);
         }
+    }
+
+    public function getLanguageString(string $type, Locale $locale): ?string
+    {
+        return $this->languageStrings()
+            ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', $type))
+            ->whereHas('locale', fn(Builder $query) => $query->where('locales.id', $locale->id))
+            ->first()?->text;
+
     }
 }
