@@ -28,6 +28,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasUploadedXlsformFile;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Stats4sd\FilamentOdkLink\Services\UpdateXlsformTitleInFile;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
@@ -292,7 +293,7 @@ class XlsformTemplate extends HasXlsformDrafts
     // Split up language strings into 2 relationships as there are 2 paths between xlsformtemplates and language strings
 
     /** @return HasManyDeep<LanguageString, $this> */
-public function surveyLanguageStrings(): HasManyDeep
+    public function surveyLanguageStrings(): HasManyDeep
     {
         return $this->hasManyDeep(
             LanguageString::class,
