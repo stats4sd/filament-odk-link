@@ -67,7 +67,7 @@ class SurveyRow extends Model implements HasLanguageStrings
     {
         return $this->languageStrings()
             ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', $type))
-            ->whereHas('language', fn($query) => $query->where('languages.iso_alpha2', $locale->language->iso_alpha2))
+            ->whereHas('locale', fn(Builder $query) => $query->where('locales.id', $locale->id))
             ->first()?->text;
     }
 
