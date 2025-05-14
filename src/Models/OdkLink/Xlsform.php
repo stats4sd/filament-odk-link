@@ -47,7 +47,10 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     {
         // when the model is created;
         static::saved(static function (self $xlsform) {
-            $xlsform->syncWithTemplate();
+
+            if (!$xlsform->has_latest_template) {
+                $xlsform->syncWithTemplate();
+            }
 
             // check if the needs_up date was updated from true to false
             if ($xlsform->wasChanged('draft_needs_update') && !$xlsform->draft_needs_update) {
@@ -65,6 +68,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         });
 
         static::created(static function (self $xlsform) {
+            $xlsform->syncWithTemplate();
             $xlsform->deployDraft();
         });
 

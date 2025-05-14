@@ -134,7 +134,6 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
         // make sure the default locale for this language exists
         $locale = $this->language->locales()->firstOrCreate([
             'is_default' => true,
-            'description' => $this->language->name . '(Default)'
         ]);
 
         return new LanguageString([
