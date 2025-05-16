@@ -164,12 +164,12 @@ class XlsformTemplateResource extends resource
                         ->required()
                         ->visible(fn(Get $get): bool => $get('is_static')),
 
-                    //                    // for non-static media (linked to datasets)
-                    //                    Forms\Components\Select::make('choice_list_id')
-                    //                        ->label('Select a Choice List to link to')
-                    //                        ->relationship('choiceList', 'list_name', fn (Builder $query, ?RequiredMedia $record): Builder => $record ? $query->whereHasMorph('template', [\Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate::class, XlsformTemplate::class], fn ($query) => $query->whereHas('requiredMedia', fn ($query) => $query->where('id', $record->id))) : $query)
-                    //                        ->visible(fn (Get $get): bool => ! $get('is_static')),
-
+                    // for non-static media (linked to datasets)
+                    Forms\Components\Select::make('dataset_id')
+                        ->label('Select a Dataset to link to')
+                        ->helperText('This might be a shared list of response choices, like a list of treatments or actitivity types, or a dataset type that projects will need to upload themselves in order to use this ODK form, such as a list of farms.')
+                        ->relationship('dataset', 'name')
+                        ->visible(fn(Get $get): bool => !$get('is_static')),
                 ]),
         ];
     }

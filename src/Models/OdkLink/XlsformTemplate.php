@@ -208,6 +208,8 @@ class XlsformTemplate extends HasXlsformDrafts
             ->where(function (Builder $query) {
                 $query->whereHas('media')
                     // HOLPA CHANGE! In Holpa we have moved to using ChoiceList and ChoiceListEntry to manage custom lookup tables, instead of datasets. We need to decide if this is a good change that should be brought into the main package or if we should merge ChoiceList and Dataset somehow...
+
+                        // TODO: merge datasets + choice lists implimentation...
                     ->orWhere('required_media.choice_list_id', '!=', null);
             });
     }

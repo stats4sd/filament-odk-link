@@ -26,6 +26,7 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 /**
  * @phpstan-require-extends Model
+ * @phpstan-extends Model
  *
  * @property string $name
  * @property Collection<Xlsform> $xlsforms
@@ -44,6 +45,8 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 interface WithXlsforms
 {
     public function xlsforms(): HasMany;
+
+    public function datasets(): HasMany;
 
     public function languages(): BelongsToMany;
 

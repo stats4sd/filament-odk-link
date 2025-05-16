@@ -13,6 +13,7 @@ return new class extends Migration
             $table->foreignId('model_id')->nullable();
             $table->string('model_type')->nullable();
             $table->string('name')->unique();
+            $table->string('label')->comment('which variable in the dataset is the default "label"? (e.g. "name" or "first_name")');
             $table->foreignId('parent_id')->nullable()->constrained('datasets')->cascadeOnDelete()->cascadeOnUpdate();
             $table->string('primary_key');
             $table->text('description')->nullable();

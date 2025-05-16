@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Stats4sd\FilamentOdkLink\Models\Country;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Language;
@@ -27,6 +28,12 @@ trait HasXlsforms
     // Used as the human-readable label for the owners of forms. Uses the same variable name that some Laravel Backpack fields expect (e.g. Relationship)
     // Xls Form titles are in the format `$owner->$nameAttribute . '-' . $xlsform->title`
     public string $identifiableAttribute = 'name';
+
+    /** @return HasMany<Dataset, $this> */
+    public function datasets(): HasMany
+    {
+        return $this->hasMany(Dataset::class, 'owner_id');
+    }
 
     // ODK projects might be owned by 'xlsform owners', or the platform itself.
     /** @return MorphOne<OdkProject, $this> */

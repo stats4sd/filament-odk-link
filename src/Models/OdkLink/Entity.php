@@ -3,13 +3,13 @@
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class Entity extends Model
@@ -48,7 +48,6 @@ class Entity extends Model
         return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
     }
 
-    /** @return MorphTo */
     public function model(): MorphTo
     {
         return $this->morphTo();
@@ -68,6 +67,21 @@ class Entity extends Model
             ->withPivot('value');
     }
 
+    /** @return Attribute<mixed, never> */
+    protected function primaryKey(): Attribute
+    {
+        return new Attribute(
+            get: fn () => $this->values()->whereHas('datasetVariable', fn (Builder $query) => $query->where('name', $this->dataset->primary_key))->first()?->value
+        );
+    }
+
+    /** @return Attribute<string, string> */
+    protected function label(): Attribute
+    {
+        return new Attribute(
+            get: fn () => $this->values()->whereHas('datasetVariable', fn (Builder $query) => $query->where('name', $this->dataset->label))->first()?->value
+        );
+    }
 
     // Value Handling Functions
 
@@ -80,11 +94,11 @@ class Entity extends Model
             $entry['entity_id'] = $this->id;
 
             $count = 0;
-            while($datasetVariableNames->contains($entry['dataset_variable_name'])) {
+            while ($datasetVariableNames->contains($entry['dataset_variable_name'])) {
                 $count++;
-                $entry['dataset_variable_name'] = $entry['dataset_variable_name'] . ".{$count}";
+                $entry['dataset_variable_name'] = $entry['dataset_variable_name'].".{$count}";
 
-                if($count > 500) {
+                if ($count > 500) {
                     dd('warning - infinite loop detected in Entity::addValues()');
                 }
             }
@@ -94,15 +108,12 @@ class Entity extends Model
             return $entry;
         });
 
-
-
-
-
         return $this->values()->insert($entries->toArray());
     }
 
     /**
      * @phpstan-param Collection<array> $entities
+     *
      * @return Collection<Entity>
      */
     public function addChildEntities(Collection $entities, Dataset $dataset): Collection
@@ -112,7 +123,7 @@ class Entity extends Model
 
         return $entities->map(
 
-        /** @phpstan-param Collection<array<string>> $values */
+            /** @phpstan-param Collection<array<string>> $values */
             function (array $values) use ($dataset, $surveyRows) {
 
                 $entity = Entity::create([
@@ -126,7 +137,7 @@ class Entity extends Model
 
                 foreach ($values as $key => $value) {
 
-                    if (!$value) {
+                    if (! $value) {
                         continue;
                     }
 
@@ -141,7 +152,7 @@ class Entity extends Model
                     $surveyRow = $surveyRows->firstWhere('name', $key);
 
                     // ignore items not in the schema; e.g. "__id" fields in repeats.
-                    if (!$surveyRow) {
+                    if (! $surveyRow) {
                         continue;
                     }
 

@@ -7,10 +7,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Symfony\Contracts\Service\Attribute\Required;
 
-class Dataset extends Model
+class Dataset extends Model implements HasMedia
 {
+    use InteractsWithMedia;
+
+    /** @return BelongsTo<WithXlsforms, $this> */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
+    }
+
     // a dataset might be a subset of another dataset (e.g. data from a repeat group in a form; household members in a household, etc);
 
     /** @return BelongsTo<self, $this> */
@@ -20,10 +32,17 @@ class Dataset extends Model
     }
 
     // a dataset might have many children (e.g. if a form has 3 repeat group sections, the 'main survey' dataset would have 3 child datasets);
+
     /** @return HasMany<self, $this> */
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id');
+    }
+
+    /** @return BelongsTo<ChoiceList, $this> */
+    public function choiceList(): BelongsTo
+    {
+        return $this->belongsTo(ChoiceList::class);
     }
 
     /** @return HasMany<OdkDataset, $this> */
@@ -51,6 +70,7 @@ class Dataset extends Model
     }
 
     // A dataset may hold data collected from multiple xlsforms. Xlsform sections table acts as the "pivot" table.
+
     /** @return HasMany<XlsformTemplateSection, $this> */
     public function xlsformTemplateSections(): HasMany
     {
@@ -78,6 +98,7 @@ class Dataset extends Model
     }
 
     // xlsform templates that use this dataset as a source
+
     /** @return BelongsToMany<XlsformTemplate, $this> */
     public function xlsformTemplates(): BelongsToMany
     {
