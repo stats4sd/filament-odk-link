@@ -3,8 +3,6 @@
 namespace Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources;
 
 use Awcodes\FilamentTableRepeater\Components\TableRepeater;
-use Awcodes\TableRepeater\Components\TableRepeater;
-use Awcodes\TableRepeater\Header;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\IconEntry;

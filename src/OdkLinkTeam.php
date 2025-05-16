@@ -7,6 +7,9 @@ use Filament\Panel;
 
 class OdkLinkTeam implements Plugin
 {
+
+    protected bool $shouldRegisterNavigation = true;
+
     public static function make(): self
     {
         return new self;
@@ -29,15 +32,15 @@ class OdkLinkTeam implements Plugin
 
         $panel
             ->discoverResources(
-                in: __DIR__ . '/Filament/OdkTeam/Resources',
+                in: __DIR__.'/Filament/OdkTeam/Resources',
                 for: 'Stats4sd\\FilamentOdkLink\\Filament\\OdkTeam\\Resources'
             )
             ->discoverWidgets(
-                in: __DIR__ . '/Filament/Widgets',
+                in: __DIR__.'/Filament/Widgets',
                 for: 'Stats4sd\\FilamentOdkLink\\Filament\\Widgets'
             )
             ->discoverWidgets(
-                in: __DIR__ . '/Filament/OdkTeam/Widgets',
+                in: __DIR__.'/Filament/OdkTeam/Widgets',
                 for: 'Stats4sd\\FilamentOdkLink\\Filament\\OdkTeam\\Widgets'
             );
     }
@@ -45,5 +48,17 @@ class OdkLinkTeam implements Plugin
     public function boot(Panel $panel): void
     {
         // TODO: Implement boot() method.
+    }
+
+    public function shouldRegisterNavigation(bool $should): static
+    {
+        $this->shouldRegisterNavigation = $should;
+
+        return $this;
+    }
+
+    public function getShouldRegisterNavigation(): bool
+    {
+        return $this->shouldRegisterNavigation;
     }
 }

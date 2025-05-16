@@ -23,6 +23,7 @@ return new class extends Migration
             // will the media uploaded to the ODK form be a static file? (If false, it will be generated from a database table/view.
             $table->boolean('is_static')->default(true);
             $table->boolean('exists_on_odk')->default(false);
+            $table->boolean('updated_during_import')->default(false);
             $table->timestamps();
         });
     }
