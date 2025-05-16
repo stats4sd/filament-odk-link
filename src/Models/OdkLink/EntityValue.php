@@ -22,4 +22,10 @@ class EntityValue extends Model
     {
         return $this->belongsTo(OdkProject::class);
     }
+
+    /** @return BelongsTo<DatasetVariable, $this> */
+    public function datasetVariable(): BelongsTo
+    {
+        return $this->belongsTo(DatasetVariable::class);
+    }
 }

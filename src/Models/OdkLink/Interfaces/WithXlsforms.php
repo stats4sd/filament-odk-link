@@ -25,6 +25,8 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
  */
 interface WithXlsforms
 {
+    public function datasets(): MorphMany;
+
     public function xlsforms(): MorphMany;
 
     public function locales(): HasManyThrough;

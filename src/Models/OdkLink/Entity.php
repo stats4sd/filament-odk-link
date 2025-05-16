@@ -2,6 +2,8 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -37,13 +39,11 @@ class Entity extends Model
         return $this->belongsTo(Dataset::class);
     }
 
-    /** @return MorphTo */
     public function owner(): MorphTo
     {
         return $this->morphTo();
     }
 
-    /** @return MorphTo */
     public function model(): MorphTo
     {
         return $this->morphTo();
@@ -53,6 +53,21 @@ class Entity extends Model
     public function values(): HasMany
     {
         return $this->hasMany(EntityValue::class, 'entity_id');
+    }
+
+    public function primaryKey(): Attribute
+    {
+        return new Attribute(
+            get: fn () => $this->values()->whereHas('datasetVariable', fn (Builder $query) => $query->where('name', $this->dataset->primary_key))->first()?->value
+        );
+    }
+
+    public function label(): Attribute
+    {
+
+        return new Attribute(
+            get: fn () => $this->values()->whereHas('datasetVariable', fn (Builder $query) => $query->where('name', $this->dataset->label))->first()?->value
+        );
     }
 
     /** @return BelongsToMany<DatasetVariable, $this> */

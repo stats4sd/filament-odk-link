@@ -4,6 +4,7 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -14,7 +15,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
@@ -50,21 +50,25 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             // If the template is available, add a version of it to all teams where `shouldReceiveAllXlsformTemplates` is true
             if ($xlsformTemplate->available) {
 
-                config('filament-odk-link.models.team_model')::all()
-                    ->filter(fn (WithXlsforms $owner) => $owner->should_receive_all_templates)
-                    ->each(function (WithXlsforms $owner) use ($xlsformTemplate) {
-                        $xlsform = $owner->xlsforms()->whereHas('xlsformTemplate', function ($query) use ($xlsformTemplate) {
-                            $query->where('xlsform_templates.id', $xlsformTemplate->id);
-                        })->first();
+                $xlsformOwners = collect(get_declared_classes())
+                    // get all classes that implement WithXlsforms
+                    ->filter(fn ($class) => collect(class_implements($class))->contains(WithXlsforms::class))
+                    ->map(fn (string|Model $class) => $class::all()
+                        ->filter(fn (WithXlsforms $owner) => $owner->should_receive_all_templates)
+                        ->each(function (WithXlsforms $owner) use ($xlsformTemplate) {
+                            $xlsform = $owner->xlsforms()->whereHas('xlsformTemplate', function ($query) use ($xlsformTemplate) {
+                                $query->where('xlsform_templates.id', $xlsformTemplate->id);
+                            })->first();
 
-                        if (! $xlsform) {
-                            $xlsform = $xlsformTemplate->xlsforms()->create([
-                                'owner_id' => $owner->getKey(),
-                                'owner_type' => get_class($owner),
-                                'title' => $xlsformTemplate->title,
-                            ]);
-                        }
-                    });
+                            if (! $xlsform) {
+                                $xlsform = $xlsformTemplate->xlsforms()->create([
+                                    'owner_id' => $owner->getKey(),
+                                    'owner_type' => get_class($owner),
+                                    'title' => $xlsformTemplate->title,
+                                ]);
+                            }
+                        })
+                    );
             }
         });
 
@@ -152,8 +156,8 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
             ->where('required_media.type', '=', 'file')
             ->where(function (Builder $query) {
                 $query->whereHas('media')
-                    // HOLPA CHANGE! In Holpa we have moved to using ChoiceList and ChoiceListEntry to manage custom lookup tables, instead of datasets. We need to decide if this is a good change that should be brought into the main package or if we should merge ChoiceList and Dataset somehow...
-                    ->orWhere('required_media.choice_list_id', '!=', null);
+                    // TODO: how to bring together Dataset and ChoiceList?
+                    ->orWhere('required_media.dataset_id', '!=', null);
             });
 
     }
@@ -217,7 +221,7 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
     // get link to form in ODK Central
     public function getOdkLinkAttribute(): ?string
     {
-        return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . '/draft';
+        return config('filament-odk-link.odk.url').'/#/projects/'.$this->owner->odkProject->id.'/forms/'.$this->odk_id.'/draft';
     }
 
     /** @return Collection<XlsformTemplateSection> */
@@ -236,7 +240,7 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                     'is_repeat' => true,
                     'is_current' => true,
                     'schema' => $this->schema->filter(
-                        fn ($subItem) => Str::contains($subItem['path'], $item['path'] . '/')
+                        fn ($subItem) => Str::contains($subItem['path'], $item['path'].'/')
                             && $subItem['path'] !== $item['path']
                             && $subItem['type'] !== 'repeat'
                     ),
@@ -263,7 +267,7 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
                 //
                 //                dump($reviewSection->schema);
                 $reviewSection->schema = $reviewSection->schema->filter(
-                    fn ($item) => ! Str::startsWith($item['path'], '/' . $reviewSection->structure_item . '/' . $section->structure_item . '/')
+                    fn ($item) => ! Str::startsWith($item['path'], '/'.$reviewSection->structure_item.'/'.$section->structure_item.'/')
                 );
 
                 $reviewSection->save();
@@ -311,10 +315,10 @@ class XlsformTemplate extends HasXlsformDrafts implements HasMedia
         $this->xlsforms()->update(['has_latest_template' => false]);
     }
 
-    /** @return MorphMany<XlsformModule, $this> */
-    public function xlsformModules(): MorphMany
+    /** @return HasMany<XlsformModule, $this> */
+    public function xlsformModules(): HasMany
     {
-        return $this->morphMany(XlsformModule::class, 'form');
+        return $this->hasMany(XlsformModule::class);
     }
 
     /** @return HasManyThrough<XlsformModuleVersion, XlsformModule, $this> */

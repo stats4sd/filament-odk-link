@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('parent_id')->nullable()->constrained('entities')->cascadeOnDelete()->cascadeOnUpdate();
             $table->nullableMorphs('owner');
             $table->nullableMorphs('model');
-            $table->foreignId('submission_id')->constrained('submissions')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignId('submission_id')->nullable()->constrained('submissions')->cascadeOnDelete()->cascadeOnUpdate();
             $table->timestamps();
         });
 

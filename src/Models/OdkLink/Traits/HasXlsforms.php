@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Stats4sd\FilamentOdkLink\Models\ChoiceListEntryRemoved;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Language;
@@ -21,7 +22,7 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 trait HasXlsforms
 {
     /** @throws BindingResolutionException */
-    protected static function booted(): void
+    protected static function bootHasXlsforms(): void
     {
         parent::booted();
 
@@ -48,6 +49,13 @@ trait HasXlsforms
     // Xls Form titles are in the format `$owner->$nameAttribute . '-' . $xlsform->title`
     public string $identifiableAttribute = 'name';
 
+    /** @return MorphMany<Dataset, $this> */
+    public function datasets(): MorphMany
+    {
+        return $this->morphMany(Dataset::class, 'owner');
+    }
+
+    /** @return MorphMany<Xlsform, $this> */
     public function xlsforms(): MorphMany
     {
         return $this->morphMany(Xlsform::class, 'owner');

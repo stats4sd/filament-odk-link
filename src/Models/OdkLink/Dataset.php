@@ -6,11 +6,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Symfony\Contracts\Service\Attribute\Required;
 
-class Dataset extends Model
+class Dataset extends Model implements HasMedia
 {
+
+    use InteractsWithMedia;
+
+    // a dataset might be owned by a specific entity
+    public function owner(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
     // a dataset might be a subset of another dataset (e.g. data from a repeat group in a form; household members in a household, etc);
 
     /** @return BelongsTo<self, $this> */
@@ -36,6 +48,12 @@ class Dataset extends Model
     public function variables(): HasMany
     {
         return $this->hasMany(DatasetVariable::class);
+    }
+
+    /** @return BelongsTo<ChoiceList, $this> */
+    public function choiceList(): BelongsTo
+    {
+        return $this->belongsTo(ChoiceList::class);
     }
 
     /** @return HasMany<Entity, $this> */

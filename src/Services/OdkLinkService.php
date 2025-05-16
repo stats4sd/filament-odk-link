@@ -14,11 +14,11 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
+use Stats4sd\FilamentOdkLink\Exports\TempCsvExport;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
@@ -67,7 +67,7 @@ class OdkLinkService
         $token = $this->authenticate();
 
         // prepend platform identifier to project name;
-        $name = (config('app.short_name') ?? config('app.name')) . '- ' . $name;
+        $name = (config('app.short_name') ?? config('app.name')).'- '.$name;
 
         // leave 7 characters for the "all " prefix and number suffix for the app user;
         if (Str::length($name) > 57) {
@@ -91,7 +91,7 @@ class OdkLinkService
         $token = $this->authenticate();
 
         // truncate name to 64 characters
-        $displayName = Str::limit('All ' . $odkProject->name . ' ' . $odkProject->appUsers()->count() + 1, limit: 64, end: '');
+        $displayName = Str::limit('All '.$odkProject->name.' '.$odkProject->appUsers()->count() + 1, limit: 64, end: '');
 
         // create new app-user
         $userResponse = Http::withToken($token)
@@ -248,7 +248,7 @@ class OdkLinkService
      *
      * @throws RequestException|ConnectionException
      */
-    public function uploadMediaFileAttachments(XLsform | XlsformTemplate $xlsform): bool
+    public function uploadMediaFileAttachments(XLsform|XlsformTemplate $xlsform): bool
     {
 
         // static files
@@ -275,7 +275,31 @@ class OdkLinkService
                 }
 
                 // TODO: add csv media file creation;
-                // $this->uploadSingleMediaFile($xlsform, $csvPath);
+                $entities = $requiredMediaItem->dataset->entities
+                    ->map(function (Entity $entity) use ($requiredMediaItem) {
+                        $rowData = [
+                            'list_name' => Str::replace('.csv', '', $requiredMediaItem->name),
+                            'name' => $entity->primary_key,
+                            'label' => $entity->label,
+                        ];
+
+                        foreach ($entity->dataset->variables as $variable) {
+
+                            if ($variable->name !== 'name' && $variable->name !== 'label') {
+                                $rowData[$variable->name] = $entity->values()->firstWhere('dataset_variable_id', $variable->id)->value ?? '';
+                            }
+
+                        }
+
+                        return $rowData;
+                    });
+
+                // create CSV file from $rowData;
+                $filePath = $xlsform->id.'/'.$requiredMediaItem->name;
+
+                Excel::store((new TempCsvExport($entities)), $filePath, config('filament-odk-link.storage.media'));
+
+                $this->uploadSingleMediaFile($xlsform, Storage::disk(config('filament-odk-link.storage.media'))->path($filePath));
             }
         }
 
@@ -287,7 +311,7 @@ class OdkLinkService
      *
      * @throws RequestException|ConnectionException
      */
-    public function uploadSingleMediaFile(Xlsform | XlsformTemplate $xlsform, string $filePath): array
+    public function uploadSingleMediaFile(Xlsform|XlsformTemplate $xlsform, string $filePath): array
     {
         $token = $this->authenticate();
         $file = file_get_contents($filePath);
@@ -305,7 +329,7 @@ class OdkLinkService
                 ->json();
         } catch (RequestException $exception) {
             if ($exception->getCode() === 404) {
-                abort(500, 'The file ' . $fileName . ' is not an expected file name for this ODK form template. Please review the form and check which media files are expected');
+                abort(500, 'The file '.$fileName.' is not an expected file name for this ODK form template. Please review the form and check which media files are expected');
             }
 
             throw ($exception);
@@ -325,7 +349,7 @@ class OdkLinkService
         $token = $this->authenticate();
 
         Http::withToken($token)
-            ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=" . Carbon::now()->toDateTimeString())
+            ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=".Carbon::now()->toDateTimeString())
             ->throw()
             ->json();
 
@@ -383,7 +407,7 @@ class OdkLinkService
     /**
      * @throws RequestException
      */
-    public function deleteForm(Xlsform | XlsformTemplate $xlsform): bool
+    public function deleteForm(Xlsform|XlsformTemplate $xlsform): bool
     {
         $token = $this->authenticate();
 
@@ -435,7 +459,7 @@ class OdkLinkService
     }
 
     // update the schema of a template for xlsform from the latest draft version on ODK Central
-    public function updateSchema(Xlsform | XlsformTemplate $xlsform): void
+    public function updateSchema(Xlsform|XlsformTemplate $xlsform): void
     {
         $token = $this->authenticate();
 
@@ -527,7 +551,7 @@ class OdkLinkService
         $oDataServiceUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}.svc";
 
         $results = Http::withToken($token)
-            ->get($oDataServiceUrl . '/Submissions?$expand=*')
+            ->get($oDataServiceUrl.'/Submissions?$expand=*')
             ->throw()
             ->json();
 
@@ -548,7 +572,7 @@ class OdkLinkService
                     'ownerName' => $xlsform->owner->name,
                 ]);
 
-                abort(500, 'The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '));
+                abort(500, 'The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: '.$messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '));
             }
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
@@ -653,7 +677,7 @@ class OdkLinkService
 
         // access the value of each ODK variable from a deeply nested array using "dot" notation
         foreach ($schema as $schemaItem) {
-            $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+            $itemPath = 'root'.Str::replace('/', '.', $schemaItem['path']);
             $value = Arr::get($entry, $itemPath);
 
             // dump($schemaItem['name'] . ' : ' . $value);
@@ -766,19 +790,19 @@ class OdkLinkService
 
             // extract value from main survey
             if ($section->is_repeat == 0) {
-                $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+                $itemPath = 'root'.Str::replace('/', '.', $schemaItem['path']);
                 $value = Arr::get($entry, $itemPath);
 
                 // extract value from repeat group
             } else {
                 $pathLength = Str::length($schemaItem['path']);
-                $position = Str::position($schemaItem['path'], '/' . $section->structure_item . '/');
+                $position = Str::position($schemaItem['path'], '/'.$section->structure_item.'/');
                 $lengthToCut = $pathLength - $position;
 
                 $itemPath = Str::substr($schemaItem['path'], ($position + 1) + Str::length($section->structure_item), $lengthToCut);
                 // dump('$itemPath : ' . $itemPath);
 
-                $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+                $fullItemPath = 'rg'.Str::replace('/', '.', $itemPath);
                 // dump('$fullItemPath : ' . $fullItemPath);
 
                 $value = Arr::get($entry, $fullItemPath);
@@ -868,7 +892,7 @@ class OdkLinkService
 
             // extract value from main survey
             if ($section->is_repeat == 0) {
-                $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+                $itemPath = 'root'.Str::replace('/', '.', $schemaItem['path']);
                 $value = Arr::get($entry, $itemPath);
 
                 // extract value from repeat group
@@ -880,7 +904,7 @@ class OdkLinkService
                 $itemPath = Str::substr($schemaItem['path'], $position + Str::length($section->structure_item), $lengthToCut);
                 // dump('$itemPath : ' . $itemPath);
 
-                $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+                $fullItemPath = 'rg'.Str::replace('/', '.', $itemPath);
                 // dump('$fullItemPath : ' . $fullItemPath);
 
                 $value = Arr::get($entry, $fullItemPath);
@@ -942,10 +966,10 @@ class OdkLinkService
         $schemaPaths = $schema->pluck('path')->toArray();
         // dump($schemaPaths[0]);
 
-        $position = Str::position($schemaPaths[0], '/' . $section->structure_item . '/');
+        $position = Str::position($schemaPaths[0], '/'.$section->structure_item.'/');
 
         // construct the path for getting an array of repeat group
-        $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . '.' . $section->structure_item;
+        $repeatGroupArrayPath = 'root'.Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)).'.'.$section->structure_item;
         // dump($repeatGroupArrayPath);
 
         // get the array for repeat group
@@ -984,13 +1008,13 @@ class OdkLinkService
                     // dump('$schemaItem[path] : ' . $schemaItem['path']);
 
                     $pathLength = Str::length($schemaItem['path']);
-                    $position = Str::position($schemaItem['path'], '/' . $section->structure_item . '/');
+                    $position = Str::position($schemaItem['path'], '/'.$section->structure_item.'/');
                     $lengthToCut = $pathLength - $position;
 
                     $itemPath = Str::substr($schemaItem['path'], ($position + 1) + Str::length($section->structure_item), $lengthToCut);
                     // dump('$itemPath : ' . $itemPath);
 
-                    $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+                    $fullItemPath = 'rg'.Str::replace('/', '.', $itemPath);
                     // dump('$fullItemPath : ' . $fullItemPath);
 
                     $value = Arr::get($repeatGroupEntry, $fullItemPath);
@@ -1019,10 +1043,10 @@ class OdkLinkService
         $schemaPaths = $schema->pluck('path')->toArray();
         // dump($schemaPaths[0]);
 
-        $position = Str::position($schemaPaths[0], '/' . $section->structure_item . '/');
+        $position = Str::position($schemaPaths[0], '/'.$section->structure_item.'/');
 
         // construct the path for getting an array of repeat group
-        $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . '.' . $section->structure_item;
+        $repeatGroupArrayPath = 'root'.Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)).'.'.$section->structure_item;
         // dump($repeatGroupArrayPath);
 
         // get the array for repeat group
@@ -1103,7 +1127,7 @@ class OdkLinkService
 
     public function exportAsExcelFile(Xlsform $xlsform): BinaryFileResponse
     {
-        return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
+        return Excel::download(new SurveyExport($xlsform), $xlsform->title.'-'.now()->toDateTimeString().'.xlsx');
     }
 
     private function getArr(mixed $model, Xlsform $xlsform, $entry, XlsformTemplateSection $section, mixed $schema, $submissionId, array $dataArray): array

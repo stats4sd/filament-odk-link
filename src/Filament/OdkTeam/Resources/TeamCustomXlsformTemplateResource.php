@@ -22,6 +22,7 @@ use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamCustomXlsformTemplat
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\FilamentOdkLink\OdkLinkTeam;
 
 // Use this resource for a panel scoped to a team
 // This resource is for a team to add their own custom templates
@@ -38,7 +39,14 @@ class TeamCustomXlsformTemplateResource extends Resource
 
     protected static ?string $navigationLabel = 'Custom ODK Templates';
 
+    protected static ?int $navigationSort = 101;
+
     protected static bool $isScopedToTenant = false;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return OdkLinkTeam::get()->getShouldRegisterNavigation();
+    }
 
     //  manually scope to Team tenant
     public static function getEloquentQuery(): Builder
@@ -95,12 +103,6 @@ class TeamCustomXlsformTemplateResource extends Resource
                         TextEntry::make('title'),
                         TextEntry::make('xlsfile_name')
                             ->url(fn (?XlsformTemplate $record): string => $record?->getFirstMediaUrl('xlsform_file')),
-                        IconEntry::make('available')
-                            ->label('Available to Platform users?')
-                            ->icon(fn (bool $state): string => match ($state) {
-                                false => 'heroicon-o-no-symbol',
-                                true => 'heroicon-o-check-circle',
-                            }),
                     ])
                     ->columns([
                         'xl' => 3,

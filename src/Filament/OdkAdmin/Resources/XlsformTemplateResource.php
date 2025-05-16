@@ -176,11 +176,11 @@ class XlsformTemplateResource extends resource
                         ->required()
                         ->visible(fn (Get $get): bool => $get('is_static')),
 
-                    //                    // for non-static media (linked to datasets)
-                    //                    Forms\Components\Select::make('choice_list_id')
-                    //                        ->label('Select a Choice List to link to')
-                    //                        ->relationship('choiceList', 'list_name', fn (Builder $query, ?RequiredMedia $record): Builder => $record ? $query->whereHasMorph('template', [\App\Models\Xlsforms\XlsformTemplate::class, XlsformTemplate::class], fn ($query) => $query->whereHas('requiredMedia', fn ($query) => $query->where('id', $record->id))) : $query)
-                    //                        ->visible(fn (Get $get): bool => ! $get('is_static')),
+                    // for non-static media (linked to datasets)
+                    Forms\Components\Select::make('dataset_id')
+                        ->label('Select a Dataset to link to')
+                        ->relationship('dataset', 'name')
+                        ->visible(fn (Get $get): bool => ! $get('is_static')),
 
                 ]),
         ];

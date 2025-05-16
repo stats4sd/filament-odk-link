@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource\Pages\ListTeamXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\OdkLinkTeam;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
@@ -24,6 +25,13 @@ class TeamXlsformTemplateResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
 
     protected static ?string $navigationLabel = 'Available ODK Templates';
+
+    protected static ?int $navigationSort = 100;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return OdkLinkTeam::get()->getShouldRegisterNavigation();
+    }
 
     protected static bool $isScopedToTenant = false;
 
@@ -72,14 +80,14 @@ class TeamXlsformTemplateResource extends Resource
                     ->form([
                         Forms\Components\TextInput::make('title')
                             ->label('Please give the form a title.')
-                            ->default(fn (XlsformTemplate $record) => HelperService::getCurrentOwner()->name . ' - ' . $record->title)
+                            ->default(fn (XlsformTemplate $record) => HelperService::getCurrentOwner()->name.' - '.$record->title)
                             ->hint('Note that ODK form titles cannot be longer than 64 characters.'),
                     ])
                     ->action(function (XlsformTemplate $record, array $data) {
 
                         $xlsform = $record->xlsforms()->create([
                             'owner_id' => Filament::getTenant()->getKey(),
-                            'owner_type' => config('filament-odk-link.models.team_model'),
+                            'owner_type' => get_class(Filament::getTenant()),
                             'title' => $data['title'],
                         ]);
 

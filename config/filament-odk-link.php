@@ -1,21 +1,7 @@
 <?php
 
-use Stats4sd\FilamentOdkLink\Models\TeamManagement\Team;
-
 // config for Stats4sd/OdkLink
 return [
-
-    'models' => [
-
-        /**
-         * Tells the system which Team model in use.
-         * By default it is "Stats4sd\FilamentOdkLink\Models\TeamManagement\Team"
-         * User can define custom Team model in .env file config item "ODK_TEAM_MODEL"
-         */
-        'team_model' => env('ODK_TEAM_MODEL', \Stats4sd\FilamentOdkLink\Models\TeamManagement\Team::class),
-        'user_model' => env('ODK_USER_MODEL', '\App\Models\User'),
-
-    ],
 
     'odk' => [
 
@@ -34,7 +20,7 @@ return [
          * If you use a custom installation of ODK Central or Kobotoolbox, it will be the base url to your service.
          */
         'url' => env('ODK_URL'),
-        'base_endpoint' => env('ODK_URL', '') . '/v1',
+        'base_endpoint' => env('ODK_URL', '').'/v1',
 
         'platform_project_id' => env('ODK_PLATFORM_PROJECT_ID'),
 
@@ -62,10 +48,6 @@ return [
     'roles' => [
         // the role that a user must have in order to see *all* forms, and not just the ones owned by an entity linked to the user.
         'xlsform-admin' => env('XLSFORM_ADMIN_ROLE', 'admin'),
-    ],
-
-    'owners' => [
-        'main_type' => env('MAIN_OWNER_TYPE', 'team'),
     ],
 
     'submission' => [

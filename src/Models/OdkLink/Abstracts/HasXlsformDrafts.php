@@ -36,20 +36,20 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts
 
     public function sendDraftToOdkCentral(OdkLinkService $service, bool $withMedia = true): bool
     {
-        try {
+//        try {
             $odkXlsFormDetails = $service->createDraftForm($this, $withMedia);
 
-        } catch (Throwable $e) {
-
-            Notification::make('draft-form-failed')
-                ->title('There is an error in the XLS Form')
-                ->body($e->getMessage())
-                ->danger()
-                ->persistent()
-                ->send();
-
-            return false;
-        }
+//        } catch (Throwable $e) {
+//
+//            Notification::make('draft-form-failed')
+//                ->title('There is an error in the XLS Form')
+//                ->body($e->getMessage())
+//                ->danger()
+//                ->persistent()
+//                ->send();
+//
+//            return false;
+//        }
 
         $this->updateQuietly([
             'odk_id' => $odkXlsFormDetails['xmlFormId'],
