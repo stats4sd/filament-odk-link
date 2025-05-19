@@ -30,15 +30,13 @@ trait OdkUserService
 
         try {
 
-            $result = Http::withToken($token)
+            return Http::withToken($token)
                 ->post("{$this->endpoint}/users", [
                     'email' => $email,
-                    'password' =>  $password
+                    'password' => $password,
                 ])
                 ->throw()
                 ->json();
-
-            return $result;
 
         } catch (RequestException $e) {
             if ($e->getCode() === 409) {
@@ -83,12 +81,12 @@ trait OdkUserService
 
         try {
 
-        return Http::withToken($token)
-            ->post("{$this->endpoint}/assignments/{$role}/{$user->odk_id}")
-            ->throw()
-            ->json();
-        } catch(RequestException $e) {
-            if($e->getCode() === 409) {
+            return Http::withToken($token)
+                ->post("{$this->endpoint}/assignments/{$role}/{$user->odk_id}")
+                ->throw()
+                ->json();
+        } catch (RequestException $e) {
+            if ($e->getCode() === 409) {
                 // user already has role;
 
                 return [
@@ -107,12 +105,23 @@ trait OdkUserService
 
         try {
 
-        return Http::withToken($token)
-            ->post("{$this->endpoint}/projects/{$odkProject->id}/assignments/manager/{$user->odk_id}")
-            ->throw()
-            ->json();
-        } catch(RequestException $e) {
-            if($e->getCode() === 409) {
+            // Check if the User account exists on ODK Central
+            if ($user->odk_id) {
+
+
+                return Http::withToken($token)
+                    ->post("{$this->endpoint}/projects/{$odkProject->id}/assignments/manager/{$user->odk_id}")
+                    ->throw()
+                    ->json();
+            }
+
+            return [
+                'success' => true,
+                'message' => 'User does not exist on ODK Central.'
+            ];
+
+        } catch (RequestException $e) {
+            if ($e->getCode() === 409) {
                 return [
                     'success' => true,
                 ];

@@ -28,14 +28,14 @@ trait HasOdkCentralAccount
     {
         $odkLinkService = app()->make(OdkLinkService::class);
 
-//        // assign site-wide roles
-//        if ($this->isAdmin()) {
-//            $odkLinkService->assignRole($this, 'admin');
-//        }
-//
-//        foreach ($this->teams as $team) {
-//            $odkLinkService->addUserToProject($this, $team->odkProject);
-//        }
+        // assign site-wide roles
+        if ($this->isAdmin()) {
+            $odkLinkService->assignRole($this, 'admin');
+        }
+
+        foreach ($this->teams as $team) {
+            $odkLinkService->addUserToProject($this, $team->odkProject);
+        }
     }
 
     /**
