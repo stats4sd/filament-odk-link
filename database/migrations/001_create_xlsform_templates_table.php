@@ -35,6 +35,8 @@ return new class extends Migration
             // which dataset does this form's submissions populate?
             $table->foreignId('main_dataset_id')->nullable()->constrained('datasets')->nullOnDelete()->cascadeOnUpdate();
 
+            $table->boolean('processing')->default(false);
+
             // system stuff
             $table->timestamps();
             $table->softDeletes();

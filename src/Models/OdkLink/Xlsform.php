@@ -2,7 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use App\Events\XlsformDraftWasDeployed;
+use Stats4sd\FilamentOdkLink\Events\XlsformDraftWasDeployed;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;

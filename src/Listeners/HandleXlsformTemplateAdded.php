@@ -9,6 +9,7 @@ use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateChoiceListIm
 use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateWorkbookImport;
 use Stats4sd\FilamentOdkLink\Jobs\FinishChoiceListEntryImport;
 use Stats4sd\FilamentOdkLink\Jobs\FinishSurveyRowImport;
+use Stats4sd\FilamentOdkLink\Jobs\FinishXlsformTemplateImport;
 use Stats4sd\FilamentOdkLink\Jobs\ImportAllLanguageStrings;
 use Stats4sd\FilamentOdkLink\Jobs\LinkModuleVersionToLocales;
 use Stats4sd\FilamentOdkLink\Jobs\PrepareSurveyRowPaths;
@@ -31,17 +32,13 @@ class HandleXlsformTemplateAdded
         }
 
         $filePath = $event->media->getPath();
-        $moduleVersion = null;
 
         // for xlsform templates, create all the included xlsform modules.
         if ($model instanceof XlsformTemplate) {
-            $moduleVersions = $this->createModules($filePath, $model);
+            $this->createModules($filePath, $model);
         }
 
-        if ($model instanceof XlsformModuleVersion) {
-            $moduleVersion = $model;
-        }
-
+        $model->updateQuietly(['processing' => true]);
         $this->processXlsformTemplate($filePath, $model);
 
     }
@@ -82,6 +79,7 @@ class HandleXlsformTemplateAdded
                 new LinkModuleVersionToLocales($model, $translatableHeadings),
 
                 new ImportAllLanguageStrings($filePath, $model, $translatableHeadings),
+                new FinishXlsformTemplateImport($model),
             ]);
 
 

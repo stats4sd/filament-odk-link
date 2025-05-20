@@ -67,7 +67,7 @@ class CreateXlsformTemplate extends CreateRecord
 
                         Notification::make('xlsform_template_updated')
                             ->title('XLSForm Template Updated')
-                            ->body('The XLSForm Template has been updated successfully.')
+                            ->body('The XLSForm Template has been saved successfully.')
                             ->success()
                             ->persistent()
                             ->send();

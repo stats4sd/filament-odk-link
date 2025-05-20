@@ -4,8 +4,8 @@ namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateRe
 
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Livewire\Attributes\On;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Filament\Widgets\OdkLinkUrlAlert;
 use Stats4sd\FilamentOdkLink\Filament\Widgets\OdkUrlAlertWidget;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 
@@ -36,5 +36,11 @@ class ListXlsformTemplates extends ListRecords
             ->openUrlInNewTab(),
             Actions\CreateAction::make(),
         ];
+    }
+
+    #[On('echo.xlsforms,XlsformTemplateWasImported')]
+    public function updateTable(): void
+    {
+        $this->resetTable();
     }
 }

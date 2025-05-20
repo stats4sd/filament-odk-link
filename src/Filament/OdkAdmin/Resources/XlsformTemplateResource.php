@@ -295,6 +295,7 @@ class XlsformTemplateResource extends resource
                     ->label('Datasets')
                     ->view('filament-odk-link::filament.tables.columns.required-data-media-count'),
                 Tables\Columns\CheckboxColumn::make('available')
+                    ->disabled(fn(XlsformTemplate $record) => $record->processing)
                     ->label('Available for use?')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('xlsforms_count')
@@ -308,6 +309,7 @@ class XlsformTemplateResource extends resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\Action::make('update_xlsform_template')
+                    ->disabled(fn(XlsformTemplate $record) => $record->processing)
                     ->label('Replace XLSForm')
                     ->icon('heroicon-o-document-arrow-up')
                     ->form(self::getCreateFields())
@@ -318,7 +320,6 @@ class XlsformTemplateResource extends resource
                     })
                     ->action(function (array $data, XlsformTemplate $record) {
                         try {
-
 
 
                             $record->title = $data['title'];
@@ -350,7 +351,8 @@ class XlsformTemplateResource extends resource
                             $this->halt();
                         }
                     }),
-                Tables\Actions\EditAction::make()->label('Edit Media & Data'),
+                Tables\Actions\EditAction::make()->label('Edit Media & Data')
+                    ->disabled(fn(XlsformTemplate $record) => $record->processing),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -363,6 +365,9 @@ class XlsformTemplateResource extends resource
     {
         return $infolist
             ->schema([
+                Shout::make('Processing')
+                    ->visible(fn(?XlsformTemplate $record): bool => $record?->processing)
+                    ->content('This Form is currently being processed, and is not yet available for use. This should only take a few minutes after being updated. If you see this notification for more than a few minutes, please contact support.'),
                 Section::make('Xlsform Details')
                     ->schema([
                         TextEntry::make('title'),

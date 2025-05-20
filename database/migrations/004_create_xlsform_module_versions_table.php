@@ -21,6 +21,9 @@ return new class extends Migration
             $table->foreignId('owner_id')->nullable()->constrained($teamTable)->cascadeOnUpdate()->nullOnDelete();
             $table->string('name');
             $table->boolean('is_default')->default(false);
+
+            $table->boolean('processing')->default(false);
+
             $table->timestamps();
 
             $table->unique(['xlsform_module_id', 'name']);
