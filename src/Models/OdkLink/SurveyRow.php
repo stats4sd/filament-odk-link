@@ -21,7 +21,7 @@ class SurveyRow extends Model implements HasLanguageStrings
 {
     use CascadesDeletes;
 
-    protected static function boot()
+    protected static function booted(): void
     {
         static::deleting(function ($surveyRow) {
             $surveyRow->languageStrings()->delete();
