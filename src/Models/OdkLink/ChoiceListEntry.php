@@ -42,6 +42,10 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
                     ->orWhereNull('choice_list_entries.owner_id');
             }
         });
+
+        static::deleting(function ($surveyRow) {
+            $surveyRow->languageStrings()->delete();
+        });
     }
 
     /** @return BelongsTo<ChoiceList, $this> */
