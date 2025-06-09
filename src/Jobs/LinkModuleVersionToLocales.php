@@ -61,7 +61,7 @@ class LinkModuleVersionToLocales implements ShouldQueue
 
             $xlsformModuleVersion->locales()->syncWithPivotValues(
                 ids: $locales->pluck('id')->toArray(),
-                values: ['has_language_strings' => true, 'needs_update' => false, 'updated_during_import' => true],
+                values: ['needs_update' => false, 'updated_during_import' => true],
                 detaching: false,
             );
 

@@ -16,10 +16,10 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('language_id')->constrained('languages')->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreignId('creator_id')->nullable()->constrained($teamTable)->cascadeOnDelete()->cascadeOnUpdate();
-
             $table->boolean('is_default')->default(false);
             $table->text('description')->nullable();
 
+            $table->unsignedInteger('processing_count')->default(0);
             $table->timestamps();
         });
     }

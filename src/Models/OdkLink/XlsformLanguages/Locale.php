@@ -8,8 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -52,6 +54,10 @@ class Locale extends Model implements HasMedia
                 }
             });
 
+            // create link with all default modules (as they will all require language strings to consider the locale as "complete"
+            $defaultModuleVersions = XlsformModuleVersion::where('is_default', true)->get()->pluck('id');
+
+            $locale->xlsformModuleVersions()->sync($defaultModuleVersions);
         });
     }
 
@@ -83,7 +89,7 @@ class Locale extends Model implements HasMedia
     {
         return $this->belongsToMany(XlsformModuleVersion::class, 'xlsform_module_version_locale', 'locale_id', 'xlsform_module_version_id')
             ->using(XlsformModuleVersionLocale::class)
-            ->withPivot(['has_language_strings', 'needs_update']);
+            ->withPivot(['needs_update']);
     }
 
     /** @return BelongsTo<Model, $this> */
@@ -107,12 +113,30 @@ class Locale extends Model implements HasMedia
         );
     }
 
+    public function getStatusForFormTemplate(XlsformTemplate $xlsformTemplate): bool
+    {
+            $moduleVersions = $xlsformTemplate->defaultXlsformModuleVersions;
+
+            return $this->checkModuleCompleteness($moduleVersions);
+    }
+
+    public function getStatusForForm(Xlsform $xlsform): bool {
+        $moduleVersions = $xlsform->xlsformModuleVersions;
+
+        return $this->checkModuleCompleteness($moduleVersions);
+
+    }
+
     /** @return Attribute<string, never> */
     protected function status(): Attribute
     {
 
         return new Attribute(
             get: function () {
+
+                if($this->processing_count > 0) {
+                    return 'Processing';
+                }
 
                 $owner = HelperService::getCurrentOwner();
 
@@ -131,23 +155,27 @@ class Locale extends Model implements HasMedia
                             ->map(fn(XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
                     )->flatten();
 
-                if ($moduleVersions->count() === 0) {
+                // Has any media been uploaded? If not:
+                if (!$this->hasMedia('xlsform_template_translation_files')) {
                     return 'Not uploaded';
                 }
 
-                if ($moduleVersions->count() < $allModuleVersions->count()) {
+                // some media has been uploaded; but not for every xlsform template
+                if ($this->media()->count() < $xlsforms->count()) {
                     return 'Translations incomplete';
                 }
 
+
+                // At least one module version "needs_update"
                 /** @phpstan-ignore-next-line
                  * Ignoring because phpstan/larastan doesn't yet support easy handling of pivot values, and the workaround seem not worth it here.
                  * https://github.com/larastan/larastan/issues/1774
                  */
-                if ($moduleVersions->every(fn($moduleVersion) => !$moduleVersion->pivot->needs_update && $moduleVersion->pivot->has_language_strings)) {
-                    return 'Ready for use';
+                if ($moduleVersions->some(fn($moduleVersion) => $moduleVersion->pivot->needs_update)) {
+                    return 'Needs updating';
                 }
 
-                return 'Needs update';
+                return 'Ready for use';
             }
         );
     }
@@ -176,5 +204,24 @@ class Locale extends Model implements HasMedia
         return new Attribute(
             get: fn() => $this->is_editable && $this->status !== 'Ready for use',
         );
+    }
+
+    /**
+     * @param mixed $moduleVersions
+     * @return mixed
+     */
+    private function checkModuleCompleteness(mixed $moduleVersions): mixed
+    {
+        return $moduleVersions->every(function (XlsformModuleVersion $version) {
+
+            $linked = $version->locales->contains($this->id);
+
+            $upToDate = $version->localeIsUpToDate($this);
+
+            $hasLanguageStrings = $version->languageStrings->count() > 0;
+
+            return $linked && $upToDate && $hasLanguageStrings;
+
+        });
     }
 }

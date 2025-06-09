@@ -29,7 +29,7 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
     /** @var Collection<LanguageStringType> */
     public Collection $allLanguageStringTypes;
 
-    public function __construct(public XlsformTemplate $template, public Locale $currentLocale, public bool $empty = false)
+    public function __construct(public XlsformTemplate $template, public Locale $currentLocale, public bool $withExistingStrings = false)
     {
 
         $this->locales = $template->locales
@@ -51,6 +51,7 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
 
         $headings[] = 'row type';
         $headings[] = 'choice_list_id';
+        $headings[] = 'entry_id';
         $headings[] = 'name';
         $headings[] = 'translation type';
 
@@ -151,13 +152,14 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
         $columnWidths = [
             'A' => 12,
             'B' => 0,
-            'C' => 29,
-            'D' => 20,
+            'C' => 0,
+            'D' => 29,
+            'E' => 20,
         ];
 
         // Set width for all other columns
         $lastColumnIndex = count($this->headings());
-        for ($i = 4; $i <= $lastColumnIndex; $i++) {
+        for ($i = 5; $i <= $lastColumnIndex; $i++) {
             $columnLetter = Coordinate::stringFromColumnIndex($i);
             $columnWidths[$columnLetter] = 45;
         }
@@ -188,6 +190,7 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
                 $row = collect([
                     $type,
                     $entry->choiceList->id ?? '',
+                    $entry->id,
                     $entry->name,
                     $languageStringType->name,
                 ]);
@@ -203,7 +206,7 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
                     });
 
                 // Add the current template language's translation (unless $empty is false, which means we should return an empty template
-                if ($this->empty) {
+                if ($this->withExistingStrings) {
                     $currentStringForLanguage = $strings->firstWhere('locale_id', $this->currentLocale->id);
                 }
 
