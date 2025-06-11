@@ -71,11 +71,12 @@ trait ExportsXlsformContent
     {
         return $entries
             ->pluck('headings')
-            ->filter()
+            ->filter() // remove null headings
             ->map(fn($heading) => collect(json_decode($heading, true)))
             ->flatten()
             ->map(fn($heading) => $this->expandMediaColumnHeaders($heading))
-            ->unique();
+            ->unique()
+            ->filter(fn($heading) => !Str::contains($heading, '::')); // remove any accidentally left-over language strings.
     }
 
 }

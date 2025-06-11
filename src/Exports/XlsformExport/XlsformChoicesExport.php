@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithCustomQuerySize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
@@ -22,7 +23,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 
-class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidths, WithHeadings, WithStyles, WithTitle, ShouldQueue, WithMapping
+class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidths, WithHeadings, WithStyles, WithTitle, ShouldQueue, WithMapping, WithCustomQuerySize
 {
 
     use ExportsXlsformContent;
@@ -151,4 +152,13 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
             ->get();
     }
 
+    public function querySize(): int
+    {
+        if($this->xlsform->xlsformModuleVersions)
+
+        return $this->xlsform->xlsformModuleVersions->map(function (XlsformModuleVersion $xlsformModuleVersion) {
+
+            return $xlsformModuleVersion->choiceListEntries()->count() ?? 0;
+        })->reduce(fn(?int $carry, int $count) => $carry + $count, 0);
+    }
 }
