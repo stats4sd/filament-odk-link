@@ -56,22 +56,5 @@ class XlsformModuleVersionLocale extends Pivot
         );
     }
 
-    /** @return Attribute<string, never> */
-    protected function status(): Attribute
-    {
-        return new Attribute(
-            get: function (): string {
 
-                if ($this->has_language_strings && ! $this->needs_update) {
-                    return 'Ready for use';
-                } elseif (! $this->has_language_strings) {
-                    return 'Not added';
-                } elseif ($this->has_language_strings && $this->needs_update) {
-                    return 'Out of date';
-                }
-
-                return 'Unknown';
-            }
-        );
-    }
 }

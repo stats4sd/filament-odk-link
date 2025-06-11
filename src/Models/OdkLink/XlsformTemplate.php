@@ -255,7 +255,7 @@ class XlsformTemplate extends HasXlsformDrafts
 
 
     /** @return Attribute<Collection<XlsformModuleVersion>, never> */
-    public function xlsformDefaultModuleVersions(): Attribute
+    protected function xlsformDefaultModuleVersions(): Attribute
     {
         return new Attribute(
             get: fn() => $this->xlsformModules->map(fn(XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
@@ -479,7 +479,7 @@ class XlsformTemplate extends HasXlsformDrafts
     }
 
     /** @return Attribute<string, never> */
-    public function fallbackModuleName(): Attribute
+    protected function fallbackModuleName(): Attribute
     {
         return new Attribute(
             get: fn() => Str::slug($this->title) . '_main',

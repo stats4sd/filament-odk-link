@@ -83,7 +83,7 @@ class XlsformModuleVersion extends Model implements HasMedia
     {
         return $this->belongsToMany(Locale::class, 'xlsform_module_version_locale', 'xlsform_module_version_id', 'locale_id')
             ->using(XlsformModuleVersionLocale::class)
-            ->withPivot(['needs_update', 'has_language_strings']);
+            ->withPivot(['needs_update']);
     }
 
     /** @return HasMany<XlsformModuleVersionLocale, $this> */
