@@ -10,8 +10,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\HasLanguageStrings;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithLanguageStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasLanguageStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\IsLookupList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
@@ -19,10 +20,11 @@ use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Tests\Models\Team;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
-class ChoiceListEntry extends Model implements HasLanguageStrings
+class ChoiceListEntry extends Model implements WithLanguageStrings
 {
     use IsLookupList;
     use \Znck\Eloquent\Traits\BelongsToThrough;
+    use HasLanguageStrings;
 
     protected $casts = [
         'is_localisable' => 'boolean',
@@ -67,20 +69,6 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
         );
     }
 
-    /** @return MorphMany<LanguageString, $this> */
-    public function languageStrings(): MorphMany
-    {
-        return $this->morphMany(LanguageString::class, 'linked_entry');
-    }
-
-    /** @return MorphOne<LanguageString, $this> */
-    public function defaultLabel(): MorphOne
-    {
-        return $this->morphOne(LanguageString::class, 'linked_entry')
-            ->whereHas('language', fn($query) => $query->where('languages.iso_alpha2', 'en'))
-            ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', 'label'));
-    }
-
     // Some choice lists are linked to specific data models to let us add custom information.
 
     public function model(): MorphTo
@@ -119,12 +107,4 @@ class ChoiceListEntry extends Model implements HasLanguageStrings
         }
     }
 
-    public function getLanguageString(string $type, Locale $locale): ?string
-    {
-        return $this->languageStrings()
-            ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', $type))
-            ->whereHas('locale', fn(Builder $query) => $query->where('locales.id', $locale->id))
-            ->first()?->text;
-
-    }
 }

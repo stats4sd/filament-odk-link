@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('xlsform_template_id')->constrained()->cascadeOnDelete()->cascadeOnUpdate();
             $table->string('label');
             $table->string('name');
+            $table->unsignedInteger('default_order')->nullable();
             $table->timestamps();
 
             $table->unique(['xlsform_template_id','name']);

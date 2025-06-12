@@ -15,6 +15,7 @@ use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
 use Stats4sd\FilamentOdkLink\Testing\TestsFilamentOdkLink;
 
 class FilamentOdkLinkServiceProvider extends PackageServiceProvider
@@ -54,6 +55,11 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
         $this->app->singleton(OdkLinkService::class, function ($app) {
             return new OdkLinkService(config('filament-odk-link.odk.base_endpoint'));
         });
+
+        $this->app->singleton(XlsformTranslationHelper::class, function($app) {
+            return new XlsformTranslationHelper();
+        });
+
 
         $this->app->register(FilamentOdkLinkEventServiceProvider::class);
     }

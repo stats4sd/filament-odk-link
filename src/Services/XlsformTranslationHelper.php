@@ -56,6 +56,6 @@ class XlsformTranslationHelper
         $typeNames = $this->languageStringTypes->pluck('name')->toArray();
         $languageCodes = $this->languages->pluck('iso_alpha2')->toArray();
 
-        return '/^(' . implode('|', $typeNames) . ')([a-z]+)_(' . implode('|', $languageCodes) . ')$/';
+        return '/^(' . implode('|', $typeNames) . '):?:?([A-z]+)[_\s]\(?(' . implode('|', $languageCodes) . ')\)?$/';
     }
 }

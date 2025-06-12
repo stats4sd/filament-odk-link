@@ -16,7 +16,9 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
 {
     use Importable;
 
-    public function __construct(public XlsformTemplate $xlsformTemplate, public string $moduleColumn = 'module') {}
+    public function __construct(public XlsformTemplate $xlsformTemplate, public string $moduleColumn = 'module')
+    {
+    }
 
     public function sheets(): array
     {
@@ -27,28 +29,54 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
 
     public function collection(Collection $collection): void
     {
-        // for any rows that do not have a module set... add them to a 'default' module
-        // (this also handles the case where the xlsform file does not have a module column)
+        // for any rows that do not have a module set... add 'generic' modules for them.
+        // Any gaps in module labelling gets a new generic module. E.g. for these rows
+        // module | type | name...
+        // mod-1  | text | qu1...
+        // mod-1  | text | qu2...
+        //        | text | qu3...
+        //        | text | qu4...
+        // mod-2  | text | qu5...
+        //        | text | qu6...
+        // mod-3  | text | qu7...
+
+        // In this case, qu3 and qu4 get put into a generic module; and qu6 is put into a separate generic module. This lets us preserve the ordering of the questions while also keeping the user-defined module breaks.
+        //
+        // If there are no modules defined at all, the entire form is put into a single generic module.
+
+        $count = 1;
+        $genericModuleName = $this->xlsformTemplate->title . ' - General Module ' . $count;
+
         $collection = $collection
-            ->map(function ($row) {
-                if (! isset($row['module'])) {
-                    $row['module'] = $this->xlsformTemplate->fallback_module_name;
+            ->map(function ($row) use (&$genericModuleName, &$count) {
+                if (!isset($row['module'])) {
+                    $row['module'] = $genericModuleName;
+                } else {
+                    $count++;
+                    $genericModuleName = $this->xlsformTemplate->title . ' - General Module ' . $count;
                 }
 
                 return $row;
             });
 
         // now all entries have a module, process them:
+
+        $order = 1;
         $collection
-            ->each(function ($row) {
+            ->groupBy('module')
+            ->each(function ($row, $key) use (&$order) {
 
                 // make sure xlsformModule exists
 
                 /** @var XlsformModule $module */
-                $module = $this->xlsformTemplate->xlsformModules()->firstOrCreate([
-                    'name' => $row['module'],
-                    'label' => $row['module'], // can be edited later in the platform
+                $module = $this->xlsformTemplate->xlsformModules()->updateOrCreate([
+                    'name' => $key,
+                ],[
+                    'label' => $key,
+                    'default_order' => $order,
                 ]);
+
+                $order++;
             });
     }
 }

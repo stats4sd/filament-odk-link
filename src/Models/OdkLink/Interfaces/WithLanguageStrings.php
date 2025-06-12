@@ -5,7 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 
-interface HasLanguageStrings
+interface WithLanguageStrings
 {
     public function languageStrings(): MorphMany;
 

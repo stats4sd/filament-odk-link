@@ -12,14 +12,19 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use ShiftOneLabs\LaravelCascadeDeletes\CascadesDeletes;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\HasLanguageStrings;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasLanguageStrings;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithLanguageStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\FilamentOdkLink\Services\HelperService;
+use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
 
-class SurveyRow extends Model implements HasLanguageStrings
+class SurveyRow extends Model implements WithLanguageStrings
 {
     use CascadesDeletes;
+    use HasLanguageStrings;
 
     protected static function booted(): void
     {
@@ -42,40 +47,10 @@ class SurveyRow extends Model implements HasLanguageStrings
         return $this->belongsTo(XlsformModuleVersion::class);
     }
 
-    /** @return MorphMany<LanguageString, $this> */
-    public function languageStrings(): MorphMany
-    {
-        return $this->morphMany(LanguageString::class, 'linked_entry');
-    }
-
-    /** @return MorphOne<LanguageString, $this> */
-    public function defaultLabel(): MorphOne
-    {
-        return $this->morphOne(LanguageString::class, 'linked_entry')
-            ->whereHas('language', fn($query) => $query->where('languages.iso_alpha2', 'en'))
-            ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', 'label'));
-    }
-
-    /** @return MorphOne<LanguageString, $this> */
-    public function defaultHint(): MorphOne
-    {
-        return $this->morphOne(LanguageString::class, 'linked_entry')
-            ->whereHas('language', fn($query) => $query->where('languages.iso_alpha2', 'en'))
-            ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', 'hint'));
-    }
-
     /** @return BelongsTo<ChoiceList, $this> */
     public function choiceList(): BelongsTo
     {
         return $this->belongsTo(ChoiceList::class);
-    }
-
-    public function getLanguageString(string $type, Locale $locale): ?string
-    {
-        return $this->languageStrings()
-            ->whereHas('languageStringType', fn($query) => $query->where('language_string_types.name', $type))
-            ->whereHas('locale', fn(Builder $query) => $query->where('locales.id', $locale->id))
-            ->first()?->text;
     }
 
     public function expandMediaColumnHeaders(string $type)
@@ -96,4 +71,8 @@ class SurveyRow extends Model implements HasLanguageStrings
 
         return $type;
     }
+
+
+
+
 }

@@ -69,6 +69,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
         static::created(static function (self $xlsform) {
             $xlsform->syncWithTemplate();
+            $xlsform->refresh();
             $xlsform->deployDraft();
         });
 
@@ -201,10 +202,17 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     public function syncWithTemplate(): void
     {
 
+        $countModules = 1;
+
         // check through the template modules; If this form is missing any, add the default version
         $this->xlsformTemplate->xlsformModules
+            ->sortBy('default_order')
             ->filter(fn(XlsformModule $module) => $this->xlsformModuleVersions->doesntContain('xlsform_module_id', $module->id))
-            ->each(fn(XlsformModule $xlsformModule) => $this->xlsformModuleVersions()->attach($xlsformModule->defaultXlsformVersion));
+            ->each(function (XlsformModule $xlsformModule) use (&$countModules) {
+                $this->xlsformModuleVersions()->attach($xlsformModule->defaultXlsformVersion, ['order' => $countModules]);
+
+                $countModules++;
+            });
 
 
         $this->has_latest_template = true;
