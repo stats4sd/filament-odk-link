@@ -37,6 +37,7 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
 
         if ($this->xlsform instanceof Xlsform) {
             $this->xlsform->live_needs_update = true;
+            $this->xlsform->draft_needs_update = false;
         }
 
         $this->xlsform->save();
