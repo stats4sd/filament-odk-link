@@ -60,11 +60,13 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
             ->select([
                 ...$surveyRowColumns,
                 'selected_xlsform_module_versions.order',
+                'selected_xlsform_module_versions.xlsform_module_version_id',
             ])
             ->distinct()
             ->whereHas('xlsformModuleVersion', fn(Builder $query) => $query->whereHas('xlsforms', fn(Builder $query) => $query->where('xlsforms.id', $this->xlsform->id)))
             ->with(['languageStrings', 'xlsformModuleVersion.xlsforms'])
             ->orderBy('selected_xlsform_module_versions.order')
+            ->orderBy('selected_xlsform_module_versions.xlsform_module_version_id')
             ->orderBy('row_number');
     }
 
@@ -73,6 +75,7 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
     {
         return [
             'id' => $surveyRow->id,
+            'row_number' => $surveyRow->row_number,
             'type' => $surveyRow->type,
             'name' => $surveyRow->name,
             ...$this->getLanguageStrings($surveyRow, 'label'),
@@ -98,6 +101,7 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
     {
         return [
             'id',
+            'row_number',
             'type',
             'name',
             ...$this->getLanguageStringHeaders('label'),
@@ -243,10 +247,10 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
     {
         $rows = $sheet->toArray();
 
-        $beginGroupRows = collect($rows)->filter(fn(array $row) => $row[1] === 'begin_group')->keys();
-        $endGroupRows = collect($rows)->filter(fn(array $row) => $row[1] === 'end_group')->keys();
-        $beginRepeatRows = collect($rows)->filter(fn(array $row) => $row[1] === 'begin_repeat')->keys();
-        $endRepeatRows = collect($rows)->filter(fn(array $row) => $row[1] === 'end_repeat')->keys();
+        $beginGroupRows = collect($rows)->filter(fn(array $row) => $row[2] === 'begin_group')->keys();
+        $endGroupRows = collect($rows)->filter(fn(array $row) => $row[2] === 'end_group')->keys();
+        $beginRepeatRows = collect($rows)->filter(fn(array $row) => $row[2] === 'begin_repeat')->keys();
+        $endRepeatRows = collect($rows)->filter(fn(array $row) => $row[2] === 'end_repeat')->keys();
 
         return collect([
             'beginGroupRows' => $beginGroupRows->map(fn($id) => $id + 1),
