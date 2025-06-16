@@ -31,7 +31,8 @@ class TeamXlsformTemplateResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return OdkLinkTeam::get()->getShouldRegisterNavigation();
+        // Check if the plugin has register navigation set on the current panel
+        return Filament::getCurrentPanel()->getPlugin('stats4sd-odk-link-team')->getShouldRegisterNavigation();
     }
 
     public static function getEloquentQuery(): Builder
