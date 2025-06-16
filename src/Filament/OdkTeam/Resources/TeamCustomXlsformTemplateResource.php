@@ -40,6 +40,11 @@ class TeamCustomXlsformTemplateResource extends Resource
 
     protected static bool $isScopedToTenant = false;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Filament::getCurrentPanel()->getPlugin('stats4sd-odk-link-team')->getShouldRegisterNavigation();
+    }
+
     //  manually scope to Team tenant
     public static function getEloquentQuery(): Builder
     {
