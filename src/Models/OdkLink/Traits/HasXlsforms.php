@@ -81,7 +81,7 @@ trait HasXlsforms
     /** @return HasMany<ChoiceListEntry, $this> */
     public function choiceListEntries(): HasMany
     {
-        return $this->belongsToMany(ChoiceListEntry::class, 'owner_id');
+        return $this->hasMany(ChoiceListEntry::class, 'owner_id');
     }
 
     /** @return BelongsToMany<ChoiceListEntry, $this> */
