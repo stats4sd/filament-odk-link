@@ -202,16 +202,25 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     public function syncWithTemplate(): void
     {
 
-        $countModules = 1;
-
         // check through the template modules; If this form is missing any, add the default version
         $this->xlsformTemplate->xlsformModules
             ->sortBy('default_order')
+
+            // check for modules where the module version is not _already_ linked to this form (to avoid resetting custom ordering)
             ->filter(fn(XlsformModule $module) => $this->xlsformModuleVersions->doesntContain('xlsform_module_id', $module->id))
             ->each(function (XlsformModule $xlsformModule) use (&$countModules) {
-                $this->xlsformModuleVersions()->attach($xlsformModule->defaultXlsformVersion, ['order' => $countModules]);
+                $this->xlsformModuleVersions()->attach($xlsformModule->defaultXlsformVersion, ['order' => $xlsformModule->default_order]);
 
-                $countModules++;
+                // If the XlsformModule `can_be_extended` add a 'local' version of the module immediately after it
+                if ($xlsformModule->can_be_extended) {
+                    $localModuleVersion = XlsformModuleVersion::firstOrCreate([
+                        'owner_id' => $this->owner->id,
+                        'name' => 'Local ' . $xlsformModule->name,
+                    ]);
+
+                    $this->xlsformModuleVersions()->sync([$localModuleVersion->id => ['order' => $xlsformModule->default_order + 1]], detaching: false);
+                }
+
             });
 
 

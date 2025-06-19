@@ -20,6 +20,14 @@ class XlsformModule extends Model
 
     protected $table = 'xlsform_modules';
 
+    protected function casts(): array
+    {
+        return [
+            'can_be_extended' => 'boolean',
+            'can_be_replaced' => 'boolean',
+        ];
+    }
+
     protected static function booted(): void
     {
 
@@ -31,6 +39,7 @@ class XlsformModule extends Model
                 'name' => 'Global ' . $module->name, // hard-code name for now
                 'is_default' => true,
             ]);
+
         });
 
     }
