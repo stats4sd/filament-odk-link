@@ -155,8 +155,12 @@ class Locale extends Model implements HasMedia
                             ->map(fn(XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
                     )->flatten();
 
-                // Has any media been uploaded? If not:
-                if (!$this->hasMedia('xlsform_template_translation_files')) {
+                if($this->is_default) {
+                    return 'Ready for use';
+                }
+
+                // If the media item is not default (i.e. with strings from the original XlsformTemplate) and there are no uploaded files, mark as not-uploaded
+                if (!$this->hasMedia('xlsform_template_translation_files') && !$this->is_default) {
                     return 'Not uploaded';
                 }
 

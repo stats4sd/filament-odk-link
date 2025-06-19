@@ -14,12 +14,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 class Language extends Model
 {
 
-    protected static function booted()
-    {
-        static::created(function(self $language) {
-            $language->locales()->create(['is_default' => true]);
-        });
-    }
+
 
     /** @return HasMany<XlsformModuleVersionLocale, $this> */
     public function xlsformModuleVersionLocales(): HasMany

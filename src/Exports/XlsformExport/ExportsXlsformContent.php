@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Exports\XlsformExport;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
@@ -40,6 +41,7 @@ trait ExportsXlsformContent
 
                 $key = "$outputString::{$locale->language->name} ({$locale->language->iso_alpha2})";
                 $value = $row->languageStrings()
+                    ->whereHas('locale', fn(Builder $query) => $query->where('locales.id', $locale->id))
                     ->whereHas('languageStringType', fn($query) => $query->where('name', $string))
                     ->first()->text ?? '';
 
