@@ -67,14 +67,20 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
             ->each(function ($row, $key) use (&$order) {
 
                 // make sure xlsformModule exists
-
                 /** @var XlsformModule $module */
                 $module = $this->xlsformTemplate->xlsformModules()->updateOrCreate([
                     'name' => $key,
                 ],[
                     'label' => $key,
                     'default_order' => $order,
+                    'can_be_extended' => $row[0]['localisable_module'] == 'extend' ?? false,
+                    'can_be_replaced' => $row[0]['localisable_module'] == 'replace' ?? false,
                 ]);
+
+                // if the module can be extended, it means we need to leave space for a 'localised_$name' module directly after it, so increment $order by 2.
+                if($module->can_be_extended)  {
+                    $order++;
+                }
 
                 $order++;
             });

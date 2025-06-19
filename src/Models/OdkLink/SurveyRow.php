@@ -28,6 +28,14 @@ class SurveyRow extends Model implements WithLanguageStrings
 
     protected static function booted(): void
     {
+
+        // When a survey row is changed, we need to recompile any draft xlsforms that include it.
+        static::saved(function (self $surveyRow) {
+           $surveyRow->xlsformModuleVersion->xlsforms()->update([
+              'draft_needs_update' => true,
+           ]);
+        });
+
         static::deleting(function ($surveyRow) {
             $surveyRow->languageStrings()->delete();
         });
@@ -71,8 +79,6 @@ class SurveyRow extends Model implements WithLanguageStrings
 
         return $type;
     }
-
-
 
 
 }

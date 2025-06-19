@@ -45,8 +45,17 @@ class ChoiceListEntry extends Model implements WithLanguageStrings
             }
         });
 
-        static::deleting(function ($surveyRow) {
-            $surveyRow->languageStrings()->delete();
+        // When a choice list entry is updated, we need to recompile the drafts of any xlsforms that include it.
+        static::saved(function (self $choiceListEntry) {
+            $choiceListEntry->xlsformModuleVersion->xlsforms()->update([
+                'draft_needs_update' => true,
+            ]);
+
+        });
+
+
+        static::deleting(function (self $choiceListEntry) {
+            $choiceListEntry->languageStrings()->delete();
         });
     }
 
