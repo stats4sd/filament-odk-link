@@ -67,9 +67,6 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
             ->each(function ($row, $key) use (&$order) {
 
                 // make sure xlsformModule exists
-
-                ray($row);
-
                 /** @var XlsformModule $module */
                 $module = $this->xlsformTemplate->xlsformModules()->updateOrCreate([
                     'name' => $key,
