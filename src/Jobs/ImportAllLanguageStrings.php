@@ -55,5 +55,7 @@ class ImportAllLanguageStrings implements ShouldQueue
                 FinishLanguageStringImport::dispatchSync($this->model, $heading);
             }
         }
+
+        AddMissingChoiceListStrings::dispatchSync($this->model);
     }
 }

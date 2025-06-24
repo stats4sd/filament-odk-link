@@ -66,6 +66,14 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
             ->groupBy('module')
             ->each(function ($row, $key) use (&$order) {
 
+                $canBeExtended = false;
+                $canBeReplaced = false;
+
+                if(isset($row[0]['localisable_module'])) {
+                    $canBeExtended = $row[0]['localisable_module'] === 'extend';
+                    $canBeReplaced = $row[0]['localisable_module'] === 'replace';
+                }
+
                 // make sure xlsformModule exists
                 /** @var XlsformModule $module */
                 $module = $this->xlsformTemplate->xlsformModules()->updateOrCreate([
@@ -73,8 +81,8 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
                 ],[
                     'label' => $key,
                     'default_order' => $order,
-                    'can_be_extended' => $row[0]['localisable_module'] == 'extend' ?? false,
-                    'can_be_replaced' => $row[0]['localisable_module'] == 'replace' ?? false,
+                    'can_be_extended' => $canBeExtended,
+                    'can_be_replaced' => $canBeReplaced,
                 ]);
 
                 // if the module can be extended, it means we need to leave space for a 'localised_$name' module directly after it, so increment $order by 2.

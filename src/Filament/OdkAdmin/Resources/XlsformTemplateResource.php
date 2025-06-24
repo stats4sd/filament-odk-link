@@ -136,7 +136,7 @@ class XlsformTemplateResource extends resource
                     $label = "<h4 class='font-bold text-xl'>Link Required Datasets</h4>";
 
                     if ($record?->requiredDataMedia()->count() > 0) {
-                        $label .= '<p>The Form requires the following media items. Please upload each one here.</p>';
+                        $label .= '<p>The Form requires the following media items. Please either upload static csv files to be used, or mark the item(s) as localisable for each team. </p>';
                     } else {
                         $label .= '<p>This form does not require any media files. You may skip this step</p>';
                     }
@@ -165,11 +165,9 @@ class XlsformTemplateResource extends resource
                         ->visible(fn(Get $get): bool => $get('is_static')),
 
                     // for non-static media (linked to datasets)
-                    Forms\Components\Select::make('dataset_id')
-                        ->label('Select a Dataset to link to')
-                        ->helperText('This might be a shared list of response choices, like a list of treatments or actitivity types, or a dataset type that projects will need to upload themselves in order to use this ODK form, such as a list of farms.')
-                        ->relationship('dataset', 'name')
-                        ->visible(fn(Get $get): bool => !$get('is_static')),
+                    Shout::make('dataset_info')
+                ->content('This platform is not set up to support ODK Entities. This csv file will be created based on individual team\'s choice list entries, which are editable through the front-end of this platform.')
+                    ->visible(fn(Get $get): bool => !$get('is_static')),
                 ]),
         ];
     }
