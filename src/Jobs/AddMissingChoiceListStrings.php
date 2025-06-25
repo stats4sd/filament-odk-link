@@ -47,10 +47,6 @@ class AddMissingChoiceListStrings implements ShouldQueue
                 ->with('choiceListEntries.languageStrings')
                 ->first();
 
-            ray($choiceList);
-            ray($matchingList);
-
-
             $choiceList->choiceListEntries->each(function (ChoiceListEntry $choiceListEntry) use ($matchingList) {
                 $matchingEntry = $matchingList->choiceListEntries
                     ->where('name', $choiceListEntry->name)

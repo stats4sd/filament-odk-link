@@ -26,7 +26,7 @@ class ChoiceListResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('xlsformModuleVersion')
+                Forms\Components\Select::make('xlsform_module_version_id')
                     ->relationship('xlsformModuleVersion', 'name', modifyQueryUsing: fn (Builder $query) => $query->where('is_default', true)),
                 Forms\Components\TextInput::make('list_name')
                     ->required()
@@ -35,9 +35,6 @@ class ChoiceListResource extends Resource
                     ->columnSpanFull(),
                 Forms\Components\Toggle::make('is_localisable')
                     ->helperText('Should this list appear on the front-end for teams to edit?')
-                    ->required(),
-                Forms\Components\Toggle::make('has_custom_handling')
-                    ->helperText('Does this choice list require custom handling? E.g. Locations, farm and enumerator lists do not appear in the default choice list editing, but are editable elsewhere.')
                     ->required(),
                 Forms\Components\Repeater::make('properties.extra_properties')
                     ->columnSpanFull()
@@ -49,7 +46,7 @@ class ChoiceListResource extends Resource
                             ->label('The name of the property (the variable name for calculations)'),
                         Forms\Components\TextInput::make('label')
                             ->label('The label to show to users when asking for this property'),
-                        Forms\Components\TextInput::make('helper_text')
+                        Forms\Components\TextArea::make('hint')
                             ->label('Helper text to show to users when asking for this property'),
                     ]),
             ]);
