@@ -4,6 +4,7 @@ namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
@@ -15,6 +16,7 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Events\AfterImport;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
@@ -39,7 +41,7 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
 
     public ?string $relationship;
 
-    public function __construct(public XlsformModuleVersion | XlsformTemplate $model, public string $heading, public string $sheet)
+    public function __construct(public XlsformModuleVersion|XlsformTemplate $model, public string $heading, public string $sheet)
     {
 
         // init translation helper and get needed props from the provided heading;
@@ -65,7 +67,7 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
     // Specify the "survey" sheet
     public function sheets(): array
     {
-        if (! $this->class) {
+        if (!$this->class) {
             return []; // no actions if the class / worksheet is not recognised.
         }
 
@@ -76,7 +78,7 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
 
     public function isEmptyWhen(array $row): bool
     {
-        return ! isset($row['name']) || $row['name'] === '';  // no need to import rows without a name, as we will never have translation strings for end_group or end_repeat rows.
+        return !isset($row['name']) || $row['name'] === '';  // no need to import rows without a name, as we will never have translation strings for end_group or end_repeat rows.
     }
 
     public function uniqueBy(): array
@@ -92,18 +94,18 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
         $relationship = $this->relationship;
 
         $items = $this->model->$relationship
-            ->filter(fn ($item) => (string) $item->name === (string) $row['name']);
+            ->filter(fn($item) => (string)$item->name === (string)$row['name']);
 
         // filter survey row entries by type as well as name
         if ($class === SurveyRow::class) {
             $items = $items
-                ->filter(fn ($item) => (string) $item->type === (string) $row['type']);
+                ->filter(fn($item) => (string)$item->type === (string)$row['type']);
         }
 
         // filter choice list entries by choice_list and every other property as well as name (as we can have 2 choice list entries in the same list with the same name, but different filters...)
         if ($class === ChoiceListEntry::class) {
             $items = $items
-                ->filter(fn ($item) => (string) $item->choiceList->list_name === (string) $row['list_name'])
+                ->filter(fn($item) => (string)$item->choiceList->list_name === (string)$row['list_name'])
                 ->filter(function (ChoiceListEntry $item) use ($row) {
 
                     // check each item property against the row
@@ -112,22 +114,22 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
                         ->map(function ($value, $key) use ($row) {
                             return $row[$key] == $value;
                         })
-                        ->every(fn ($value) => $value === true);
+                        ->every(fn($value) => $value === true);
                 });
         }
 
         $item = $items->first();
 
-        if (! $item) {
+        if (!$item) {
             return null;
         }
 
         $translatableValue = $row
-            ->filter(fn ($value, $key) => $this->heading === $key)
-            ->filter(fn ($value, $key) => $value !== null && $value !== '')
+            ->filter(fn($value, $key) => $this->heading === $key)
+            ->filter(fn($value, $key) => $value !== null && $value !== '')
             ->first();
 
-        if (! $translatableValue) {
+        if (!$translatableValue) {
             return null;
         }
 
@@ -183,8 +185,8 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
             ->whereHasMorph('linkedEntry', SurveyRow::class)
             ->get();
 
-        $toDelete->each(fn (LanguageString $languageString) => $languageString->delete());
-        $toDeleteToo->each(fn (LanguageString $languageString) => $languageString->delete());
+        $toDelete->each(fn(LanguageString $languageString) => $languageString->delete());
+        $toDeleteToo->each(fn(LanguageString $languageString) => $languageString->delete());
 
     }
 
