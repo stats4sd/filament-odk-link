@@ -26,9 +26,11 @@ class UpdateXlsformDrafts extends Command
      */
     public function handle()
     {
+        // TEMP
+        Xlsform::find(1)->update(['draft_needs_update' => true]);
+
         Xlsform::query()
-            ->where('is_active', true)
-            ->where('needs_update', true)
+            ->where('draft_needs_update', true)
             ->get()
             ->each(function (Xlsform $xlsform) {
                 $this->info("Processing {$xlsform->title}...");
