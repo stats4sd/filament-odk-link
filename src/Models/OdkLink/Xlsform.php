@@ -177,6 +177,16 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         return $this->xlsformTemplate->requiredMedia();
     }
 
+    public function requiredFixedMedia(): HasMany
+    {
+        return $this->xlsformTemplate->requiredFixedMedia();
+    }
+
+    public function requiredDataMedia(): HasMany
+    {
+        return $this->xlsformTemplate->requiredDataMedia();
+    }
+
     /** @return HasMany<RequiredMedia, XlsformTemplate> */
     public function attachedFixedMedia(): HasMany
     {

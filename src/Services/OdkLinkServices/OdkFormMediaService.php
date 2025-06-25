@@ -5,7 +5,11 @@ namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+use Stats4sd\FilamentOdkLink\Exports\ChoiceListAsMediaAttachmentExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
@@ -45,24 +49,22 @@ trait OdkFormMediaService
         }
 
         // dynamic files
-        $requiredDataMedia = $xlsform->attachedDataMedia()->get();
-
-        ray($requiredDataMedia);
+        $requiredDataMedia = $xlsform->requiredDataMedia()->get();
 
         if (count($requiredDataMedia) > 0) {
             foreach ($requiredDataMedia as $requiredMediaItem) {
-
-                ray($requiredMediaItem);
 
                 // if there is a static upload, use it;
                 // TODO: work out how to handle xlsforms where we might have a static media file for TESTING the template...
                 $media = $requiredMediaItem->getFirstMedia();
                 if ($media) {
                     $this->uploadSingleMediaFile($xlsform, $media->getPath());
+                    continue;
                 }
 
-                // TODO: add csv media file creation;
-                // $this->uploadSingleMediaFile($xlsform, $csvPath);
+                $filePath = $this->prepareCsvFile($xlsform, $requiredMediaItem);
+
+                $this->uploadSingleMediaFile($xlsform, Storage::disk(config('filament-odk-link.storage.media'))->path($filePath));
             }
         }
 
@@ -98,5 +100,27 @@ trait OdkFormMediaService
             throw ($exception);
         }
     }
+
+     /**
+     * Prepares a media attachment csv file based on a requiredDataMedia item for a specific xlsform.
+     * Assumes that the ChoiceList containing the localised choices is named the same as the csv file.
+     * @return string
+     * */
+    public function prepareCsvFile(HasXlsformDrafts $xlsform, RequiredMedia $requiredMediaItem): string
+    {
+        // create folder structure if not exists
+        //Storage::disk(config('filament-odk-link.storage.media'))->makeDirectory('xlsforms');
+
+        $filePath = 'xlsforms/' . $xlsform->id . '/' . $requiredMediaItem->name;
+
+        Excel::store(
+            export: new ChoiceListAsMediaAttachmentExport($xlsform, $requiredMediaItem),
+            filePath: $filePath,
+            diskName: config('filament-odk-link.storage.media')
+        );
+
+        return $filePath;
+    }
+
 
 }
