@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreignId('language_string_type_id')->constrained('language_string_types')->cascadeOnDelete()->cascadeOnUpdate();
             $table->morphs('linked_entry');
-            $table->text('text');
+            $table->text('text')->nullable();
 
             $table->boolean('updated_during_import')->default(false); // used to track if the row was updated during import of a new version of the XlsformTemplate file;
             $table->timestamps();
