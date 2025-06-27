@@ -20,8 +20,16 @@ class ChoiceList extends Model
         'is_localisable' => 'boolean',
     ];
 
-    //get entries for a specific owner
+    protected static function booted()
+    {
+        static::deleting(function (ChoiceList $choiceList) {
+            $choiceList->choiceListEntries->each(function (ChoiceListEntry $choiceListEntry) {
+                $choiceListEntry->delete();
+            });
+        });
+    }
 
+    //get entries for a specific owner
     /** @return Collection<ChoiceListEntry> */
     public function getOwnedEntries(WithXlsforms $owner): Collection
     {
