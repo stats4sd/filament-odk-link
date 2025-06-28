@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Rector\PhpAttribute\AnnotationToAttributeMapper\CurlyListNodeAnnotationToAttributeMapper;
 use ShiftOneLabs\LaravelCascadeDeletes\CascadesDeletes;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasLanguageStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithLanguageStrings;
@@ -59,6 +60,23 @@ class SurveyRow extends Model implements WithLanguageStrings
     public function choiceList(): BelongsTo
     {
         return $this->belongsTo(ChoiceList::class);
+    }
+
+    // Return full 'type'; including correct list_name for selects
+    /** @return Attribute<string, never> */
+    protected function typeAndChoiceList(): Attribute
+    {
+        return new Attribute(
+            get: function() {
+                if(Str::contains($this->type, 'select')) {
+                    $listName = $this->choiceList?->list_name;
+
+                    return Str::before($this->type, ' ') . ' ' . $listName;
+                }
+
+                return $this->type;
+            }
+        );
     }
 
     public function expandMediaColumnHeaders(string $type)

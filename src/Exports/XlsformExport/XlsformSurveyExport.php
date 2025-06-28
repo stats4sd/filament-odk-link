@@ -62,9 +62,9 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
                 'selected_xlsform_module_versions.order',
                 'selected_xlsform_module_versions.xlsform_module_version_id',
             ])
-            ->distinct()
-            ->whereHas('xlsformModuleVersion', fn(Builder $query) => $query->whereHas('xlsforms', fn(Builder $query) => $query->where('xlsforms.id', $this->xlsform->id)))
+            ->whereRaw('selected_xlsform_module_versions.xlsform_id = ' . $this->xlsform->id)
             ->with(['languageStrings', 'xlsformModuleVersion.xlsforms'])
+            ->distinct()
             ->orderBy('selected_xlsform_module_versions.order')
             ->orderBy('selected_xlsform_module_versions.xlsform_module_version_id')
             ->orderBy('row_number');
@@ -76,7 +76,7 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
         return [
             'id' => $surveyRow->id,
             'row_number' => $surveyRow->row_number,
-            'type' => $surveyRow->type,
+            'type' => $surveyRow->type_and_choice_list,
             'name' => $surveyRow->name,
             ...$this->getLanguageStrings($surveyRow, 'label'),
             ...$this->getLanguageStrings($surveyRow, 'hint'),
