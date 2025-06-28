@@ -3,6 +3,7 @@
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources;
 
 use Awcodes\Shout\Components\Shout;
+use Awcodes\Shout\Components\ShoutEntry;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Filament\Facades\Filament;
@@ -363,7 +364,7 @@ class XlsformTemplateResource extends resource
     {
         return $infolist
             ->schema([
-                Shout::make('Processing')
+                ShoutEntry::make('Processing')
                     ->visible(fn(?XlsformTemplate $record): bool => $record?->processing)
                     ->content('This Form is currently being processed, and is not yet available for use. This should only take a few minutes after being updated. If you see this notification for more than a few minutes, please contact support.'),
                 Section::make('Xlsform Details')

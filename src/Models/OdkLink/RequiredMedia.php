@@ -27,10 +27,10 @@ class RequiredMedia extends Pivot implements HasMedia
                 ->each(fn ($media) => $requiredMedia->deleteMedia($media));
         });
 
-        // when updating, update the related xlsform template to set draft_needs_updating to true (to ensure the updated media is pushed to ODK Central for testing
+        // when updating, update the related xlsform template to set draft_needs_update to true (to ensure the updated media is pushed to ODK Central for testing
         static::saved(static function (RequiredMedia $requiredMedia) {
             $requiredMedia->xlsformTemplate->update(
-                ['draft_needs_updating' => true]
+                ['draft_needs_update' => true]
             );
 
         });

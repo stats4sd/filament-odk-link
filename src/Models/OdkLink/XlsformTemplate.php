@@ -65,7 +65,6 @@ class XlsformTemplate extends HasXlsformDrafts
                 unset($xlsformTemplate->newXlsfile);
 
 
-
             }
         });
 
@@ -76,7 +75,7 @@ class XlsformTemplate extends HasXlsformDrafts
         static::saved(static function (XlsformTemplate $xlsformTemplate) {
 
             // if the draft form has been updated; do the post processing
-            if($xlsformTemplate->isDirty('odk_draft_updated_at')) {
+            if ($xlsformTemplate->isDirty('odk_draft_updated_at')) {
                 $xlsformTemplate->afterXlsformFileUpdated();
             }
 
@@ -209,7 +208,7 @@ class XlsformTemplate extends HasXlsformDrafts
                 $query->whereHas('media')
                     // HOLPA CHANGE! In Holpa we have moved to using ChoiceList and ChoiceListEntry to manage custom lookup tables, instead of datasets. We need to decide if this is a good change that should be brought into the main package or if we should merge ChoiceList and Dataset somehow...
 
-                        // TODO: merge datasets + choice lists implimentation...
+                    // TODO: merge datasets + choice lists implimentation...
                     ->orWhere('required_media.choice_list_id', '!=', null);
             });
     }
@@ -325,6 +324,7 @@ class XlsformTemplate extends HasXlsformDrafts
         foreach ($mediaItems as $mediaItem) {
             $this->requiredMedia()->updateOrCreate([
                 'name' => $mediaItem['name'],
+                'xlsform_template_id' => $this->id,
             ], [
                 'type' => $mediaItem['type'],
                 'exists_on_odk' => $mediaItem['exists'],

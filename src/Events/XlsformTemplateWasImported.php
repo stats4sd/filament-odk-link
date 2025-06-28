@@ -7,7 +7,6 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 
 class XlsformTemplateWasImported implements ShouldBroadcast
 {
@@ -30,5 +29,10 @@ class XlsformTemplateWasImported implements ShouldBroadcast
         return [
             new Channel('xlsforms'),
         ];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'FilamentOdkLink.XlsformTemplateWasImported';
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -20,6 +21,15 @@ class LanguageString extends Model
     protected $casts = [
         'updated_during_import' => 'boolean',
     ];
+
+
+    /** @return Attribute<string, string> */
+    protected function text(): Attribute
+    {
+        return new Attribute(
+            set: fn($value) => $value ?? ' ',
+        );
+    }
 
     // A language string is linked to either a SurveyRow or a ChoiceListEntry;
     public function linkedEntry(): MorphTo

@@ -8,6 +8,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\HtmlString;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
@@ -62,9 +63,10 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
 
         if ($this->user) {
             Notification::make('xlsform_file_deployment_failed')
-                ->title('Draft Form Failed to Deploy')
-                ->body('The Xlsform ' . $this->xlsform->title . ' belonging to ' . $this->xlsform->owner->name . ' failed to upload to ODK Central. Please check other error messages and review the form to confirm it is a valid ODK form.')
+                ->title('Draft Form "'.$this->xlsform->title.'" failed to deploy')
+                ->body(new HtmlString('The message below was returned from the ODK Server. It may indicate an issue with the Xlsform definition being used: <br/><br/>' . $exception->getmessage()))
                 ->danger()
+                ->persistent()
                 ->broadcast($this->user);
         }
     }

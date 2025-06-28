@@ -53,9 +53,10 @@ class ChoiceListEntry extends Model implements WithLanguageStrings
 
         });
 
-
         static::deleting(function (self $choiceListEntry) {
-            $choiceListEntry->languageStrings()->delete();
+            $choiceListEntry->languageStrings->each(function (LanguageString $languageString) {
+                $languageString->delete();
+            });
         });
     }
 
