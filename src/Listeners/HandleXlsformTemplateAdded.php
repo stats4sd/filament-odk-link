@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Listeners;
 
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
 use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformModuleImport;
@@ -20,6 +21,10 @@ use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
 
 class HandleXlsformTemplateAdded
 {
+    public function __construct(public ?User $importedBy = null)
+    {
+    }
+
     public function handle(MediaHasBeenAddedEvent $event): void
     {
 
@@ -79,7 +84,7 @@ class HandleXlsformTemplateAdded
                 new LinkModuleVersionToLocales($model, $translatableHeadings),
 
                 new ImportAllLanguageStrings($filePath, $model, $translatableHeadings),
-                new FinishXlsformTemplateImport($model),
+                new FinishXlsformTemplateImport($model, $this->importedBy),
             ]);
 
 

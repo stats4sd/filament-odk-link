@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Jobs;
 
+use Stats4sd\FilamentOdkLink\Events\XlsformModuleVersionWasImported;
 use Stats4sd\FilamentOdkLink\Events\XlsformTemplateWasImported;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,7 +17,7 @@ class FinishXlsformTemplateImport implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public XlsformModuleVersion | XlsformTemplate $model)
+    public function __construct(public XlsformModuleVersion|XlsformTemplate $model, public ?User $importedBy)
     {
     }
 
@@ -28,13 +29,31 @@ class FinishXlsformTemplateImport implements ShouldQueue
         // mark model as ready
         $this->model->updateQuietly(['processing' => false]);
 
-        XlsformTemplateWasImported::dispatch($this->model->id);
 
-        Notification::make('xlsform_template_imported')
-            ->title('Xlsform Template Imported')
-            ->body('The Xlsform Template ' . $this->model->title . ' belonging to ' . $this->model->owner->name . ' has been imported.')
-            ->success()
-            ->broadcast(Role::findByName('Super Admin')->users);
+        if ($this->model instanceof XlsformTemplate) {
+
+            XlsformTemplateWasImported::dispatch($this->model->id);
+
+            Notification::make('xlsform_template_imported')
+                ->title('Xlsform Template Imported')
+                ->body('The Xlsform Template ' . $this->model->title . ' belonging to ' . $this->model->owner->name . ' has been imported.')
+                ->success()
+                ->broadcast(Role::findByName('Super Admin')->users);
+        }
+
+        if($this->model instanceof XlsformModuleVersion) {
+
+
+            XlsformModuleVersionWasImported::dispatch($this->model->id);
+
+            Notification::make('xlsform_module_version_imported')
+                ->title("Questions for Module: {$this->model->name} successfully imported")
+                ->body("The Questions for module {$this->model->name} have been successfully updated.")
+                ->success()
+                ->broadcast($this->importedBy ?? Role::findByName('Super Admin')->users);
+
+
+        }
 
     }
 }
