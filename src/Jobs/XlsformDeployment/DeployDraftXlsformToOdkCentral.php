@@ -64,8 +64,9 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
         if ($this->user) {
             Notification::make('xlsform_file_deployment_failed')
                 ->title('Draft Form "'.$this->xlsform->title.'" failed to deploy')
-                ->body(new HtmlString('There may be an issue with the Xlsform template uploaded by the platform support team. Please contact support for more information, and pass the following error message along: <br/><br/>' . $exception->getmessage()))
+                ->body(new HtmlString('The message below was returned from the ODK Server. It may indicate an issue with the Xlsform definition being used: <br/><br/>' . $exception->getmessage()))
                 ->danger()
+                ->persistent()
                 ->broadcast($this->user);
         }
     }
