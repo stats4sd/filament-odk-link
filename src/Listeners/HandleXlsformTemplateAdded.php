@@ -69,8 +69,6 @@ class HandleXlsformTemplateAdded
         $translatableHeadings = (new XlsformTranslationHelper)->getTranslatableColumnsFromFile($filePath);
 
 
-        ray($this->importedBy);
-
         // make sure all the choice_lists are imported;
         (new XlsformTemplateChoiceListImport($model, $moduleColumn))->queue($filePath);
 

@@ -111,7 +111,6 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
                     // check each item property against the row
                     // every property must match the row input
 
-                    ray($item, $row);
 
                     if ($item->properties === null) {
                         return true;
