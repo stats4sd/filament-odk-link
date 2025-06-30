@@ -21,9 +21,8 @@ use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
 
 class HandleXlsformTemplateAdded
 {
-    public function __construct(public ?User $importedBy = null)
-    {
-    }
+    public ?User $importedBy = null;
+
 
     public function handle(MediaHasBeenAddedEvent $event): void
     {
@@ -70,6 +69,8 @@ class HandleXlsformTemplateAdded
         $translatableHeadings = (new XlsformTranslationHelper)->getTranslatableColumnsFromFile($filePath);
 
 
+        ray($this->importedBy);
+
         // make sure all the choice_lists are imported;
         (new XlsformTemplateChoiceListImport($model, $moduleColumn))->queue($filePath);
 
@@ -84,7 +85,7 @@ class HandleXlsformTemplateAdded
                 new LinkModuleVersionToLocales($model, $translatableHeadings),
 
                 new ImportAllLanguageStrings($filePath, $model, $translatableHeadings),
-                new FinishXlsformTemplateImport($model, $this->importedBy),
+                new FinishXlsformTemplateImport($model),
             ]);
 
 

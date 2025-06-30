@@ -37,13 +37,18 @@ class ImportAllLanguageStrings implements ShouldQueue
         if ($this->model instanceof XlsformModuleVersion) {
 
             // custom questions excel file has been stored by Spatie media library, use model to find the corresponding team
-            $currentOwner = Team::find($this->model->owner->id);
 
-            // get the file path of custom questions excel file stored by Spatie media library
-            $newFilePath = $currentOwner->getFirstMediaPath('custom_questions');
+            $currentOwner = $this->model->owner ?? null;
 
-            // update filePath for testing, no error occurred. All jobs completed.
-            $this->filePath = $newFilePath;
+
+            // If there is an owner, use the custom file path to retrieve the file.
+            if($currentOwner) {
+                // get the file path of custom questions excel file stored by Spatie media library
+                $newFilePath = $currentOwner->getFirstMediaPath('custom_questions');
+
+                // update filePath for testing, no error occurred. All jobs completed.
+                $this->filePath = $newFilePath;
+            }
         }
 
 

@@ -17,7 +17,7 @@ class FinishXlsformTemplateImport implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public XlsformModuleVersion|XlsformTemplate $model, public ?User $importedBy)
+    public function __construct(public XlsformModuleVersion|XlsformTemplate $model)
     {
     }
 
@@ -50,7 +50,7 @@ class FinishXlsformTemplateImport implements ShouldQueue
                 ->title("Questions for Module: {$this->model->name} successfully imported")
                 ->body("The Questions for module {$this->model->name} have been successfully updated.")
                 ->success()
-                ->broadcast($this->importedBy ?? Role::findByName('Super Admin')->users);
+                ->broadcast(Role::findByName('Super Admin')->users);
 
 
         }
