@@ -89,7 +89,7 @@ class GenerateSubmissions extends Command
 
                 $row = array_combine($headings, $row);
                 if ($row === false) {
-00                    continue;
+                    continue;
                 }
 
                 if (!isset($row['type']) || !isset($row['name'])) {
