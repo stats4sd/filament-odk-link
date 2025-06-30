@@ -271,6 +271,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     public function xlsformModuleVersions(): BelongsToMany
     {
         return $this->belongsToMany(XlsformModuleVersion::class, 'selected_xlsform_module_versions')
+            ->withPivot('order')
             ->orderByPivot('order', 'asc');
     }
 
