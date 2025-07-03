@@ -67,19 +67,22 @@ class TeamXlsformTemplateResource extends Resource
 
         return parent::getEloquentQuery()
             ->where(function (Builder $query) {
-                $query->whereHasMorph(
-                    relation: 'owner',
-                    types: [get_class(Filament::getTenant())],
-                    callback: function (Builder $subQuery) {
-                        $subQuery->where('id', Filament::getTenant()->getKey());
+                $query
+                    ->whereHasMorph(
+                        relation: 'owner',
+                        types: [get_class(Filament::getTenant())],
+                        callback: function (Builder $subQuery) {
+                            $subQuery->where('id', Filament::getTenant()->getKey());
+                        }
+                    )
+                    ->orWhere(function (Builder $query) {
+                        $query
+                            ->whereHasMorph(
+                                relation: 'owner',
+                                types: [Platform::class]
+                            )
+                            ->where('available', true);
                     });
-            })
-            ->orWhere(function (Builder $query) {
-                $query->whereHasMorph(
-                    relation: 'owner',
-                    types: [Platform::class]
-                )
-                    ->where('available', true);
             })
             ->orderBy('owner_type');
     }
@@ -91,7 +94,7 @@ class TeamXlsformTemplateResource extends Resource
                 Tables\Columns\TextColumn::make('title'),
                 Tables\Columns\IconColumn::make('has_version')
                     ->label('In use?')
-                    ->state(fn (Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->getKey())->count() > 0)
+                    ->state(fn(Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->getKey())->count() > 0)
                     ->boolean(),
                 Tables\Columns\TextColumn::make('owner_type')
                     ->label('Source')
@@ -110,19 +113,19 @@ class TeamXlsformTemplateResource extends Resource
                     ->view('filament-odk-link::filament.tables.columns.required-data-media-count'),
             ])
             ->filters([
-            //
-        ])
+                //
+            ])
             ->actions([
 
-            // TODO: setup a helper function that a) returns the current tenant as a "WithXlsforms" class, and b) makes sure that devs realise the Filament tenant must implement this interface.
-            Tables\Actions\Action::make('deploy')
+                // TODO: setup a helper function that a) returns the current tenant as a "WithXlsforms" class, and b) makes sure that devs realise the Filament tenant must implement this interface.
+                Tables\Actions\Action::make('deploy')
                     ->label('Deploy Form')
-                    ->hidden(fn (Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->getKey())->count() > 0)
+                    ->hidden(fn(Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->getKey())->count() > 0)
                     ->icon('heroicon-o-cloud-arrow-up')
                     ->form([
                         Forms\Components\TextInput::make('title')
                             ->label('Please give the form a title.')
-                            ->default(fn (XlsformTemplate $record) => HelperService::getCurrentOwner()->name.' - '.$record->title)
+                            ->default(fn(XlsformTemplate $record) => HelperService::getCurrentOwner()->name . ' - ' . $record->title)
                             ->hint('Note that ODK form titles cannot be longer than 64 characters.'),
                     ])
                     ->action(function (XlsformTemplate $record, array $data) {
@@ -138,15 +141,15 @@ class TeamXlsformTemplateResource extends Resource
                         $xlsform->publishForm();
 
                     }),
-            Tables\Actions\Action::make('download file')
+                Tables\Actions\Action::make('download file')
                     ->label('Download XLS File')
-                    ->url(fn ($record) => $record->getFirstMediaUrl('xlsform_file')),
-        ])
+                    ->url(fn($record) => $record->getFirstMediaUrl('xlsform_file')),
+            ])
             ->bulkActions([
-            Tables\Actions\BulkActionGroup::make([
+                Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-            ]),
-        ]);
+                ]),
+            ]);
     }
 
     public static function infoList(Infolist $infolist): Infolist
