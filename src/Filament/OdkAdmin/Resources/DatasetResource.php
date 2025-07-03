@@ -2,7 +2,9 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources;
 
+use Filament\Facades\Filament;
 use Filament\Forms;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -19,7 +21,6 @@ use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Relatio
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\RelationManagers\XlsformTemplateSourcesRelationManager;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\RelationManagers\XlsformTemplatesRelationManager;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
-use Stats4sd\FilamentOdkLink\Services\HelperService;
 
 class DatasetResource extends Resource
 {
@@ -37,23 +38,32 @@ class DatasetResource extends Resource
 
     public static function getCreateFormFields(?Dataset $record = null): array
     {
-        $models = HelperService::getModels()
-            ->mapWithKeys(function ($model) {
-                return [
-                    $model => (new $model)->getTable(),
-                ];
-            });
+
+        if (Filament::hasTenancy()) {
+            $owner = Filament::getTenant();
+            $ownerField = Forms\Components\Hidden::make('owner_id')
+                ->default($owner->getKey());
+        } else {
+            $ownerField = Forms\Components\Select::make('owner_id')
+                ->relationship('owner')
+                ->label('Does a specific team own this dataset, or is it shared amongst all APNI projects?');
+        }
 
         return [
             Forms\Components\TextInput::make('name')
                 ->label('Name of the dataset'),
-            Forms\Components\Select::make('entity_model')
-                ->label('Which Database table does this dataset represent?')
-                ->options($models),
+
             Forms\Components\Textarea::make('description')
                 ->label('Enter a brief description of the dataset')
                 ->rows(3)
                 ->columnSpanFull(),
+
+            TextInput::make('label')
+                ->label('Enter the variable name that should be used as the main "label" when displaying entities in the dataset')
+                ->nullable(),
+
+            $ownerField,
+
             Forms\Components\Hidden::make('primary_key')
                 ->default('id'),
         ];

@@ -478,12 +478,4 @@ class XlsformTemplate extends HasXlsformDrafts
 
     }
 
-    /** @return Attribute<string, never> */
-    protected function fallbackModuleName(): Attribute
-    {
-        return new Attribute(
-            get: fn() => Str::slug($this->title) . '_main',
-        );
-    }
-
 }

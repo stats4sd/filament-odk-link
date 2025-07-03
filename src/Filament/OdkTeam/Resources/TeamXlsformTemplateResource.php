@@ -2,12 +2,23 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources;
 
+use App\Filament\App\Resources\DatasetResource;
+use Awcodes\Shout\Components\ShoutEntry;
+use Awcodes\TableRepeater\Components\TableRepeater;
+use Awcodes\TableRepeater\Header;
 use Filament\Facades\Filament;
 use Filament\Forms;
+use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\Section;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource\Pages\CreateTeamXlsformTemplate;
 use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource\Pages\EditTeamXlsformTemplate;
 use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource\Pages\ListTeamXlsformTemplates;
@@ -15,7 +26,9 @@ use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResou
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 
 // Use this resource for a panel scoped to a team
@@ -134,6 +147,11 @@ class TeamXlsformTemplateResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
             ]),
         ]);
+    }
+
+    public static function infoList(Infolist $infolist): Infolist
+    {
+        return XlsformTemplateResource::infoList($infolist);
     }
 
     public static function getPages(): array

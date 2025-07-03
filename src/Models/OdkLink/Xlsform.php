@@ -345,7 +345,6 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      */
     public function publishForm(): XlsformVersion
     {
-        ray('publishForm for . ' . $this->title);
 
         $odkLinkService = app()->make(OdkLinkService::class);
         $newVersion = $odkLinkService->publishForm($this);

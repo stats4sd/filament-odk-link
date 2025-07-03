@@ -36,7 +36,6 @@ class FinishChoiceListEntryImport implements ShouldQueue
             })->with('choiceListEntries')
             ->get();
 
-        ray($localisableChoiceLists);
 
 
         $localisableChoiceLists

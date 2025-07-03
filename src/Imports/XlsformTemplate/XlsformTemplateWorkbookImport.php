@@ -31,7 +31,7 @@ class XlsformTemplateWorkbookImport implements WithMultipleSheets, ShouldQueue, 
     {
         return [
             'survey' => new XlsformTemplateSurveyImport($this->model, $this->translatableHeadings['survey'], $this->moduleColumn),
-            'choices' => new XlsformTemplateChoicesImport($this->model, $this->translatableHeadings['choices']),
+            'choices' => new XlsformTemplateChoicesImport($this->model, $this->translatableHeadings['choices'], $this->moduleColumn),
         ];
     }
 

@@ -25,6 +25,7 @@ class XlsformModule extends Model
         return [
             'can_be_extended' => 'boolean',
             'can_be_replaced' => 'boolean',
+            'row_names' => 'collection',
         ];
     }
 

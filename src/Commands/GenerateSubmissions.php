@@ -33,7 +33,6 @@ class GenerateSubmissions extends Command
         $username = env('ODK_USERNAME');
         $password = env('ODK_PASSWORD');
 
-        // ray($xlsformId, $projectId, $odkId, $xlsformVersion);
         if (!$xlsform) {
             $this->error("XLSForm with ID $xlsformId not found.");
             return;
@@ -49,7 +48,7 @@ class GenerateSubmissions extends Command
             Storage::disk('local')->makeDirectory('temp/' . $xlsform->getKey());
             Excel::store(new XlsformWorkbookExport($xlsform), $filePath, 'local');
             $data = Excel::toArray(new XlsformWorkbookExport($xlsform), $filePath);
-            
+
             // Get the survey rows
             $rows = $data[0];
             $headings = array_shift($rows);
@@ -90,18 +89,17 @@ class GenerateSubmissions extends Command
 
                 $row = array_combine($headings, $row);
                 if ($row === false) {
-                    ray("Skipping row: array_combine failed", $row);
                     continue;
                 }
 
                 if (!isset($row['type']) || !isset($row['name'])) {
-                    continue; 
+                    continue;
                 }
 
                 if (strpos($row['type'], 'select_multiple') === 0) {
                     $parts = explode(' ', $row['type']);
                     if (isset($parts[1])) {
-                        $list_name_mapping[$row['name']] = $parts[1]; 
+                        $list_name_mapping[$row['name']] = $parts[1];
                     }
                 }
             }
@@ -112,7 +110,7 @@ class GenerateSubmissions extends Command
             // Convert the submission to XML
             $xml = new SimpleXMLElement('<data/>');
             $this->arrayToXml($submission, $xml, $xlsform->odk_id, $xlsformVersion);
-            $xmlContent = $xml->asXML();            
+            $xmlContent = $xml->asXML();
 
             // Send the POST request to ODK Central API
             $url = "{$odkUrl}/v1/projects/{$projectId}/forms/{$odkId}/submissions";
@@ -125,9 +123,7 @@ class GenerateSubmissions extends Command
             ->post($url);
 
             if ($response->successful()) {
-                ray('Submission successfully sent!', $response->body());
             } else {
-                ray('Error occurred while sending submission', $response->status(), $response->body());
             }
 
             $this->info("Generated submission #".($i+1)." of ".$count." for XLSForm ID: $xlsformId");
@@ -161,7 +157,7 @@ class GenerateSubmissions extends Command
                 $groupRows = [];
                 while ($rows && $rows[0]) {
                     $nextRow = array_combine($headings, $rows[0]);
-            
+
                     // Check if we have reached an end_group that matches the current group
                     if ($nextRow['type'] === 'end_group' || $nextRow['type'] === 'end group') {
                         // Ensure we match the correct end_group by checking level and name
@@ -171,18 +167,18 @@ class GenerateSubmissions extends Command
                             break;
                         }
                     }
-            
+
                     // Add the row to the group rows list
                     $groupRows[] = array_shift($rows);
                 }
-            
+
                 // Process the group rows after collecting them all
                 $processedGroup = [];
                 $this->processRows($groupRows, $headings, $list_name_mapping, $activeGroups, $activeRepeats, $list_data_labels, $list_data_values, $processedGroup);
-            
+
                 // Store processed data inside the group array
                 $submission[$row['name']] = $processedGroup;
-            
+
                 // After processing, remove the group context from the active list
                 array_pop($activeGroups);
 
@@ -199,17 +195,13 @@ class GenerateSubmissions extends Command
                         if (preg_match('/^count-selected\(\$\{(.+?)\}\)$/', $row['repeat_count'], $matches)) {
                             $variableName = $matches[1]; // Extract variable name from ${}
                             $repeatCount = $this->getCountSelected($variableName, $submission, $parentSubmission);
-                        // Case: ${variable} 
-                        } elseif (preg_match('/\$\{(.+?)\}/', $row['repeat_count'], $matches) || 
+                        // Case: ${variable}
+                        } elseif (preg_match('/\$\{(.+?)\}/', $row['repeat_count'], $matches) ||
                             preg_match('/^number\((.+?)\)$/', $row['repeat_count'], $matches)) {
                             // ray($row['name'], 'repat count: '.$row['repeat_count']);
-                            // ray('repeat count is a varialbe ');
 
                             $variableName = $matches[1]; // Extract variable name from ${}
-                            // ray($variableName);
-                            // ray($submission[$variableName]);
                             $repeatCount = $this->findValueInSubmission($variableName, $submission, $parentSubmission);
-                            // ray($repeatCount);
 
                         // Case: specified number
                         }else {
@@ -220,12 +212,11 @@ class GenerateSubmissions extends Command
                     } else {
                         $repeatCount = 2;
                     }
-                    // ray('repeat count', $repeatCount);
                     // Initialize the repeat data in submission
                     if (!isset($submission[$row['name']])) {
                         $submission[$row['name']] = [];
                     }
-                
+
                     // Collect all rows that belong to this repeat group
                     $repeatRows = [];
                     while ($rows && $rows[0]) {
@@ -238,7 +229,7 @@ class GenerateSubmissions extends Command
                             if ($nextRow['name'] === $lastRepeat['name'] && $lastRepeat['level'] === count($activeRepeats) - 1) {
                                 array_shift($rows); // Removes the 'end_repeat' row and stops collecting
                                 break;
-                            } 
+                            }
                         }
 
                         // Add the row to the repeat rows list
@@ -249,7 +240,7 @@ class GenerateSubmissions extends Command
                     for ($repeat_position = 1; $repeat_position <= $repeatCount; $repeat_position++) {
                         $repeatSubmission = [];
                         // Clone repeatRows so each iteration gets new data
-                        $repeatRowsCopy = $repeatRows; 
+                        $repeatRowsCopy = $repeatRows;
                         // Process the repeat rows and get the data
                         $processedRepeat = $this->processRows($repeatRowsCopy, $headings, $list_name_mapping, $activeGroups, $activeRepeats, $list_data_labels, $list_data_values, $repeatSubmission, $repeat_position, $submission);
                         if (!empty($processedRepeat)) {
@@ -257,14 +248,14 @@ class GenerateSubmissions extends Command
                             $submission[$row['name']][] = $processedRepeat;
                         }
                     }
-                
+
                     // After processing, remove the repeat context from the active list
                     array_pop($activeRepeats);
 
             } elseif (strpos($row['type'], 'select_one') === 0) {
                 $listname = explode(' ', $row['type'])[1] ?? '';
-                $submission[$row['name']] = (!empty($listname) && isset($list_data_values[$listname]) && is_array($list_data_values[$listname]) && count($list_data_values[$listname]) > 0) 
-                    ? $list_data_values[$listname][array_rand($list_data_values[$listname])] 
+                $submission[$row['name']] = (!empty($listname) && isset($list_data_values[$listname]) && is_array($list_data_values[$listname]) && count($list_data_values[$listname]) > 0)
+                    ? $list_data_values[$listname][array_rand($list_data_values[$listname])]
                     : 'CANNOT FIND CHOICE LIST';
 
             } elseif (strpos($row['type'], 'select_multiple') === 0) {
@@ -272,7 +263,7 @@ class GenerateSubmissions extends Command
                 if (!empty($listname) && isset($list_data_values[$listname]) && is_array($list_data_values[$listname]) && count($list_data_values[$listname]) > 0) {
                     $listItems = array_unique($list_data_values[$listname]);
                     $numberOfItems = rand(1, count($listItems));
-                    $numberOfItems = min($numberOfItems, count($listItems)); 
+                    $numberOfItems = min($numberOfItems, count($listItems));
                     // ray($listname, $listItems, $numberOfItems);
                     $selectedItems = array_rand(array_flip($listItems), $numberOfItems);
                     $selectedItems = is_array($selectedItems) ? $selectedItems : [$selectedItems];
@@ -301,16 +292,14 @@ class GenerateSubmissions extends Command
 
                 // single variable reference eg ${village_id}
                 } elseif (preg_match('/^\$\{([^{}]+)\}$/', $row['calculation'], $matches)) {
-                    // ray($row['name'], $row['calculation']);
                     $variableName = $matches[1];
                     $submission[$row['name']] = $this->findValueInSubmission($variableName, $submission, $parentSubmission) ?? 'CANNOT FIND VALUE';
 
                 // count-selected
                 } elseif (preg_match('/^count-selected\(\$\{(.+?)\}\)$/', $row['calculation'], $matches)) {
                     $variableName = $matches[1]; // Extract variable name from ${}
-                    // ray($row['name'], $row['calculation'], $variableName);
                     $submission[$row['name']] = $this->getCountSelected($variableName, $submission);
-                
+
                 // years from today
                 } elseif (preg_match('/^number\(format-date\(today\(\),\s?[\'"]%Y[\'"]\)\)\s?-\s?\$\{(.+?)\}$/', $row['calculation'], $matches)) {
                     $variableName = $matches[1]; // Extract any variable inside ${}
@@ -328,7 +317,7 @@ class GenerateSubmissions extends Command
                     if (preg_match('/^\$\{([^{}]+)\}$/', $listName, $listMatch)) {
                         $listName = $listMatch[1];
                     }
-                
+
                     // Check if $listName is actually a question name in a select_multiple
                     if (isset($list_name_mapping[$listName])) {
                         $originalListName = $listName;
@@ -339,8 +328,8 @@ class GenerateSubmissions extends Command
                     if (preg_match('/^\$\{([^{}]+)\}$/', $variableExpression, $varMatch)) {
                         $variableName = $varMatch[1];
                         $selectedValue = $this->findValueInSubmission($variableName, $submission, $parentSubmission);
-                
-                    } elseif (preg_match('/^selected-at\(\$\{([^{}]+)\},\s*(.+?)\)$/', $variableExpression, $selectedMatches)) { 
+
+                    } elseif (preg_match('/^selected-at\(\$\{([^{}]+)\},\s*(.+?)\)$/', $variableExpression, $selectedMatches)) {
                         $variableName = $selectedMatches[1];
                         $indexExpression = $selectedMatches[2];
                         // ray($variableExpression, $indexExpression);
@@ -349,10 +338,10 @@ class GenerateSubmissions extends Command
                             $indexExpression = str_replace('position(..)', $repeat_position, $indexExpression);
                         }
                         $index = $this->evaluateOdkExpression($indexExpression, $submission);
-                
+
                         // Fetch the list from submission
                         $listValue = $this->findValueInSubmission($variableName, $submission, $parentSubmission);
-                
+
                         if (is_string($listValue)) {
                             $listItems = explode(' ', trim($listValue));
                             if (isset($listItems[$index])) {
@@ -363,31 +352,28 @@ class GenerateSubmissions extends Command
                         } else {
                             $selectedValue = 'INVALID VALUE';
                         }
-                
+
                     } else {
                         $selectedValue = 'UNKNOWN EXPRESSION';
                     }
-                
+
                     // Find the corresponding label in the choice list
                     if (!empty($selectedValue) && isset($list_data_labels[$listName][$selectedValue])) {
                         $submission[$row['name']] = $list_data_labels[$listName][$selectedValue];
                     } else {
                         $submission[$row['name']] = 'CHOICE NOT FOUND';
                     }
-                
-            
+
+
                 // // indexed-repeat
                 } elseif (preg_match('/^indexed-repeat\(\$\{([^}]+)\},\s?\$\{([^}]+)\},\s?(\d+)\)$/', $row['calculation'], $matches)) {
-                    // ray('indexed-repeat');
-                    // ray($row['name'], $row['calculation']);
-                    $variableName = $matches[1]; 
-                    $repeatGroupName = $matches[2]; 
+                    $variableName = $matches[1];
+                    $repeatGroupName = $matches[2];
                     $index = (int) $matches[3] - 1; // Convert to zero-based index
-                    // ray($variableName, $repeatGroupName, $index);
                     // Check if the repeat group exists in submission
                     if (isset($submission[$repeatGroupName]) && is_array($submission[$repeatGroupName])) {
                         $repeatGroup = $submission[$repeatGroupName];
-                
+
                         // Ensure the index is within bounds
                         if (isset($repeatGroup[$index][$variableName])) {
                             $submission[$row['name']] = $repeatGroup[$index][$variableName];
@@ -397,37 +383,32 @@ class GenerateSubmissions extends Command
                     } else {
                         $submission[$row['name']] = null;
                     }
-                    // ray($submission[$row['name']]);
-                
-                // selected-at 
+
+                // selected-at
                 } elseif (preg_match('/^selected-at\(\$\{([^{}]+)\},\s*(.+?)\)$/', $row['calculation'], $matches)) {
                     // ray($row['name'], $row['calculation']);
-                    
+
                     $variableName = $matches[1];  // Extract list variable name
                     $indexExpression = $matches[2]; // Extract index expression
-                    
-                    // ray("Processing selected-at: Variable = {$variableName}, Index = {$indexExpression}");
-                
+
+
                     // Retrieve the list from submission
                     $listValue = $this->findValueInSubmission($variableName, $submission, $parentSubmission);
-                    // ray("List value: ", $listValue);
-                    
+
                     if (!is_string($listValue) || trim($listValue) === '') {
                         $submission[$row['name']] = 'INVALID VALUE';
                     } else {
                         // Convert space-separated string into an array
                         $listItems = explode(' ', trim($listValue));
-                
+
                         // Replace position(..) with the actual repeat position
                         if (isset($repeat_position)) {
                             $indexExpression = str_replace('position(..)', $repeat_position, $indexExpression);
                         }
-                        // ray("Updated Index Expression: ", $indexExpression);
-                
+
                         // Evaluate the modified index expression
                         $index = $this->evaluateOdkExpression($indexExpression, $submission);
-                        // ray("Evaluated index: ", $index);
-                
+
                         // Ensure the index is valid
                         if (!is_numeric($index)) {
                             $submission[$row['name']] = 'INVALID INDEX';
@@ -443,24 +424,17 @@ class GenerateSubmissions extends Command
                     }
 
                 } elseif (strpos($row['calculation'], 'coalesce(') !== false) {
-                    // ray("Skipping calculation due to coalesce() in:", $row['calculation']);
                     $submission[$row['name']] = 'SKIPPED coalesce()';
                 } elseif (strpos($row['calculation'], 'selected(') !== false) {
-                    // ray("Skipping calculation due to selected() in:", $row['calculation']);
                     $submission[$row['name']] = 'SKIPPED selected()';
                 } elseif (strpos($row['calculation'], 'concat(') !== false) {
-                    // ray("Skipping calculation due to concat() in:", $row['calculation']);
                     $submission[$row['name']] = 'SKIPPED concat()';
                 } elseif (strpos($row['calculation'], 'contains(') !== false) {
-                    // ray("Skipping calculation due to contains() in:", $row['calculation']);
                     $submission[$row['name']] = 'SKIPPED contains()';
                 } elseif (strpos($row['calculation'], 'jr:choice-name(selected-at') !== false) {
-                    // ray("Skipping calculation due to jr:choice-name(selected-at) in:", $row['calculation']);
                     $submission[$row['name']] = 'SKIPPED jr:choice-name(selected-at)';
 
                 } elseif (preg_match('/^(if\(.+\)|[\d\s\(\)]*([\+\-\*\/]|div|mod)[\d\s\(\)]*)$/', $row['calculation'])) {
-                    // ray('math expression');
-                    // ray($row['name'], $row['calculation']);
                     $submission[$row['name']] = $this->evaluateOdkExpression($row['calculation'], $submission);
 
                 } else {
@@ -474,7 +448,7 @@ class GenerateSubmissions extends Command
                 $startTime = date('Y-m-d\TH:i:s.', time()) . substr(microtime(), 2, 3) . 'Z';
                 $submission['start'] = $startTime;
 
-            } elseif ($row['type'] === 'end') { 
+            } elseif ($row['type'] === 'end') {
                 if ($startTime) {
                     $randomMinutes = rand(1, 60);
                     $randomSeconds = rand(0, 59);
@@ -484,10 +458,10 @@ class GenerateSubmissions extends Command
                     $submission['end'] = $endTime;
                 }
 
-            } elseif ($row['type'] === 'username') { 
+            } elseif ($row['type'] === 'username') {
                 $submission[$row['name']] = 'submission-generator';
 
-            } elseif ($row['type'] === 'deviceid') { 
+            } elseif ($row['type'] === 'deviceid') {
                 $submission['deviceid'] = 'submission-generator';
 
             } elseif ($row['type'] === 'today') {
@@ -499,47 +473,43 @@ class GenerateSubmissions extends Command
     }
 
     function evaluateOdkExpression(string $expression, array $submission, $parentSubmission = null) {
-        // ray("Evaluating Expression:", $expression);
-        
+
         // Handle nested `if()` expressions correctly
         while (preg_match('/if\(([^,]+),([^,]+),([^()]*)\)/', $expression, $matches)) {
             $condition = trim($matches[1]);
             $trueValue = trim($matches[2]);
             $falseValue = trim($matches[3]);
-            
+
             // Fix "=" to "==" for PHP compatibility
             $condition = preg_replace('/([^<>=!])=([^=])/', '$1 == $2', $condition);
-            
+
             // Evaluate the condition first
             $evaluatedCondition = $this->evaluateOdkExpression($condition, $submission, $parentSubmission);
-            // ray("Evaluated Condition:", $evaluatedCondition);
-            
+
             // If the condition is invalid, stop the calculation and return early
             if ($evaluatedCondition === 'INVALID VALUE') {
                 return 'INVALID VALUE'; // Exit immediately
             }
-    
+
             // Evaluate true or false value based on condition
             $replacement = $evaluatedCondition
                 ? $this->evaluateOdkExpression($trueValue, $submission, $parentSubmission)
                 : $this->evaluateOdkExpression($falseValue, $submission, $parentSubmission);
-            
+
             // Check if the replacement value is invalid and exit if so
             if ($replacement === 'INVALID VALUE') {
                 return 'INVALID VALUE'; // Exit immediately if the replacement is invalid
             }
-            
-            // ray("Replacing IF with:", $replacement);
-            
+
             // Replace the entire "if()" expression with the evaluated value
             $expression = preg_replace('/if\(([^,]+),([^,]+),([^()]*)\)/', $replacement, $expression, 1);
         }
-    
+
         // Process remaining expressions (variables, numbers, operators, and strings)
         preg_match_all('/\$\{([^{}]+)\}|("[^"]*")|(\d+(\.\d+)?)|div|mod|[+\-*\/\(\)]|!=|==|>=|<=|=/', $expression, $matches);
         $tokens = $matches[0];
         $parsedExpression = '';
-    
+
         foreach ($tokens as $token) {
             if (preg_match('/^\d+(\.\d+)?$/', $token)) {
                 // If it's a number, keep it as is
@@ -552,7 +522,7 @@ class GenerateSubmissions extends Command
                 // Handle variable substitution
                 $variableName = $varMatch[1];
                 $value = $this->findValueInSubmission($variableName, $submission, $parentSubmission);
-    
+
                 if ($value === null || $value === '') {
                     $parsedExpression .= ' "" ';  // Represent empty values as an empty string
                 } elseif (is_numeric($value)) {
@@ -565,36 +535,29 @@ class GenerateSubmissions extends Command
                 $parsedExpression .= ' ' . $token . ' ';
             }
         }
-    
-        // ray("Parsed Expression Before Eval:", $parsedExpression);
-        
+
         // Fix possible errors by ensuring the expression is wrapped correctly
         $parsedExpression = preg_replace('/([^\d\+\-\*\/\(\)])\s*\)\s*\+/', '$1) +', $parsedExpression);
-        
-        // ray("Final Parsed Expression Before Eval:", $parsedExpression);
-    
+
         // Check if the expression is valid before evaluating
         if (strpos($parsedExpression, ')') === false && strpos($parsedExpression, '(') === false) {
-            // ray("ERROR: Unbalanced parentheses in expression.")->red();
             return 'ERROR';
         }
-        
+
         try {
             eval('$result = (' . $parsedExpression . ');');
-            
+
             // If result is null, return 'ERROR'
             if ($result === null) {
-                // ray("ERROR: eval() returned NULL, invalid expression detected.")->red();
                 return 'ERROR';
             }
-    
+
             return $result;
         } catch (Throwable $e) {
-            // ray("ERROR: Evaluation failed", $e->getMessage())->red();
             return 'ERROR';
         }
     }
-    
+
     function getCountSelected($variableName, $submission) {
         if (!empty($submission[$variableName])) {
             $rawValue = trim((string) $submission[$variableName]);
@@ -635,7 +598,7 @@ class GenerateSubmissions extends Command
         if (!$constraint) {
             return rand(1, 10);
         }
-    
+
         $min = PHP_INT_MIN;
         $max = PHP_INT_MAX;
         $exact = null;
@@ -647,13 +610,13 @@ class GenerateSubmissions extends Command
         if (count($constraints) === 1 && (preg_match('/\.<(\d+)/', $constraints[0], $matches) || preg_match('/\.<=([0-9]+)/', $constraints[0], $matches))) {
             $min = 0;
         }
-    
+
         // Process each constraint
         foreach ($constraints as $constraintItem) {
             if (preg_match('/\.(>=|<=|>|<|=)(\d+|\$\{(.+?)\})/', $constraintItem, $matches)) {
                 $operator = $matches[1]; // The operator: >=, <=, >, <, =
                 $value = $matches[2]; // The value to compare with
-    
+
                 // Check if the value is a variable reference
                 if (preg_match('/^\$\{(.+?)\}$/', $value, $varMatch)) {
                     $variableName = $varMatch[1]; // Extract the variable name from ${}
@@ -687,7 +650,7 @@ class GenerateSubmissions extends Command
                 }
             }
         }
-    
+
         // If no upper constraint given, set max to 100
         if ($max === PHP_INT_MAX) {
             $max = 100;
@@ -724,7 +687,7 @@ class GenerateSubmissions extends Command
             if (preg_match('/\.(>=|<=|>|<|=)(\d+|\$\{(.+?)\})/', $constraintItem, $matches)) {
                 $operator = $matches[1]; // The operator: >=, <=, >, <, =
                 $value = $matches[2]; // The value to compare with
-    
+
                 if (preg_match('/^\$\{(.+?)\}$/', $value, $varMatch)) {
                     $variableName = $varMatch[1]; // Extract the variable name from ${}
                     // Fetch the value of the variable from $submission
@@ -786,11 +749,11 @@ class GenerateSubmissions extends Command
             $xml->addAttribute('id', $formId);
             $xml->addAttribute('version', $xlsformVersion);
         }
-    
+
         foreach ($data as $key => $value) {
             // Ensure valid XML tag names
             $key = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $key);
-    
+
             if (is_array($value)) {
                 if (array_is_list($value)) {
                     foreach ($value as $item) {

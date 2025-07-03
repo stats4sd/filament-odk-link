@@ -73,6 +73,11 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
                     $canBeReplaced = $row[0]['localisable_module'] === 'replace';
                 }
 
+                // temporarily store the survey row unique name/type combos so we can match the module to the generic survey row later on in the import
+                $rowNames = collect($row)->map(function ($rowEntry) {
+                    return $rowEntry['type'].'_'.$rowEntry['name'];
+                });
+
                 // make sure xlsformModule exists
                 /** @var XlsformModule $module */
                 $module = $this->xlsformTemplate->xlsformModules()->updateOrCreate([
@@ -82,6 +87,7 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
                     'default_order' => $order,
                     'can_be_extended' => $canBeExtended,
                     'can_be_replaced' => $canBeReplaced,
+                    'row_names' => $rowNames,
                 ]);
 
                 // if the module can be extended, it means we need to leave space for a 'localised_$name' module directly after it, so increment $order by 2.
