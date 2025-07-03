@@ -2,22 +2,15 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages;
 
-use App\Services\HelperService;
-use Filament\Facades\Filament;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class CreateXlsformTemplate extends CreateRecord
 {
@@ -53,13 +46,17 @@ class CreateXlsformTemplate extends CreateRecord
                     try {
 
                         // wait to trigger the saved event until the xlsform file is attached.
+
+                        // find the correct owner
+                        $owner = (static::getResource())::getFormOwner();
+
                         /** @var XlsformTemplate $xlsformTemplate */
                         $xlsformTemplate = XlsformTemplate::make([
                             'title' => $get('title'),
                             'newXlsfile' => collect($get('newXlsfile'))->first(),
                         ]);
 
-                        $xlsformTemplate->owner()->associate(Platform::first());
+                        $xlsformTemplate->owner()->associate($owner);
 
                         $xlsformTemplate = $xlsformTemplate->testOnOdkCentral();
 
@@ -77,12 +74,12 @@ class CreateXlsformTemplate extends CreateRecord
 
                         Notification::make('xlsform_template_not_saved')
                             ->title('XLSForm Template Not Saved')
-                            ->body('There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage())
+                            ->body('There was an error saving the XLSForm Template. ODK Returned the following error: '.$e->getMessage())
                             ->danger()
                             ->persistent()
                             ->send();
 
-                        return redirect($this->getResource()::getUrl('create') . '?step=1-xlsform&title=' . urlencode($get('title')));
+                        return redirect($this->getResource()::getUrl('create').'?step=1-xlsform&title='.urlencode($get('title')));
                     }
 
                 }),

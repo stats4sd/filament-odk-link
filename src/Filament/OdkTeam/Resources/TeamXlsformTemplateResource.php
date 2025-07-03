@@ -8,10 +8,14 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource\Pages\CreateTeamXlsformTemplate;
+use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource\Pages\EditTeamXlsformTemplate;
 use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource\Pages\ListTeamXlsformTemplates;
+use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource\Pages\ViewTeamXlsformTemplate;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\OdkLinkTeam;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 
 // Use this resource for a panel scoped to a team
@@ -23,11 +27,18 @@ class TeamXlsformTemplateResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
 
-    protected static ?string $navigationLabel = 'Available ODK Templates';
+    protected static ?string $navigationLabel = 'ODK Form Templates';
 
     protected static ?int $navigationSort = 100;
 
     protected static bool $isScopedToTenant = false;
+
+    protected static WithXlsformTemplates $formOwner;
+
+    public static function getFormOwner(): WithXlsformTemplates
+    {
+        return Filament::getTenant();
+    }
 
     public static function shouldRegisterNavigation(): bool
     {
@@ -37,13 +48,25 @@ class TeamXlsformTemplateResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
+        // get all teamplates that
+        //   - belong to the current tenant
+        //   - OR belong to the platform _and_ are available
+
         return parent::getEloquentQuery()
-            ->where('available', true)
             ->where(function (Builder $query) {
-                $query->whereHas('owner', function (Builder $subQuery) {
-                    $subQuery->where('id', Filament::getTenant()->getKey());
-                })
-                    ->orWhere('owner_type', Platform::class);
+                $query->whereHasMorph(
+                    relation: 'owner',
+                    types: [get_class(Filament::getTenant())],
+                    callback: function (Builder $subQuery) {
+                        $subQuery->where('id', Filament::getTenant()->getKey());
+                    });
+            })
+            ->orWhere(function (Builder $query) {
+                $query->whereHasMorph(
+                    relation: 'owner',
+                    types: [Platform::class]
+                )
+                    ->where('available', true);
             })
             ->orderBy('owner_type');
     }
@@ -54,26 +77,32 @@ class TeamXlsformTemplateResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('title'),
                 Tables\Columns\IconColumn::make('has_version')
-                    ->label('Deployed?')
+                    ->label('In use?')
                     ->state(fn (Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->getKey())->count() > 0)
                     ->boolean(),
                 Tables\Columns\TextColumn::make('owner_type')
-                    ->label('Owner')
+                    ->label('Source')
                     ->badge()
                     ->getStateUsing(function ($record) {
-                        return $record->owner_type === Platform::class ? 'Platform' : 'Custom';
+                        return $record->owner_type === Platform::class ? 'Global' : 'Project';
                     })
                     ->color(function ($record) {
                         return $record->owner_type === Platform::class ? 'gray' : 'success';
                     }),
+                Tables\Columns\ViewColumn::make('required_fixed_media_count')
+                    ->label('Fixed Media')
+                    ->view('filament-odk-link::filament.tables.columns.required-fixed-media-count'),
+                Tables\Columns\ViewColumn::make('required_data_media_count')
+                    ->label('Datasets')
+                    ->view('filament-odk-link::filament.tables.columns.required-data-media-count'),
             ])
             ->filters([
-                //
-            ])
+            //
+        ])
             ->actions([
 
-                // TODO: setup a helper function that a) returns the current tenant as a "WithXlsforms" class, and b) makes sure that devs realise the Filament tenant must implement this interface.
-                Tables\Actions\Action::make('deploy')
+            // TODO: setup a helper function that a) returns the current tenant as a "WithXlsforms" class, and b) makes sure that devs realise the Filament tenant must implement this interface.
+            Tables\Actions\Action::make('deploy')
                     ->label('Deploy Form')
                     ->hidden(fn (Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->getKey())->count() > 0)
                     ->icon('heroicon-o-cloud-arrow-up')
@@ -96,21 +125,24 @@ class TeamXlsformTemplateResource extends Resource
                         $xlsform->publishForm();
 
                     }),
-                Tables\Actions\Action::make('download file')
+            Tables\Actions\Action::make('download file')
                     ->label('Download XLS File')
                     ->url(fn ($record) => $record->getFirstMediaUrl('xlsform_file')),
-            ])
+        ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            ]),
+        ]);
     }
 
     public static function getPages(): array
     {
         return [
             'index' => ListTeamXlsformTemplates::route('/'),
+            'create' => CreateTeamXlsformTemplate::route('/create'),
+            'edit' => EditTeamXlsformTemplate::route('/{record}/edit'),
+            'view' => ViewTeamXlsformTemplate::route('/{record}'),
         ];
     }
 }

@@ -3,7 +3,6 @@
 namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -16,9 +15,7 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
 {
     use Importable;
 
-    public function __construct(public XlsformTemplate $xlsformTemplate, public string $moduleColumn = 'module')
-    {
-    }
+    public function __construct(public XlsformTemplate $xlsformTemplate, public string $moduleColumn = 'module') {}
 
     public function sheets(): array
     {
@@ -45,15 +42,17 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
         // If there are no modules defined at all, the entire form is put into a single generic module.
 
         $count = 1;
-        $genericModuleName = $this->xlsformTemplate->title . ' - General Module ' . $count;
+        $genericModuleName = $this->xlsformTemplate->title.' - Unspecified Module '.$count;
 
         $collection = $collection
             ->map(function ($row) use (&$genericModuleName, &$count) {
-                if (!isset($row['module'])) {
+                if (! isset($row['module'])) {
                     $row['module'] = $genericModuleName;
                 } else {
+
+                    // if there's a module specified, then we are done with the nth 'unspecified' module, and next time we need one we'll start n+1th unspecified module
                     $count++;
-                    $genericModuleName = $this->xlsformTemplate->title . ' - General Module ' . $count;
+                    $genericModuleName = $this->xlsformTemplate->title.' - Unspecified Module '.$count;
                 }
 
                 return $row;
@@ -69,7 +68,7 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
                 $canBeExtended = false;
                 $canBeReplaced = false;
 
-                if(isset($row[0]['localisable_module'])) {
+                if (isset($row[0]['localisable_module'])) {
                     $canBeExtended = $row[0]['localisable_module'] === 'extend';
                     $canBeReplaced = $row[0]['localisable_module'] === 'replace';
                 }
@@ -78,7 +77,7 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
                 /** @var XlsformModule $module */
                 $module = $this->xlsformTemplate->xlsformModules()->updateOrCreate([
                     'name' => $key,
-                ],[
+                ], [
                     'label' => $key,
                     'default_order' => $order,
                     'can_be_extended' => $canBeExtended,
@@ -86,7 +85,7 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
                 ]);
 
                 // if the module can be extended, it means we need to leave space for a 'localised_$name' module directly after it, so increment $order by 2.
-                if($module->can_be_extended)  {
+                if ($module->can_be_extended) {
                     $order++;
                 }
 
