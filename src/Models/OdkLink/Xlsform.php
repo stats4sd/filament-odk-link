@@ -126,6 +126,10 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         return new Attribute(
             get: function (): string {
 
+                if($this->processing) {
+                    return 'PROCESSING';
+                }
+
                 if (!$this->odk_draft_token) {
                     return 'NOT DEPLOYED';
                 }

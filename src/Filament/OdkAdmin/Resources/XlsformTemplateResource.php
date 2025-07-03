@@ -369,6 +369,7 @@ class XlsformTemplateResource extends resource
         return $infolist
             ->schema([
                 ShoutEntry::make('Processing')
+                    ->columnSpan('full')
                     ->visible(fn (?XlsformTemplate $record): bool => $record?->processing)
                     ->content('This Form is currently being processed, and is not yet available for use. This should only take a few minutes after being updated. If you see this notification for more than a few minutes, please contact support.'),
                 Section::make('Xlsform Details')
