@@ -120,7 +120,7 @@ class XlsformTemplate extends HasXlsformDrafts
     // ******************* COMPUTED ATTRIBUTES *****************
 
     // for a template to be available in a locale, *every* module should be linked to that locale
-    /** @return Attribute<Collection, never> */
+    /** @return Attribute<Collection<Locale>, never> */
     protected function locales(): Attribute
     {
         return new Attribute(

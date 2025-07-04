@@ -34,6 +34,7 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wit
     public function __construct(public Xlsform $xlsform)
     {
         $this->locales = $xlsform->locale_list;
+
         $this->propertyHeadings = $this->getHeadingsFromPropertyList($this->getHeadingsFromProperties());
 
     }

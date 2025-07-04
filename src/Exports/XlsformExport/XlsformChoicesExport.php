@@ -6,7 +6,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
@@ -20,12 +19,10 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 
-class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidths, WithHeadings, WithStyles, WithTitle, ShouldQueue, WithMapping, WithCustomQuerySize
+class XlsformChoicesExport implements FromQuery, ShouldAutoSize, ShouldQueue, WithColumnWidths, WithCustomQuerySize, WithHeadings, WithMapping, WithStyles, WithTitle
 {
-
     use ExportsXlsformContent;
 
     /** @var Collection<Locale> */
@@ -37,6 +34,7 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
     public function __construct(public Xlsform $xlsform)
     {
         $this->locales = $xlsform->locale_list;
+
         $this->propertyHeadings = $this->getHeadingsFromPropertyList($this->getHeadingsFromProperties());
     }
 
@@ -59,14 +57,14 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
             ])
 
             // only global entries and entries owned by the current form owner
-            ->where(fn(Builder $query) => $query
+            ->where(fn (Builder $query) => $query
                 ->where('choice_list_entries.owner_id', $this->xlsform->owner->getKey())
                 ->orWhere('choice_list_entries.owner_id', null)
             )
 
             // only entries in lists linked to a module version of the current form
-            ->whereHas('xlsformModuleVersion', fn(Builder $query) => $query
-                ->whereHas('xlsforms', fn(Builder $query) => $query
+            ->whereHas('xlsformModuleVersion', fn (Builder $query) => $query
+                ->whereHas('xlsforms', fn (Builder $query) => $query
                     ->where('xlsforms.id', $this->xlsform->id)
                 )
             )
@@ -124,7 +122,7 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
     {
         // starting at C, make 1 column auto-wrap per Xlsformtemplatelangauge
         $wrapArray = $this->locales->mapWithKeys(
-            fn(Locale $locale, $index) => [chr(67 + $index) => ['alignment' => ['wrapText' => true]]]
+            fn (Locale $locale, $index) => [chr(67 + $index) => ['alignment' => ['wrapText' => true]]]
         )->toArray();
 
         return [
@@ -135,7 +133,7 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
 
     public function columnWidths(): array
     {
-        $labelColumns = $this->locales->mapWithKeys(fn(Locale $locale, $index) => [Coordinate::stringFromColumnIndex(4 + $index) => 60]);
+        $labelColumns = $this->locales->mapWithKeys(fn (Locale $locale, $index) => [Coordinate::stringFromColumnIndex(4 + $index) => 60]);
 
         return [
             'A' => 30, // list_name
@@ -154,11 +152,12 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
 
     public function querySize(): int
     {
-        if($this->xlsform->xlsformModuleVersions)
+        if ($this->xlsform->xlsformModuleVersions) {
 
-        return $this->xlsform->xlsformModuleVersions->map(function (XlsformModuleVersion $xlsformModuleVersion) {
+            return $this->xlsform->xlsformModuleVersions->map(function (XlsformModuleVersion $xlsformModuleVersion) {
 
-            return $xlsformModuleVersion->choiceListEntries()->count() ?? 0;
-        })->reduce(fn(?int $carry, int $count) => $carry + $count, 0);
+                return $xlsformModuleVersion->choiceListEntries()->count() ?? 0;
+            })->reduce(fn (?int $carry, int $count) => $carry + $count, 0);
+        }
     }
 }
