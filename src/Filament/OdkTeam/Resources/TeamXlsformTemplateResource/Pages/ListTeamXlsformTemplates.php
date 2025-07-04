@@ -21,4 +21,11 @@ class ListTeamXlsformTemplates extends ListRecords
         ];
     }
 
+    public function getHeaderActions(): array
+    {
+        return [
+            Actions\CreateAction::make(),
+        ];
+    }
+
 }

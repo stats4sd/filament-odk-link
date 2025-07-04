@@ -3,6 +3,7 @@
 namespace Stats4sd\FilamentOdkLink\Listeners;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
 use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformModuleImport;
@@ -23,15 +24,14 @@ class HandleXlsformTemplateAdded
 {
     public ?User $importedBy = null;
 
-
     public function handle(MediaHasBeenAddedEvent $event): void
     {
 
-        /** @var XlsformModuleVersion | XlsformTemplate $model */
+        /** @var XlsformModuleVersion | XlsformTemplate | Model $model */
         $model = $event->media->model;
 
         // only process xlsform module versions or templates
-        if (!$model instanceof XlsformModuleVersion && !$model instanceof XlsformTemplate) {
+        if (! $model instanceof XlsformModuleVersion && ! $model instanceof XlsformTemplate) {
             return;
         }
 
@@ -56,18 +56,17 @@ class HandleXlsformTemplateAdded
         return $model
             ->xlsformModules
             ->map(
-                fn(XlsformModule $module) => $module
+                fn (XlsformModule $module) => $module
                     ->xlsformModuleVersions
-                    ->filter(fn(XlsformModuleVersion $xlsformModuleVersion) => $xlsformModuleVersion->is_default)
+                    ->filter(fn (XlsformModuleVersion $xlsformModuleVersion) => $xlsformModuleVersion->is_default)
             )
             ->flatten();
     }
 
-    public function processXlsformTemplate(string $filePath, XlsformModuleVersion | XlsformTemplate $model, string $moduleColumn = 'module'): void
+    public function processXlsformTemplate(string $filePath, XlsformModuleVersion|XlsformTemplate $model, string $moduleColumn = 'module'): void
     {
         // Get the translatable headings from the Xlsform workbook;
         $translatableHeadings = (new XlsformTranslationHelper)->getTranslatableColumnsFromFile($filePath);
-
 
         // make sure all the choice_lists are imported;
         (new XlsformTemplateChoiceListImport($model, $moduleColumn))->queue($filePath);
@@ -85,7 +84,6 @@ class HandleXlsformTemplateAdded
                 new ImportAllLanguageStrings($filePath, $model, $translatableHeadings),
                 new FinishXlsformTemplateImport($model),
             ]);
-
 
     }
 }

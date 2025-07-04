@@ -171,9 +171,9 @@ class Submission extends Model implements HasMedia
     public function owner(): BelongsToThrough
     {
         return $this->belongsToThrough(
-            config('filament-odk-link.models.team_model'),
+            config('filament-odk-link.models.form_owner'),
             [Xlsform::class, XlsformVersion::class],
-            foreignKeyLookup: [config('filament-odk-link.models.team_model') => 'owner_id']);
+            foreignKeyLookup: [config('filament-odk-link.models.form_owner') => 'owner_id']);
     }
 
     /** @return Attribute<string, never> */

@@ -1,15 +1,16 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamCustomXlsformTemplateResource\Pages;
+namespace Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource\Pages;
 
 use Illuminate\Database\Eloquent\Model;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages\ViewXlsformTemplate;
 use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamCustomXlsformTemplateResource;
+use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
-class ViewTeamCustomXlsformTemplate extends ViewXlsformTemplate
+class ViewTeamXlsformTemplate extends ViewXlsformTemplate
 {
-    protected static string $resource = TeamCustomXlsformTemplateResource::class;
+    protected static string $resource = TeamXlsformTemplateResource::class;
 
     /**
      * @phpstan-return XlsformTemplate

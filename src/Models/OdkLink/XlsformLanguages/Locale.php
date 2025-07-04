@@ -2,25 +2,27 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages;
 
-use Illuminate\Database\Eloquent\Collection;
-use Spatie\MediaLibrary\HasMedia;
-use Illuminate\Database\Eloquent\Model;
-use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Services\HelperService;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Services\HelperService;
+use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
+use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
 class Locale extends Model implements HasMedia
 {
+    use HasRelationships;
     use InteractsWithMedia;
 
     protected $casts = [
@@ -38,7 +40,7 @@ class Locale extends Model implements HasMedia
             // if the locale is default, check all teams to see if they are linked to the language and do not yet have a locale
 
             /** @var Collection<WithXlsforms> $owners */
-            $owners = config('filament-odk-link.models.team_model')::all();
+            $owners = config('filament-odk-link.models.form_owner')::all();
 
             $owners->each(function (WithXlsforms $owner) use ($locale) {
                 if (
@@ -46,7 +48,7 @@ class Locale extends Model implements HasMedia
                     $owner->languages->contains($locale->language) &&
 
                     // and the owner doesn't have a locale set for that language already
-                    $owner->locales->filter(fn(Locale $l) => $l->language_id === $locale->language_id)->count() === 0
+                    $owner->locales->filter(fn (Locale $l) => $l->language_id === $locale->language_id)->count() === 0
                 ) {
 
                     // assign the new 'default' locale to that owner/language combo.
@@ -78,6 +80,13 @@ class Locale extends Model implements HasMedia
         return $this->hasMany(LanguageString::class);
     }
 
+    public function xlsformTemplates(): HasManyDeep
+    {
+        return $this->hasManyDeep(
+            related: XlsformTemplate::class,
+            through: ['xlsform_module_version_locale', XlsformModule::class]);
+    }
+
     /** @return HasMany<XlsformModuleVersionLocale, $this> */
     public function xlsformModuleVersionLocales(): HasMany
     {
@@ -92,16 +101,21 @@ class Locale extends Model implements HasMedia
             ->withPivot(['needs_update']);
     }
 
+    /** @return BelongsToMany<Xlsform, $this> */
+    public function xlsforms(): BelongsToMany
+    {
+        return $this->belongsToMany(Xlsform::class);
+    }
+
     /** @return BelongsTo<Model, $this> */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(config('filament-odk-link.models.team_model'), 'creator_id');
+        return $this->belongsTo(config('filament-odk-link.models.form_owner'), 'creator_id');
     }
 
     public function owners(): BelongsToMany
     {
-        return $this->BelongsToMany
-        (config('filament-odk-link.models.team_model'), 'language_owner', 'locale_id', 'owner_id')
+        return $this->BelongsToMany(config('filament-odk-link.models.form_owner'), 'language_owner', 'locale_id', 'owner_id')
             ->withPivot(['langauge_id']);
     }
 
@@ -109,18 +123,19 @@ class Locale extends Model implements HasMedia
     protected function languageLabel(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->is_default ? $this->language->name . ' (default)' : $this->description,
+            get: fn () => $this->is_default ? $this->language->name.' (default)' : $this->description,
         );
     }
 
     public function getStatusForFormTemplate(XlsformTemplate $xlsformTemplate): bool
     {
-            $moduleVersions = $xlsformTemplate->defaultXlsformModuleVersions;
+        $moduleVersions = $xlsformTemplate->defaultXlsformModuleVersions;
 
-            return $this->checkModuleCompleteness($moduleVersions);
+        return $this->checkModuleCompleteness($moduleVersions);
     }
 
-    public function getStatusForForm(Xlsform $xlsform): bool {
+    public function getStatusForForm(Xlsform $xlsform): bool
+    {
         $moduleVersions = $xlsform->xlsformModuleVersions;
 
         return $this->checkModuleCompleteness($moduleVersions);
@@ -134,7 +149,7 @@ class Locale extends Model implements HasMedia
         return new Attribute(
             get: function () {
 
-                if($this->processing_count > 0) {
+                if ($this->processing_count > 0) {
                     return 'Processing';
                 }
 
@@ -149,18 +164,18 @@ class Locale extends Model implements HasMedia
                 $moduleVersions = $this->xlsformModuleVersions;
                 $allModuleVersions = $xlsforms
                     ->map(
-                        fn(Xlsform $xlsform) => $xlsform
+                        fn (Xlsform $xlsform) => $xlsform
                             ->xlsformTemplate
                             ->xlsformModules
-                            ->map(fn(XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
+                            ->map(fn (XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
                     )->flatten();
 
-                if($this->is_default) {
+                if ($this->is_default) {
                     return 'Ready for use';
                 }
 
                 // If the media item is not default (i.e. with strings from the original XlsformTemplate) and there are no uploaded files, mark as not-uploaded
-                if (!$this->hasMedia('xlsform_template_translation_files') && !$this->is_default) {
+                if (! $this->hasMedia('xlsform_template_translation_files') && ! $this->is_default) {
                     return 'Not uploaded';
                 }
 
@@ -169,13 +184,12 @@ class Locale extends Model implements HasMedia
                     return 'Translations incomplete';
                 }
 
-
                 // At least one module version "needs_update"
                 /** @phpstan-ignore-next-line
                  * Ignoring because phpstan/larastan doesn't yet support easy handling of pivot values, and the workaround seem not worth it here.
                  * https://github.com/larastan/larastan/issues/1774
                  */
-                if ($moduleVersions->some(fn($moduleVersion) => $moduleVersion->pivot->needs_update)) {
+                if ($moduleVersions->some(fn ($moduleVersion) => $moduleVersion->pivot->needs_update)) {
                     return 'Needs updating';
                 }
 
@@ -188,7 +202,7 @@ class Locale extends Model implements HasMedia
     protected function odkLabel(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->language->name . ' (' . $this->language->iso_alpha2 . ')',
+            get: fn () => $this->language->name.' ('.$this->language->iso_alpha2.')',
         );
     }
 
@@ -196,7 +210,7 @@ class Locale extends Model implements HasMedia
     protected function isEditable(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->creator?->getKey() === HelperService::getCurrentOwner()->getKey(),
+            get: fn () => $this->creator?->getKey() === HelperService::getCurrentOwner()->getKey(),
         );
     }
 
@@ -206,14 +220,10 @@ class Locale extends Model implements HasMedia
     protected function isEditing(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->is_editable && $this->status !== 'Ready for use',
+            get: fn () => $this->is_editable && $this->status !== 'Ready for use',
         );
     }
 
-    /**
-     * @param mixed $moduleVersions
-     * @return mixed
-     */
     private function checkModuleCompleteness(mixed $moduleVersions): mixed
     {
         return $moduleVersions->every(function (XlsformModuleVersion $version) {

@@ -81,7 +81,7 @@ class XlsformTemplate extends HasXlsformDrafts
 
             // If the template is available, add a version of it to all teams where `shouldReceiveAllXlsformTemplates` is true
             if ($xlsformTemplate->available) {
-                config('filament-odk-link.models.team_model')::all()
+                config('filament-odk-link.models.form_owner')::all()
                     ->filter(fn(WithXlsforms $owner) => $owner->should_receive_all_xlsform_templates)
                     ->each(function (WithXlsforms $owner) use ($xlsformTemplate) {
                         $xlsform = $owner->xlsforms()->whereHas('xlsformTemplate', function ($query) use ($xlsformTemplate) {
@@ -120,7 +120,7 @@ class XlsformTemplate extends HasXlsformDrafts
     // ******************* COMPUTED ATTRIBUTES *****************
 
     // for a template to be available in a locale, *every* module should be linked to that locale
-    /** @return Attribute<Collection, never> */
+    /** @return Attribute<Collection<Locale>, never> */
     protected function locales(): Attribute
     {
         return new Attribute(
@@ -133,7 +133,8 @@ class XlsformTemplate extends HasXlsformDrafts
                         ->locales
                 );
 
-                // get list of locales present for *every* module
+                // locales here is a collection of collections.
+                // we want the list of locales present for *every* module (in every collectioon)
                 return $locales->reduce(function ($carry, $item) {
                     return $carry->intersect($item);
                 }, $locales->first())
@@ -476,14 +477,6 @@ class XlsformTemplate extends HasXlsformDrafts
 
         return $odkLinkService->createDraftForm($this, $this->newXlsfile->getRealPath());
 
-    }
-
-    /** @return Attribute<string, never> */
-    protected function fallbackModuleName(): Attribute
-    {
-        return new Attribute(
-            get: fn() => Str::slug($this->title) . '_main',
-        );
     }
 
 }
