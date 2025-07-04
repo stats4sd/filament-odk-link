@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        $teamTable = (new (config('filament-odk-link.models.team_model')))->getTable();
+        $teamTable = (new (config('filament-odk-link.models.form_owner')))->getTable();
 
         /**
          * Table to store the individual team's forms (many-many pivot table between Xlsform and Team)

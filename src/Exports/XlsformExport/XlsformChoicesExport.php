@@ -36,7 +36,7 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, WithColumnWidth
 
     public function __construct(public Xlsform $xlsform)
     {
-        $this->locales = $xlsform->owner->locales;
+        $this->locales = $xlsform->locale_list;
         $this->propertyHeadings = $this->getHeadingsFromPropertyList($this->getHeadingsFromProperties());
     }
 

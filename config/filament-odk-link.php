@@ -1,7 +1,5 @@
 <?php
 
-use Stats4sd\FilamentOdkLink\Models\TeamManagement\Team;
-
 // config for Stats4sd/OdkLink
 return [
 
@@ -14,7 +12,7 @@ return [
          * This model MUST implement the WithXlsforms trait.
          * There can ONLY be one model that implements this trait. All Xlsforms must be owned by entities of this model.
          */
-        'team_model' => env('ODK_TEAM_MODEL', 'App\Models\Team'),
+        'form_owner' => env('ODK_FORM_OWNER_MODEL', 'App\Models\Team'),
         'user_model' => env('ODK_USER_MODEL', 'App\Models\User'),
     ],
 

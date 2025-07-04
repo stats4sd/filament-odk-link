@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Illuminate\Database\Eloquent\Collection;
 use Stats4sd\FilamentOdkLink\Events\XlsformDraftWasDeployed;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,6 +24,7 @@ use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\NotifyUserThatXlsformFileIsD
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\NotifyUserThatXlsformFileIsUpdated;
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\UpdateXlsformFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
@@ -171,6 +173,21 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     public function submissions(): HasManyThrough
     {
         return $this->hasManyThrough(Submission::class, XlsformVersion::class);
+    }
+
+    /** @return BelongsTomany<Locale, $this> */
+    public function locales(): BelongsToMany
+    {
+        return $this->belongsToMany(Locale::class);
+    }
+
+    /** @return Attribute<Collection<Locale>, never> */
+    protected function localeList(): Attribute
+    {
+        // Check if this form is marked as having a custom list of locales. If not, defer to the owner's locales
+        return new Attribute(
+            get: fn() => $this->has_locales ?  $this->locales : $this->owner->locales,
+        );
     }
 
     // ***** RELATIONSHIPS VIA XLSFORM TEMPLATE *****
@@ -358,4 +375,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
         return $newVersion;
     }
+
+
+    //
 }

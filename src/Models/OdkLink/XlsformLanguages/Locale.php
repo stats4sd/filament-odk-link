@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
@@ -38,7 +37,7 @@ class Locale extends Model implements HasMedia
             // if the locale is default, check all teams to see if they are linked to the language and do not yet have a locale
 
             /** @var Collection<WithXlsforms> $owners */
-            $owners = config('filament-odk-link.models.team_model')::all();
+            $owners = config('filament-odk-link.models.form_owner')::all();
 
             $owners->each(function (WithXlsforms $owner) use ($locale) {
                 if (
@@ -92,16 +91,22 @@ class Locale extends Model implements HasMedia
             ->withPivot(['needs_update']);
     }
 
+    /** @return BelongsToMany<Xlsform, $this> */
+    public function xlsforms(): BelongsToMany
+    {
+        return $this->belongsToMany(Xlsform::class);
+    }
+
     /** @return BelongsTo<Model, $this> */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(config('filament-odk-link.models.team_model'), 'creator_id');
+        return $this->belongsTo(config('filament-odk-link.models.form_owner'), 'creator_id');
     }
 
     public function owners(): BelongsToMany
     {
         return $this->BelongsToMany
-        (config('filament-odk-link.models.team_model'), 'language_owner', 'locale_id', 'owner_id')
+        (config('filament-odk-link.models.form_owner'), 'language_owner', 'locale_id', 'owner_id')
             ->withPivot(['langauge_id']);
     }
 

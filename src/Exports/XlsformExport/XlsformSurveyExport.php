@@ -5,11 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Exports\XlsformExport;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\LazyCollection;
-use Illuminate\Support\Str;
-use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
@@ -24,12 +20,9 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 
-class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths, WithHeadings, WithStyles, WithTitle, WithMapping, ShouldQueue
+class XlsformSurveyExport implements FromQuery, ShouldAutoSize, ShouldQueue, WithColumnWidths, WithHeadings, WithMapping, WithStyles, WithTitle
 {
-
     use ExportsXlsformContent;
 
     /** @var Collection<Locale> */
@@ -40,7 +33,7 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
 
     public function __construct(public Xlsform $xlsform)
     {
-        $this->locales = $xlsform->owner->locales;
+        $this->locales = $xlsform->locale_list;
         $this->propertyHeadings = $this->getHeadingsFromPropertyList($this->getHeadingsFromProperties());
 
     }
@@ -50,9 +43,9 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
         $surveyRowColumns = collect(
             DB::connection()
                 ->getSchemaBuilder()
-                ->getColumnListing((new SurveyRow())->getTable())
+                ->getColumnListing((new SurveyRow)->getTable())
         )
-            ->map(fn($column) => "survey_rows.$column")
+            ->map(fn ($column) => "survey_rows.$column")
             ->toArray();
 
         return SurveyRow::query()
@@ -62,7 +55,7 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
                 'selected_xlsform_module_versions.order',
                 'selected_xlsform_module_versions.xlsform_module_version_id',
             ])
-            ->whereRaw('selected_xlsform_module_versions.xlsform_id = ' . $this->xlsform->id)
+            ->whereRaw('selected_xlsform_module_versions.xlsform_id = '.$this->xlsform->id)
             ->with(['languageStrings', 'xlsformModuleVersion.xlsforms'])
             ->distinct()
             ->orderBy('selected_xlsform_module_versions.order')
@@ -96,7 +89,6 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
         ];
     }
 
-
     public function headings(): array
     {
         return [
@@ -127,13 +119,12 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
         return 'survey';
     }
 
-
     public function columnWidths(): array
     {
         $languageCount = $this->locales->count();
 
-        $labelColumns = $this->locales->mapWithKeys(fn(Locale $locale, $index) => [Coordinate::stringFromColumnIndex(4 + $index) => 45]);
-        $hintColumns = $this->locales->mapWithKeys(fn(Locale $locale, $index) => [Coordinate::stringFromColumnIndex(4 + $languageCount + $index) => 45]);
+        $labelColumns = $this->locales->mapWithKeys(fn (Locale $locale, $index) => [Coordinate::stringFromColumnIndex(4 + $index) => 45]);
+        $hintColumns = $this->locales->mapWithKeys(fn (Locale $locale, $index) => [Coordinate::stringFromColumnIndex(4 + $languageCount + $index) => 45]);
 
         return [
             'A' => 5, // ID
@@ -208,37 +199,36 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
         ];
 
         // starting at C, make label + hint columns auto-wrap per Xlsformtemplatelangauge
-        $wrapLabelList = $this->locales->map(fn(Locale $language, $index) => chr(67 + $index));
-        $wrapHintList = $this->locales->map(fn(Locale $language, $index) => chr(67 + $languageCount + $index));
+        $wrapLabelList = $this->locales->map(fn (Locale $language, $index) => chr(67 + $index));
+        $wrapHintList = $this->locales->map(fn (Locale $language, $index) => chr(67 + $languageCount + $index));
 
         // **** APPLY STYLES ****
         $dynamicStylesRowLists = $this->getDynamicStylesRowLists($sheet);
 
-
         $sheet->getStyle('1:1')->getFont()->setBold(true);
 
         foreach ($wrapLabelList as $column) {
-            $sheet->getStyle($column . ':' . $column)->applyFromArray($wrapStyle);
+            $sheet->getStyle($column.':'.$column)->applyFromArray($wrapStyle);
         }
 
         foreach ($wrapHintList as $column) {
-            $sheet->getStyle($column . ':' . $column)->applyFromArray($wrapStyle);
+            $sheet->getStyle($column.':'.$column)->applyFromArray($wrapStyle);
         }
 
         foreach ($dynamicStylesRowLists['beginGroupRows'] as $row) {
-            $sheet->getStyle($row . ':' . $row)->applyFromArray($beginGroupStyle);
+            $sheet->getStyle($row.':'.$row)->applyFromArray($beginGroupStyle);
         }
 
         foreach ($dynamicStylesRowLists['endGroupRows'] as $row) {
-            $sheet->getStyle($row . ':' . $row)->applyFromArray($endGroupStyle);
+            $sheet->getStyle($row.':'.$row)->applyFromArray($endGroupStyle);
         }
 
         foreach ($dynamicStylesRowLists['beginRepeatRows'] as $row) {
-            $sheet->getStyle($row . ':' . $row)->applyFromArray($beginRepeatStyle);
+            $sheet->getStyle($row.':'.$row)->applyFromArray($beginRepeatStyle);
         }
 
         foreach ($dynamicStylesRowLists['endRepeatRows'] as $row) {
-            $sheet->getStyle($row . ':' . $row)->applyFromArray($endRepeatStyle);
+            $sheet->getStyle($row.':'.$row)->applyFromArray($endRepeatStyle);
         }
 
     }
@@ -247,16 +237,16 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
     {
         $rows = $sheet->toArray();
 
-        $beginGroupRows = collect($rows)->filter(fn(array $row) => $row[2] === 'begin_group')->keys();
-        $endGroupRows = collect($rows)->filter(fn(array $row) => $row[2] === 'end_group')->keys();
-        $beginRepeatRows = collect($rows)->filter(fn(array $row) => $row[2] === 'begin_repeat')->keys();
-        $endRepeatRows = collect($rows)->filter(fn(array $row) => $row[2] === 'end_repeat')->keys();
+        $beginGroupRows = collect($rows)->filter(fn (array $row) => $row[2] === 'begin_group')->keys();
+        $endGroupRows = collect($rows)->filter(fn (array $row) => $row[2] === 'end_group')->keys();
+        $beginRepeatRows = collect($rows)->filter(fn (array $row) => $row[2] === 'begin_repeat')->keys();
+        $endRepeatRows = collect($rows)->filter(fn (array $row) => $row[2] === 'end_repeat')->keys();
 
         return collect([
-            'beginGroupRows' => $beginGroupRows->map(fn($id) => $id + 1),
-            'endGroupRows' => $endGroupRows->map(fn($id) => $id + 1),
-            'beginRepeatRows' => $beginRepeatRows->map(fn($id) => $id + 1),
-            'endRepeatRows' => $endRepeatRows->map(fn($id) => $id + 1),
+            'beginGroupRows' => $beginGroupRows->map(fn ($id) => $id + 1),
+            'endGroupRows' => $endGroupRows->map(fn ($id) => $id + 1),
+            'beginRepeatRows' => $beginRepeatRows->map(fn ($id) => $id + 1),
+            'endRepeatRows' => $endRepeatRows->map(fn ($id) => $id + 1),
         ]);
     }
 
@@ -267,5 +257,4 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, WithColumnWidths
             ->whereNotNull('survey_rows.properties')
             ->get();
     }
-
 }

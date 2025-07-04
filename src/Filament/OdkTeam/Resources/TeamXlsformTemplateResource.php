@@ -132,7 +132,7 @@ class TeamXlsformTemplateResource extends Resource
 
                         $xlsform = $record->xlsforms()->create([
                             'owner_id' => Filament::getTenant()->getKey(),
-                            'owner_type' => config('filament-odk-link.models.team_model'),
+                            'owner_type' => config('filament-odk-link.models.form_owner'),
                             'title' => $data['title'],
                         ]);
 
