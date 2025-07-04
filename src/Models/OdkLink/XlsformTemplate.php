@@ -445,9 +445,11 @@ class XlsformTemplate extends HasXlsformDrafts
                         'name' => $item['name'],
                         'label' => $item['name'],
                         'dataset_id' => $section->dataset->id,
+                        'type' => $item['type'],
+                        'value_type' => $item['value_type'],
                     ]);
 
-                DatasetVariable::upsert($variables->toArray(), ['name', 'dataset_id'], ['label']);
+                DatasetVariable::upsert($variables->toArray(), ['name', 'dataset_id'], ['label', 'type', 'value_type']);
             });
 
 

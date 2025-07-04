@@ -130,12 +130,12 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                     return 'NOT DEPLOYED';
                 }
 
-                if (! $this->has_latest_template || ! $this->has_latest_media) {
-                    return 'UPDATES AVAILABLE';
-                }
-
                 if ($this->is_active) {
                     return 'LIVE';
+                }
+
+                if ($this->xlsformVersions()->where('is_draft', false)->count() === 0) {
+                    return 'DRAFT READY FOR TESTING';
                 }
 
                 return 'INACTIVE';
