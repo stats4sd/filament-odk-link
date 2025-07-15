@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Symfony\Contracts\Service\Attribute\Required;
 
@@ -17,10 +16,36 @@ class Dataset extends Model implements HasMedia
 {
     use InteractsWithMedia;
 
-    /** @return BelongsTo<WithXlsforms, $this> */
+    /** @return BelongsTo<HasXlsforms, $this> */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(config('filament-odk-link.models.form_owner'), 'owner_id');
+    }
+
+    // Datasets might relate to one another with 'parent-child' style relationships.
+    // E.g., a farm-group might have many farms, and a farm might belong to a farm-group. A farm might also belong to a location.
+    /** @return BelongsToMany<self, $this> */
+    public function parentDatasets(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            related: self::class,
+            table: 'dataset_parents',
+            foreignPivotKey: 'child_dataset_id',
+            relatedPivotKey: 'parent_dataset_id',
+        );
+
+    }
+
+    /** @return BelongsToMany<self, $this> */
+    public function childDatasets(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            related: self::class,
+            table: 'dataset_parents',
+            relatedPivotKey: 'parent_dataset_id',
+            foreignPivotKey: 'child_dataset_id',
+        );
+
     }
 
     // a dataset might be a subset of another dataset (e.g. data from a repeat group in a form; household members in a household, etc);
@@ -110,16 +135,5 @@ class Dataset extends Model implements HasMedia
                 'exists_on_odk',
             ])
             ->using(RequiredMedia::class);
-    }
-
-    // Some datasets are customisable by owners (e.g. "Farms" for a survey; or lookup lists that are contextualisable. Some datasets are universal, and the same set of entities should be available to all teams.
-    public function isOwnerSpecific(): bool
-    {
-        return ! $this->is_universal;
-    }
-
-    public function isUniversal(): bool
-    {
-        return $this->is_universal;
     }
 }
