@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources;
 
+use Closure;
 use Awcodes\Shout\Components\Shout;
 use Awcodes\Shout\Components\ShoutEntry;
 use Awcodes\TableRepeater\Components\TableRepeater;
@@ -104,6 +105,42 @@ class XlsformTemplateResource extends resource
     {
 
         return [
+
+            // TODO: 
+            // find the right timing to check if a xmlsform template excel file contains "or_other" in "type" column
+            // it is good if we can do checking just after uploading excel file, but there is no database record created until user click "Next" button
+            // in wizard step "1. Xlsform" 
+            //
+            // Should we comprimise to show validation result in wizard step "2. Add Media Files"?
+
+            // TODO:
+            // find out where to set validation_result and fail the form to prevent form submission
+
+            // show validation result in this field directly
+            Forms\Components\TextInput::make('validation_result')
+                ->disabled()
+                // show this field when there is validation error, hide this field when there is no validation error
+                // ->hidden(fn(Get $get): bool => $get('validation_result') == '')
+                // TODO: show text in red color for eye catching
+                ->live()
+                ->dehydrated(false)
+                // customize validation rule
+                ->rules([
+                    fn(): Closure => function (string $attribute, $value, Closure $fail) {
+                        if ($value != '') {
+                            // Customise the error message to be showed when user clicks "Create" button in modal popup.
+                            //
+                            // As validation result is already showed as field content directly, it is no need to show
+                            // any other error message when user clicks "Create" button.
+                            //
+                            // Note: when there is a validation error and user clicks "Create" button in modal popup:
+                            //  - a space in $fail() will highlight and set focus to this field
+                            //  - an empty string in $fail() will not highlight and will not set focus to this field
+                            $fail(' ');
+                        }
+                    },
+                ]),
+
             Forms\Components\Repeater::make('requiredFixedMedia')
                 ->label(function (?XlsformTemplate $record) {
 
