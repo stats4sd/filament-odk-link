@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages;
 
+use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateValidator;
 use Filament\Forms\Get;
 use Filament\Forms\Form;
 use Maatwebsite\Excel\Facades\Excel;
@@ -49,6 +50,9 @@ class CreateXlsformTemplate extends CreateRecord
                     try {
 
                         logger('CreateXlsformTemplate.getSteps()->afterValidation()...');
+
+                        $pathName = collect($get('newXlsfile'))->first()->getPathName();
+                        $collection = Excel::toCollection(new XlsformTemplateValidator(), $pathName);
 
                         // wait to trigger the saved event until the xlsform file is attached.
 
