@@ -4,14 +4,13 @@ namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateRe
 
 use Filament\Forms\Get;
 use Filament\Forms\Form;
-use Illuminate\Support\Str;
-use Maatwebsite\Excel\Facades\Excel;
 use Filament\Forms\Components\Wizard;
 use Filament\Support\Exceptions\Halt;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Resources\Pages\CreateRecord;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Services\XlsformValidationHelper;
 use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateValidator;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
 
@@ -47,29 +46,35 @@ class CreateXlsformTemplate extends CreateRecord
                 ->afterValidation(function (Get $get) {
 
                     try {
-                        // convert the uploaded excel file into a collection
+                        // find the full file path of the uploaded xlsform template excel file
                         $pathName = collect($get('newXlsfile'))->first()->getPathName();
-                        $collection = Excel::toCollection(new XlsformTemplateValidator(), $pathName);
 
-                        // get type columns of all ODK variables from survey excel sheet
-                        $types = $collection['survey']->pluck('type');
-                        // dd($types);
+                        // call helper function to perform custom validation for type or_other
+                        $errorMessages = XlsformValidationHelper::validateTypeOrOther($pathName);
 
-                        // initialise the flag
-                        $unsupportedTypeFound = false;                        
+                        // show error messages if any
+                        if ($errorMessages->count() > 0) {
+                            $i = 0;
 
-                        // check if any ODK variable with type "or_other"
-                        foreach ($types as $type) {
-                            if (Str::contains($type, 'or_other')) {
-                                $unsupportedTypeFound = true;
-                                break;
+                            // show each error message in a notification
+                            foreach ($errorMessages as $errorMessage) {
+                                $i++;
+
+                                Notification::make('xlsform_template_validation_failed_' . $i)
+                                    ->title('XLSForm Template Not Saved')
+                                    ->body('XLSForm Template validation failed. Error: '. $errorMessage)
+                                    ->danger()
+                                    ->persistent()
+                                    ->send();
                             }
+
+                            // fail the wizard step, keep user in step 1
+                            throw new Halt();
                         }
 
-                        // if flag is true, then throw error with customised error message
-                        if ($unsupportedTypeFound) {
-                            throw new Halt('Type "or_other" is not recommended. Please do below updates on xlsform template and then try again. 1. Manually add an "Other" option to choices list. 2. Use a follow-up text question that is only relevant if "Other" is selected');
-                        }
+
+                        // TODO: call helper function to perform custom validation for unspecified language or non-existed language
+
 
 
                         // wait to trigger the saved event until the xlsform file is attached.
