@@ -49,6 +49,7 @@ class CreateXlsformTemplate extends CreateRecord
                         // find the full file path of the uploaded xlsform template excel file
                         $pathName = collect($get('newXlsfile'))->first()->getPathName();
 
+
                         // call helper function to perform custom validation for type or_other
                         $errorMessages = XlsformValidationHelper::validateTypeOrOther($pathName);
 
@@ -60,9 +61,9 @@ class CreateXlsformTemplate extends CreateRecord
                             foreach ($errorMessages as $errorMessage) {
                                 $i++;
 
-                                Notification::make('xlsform_template_validation_failed_' . $i)
-                                    ->title('XLSForm Template Not Saved')
-                                    ->body('XLSForm Template validation failed. Error: '. $errorMessage)
+                                Notification::make('xlsform_template_odk_variable_type_validation_failed_' . $i)
+                                    ->title('XLSForm Template ODK variable type validation failed')
+                                    ->body('Error: '. $errorMessage)
                                     ->danger()
                                     ->persistent()
                                     ->send();
@@ -73,8 +74,28 @@ class CreateXlsformTemplate extends CreateRecord
                         }
 
 
-                        // TODO: call helper function to perform custom validation for unspecified language or non-existed language
+                        // call helper function to perform custom validation for unspecified language or non-existed language
+                        $errorMessages = XlsformValidationHelper::validateColumnHeadersWithLanguageString($pathName);
 
+                        // show error messages if any
+                        if ($errorMessages->count() > 0) {
+                            $i = 0;
+
+                            // show each error message in a notification
+                            foreach ($errorMessages as $errorMessage) {
+                                $i++;
+
+                                Notification::make('xlsform_template_language_validation_failed_' . $i)
+                                    ->title('XLSForm Template language validation failed')
+                                    ->body('Error: '. $errorMessage)
+                                    ->danger()
+                                    ->persistent()
+                                    ->send();
+                            }
+
+                            // fail the wizard step, keep user in step 1
+                            throw new Halt();
+                        }
 
 
                         // wait to trigger the saved event until the xlsform file is attached.
@@ -104,9 +125,15 @@ class CreateXlsformTemplate extends CreateRecord
                         return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
                     } catch (\Throwable $e) {
 
+                        $notificationBody = 'There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage();
+
+                        if ($e->getMessage() == '') {
+                            $notificationBody = 'There was an error saving the XLSForm Template. Please refer to validation error message in other notification(s) for correction then try again.';
+                        }
+
                         Notification::make('xlsform_template_not_saved')
                             ->title('XLSForm Template Not Saved')
-                            ->body('There was an error saving the XLSForm Template. ODK Returned the following error: '.$e->getMessage())
+                            ->body($notificationBody)
                             ->danger()
                             ->persistent()
                             ->send();
