@@ -12,6 +12,7 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages\CreateDataset;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages\EditDataset;
@@ -50,22 +51,42 @@ class DatasetResource extends Resource
         }
 
         return [
+            $ownerField,
+
+            Forms\Components\Section::make('')
             Forms\Components\TextInput::make('name')
-                ->label('Name of the dataset'),
+                ->label('Enter the name of the dataset')
+                ->helperText('This should be the plural name for the people, objects or ideas represented by each entity in the dataset. For example: "farms", "villages", "enumerators", "treatments"'),
 
             Forms\Components\Textarea::make('description')
                 ->label('Enter a brief description of the dataset')
                 ->rows(3)
                 ->columnSpanFull(),
 
-            TextInput::make('label')
-                ->label('Enter the variable name that should be used as the main "label" when displaying entities in the dataset')
-                ->nullable(),
+            Forms\Components\Section::make('Variables')
+                ->description(fn(): HtmlString => new HtmlString('Every dataset requires a primary key to uniquely identify each entity. By default, this platform will create a uuid value for every entity in the dataset. You may also wish to include a custom unique identifier, e.g. a code that is used throughout the project (or program).<br/><br/>
+                  The dataset also requires a variable to act as a "label".This is the text that will be shown to enumerators if the dataset is used in an ODK form.'))
+                ->schema([
 
-            $ownerField,
+                    Forms\Components\Select::make('custom_key')
+                        ->options([
+                            1 => 'Yes',
+                            0 => 'No',
+                        ])
+                        ->label('Does this dataset have a custom unique identifier defined by the project?')
+                        ->helperText('For example, you may have assigned unique codes for each farm.')
+                        ->live()
+                        ->afterStateUpdated(fn ($state, $set) => $state === '0' ? $set('primary_key', 'uuid') : null),
 
-            Forms\Components\Hidden::make('primary_key')
-                ->default('id'),
+                    TextInput::make('primary_key')
+                        ->label('Enter the name of the variable that includes your unique identifier')
+                        ->visible(fn (Forms\Get $get) => $get('custom_key') === '1'),
+
+                    TextInput::make('label')
+                        ->label('Enter the variable name that should be used as the main "label" when displaying entities in the dataset')
+                        ->nullable(),
+
+                ]),
         ];
     }
 
