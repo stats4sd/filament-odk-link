@@ -2,23 +2,28 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages;
 
-use Filament\Forms\Get;
-use Filament\Forms\Form;
 use Filament\Forms\Components\Wizard;
-use Filament\Support\Exceptions\Halt;
-use Filament\Notifications\Notification;
 use Filament\Forms\Components\Wizard\Step;
+use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Support\Exceptions\Halt;
+use Illuminate\Validation\ValidationException;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\XlsformValidationHelper;
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateValidator;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
 
 class CreateXlsformTemplate extends CreateRecord
 {
     use CreateRecord\Concerns\HasWizard;
 
     protected static string $resource = XlsformTemplateResource::class;
+
+    protected function onValidationError(ValidationException $exception): void
+    {
+
+    }
 
     // override form from HasWizard trait to add step to url
     public function form(Form $form): Form
@@ -49,54 +54,23 @@ class CreateXlsformTemplate extends CreateRecord
                         // find the full file path of the uploaded xlsform template excel file
                         $pathName = collect($get('newXlsfile'))->first()->getPathName();
 
-
                         // call helper function to perform custom validation for type or_other
-                        $errorMessages = XlsformValidationHelper::validateTypeOrOther($pathName);
+                        $orOtherErrors = XlsformValidationHelper::validateTypeOrOther($pathName);
+                        $languageErrors = XlsformValidationHelper::validateColumnHeadersWithLanguageString($pathName);
+
+                        $errorMessages = $orOtherErrors->merge($languageErrors);
 
                         // show error messages if any
                         if ($errorMessages->count() > 0) {
-                            $i = 0;
-
-                            // show each error message in a notification
-                            foreach ($errorMessages as $errorMessage) {
-                                $i++;
-
-                                Notification::make('xlsform_template_odk_variable_type_validation_failed_' . $i)
-                                    ->title('XLSForm Template ODK variable type validation failed')
-                                    ->body('Error: '. $errorMessage)
-                                    ->danger()
-                                    ->persistent()
-                                    ->send();
-                            }
 
                             // fail the wizard step, keep user in step 1
-                            throw new Halt();
+
+                            // Add the error messages to a fake field. In Filament 3, only 1 error is shown on a single field.
+                            // Filament 4 is updated to allow devs to show multiple errors for a single field if required.
+                            // To show all errors, we add a custom Shout() component that reads from the errorBag.
+                            // TODO: refactor this when Filament 4 is released.
+                            throw ValidationException::withMessages(['data.fake-field' => $errorMessages->toArray()]);
                         }
-
-
-                        // call helper function to perform custom validation for unspecified language or non-existed language
-                        $errorMessages = XlsformValidationHelper::validateColumnHeadersWithLanguageString($pathName);
-
-                        // show error messages if any
-                        if ($errorMessages->count() > 0) {
-                            $i = 0;
-
-                            // show each error message in a notification
-                            foreach ($errorMessages as $errorMessage) {
-                                $i++;
-
-                                Notification::make('xlsform_template_language_validation_failed_' . $i)
-                                    ->title('XLSForm Template language validation failed')
-                                    ->body('Error: '. $errorMessage)
-                                    ->danger()
-                                    ->persistent()
-                                    ->send();
-                            }
-
-                            // fail the wizard step, keep user in step 1
-                            throw new Halt();
-                        }
-
 
                         // wait to trigger the saved event until the xlsform file is attached.
 
@@ -123,12 +97,24 @@ class CreateXlsformTemplate extends CreateRecord
                             ->send();
 
                         return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
+                    } catch (ValidationException $e) {
+
+                        Notification::make('xlsform_template_not_saved')
+                            ->title('XLSForm Template Not Saved')
+                            ->body('Please check the file upload and review the error messages.')
+                            ->danger()
+                            ->persistent()
+                            ->send();
+
+                        throw $e;
                     } catch (\Throwable $e) {
 
-                        $notificationBody = 'There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage();
+                        // Generic catch-all for errors coming back from ODK Central. Convert them into validation errors to be displayed on the front-end.
+
+                        $notificationBody = 'There was an error saving the XLSForm Template. ODK Returned the following error: '.$e->getMessage();
 
                         if ($e->getMessage() == '') {
-                            $notificationBody = 'There was an error saving the XLSForm Template. Please refer to validation error message in other notification(s) for correction then try again.';
+                            $notificationBody = 'There was an error saving the XLSForm Template.';
                         }
 
                         Notification::make('xlsform_template_not_saved')
@@ -138,7 +124,7 @@ class CreateXlsformTemplate extends CreateRecord
                             ->persistent()
                             ->send();
 
-                        return redirect($this->getResource()::getUrl('create').'?step=1-xlsform&title='.urlencode($get('title')));
+                        throw ValidationException::withMessages(['data.fake-field' => [$notificationBody]]);
                     }
 
                 }),
