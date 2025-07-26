@@ -62,6 +62,8 @@ class CreateXlsformTemplate extends CreateRecord
 
                         $xlsformTemplate->save();
 
+                        static::afterXlsformTemplateCreated($xlsformTemplate);
+
                         Notification::make('xlsform_template_updated')
                             ->title('XLSForm Template Updated')
                             ->body('The XLSForm Template has been saved successfully.')
@@ -95,4 +97,13 @@ class CreateXlsformTemplate extends CreateRecord
                 ->schema([]),
         ];
     }
+
+
+    // Placeholder function - can override this function to perform extra actions before the
+    public static function beforeXlsformTemplateCreated(?XlsformTemplate $xlsformTemplate = null)
+    {}
+
+    // placeholder function. Can be overidden to perform extra actions after the $xlsformTemplate is saved
+    public static function afterXlsformTemplateCreated(XlsformTemplate $xlsformTemplate)
+    {}
 }

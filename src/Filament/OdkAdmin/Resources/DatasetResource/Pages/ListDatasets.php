@@ -27,7 +27,8 @@ class ListDatasets extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+            ->createAnother(false),
         ];
     }
 }

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class DatasetVariable extends Model
 {
@@ -18,6 +19,13 @@ class DatasetVariable extends Model
     {
         return $this->belongsTo(Dataset::class);
     }
+
+    /** @return HasOne<DatasetVariable, $this> */
+    public function datasetParentPivot(): HasOne
+    {
+        return $this->hasOne(ParentDatasetPivot::class, 'foreign_key_variable_id');
+    }
+
 
     /** @return BelongsToMany<Entity, $this> */
     public function entities(): BelongsToMany

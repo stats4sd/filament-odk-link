@@ -16,6 +16,21 @@ class Entity extends Model
 {
     protected $table = 'entities';
 
+    protected static function booted()
+    {
+        static::created(function (self $entity) {
+            if ($entity->dataset->primary_key === 'uuid' && ! $entity->uuid) {
+                $entity->uuid = \Illuminate\Support\Str::uuid()->toString();
+                $entity->save();
+
+                $entity->values()->create([
+                    'dataset_variable_name' => $entity->dataset->primary_key,
+                    'value' => $entity->uuid,
+                ]);
+            }
+        });
+    }
+
     // e.g. for an entity created from a repeat group item, the parent entity will be the entity created from the repeat group's parent (the main form or, if it's a nested repeat group, the parent group).
 
     /** @return BelongsTo<self, $this> */

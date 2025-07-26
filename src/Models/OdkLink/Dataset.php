@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
-use Symfony\Contracts\Service\Attribute\Required;
 
 class Dataset extends Model implements HasMedia
 {
@@ -30,9 +29,9 @@ class Dataset extends Model implements HasMedia
         return $this->belongsToMany(
             related: self::class,
             table: 'dataset_parents',
-            foreignPivotKey: 'child_dataset_id',
-            relatedPivotKey: 'parent_dataset_id',
-        );
+            foreignPivotKey: 'child_id',
+            relatedPivotKey: 'parent_id',
+        )->using(ParentDatasetPivot::class);
 
     }
 
@@ -42,9 +41,9 @@ class Dataset extends Model implements HasMedia
         return $this->belongsToMany(
             related: self::class,
             table: 'dataset_parents',
-            relatedPivotKey: 'parent_dataset_id',
-            foreignPivotKey: 'child_dataset_id',
-        );
+            relatedPivotKey: 'parent_id',
+            foreignPivotKey: 'child_id',
+        )->using(ParentDatasetPivot::class);
 
     }
 

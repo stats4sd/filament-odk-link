@@ -2,6 +2,8 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources;
 
+use App\Filament\App\Resources\XlsformTemplateResource\RelationManagers\XlsformModuleRelationManager;
+use App\Filament\App\Resources\XlsformTemplateResource\Pages;
 use Awcodes\Shout\Components\Shout;
 use Awcodes\Shout\Components\ShoutEntry;
 use Awcodes\TableRepeater\Components\TableRepeater;
@@ -23,7 +25,6 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\RelationManagers\XlsformModuleRelationManager;
 use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
@@ -34,7 +35,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 // Use this resource for an admin panel
 // This resource is for templates that can be made available to all platform users
 
-class XlsformTemplateResource extends resource
+class XlsformTemplateResource extends Resource
 {
     protected static ?string $model = XlsformTemplate::class;
 
@@ -591,10 +592,10 @@ class XlsformTemplateResource extends resource
     public static function getPages(): array
     {
         return [
-            'index' => \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages\ListXlsformTemplates::route('/'),
-            'create' => \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages\CreateXlsformTemplate::route('/create'),
-            'edit' => \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages\EditXlsformTemplate::route('/{record}/edit'),
-            'view' => \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages\ViewXlsformTemplate::route('/{record}'),
+            'index' => Pages\ListXlsformTemplates::route('/'),
+            'create' => Pages\CreateXlsformTemplate::route('/create'),
+            'edit' => Pages\EditXlsformTemplate::route('/{record}/edit'),
+            'view' => Pages\ViewXlsformTemplate::route('/{record}'),
         ];
     }
 }

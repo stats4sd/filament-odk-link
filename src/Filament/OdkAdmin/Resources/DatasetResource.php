@@ -53,40 +53,75 @@ class DatasetResource extends Resource
         return [
             $ownerField,
 
-            Forms\Components\Section::make('')
-            Forms\Components\TextInput::make('name')
-                ->label('Enter the name of the dataset')
-                ->helperText('This should be the plural name for the people, objects or ideas represented by each entity in the dataset. For example: "farms", "villages", "enumerators", "treatments"'),
-
-            Forms\Components\Textarea::make('description')
-                ->label('Enter a brief description of the dataset')
-                ->rows(3)
-                ->columnSpanFull(),
-
+            Forms\Components\Section::make('Information')
+                ->schema([
+                    Forms\Components\TextInput::make('name')
+                        ->required()
+                        ->label('Enter the name of the dataset')
+                        ->helperText('This should be the plural name for the people, objects or ideas represented by each entity in the dataset. For example: "farms", "villages", "enumerators", "treatments"'),
+                    Forms\Components\Textarea::make('description')
+                        ->required()
+                        ->label('Enter a brief description of the dataset')
+                        ->rows(3)
+                        ->columnSpanFull(),
+                ]),
             Forms\Components\Section::make('Variables')
-                ->description(fn(): HtmlString => new HtmlString('Every dataset requires a primary key to uniquely identify each entity. By default, this platform will create a uuid value for every entity in the dataset. You may also wish to include a custom unique identifier, e.g. a code that is used throughout the project (or program).<br/><br/>
+                ->description(fn (): HtmlString => new HtmlString('Every dataset requires a primary key to uniquely identify each entity. By default, this platform will create a uuid value for every entity in the dataset. You may also wish to include a custom unique identifier, e.g. a code that is used throughout the project (or program).<br/><br/>
                   The dataset also requires a variable to act as a "label".This is the text that will be shown to enumerators if the dataset is used in an ODK form.'))
                 ->schema([
 
-                    Forms\Components\Select::make('custom_key')
+                    Forms\Components\Select::make('custom_key_used')
+                        ->dehydrated(false)
                         ->options([
                             1 => 'Yes',
                             0 => 'No',
                         ])
+                        ->required()
                         ->label('Does this dataset have a custom unique identifier defined by the project?')
                         ->helperText('For example, you may have assigned unique codes for each farm.')
                         ->live()
                         ->afterStateUpdated(fn ($state, $set) => $state === '0' ? $set('primary_key', 'uuid') : null),
 
-                    TextInput::make('primary_key')
-                        ->label('Enter the name of the variable that includes your unique identifier')
-                        ->visible(fn (Forms\Get $get) => $get('custom_key') === '1'),
+                    TextInput::make('custom_key')
+                        ->label('Enter the variable name for the custom key used by this project')
+                        ->notIn(['uuid'])
+                        ->validationMessages([
+                            'not_in' => 'uuid is a restricted variable name. Please use a different name.',
+                        ])
+                        ->helperText('E.g. "farm_code", "project_number", "id",')
+                        ->visible(fn (Forms\Get $get): bool => $get('custom_key_used') === '1')
+                        ->required(fn (Forms\Get $get): bool => $get('custom_key_used') === '1'),
 
                     TextInput::make('label')
                         ->label('Enter the variable name that should be used as the main "label" when displaying entities in the dataset')
+                        ->notIn(['uuid'])
+                        ->validationMessages([
+                            'not_in' => 'uuid is a restricted variable name. Please use a different name.',
+                        ])
                         ->nullable(),
 
                 ]),
+            Forms\Components\Repeater::make('variables')
+                ->label('Optionally, add extra variables that you know the dataset will contain. This is optional, and additional variables will be added automatically when you import data from csv or ODK form submissions.')
+                ->relationship('variables')
+                ->columnSpanFull()
+                ->columns(2)
+                ->schema([
+                    TextInput::make('name')
+                        ->label('Name')
+                        ->helperText('How does this variable appear in code or in ODK forms?')
+                        ->notIn(['uuid'])
+                        ->validationMessages([
+                            'not_in' => 'uuid is a restricted variable name. Please use a different name.',
+                        ])
+                        ->live(),
+                    TextInput::make('label')
+                        ->label('Label')
+                        ->helperText('A readable label for the variable'),
+                ])
+                ->itemLabel(fn (array $state) => $state['name'] ?? '~new variable~')
+                ->default([])
+                ->addActionLabel('Add variable'),
         ];
     }
 
