@@ -98,6 +98,14 @@ class XlsformTemplateResource extends Resource
                 ->hiddenOn(['edit'])
                 ->disabledOn(['edit'])
                 ->placeholder(__('File')),
+
+            // Custom validation display - because Filament fields only show 1 validation error message. This component shows all errors thrown at once.
+            // TODO: refactor in Filament 4, when we can set fields to show multiple errors if needed.
+            Shout::make('validation_info')
+                ->color('danger')
+                ->visible(fn($livewire): bool => $livewire->getErrorBag()->any())
+                ->content(fn ($livewire): HtmlString => new HtmlString(collect($livewire->getErrorBag()->all())->join('<br/><br/>'))),
+
         ];
     }
 
@@ -125,7 +133,7 @@ class XlsformTemplateResource extends Resource
 
                     HtmlBlock::make('name')
                         ->content(
-                            fn (?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
+                            fn(?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
                         ),
 
                     Forms\Components\SpatieMediaLibraryFileUpload::make('file')
@@ -158,7 +166,7 @@ class XlsformTemplateResource extends Resource
 
                     HtmlBlock::make('name')
                         ->content(
-                            fn (?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
+                            fn(?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
                         ),
                     Forms\Components\Toggle::make('is_static')
                         ->label('Is this a static media file?')
@@ -170,12 +178,12 @@ class XlsformTemplateResource extends Resource
                         ->preserveFilenames()
                         ->downloadable()
                         ->required()
-                        ->visible(fn (Get $get): bool => $get('is_static')),
+                        ->visible(fn(Get $get): bool => $get('is_static')),
 
                     // for non-static media (linked to datasets)
                     Shout::make('dataset_info')
                         ->content('This platform is not set up to support ODK Entities. This csv file will be created based on individual team\'s choice list entries, which are editable through the front-end of this platform.')
-                        ->visible(fn (Get $get): bool => ! $get('is_static')),
+                        ->visible(fn(Get $get): bool => !$get('is_static')),
                 ]),
         ];
     }
@@ -185,7 +193,7 @@ class XlsformTemplateResource extends Resource
         return [
 
             HtmlBlock::make('title')
-                ->content(fn (?XlsformTemplate $record): HtmlString => new HtmlString("
+                ->content(fn(?XlsformTemplate $record): HtmlString => new HtmlString("
                 <h3 class='text-xl'>$record->title - Form Structure</h3>
                 <p>On this page, you can review the structure of the data that will come from form submissions. The 'main survey' section includes all the variables that are not in repeat groups. You should choose or create a dataset for the form submissions to populate.</p>
 
@@ -217,13 +225,13 @@ class XlsformTemplateResource extends Resource
                                             ]),
                                     ];
                                 })
-                                ->fillForm(fn (?XlsformTemplateSection $record): array => [
+                                ->fillForm(fn(?XlsformTemplateSection $record): array => [
                                     'schema' => $record->schema,
                                 ])
                                 ->modalSubmitAction(false)
                                 ->modalCancelActionLabel('Close'),
                         ])
-                        ->visible(fn (?XlsformTemplateSection $record): bool => $record?->schema->count() >= 5),
+                        ->visible(fn(?XlsformTemplateSection $record): bool => $record?->schema->count() >= 5),
 
                     Forms\Components\Select::make('dataset_id')
                         ->relationship('dataset', 'name')
@@ -242,8 +250,8 @@ class XlsformTemplateResource extends Resource
 
                     return new HtmlString($label);
                 })
-                ->itemLabel(fn (array $state): ?string => $state['structure_item'] ?? null)
-                ->visible(fn (?XlsformTemplate $record): bool => $record->repeatingSections()->count() > 0)
+                ->itemLabel(fn(array $state): ?string => $state['structure_item'] ?? null)
+                ->visible(fn(?XlsformTemplate $record): bool => $record->repeatingSections()->count() > 0)
                 ->relationship()
                 ->addable(false)
                 ->deletable(false)
@@ -257,7 +265,7 @@ class XlsformTemplateResource extends Resource
                                 ->form(function (?XlsformTemplateSection $record) {
                                     return [
                                         TableRepeater::make('schema')
-                                            ->label(fn (?XlsformTemplateSection $record) => "List of variables in the $record->structure_item repeat group")
+                                            ->label(fn(?XlsformTemplateSection $record) => "List of variables in the $record->structure_item repeat group")
                                             ->deletable(false)
                                             ->reorderable(false)
                                             ->addable(false)
@@ -271,7 +279,7 @@ class XlsformTemplateResource extends Resource
                                             ]),
                                     ];
                                 })
-                                ->fillForm(fn (?XlsformTemplateSection $record): array => [
+                                ->fillForm(fn(?XlsformTemplateSection $record): array => [
                                     'schema' => $record->schema,
                                 ])
                                 ->modalSubmitAction(false)
@@ -301,7 +309,7 @@ class XlsformTemplateResource extends Resource
                     ->label('Datasets')
                     ->view('filament-odk-link::filament.tables.columns.required-data-media-count'),
                 Tables\Columns\CheckboxColumn::make('available')
-                    ->disabled(fn (XlsformTemplate $record) => $record->processing)
+                    ->disabled(fn(XlsformTemplate $record) => $record->processing)
                     ->label('Available for use?')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('xlsforms_count')
@@ -315,7 +323,7 @@ class XlsformTemplateResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\Action::make('update_xlsform_template')
-                    ->disabled(fn (XlsformTemplate $record) => $record->processing)
+                    ->disabled(fn(XlsformTemplate $record) => $record->processing)
                     ->label('Replace XLSForm')
                     ->icon('heroicon-o-document-arrow-up')
                     ->form(self::getCreateFields())
@@ -345,7 +353,7 @@ class XlsformTemplateResource extends Resource
 
                             Notification::make('xlsform_template_not_saved')
                                 ->title('XLSForm Template Not Saved')
-                                ->body('There was an error saving the XLSForm Template. ODK Returned the following error: '.$e->getMessage())
+                                ->body('There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage())
                                 ->danger()
                                 ->persistent()
                                 ->send();
@@ -356,7 +364,7 @@ class XlsformTemplateResource extends Resource
                         }
                     }),
                 Tables\Actions\EditAction::make()->label('Edit Media & Data')
-                    ->disabled(fn (XlsformTemplate $record) => $record->processing),
+                    ->disabled(fn(XlsformTemplate $record) => $record->processing),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -371,20 +379,20 @@ class XlsformTemplateResource extends Resource
             ->schema([
                 ShoutEntry::make('Processing')
                     ->columnSpan('full')
-                    ->visible(fn (?XlsformTemplate $record): bool => $record?->processing)
+                    ->visible(fn(?XlsformTemplate $record): bool => $record?->processing)
                     ->content('This Form is currently being processed, and is not yet available for use. This should only take a few minutes after being updated. If you see this notification for more than a few minutes, please contact support.'),
                 Section::make('Xlsform Details')
                     ->schema([
                         TextEntry::make('title'),
                         TextEntry::make('xlsfile_name')
-                            ->url(fn (?XlsformTemplate $record): string => $record?->getFirstMediaUrl('xlsform_file')),
+                            ->url(fn(?XlsformTemplate $record): string => $record?->getFirstMediaUrl('xlsform_file')),
                         IconEntry::make('available')
                             ->label('Available to Platform users?')
-                            ->icon(fn (bool $state): string => match ($state) {
+                            ->icon(fn(bool $state): string => match ($state) {
                                 false => 'heroicon-o-no-symbol',
                                 true => 'heroicon-o-check-circle',
                             })
-                            ->color(fn (bool $state): string => match ($state) {
+                            ->color(fn(bool $state): string => match ($state) {
                                 false => 'gray',
                                 true => 'success',
                             }),
@@ -400,14 +408,14 @@ class XlsformTemplateResource extends Resource
                         RepeatableEntry::make('requiredFixedMedia')
                             ->schema([
                                 TextEntry::make('name')
-                                    ->url(fn (?RequiredMedia $record): string => $record->getFirstMediaUrl()),
+                                    ->url(fn(?RequiredMedia $record): string => $record->getFirstMediaUrl()),
                                 TextEntry::make('type'),
                                 IconEntry::make('status')
-                                    ->icon(fn (int $state): string => match ($state) {
+                                    ->icon(fn(int $state): string => match ($state) {
                                         1 => 'heroicon-o-check-circle',
                                         default => 'heroicon-o-x-circle',
                                     })
-                                    ->color(fn (int $state): string => match ($state) {
+                                    ->color(fn(int $state): string => match ($state) {
                                         1 => 'success',
                                         default => 'gray',
                                     }),
@@ -421,14 +429,14 @@ class XlsformTemplateResource extends Resource
                         RepeatableEntry::make('requiredDataMedia')
                             ->schema([
                                 TextEntry::make('name')
-                                    ->url(fn (?RequiredMedia $record): string => $record->getFirstMediaUrl()),
+                                    ->url(fn(?RequiredMedia $record): string => $record->getFirstMediaUrl()),
                                 TextEntry::make('full_type'),
                                 IconEntry::make('status')
-                                    ->icon(fn (int $state): string => match ($state) {
+                                    ->icon(fn(int $state): string => match ($state) {
                                         1 => 'heroicon-o-check-circle',
                                         default => 'heroicon-o-x-circle',
                                     })
-                                    ->color(fn (int $state): string => match ($state) {
+                                    ->color(fn(int $state): string => match ($state) {
                                         1 => 'success',
                                         default => 'gray',
                                     }),
@@ -447,7 +455,7 @@ class XlsformTemplateResource extends Resource
                                 TextEntry::make('name')->hiddenLabel(),
                                 TextEntry::make('type')->hiddenLabel(),
                             ])
-                            ->visible(fn (?XlsformTemplate $record): bool => $record->rootSection->schema->count() < 5),
+                            ->visible(fn(?XlsformTemplate $record): bool => $record->rootSection->schema->count() < 5),
 
                         ViewEntry::make('schema')
                             ->view('filament-odk-link::filament.infolists.components.xlsform-section-schema-modal-link')
@@ -480,7 +488,7 @@ class XlsformTemplateResource extends Resource
                                     ->modalSubmitAction(false)
                                     ->modalCancelActionLabel('Close'),
                             ])
-                            ->visible(fn (?XlsformTemplate $record): bool => $record->rootSection->schema->count() >= 5),
+                            ->visible(fn(?XlsformTemplate $record): bool => $record->rootSection->schema->count() >= 5),
 
                         TextEntry::make('rootSection.dataset.name')->label('Submission data is added to:')
                             ->placeholder('No dataset linked')
@@ -534,7 +542,7 @@ class XlsformTemplateResource extends Resource
                                                             ]),
                                                     ];
                                                 })
-                                                ->fillForm(fn (?XlsformTemplateSection $record): array => [
+                                                ->fillForm(fn(?XlsformTemplateSection $record): array => [
                                                     'schema' => $record->schema,
                                                 ])
                                                 ->modalSubmitAction(false)
@@ -557,7 +565,7 @@ class XlsformTemplateResource extends Resource
                             }),
 
                     ])
-                    ->visible(fn (?XlsformTemplate $record): bool => $record->repeatingSections->count() > 0),
+                    ->visible(fn(?XlsformTemplate $record): bool => $record->repeatingSections->count() > 0),
 
                 Section::make('Draft Testing')
                     ->collapsed()
@@ -574,7 +582,7 @@ class XlsformTemplateResource extends Resource
 
                         // open URL in browser new tab
                         TextEntry::make('enketo_draft_url')->label('Click below link to view ODK form in browser')
-                            ->url(fn (?XlsformTemplate $record): string => $record->enketo_draft_url)
+                            ->url(fn(?XlsformTemplate $record): string => $record->enketo_draft_url)
                             ->openUrlInNewTab(),
 
                     ]),
