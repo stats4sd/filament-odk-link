@@ -34,7 +34,7 @@ use Stats4sd\FilamentOdkLink\Services\HelperService;
 // Use this resource for a panel scoped to a team
 // This resource is for templates available to all platform users
 
-class TeamXlsformTemplateResource extends Resource
+class TeamXlsformTemplateResource extends XlsformTemplateResource
 {
     protected static ?string $model = XlsformTemplate::class;
 

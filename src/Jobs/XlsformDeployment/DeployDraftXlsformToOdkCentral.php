@@ -49,8 +49,8 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
                 'is_draft' => true,
             ],
             [
-                'version' => $this->xlsform->current_version,
-                'odk_version' => $this->xlsform->current_version,
+                'version' => $this->xlsform->odk_version_id,
+                'odk_version' => $this->xlsform->odk_version_id,
                 'active' => true,
             ]
         );

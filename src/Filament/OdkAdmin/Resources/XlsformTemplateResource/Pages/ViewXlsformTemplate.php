@@ -7,8 +7,10 @@ use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Services\XlsformValidationHelper;
 
 class ViewXlsformTemplate extends ViewRecord
 {
@@ -36,7 +38,7 @@ class ViewXlsformTemplate extends ViewRecord
             Actions\Action::make('make_template_available')
                 ->label('Make Template Available')
                 ->icon('heroicon-o-pencil')
-                ->disabled(fn($record) => $record->available == true)
+                ->disabled(fn ($record) => $record->available == true)
                 ->action(function (array $data, XlsformTemplate $record, Get $get) {
                     $this->makeTemplateAvailable($record);
                 }),
@@ -44,7 +46,7 @@ class ViewXlsformTemplate extends ViewRecord
                 ->label('Replace XLSForm')
                 ->icon('heroicon-o-document-arrow-up')
                 ->form(XlsformTemplateResource::getCreateFields())
-                ->fillForm(fn() => [
+                ->fillForm(fn () => [
                     'title' => self::getRecord()->title,
                 ])
                 ->action(function (array $data, XlsformTemplate $record) {
@@ -53,29 +55,47 @@ class ViewXlsformTemplate extends ViewRecord
                         $record->title = $data['title'];
                         $record->newXlsfile = $data['newXlsfile'];
 
+                        $pathName = $record->newXlsfile->getPathName();
+
+                        $orOtherErrors = XlsformValidationHelper::validateTypeOrOther($pathName);
+                        $languageErrors = XlsformValidationHelper::validateColumnHeadersWithLanguageString($pathName);
+
+                        $errorMessages = $orOtherErrors->merge($languageErrors);
+
+                        // show error messages if any
+                        if ($errorMessages->count() > 0) {
+
+                            // fail the wizard step, keep user in step 1
+
+                            // Add the error messages to a fake field. In Filament 3, only 1 error is shown on a single field.
+                            // Filament 4 is updated to allow devs to show multiple errors for a single field if required.
+                            // To show all errors, we add a custom Shout() component that reads from the errorBag.
+                            // TODO: refactor this when Filament 4 is released.
+                            throw ValidationException::withMessages(['data.fake-field' => $errorMessages->toArray()]);
+                        }
+
                         $record = $record->testOnOdkCentral();
 
                         $record->save();
 
-                         Notification::make('xlsform_template_updated')
-                                ->title('XLSForm Template Updated')
-                                ->body('The XLSForm Template has been updated successfully.')
-                                ->success()
-                                ->persistent()
-                                ->send();
+                        Notification::make('xlsform_template_updated')
+                            ->title('XLSForm Template Updated')
+                            ->body('The XLSForm Template has been updated successfully.')
+                            ->success()
+                            ->persistent()
+                            ->send();
 
                     } catch (\Exception $e) {
 
                         Notification::make('xlsform_template_not_saved')
                             ->title('XLSForm Template Not Saved')
-                            ->body('There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage())
+                            ->body('There was an error saving the XLSForm Template. ODK Returned the following error: '.$e->getMessage())
                             ->danger()
-                            ->persistent()
                             ->send();
 
                         $this->getRecord()->refresh();
 
-                        $this->halt();
+                        throw ValidationException::withMessages(['data.fake-field' => $e->getMessage()]);
                     }
                 }),
             Actions\EditAction::make()
