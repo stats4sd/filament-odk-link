@@ -129,6 +129,8 @@ class CreateXlsformTemplate extends CreateRecord
                             ->persistent()
                             ->send();
 
+                        throw $e;
+
                         throw ValidationException::withMessages(['data.fake-field' => [$notificationBody]]);
                     }
 

@@ -51,12 +51,6 @@ class XlsformTemplateResource extends Resource
         return Platform::first();
     }
 
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->where('owner_type', '=', Platform::class);
-    }
-
     public static function form(Form $form): Form
     {
         return $form
