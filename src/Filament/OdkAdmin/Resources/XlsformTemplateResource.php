@@ -2,8 +2,9 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources;
 
-use App\Filament\App\Resources\XlsformTemplateResource\RelationManagers\XlsformModuleRelationManager;
-use App\Filament\App\Resources\XlsformTemplateResource\Pages;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\RelationManagers;
 use Awcodes\Shout\Components\Shout;
 use Awcodes\Shout\Components\ShoutEntry;
 use Awcodes\TableRepeater\Components\TableRepeater;
@@ -593,7 +594,7 @@ class XlsformTemplateResource extends Resource
     public static function getRelations(): array
     {
         return [
-            XlsformModuleRelationManager::class,
+            RelationManagers\XlsformModuleRelationManager::class,
         ];
     }
 
