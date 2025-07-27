@@ -2,9 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources;
 
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\RelationManagers;
+use App\Services\FilamentHelperService;
 use Awcodes\Shout\Components\Shout;
 use Awcodes\Shout\Components\ShoutEntry;
 use Awcodes\TableRepeater\Components\TableRepeater;
@@ -26,6 +24,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\RelationManagers;
 use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
@@ -99,7 +99,7 @@ class XlsformTemplateResource extends Resource
             Shout::make('validation_info')
                 ->color('danger')
                 ->visible(fn($livewire): bool => $livewire->getErrorBag()->any())
-                ->content(fn ($livewire): HtmlString => new HtmlString(collect($livewire->getErrorBag()->all())->join('<br/><br/>'))),
+                ->content(fn($livewire): HtmlString => new HtmlString(collect($livewire->getErrorBag()->all())->join('<br/><br/>'))),
 
         ];
     }
@@ -177,8 +177,15 @@ class XlsformTemplateResource extends Resource
 
                     // for non-static media (linked to datasets)
                     Shout::make('dataset_info')
-                        ->content('This platform is not set up to support ODK Entities. This csv file will be created based on individual team\'s choice list entries, which are editable through the front-end of this platform.')
+                        ->content(fn(?RequiredMedia $record): HtmlString => new HtmlString('Select the dataset that contains the list of entries for this linked dataset. When the form is published, the full content of the chosen dataset will be written to a csv file and uploaded to ODK as a file attachment.'))
                         ->visible(fn(Get $get): bool => !$get('is_static')),
+                    Forms\Components\Select::make('dataset_id')
+                        ->relationship('dataset', 'name', modifyQueryUsing: fn(Builder $query) => $query->whereHas('owner', fn(Builder $query) => $query
+                        ->where('projects.id', '=', FilamentHelperService::getTenant()->id)))
+                        ->preload()
+                        ->searchable()
+                        ->visible(fn(Get $get): bool => !$get('is_static')),
+
                 ]),
         ];
     }
