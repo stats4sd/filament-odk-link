@@ -16,6 +16,7 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithUpserts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
@@ -47,7 +48,27 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
         $row = collect($row);
 
         // skip non-select questions
-        if(! Str::startsWith(trim($row['type']), 'select_') ) {
+        if (!Str::startsWith(trim($row['type']), 'select_')) {
+            return null;
+        }
+
+        // skip select_from_file questions
+        if (Str::contains(trim($row['type']), '_from_file')) {
+
+            // TODO: refactor this - this should be in a more logical place to handle RequiredMedia.
+
+            if ($this->model instanceof XlsformTemplate) {
+                $xlsformTemplate = $this->model;
+            } else {
+                $xlsformTemplate = $this->model->xlsformModule->xlsformTemplate;
+            }
+
+            RequiredMedia::create([
+                'name' => Str::of($row['type'])->trim()->afterLast(' '),
+                'xlsform_template_id' => $xlsformTemplate->id,
+                'links_to_dataset' => true,
+            ]);
+
             return null;
         }
 
@@ -56,7 +77,7 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
 
         $listName = Str::of($row['type'])->trim()->afterLast(' ')->toString();
 
-         if (isset($row['localisable'])) {
+        if (isset($row['localisable'])) {
             $localisable = match ($row['localisable']) {
                 'true', 'yes', 'TRUE', 'YES', 'Yes', 'True', '1', 1, true => true,
                 default => false,
@@ -67,8 +88,8 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
 
 
         return new ChoiceList([
-           'xlsform_module_version_id' => $moduleVersion->id,
-           'list_name' => $listName,
+            'xlsform_module_version_id' => $moduleVersion->id,
+            'list_name' => $listName,
             'is_localisable' => $localisable,
         ]);
 

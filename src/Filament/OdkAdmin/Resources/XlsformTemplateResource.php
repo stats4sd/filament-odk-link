@@ -2,7 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources;
 
-use App\Services\FilamentHelperService;
 use Awcodes\Shout\Components\Shout;
 use Awcodes\Shout\Components\ShoutEntry;
 use Awcodes\TableRepeater\Components\TableRepeater;
@@ -27,6 +26,7 @@ use Illuminate\Support\HtmlString;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\RelationManagers;
 use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
@@ -157,36 +157,53 @@ class XlsformTemplateResource extends Resource
                 ->relationship()
                 ->addable(false)
                 ->deletable(false)
-                ->schema([
+                ->schema(function (?IsXlsformTemplate $record) {
+                    $xlsformTemplate = $record;
 
-                    HtmlBlock::make('name')
-                        ->content(
-                            fn(?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
-                        ),
-                    Forms\Components\Toggle::make('is_static')
-                        ->label('Is this a static media file?')
-                        ->default(false)
-                        ->live(),
+                    return
+                        [
+                            HtmlBlock::make('name')
+                                ->content(
+                                    fn(?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
+                                ),
+                            Forms\Components\Toggle::make('is_static')
+                                ->label('Is this a static media file?')
+                                ->default(false)
+                                ->live(),
 
-                    // for static media
-                    Forms\Components\SpatieMediaLibraryFileUpload::make('file')
-                        ->preserveFilenames()
-                        ->downloadable()
-                        ->required()
-                        ->visible(fn(Get $get): bool => $get('is_static')),
+                            // for static media
+                            Forms\Components\Grid::make('static_media_info')
+                                ->visible(fn(Get $get): bool => $get('is_static'))
+                                ->schema([
+                                    Forms\Components\SpatieMediaLibraryFileUpload::make('file')
+                                        ->preserveFilenames()
+                                        ->downloadable()
+                                        ->required(),
+                                ]),
 
-                    // for non-static media (linked to datasets)
-                    Shout::make('dataset_info')
-                        ->content(fn(?RequiredMedia $record): HtmlString => new HtmlString('Select the dataset that contains the list of entries for this linked dataset. When the form is published, the full content of the chosen dataset will be written to a csv file and uploaded to ODK as a file attachment.'))
-                        ->visible(fn(Get $get): bool => !$get('is_static')),
-                    Forms\Components\Select::make('dataset_id')
-                        ->relationship('dataset', 'name', modifyQueryUsing: fn(Builder $query) => $query->whereHas('owner', fn(Builder $query) => $query
-                        ->where('projects.id', '=', FilamentHelperService::getTenant()->id)))
-                        ->preload()
-                        ->searchable()
-                        ->visible(fn(Get $get): bool => !$get('is_static')),
+                            // for non-static media (linked to datasets)
+                            Forms\Components\Grid::make('dataset_media_info')
+                                ->visible(fn(Get $get, ?RequiredMedia $record): bool => $record?->links_to_dataset && !$get('is_static'))
+                                ->schema([
+                                    Shout::make('dataset_info')
+                                        ->content(fn(?RequiredMedia $record): HtmlString => new HtmlString('Select the dataset that contains the list of entries for this linked dataset. When the form is published, the full content of the chosen dataset will be written to a csv file and uploaded to ODK as a file attachment.'))
+                                        ->visible(fn(Get $get): bool => !$get('is_static')),
+                                    Forms\Components\Select::make('dataset_id')
+                                        ->relationship('dataset', 'name', modifyQueryUsing: fn(Builder $query) => $query->whereHas('owner', fn(Builder $query) => $query->whereKey($xlsformTemplate->owner_id)))
+                                        ->preload()
+                                        ->searchable()
+                                        ->visible(fn(Get $get): bool => !$get('is_static')),
+                                ]),
 
-                ]),
+                            Forms\Components\Grid::make('choice_list_media_info')
+                                ->visible(fn(Get $get, ?RequiredMedia $record): bool => !$record?->links_to_dataset && !$get('is_static'))
+                                ->schema([
+                                    Shout::make('choice_list_info')
+                                        ->content(fn(?RequiredMedia $record): string => "This csv file will be automatically generated from the linked choice list " . $record->choiceList?->list_name . ". This list is editable by individual teams using versions of this Form Template."),
+                                ]),
+
+                        ];
+                }),
         ];
     }
 
