@@ -176,6 +176,8 @@ trait OdkFormService
             ->throw()
             ->json();
 
+        dump($formDetails);
+
         if ($formDetails['state'] !== 'open') {
             $formDetails = $this->unArchiveForm($xlsform);
         }
