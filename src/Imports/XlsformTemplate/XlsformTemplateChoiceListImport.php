@@ -3,28 +3,23 @@
 namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\Importable;
-use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
-use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithUpserts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, ToModel, WithChunkReading, WithHeadingRow, WithMultipleSheets, WithUpserts
 {
-    use Importable;
     use GetsModuleNamesPerRow;
+    use Importable;
 
     /**
      * @throws \Exception
@@ -48,14 +43,17 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
         $row = collect($row);
 
         // skip non-select questions
-        if (!Str::startsWith(trim($row['type']), 'select_')) {
+        if (! Str::startsWith(trim($row['type']), 'select_')) {
             return null;
         }
+
+        ray('select row found and processing');
 
         // skip select_from_file questions
         if (Str::contains(trim($row['type']), '_from_file')) {
 
             // TODO: refactor this - this should be in a more logical place to handle RequiredMedia.
+            ray('from file found and stopping;');
 
             if ($this->model instanceof XlsformTemplate) {
                 $xlsformTemplate = $this->model;
@@ -63,14 +61,17 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
                 $xlsformTemplate = $this->model->xlsformModule->xlsformTemplate;
             }
 
-            RequiredMedia::create([
+            RequiredMedia::updateOrCreate([
                 'name' => Str::of($row['type'])->trim()->afterLast(' '),
                 'xlsform_template_id' => $xlsformTemplate->id,
+            ], [
                 'links_to_dataset' => true,
             ]);
 
             return null;
         }
+
+        ray('continuing with '.$row['type']);
 
         // get current module
         $moduleVersion = $this->getModuleVersionAndNameFromRow($row, $this->model, $this->moduleColumn);
@@ -85,7 +86,6 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
         } else {
             $localisable = false;
         }
-
 
         return new ChoiceList([
             'xlsform_module_version_id' => $moduleVersion->id,
@@ -102,7 +102,7 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
 
     public function isEmptyWhen(array $row): bool
     {
-        return !isset($row['type']) || $row['type'] === '';
+        return ! isset($row['type']) || $row['type'] === '';
     }
 
     public function uniqueBy(): array

@@ -53,11 +53,16 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
         $data['updated_during_import'] = true; // to make sure we don't delete this row after import.
 
         // find the choice list for select questions
-        if (Str::contains(trim($row['type']), ['select_one', 'select_multiple'])) {
+        $type = Str::of($row['type'])->trim()->before(' ')->toString();
+        if ($type === 'select_one' || $type === 'select_multiple') {
             $choiceListName = collect(explode(' ', trim($row['type'])))->last();
+
+            ray($choiceListName);
 
             $data['choice_list_id'] = $moduleVersion->choiceLists()->where('list_name', $choiceListName)->first()->id;
         }
+
+        // TODO: do we need to add link to datasets for select_*_from_file questions?
 
         // for end_group or end_repeats, the name might be empty.
         // In that case, we generate a unique name based on the type.
