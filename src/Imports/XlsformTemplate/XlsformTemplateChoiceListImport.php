@@ -52,7 +52,7 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
         if (Str::contains(trim($row['type']), '_from_file')) {
 
             // TODO: refactor this - this should be in a more logical place to handle RequiredMedia.
-            ray('from file found and stopping;');
+
 
             if ($this->model instanceof XlsformTemplate) {
                 $xlsformTemplate = $this->model;
