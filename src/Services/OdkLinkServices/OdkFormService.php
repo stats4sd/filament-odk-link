@@ -176,7 +176,6 @@ trait OdkFormService
             ->throw()
             ->json();
 
-        dump($formDetails);
 
         if ($formDetails['state'] !== 'open') {
             $formDetails = $this->unArchiveForm($xlsform);
@@ -202,6 +201,9 @@ trait OdkFormService
         ]);
         $xlsform->save();
 
+        // delete any existing draft submisisons (to reset the pilot testing)
+        $xlsform->submissions()->onlyDraftData()->delete();
+
         return $xlsformVersion;
     }
 
@@ -218,6 +220,7 @@ trait OdkFormService
             'odk_version' => $versionDetails['version'],
             'active' => true,
             'schema' => $xlsform->schema,
+            'is_draft' => false,
         ]);
 
         // copy xlsform file to store linked to this version forever

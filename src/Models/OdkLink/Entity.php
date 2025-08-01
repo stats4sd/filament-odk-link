@@ -86,7 +86,7 @@ class Entity extends Model
     protected function primaryKey(): Attribute
     {
         return new Attribute(
-            get: fn () => $this->values()->whereHas('datasetVariable', fn (Builder $query) => $query->where('name', $this->dataset->primary_key))->first()?->value
+            get: fn () => $this->values->filter(fn(EntityValue $value) => $value->dataset_variable_name === $this->dataset->primary_key)->first()?->value ?? $this->id
         );
     }
 
