@@ -57,7 +57,6 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
         if ($type === 'select_one' || $type === 'select_multiple') {
             $choiceListName = collect(explode(' ', trim($row['type'])))->last();
 
-            ray($choiceListName);
 
             $data['choice_list_id'] = $moduleVersion->choiceLists()->where('list_name', $choiceListName)->first()->id;
         }

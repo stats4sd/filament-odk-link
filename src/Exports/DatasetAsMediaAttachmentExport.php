@@ -70,8 +70,6 @@ class DatasetAsMediaAttachmentExport implements FromCollection, WithHeadings
             return [$value->dataset_variable_name => $value->value];
         });
 
-        ray($entityValues);
-
         return $this->propertyHeadings->mapWithKeys(function(string $heading) use ($entityValues) {
             return [$heading => $entityValues[$heading] ?? null];
         });

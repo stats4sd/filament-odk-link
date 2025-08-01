@@ -47,7 +47,6 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
             return null;
         }
 
-        ray('select row found and processing');
 
         // skip select_from_file questions
         if (Str::contains(trim($row['type']), '_from_file')) {
@@ -71,7 +70,6 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
             return null;
         }
 
-        ray('continuing with '.$row['type']);
 
         // get current module
         $moduleVersion = $this->getModuleVersionAndNameFromRow($row, $this->model, $this->moduleColumn);
