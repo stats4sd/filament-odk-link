@@ -70,34 +70,24 @@ class DatasetResource extends Resource
                   The dataset also requires a variable to act as a "label".This is the text that will be shown to enumerators if the dataset is used in an ODK form.'))
                 ->schema([
 
-                    Forms\Components\Select::make('custom_key_used')
-                        ->dehydrated(false)
-                        ->options([
-                            1 => 'Yes',
-                            0 => 'No',
-                        ])
-                        ->required()
-                        ->label('Does this dataset have a custom unique identifier defined by the project?')
-                        ->helperText('For example, you may have assigned unique codes for each farm.')
-                        ->live()
-                        ->afterStateUpdated(fn ($state, $set) => $state === '0' ? $set('primary_key', 'uuid') : null),
-
                     TextInput::make('custom_key')
-                        ->label('Enter the variable name for the custom key used by this project')
+                        ->label('Please enter the variable name for the primary key (unique identifier)')
+                        ->helperText('This variable must be unique across the dataset')
                         ->notIn(['uuid'])
                         ->validationMessages([
                             'not_in' => 'uuid is a restricted variable name. Please use a different name.',
                         ])
                         ->helperText('E.g. "farm_code", "project_number", "id",')
-                        ->visible(fn (Forms\Get $get): bool => $get('custom_key_used') === '1')
-                        ->required(fn (Forms\Get $get): bool => $get('custom_key_used') === '1'),
+                        ->required(),
 
                     TextInput::make('label')
-                        ->label('Enter the variable name that should be used as the main "label" when displaying entities in the dataset')
+                        ->label('Enter the variable name to be used as the main "label" when displaying entities in the dataset')
+                        ->helperText('E.g. "farm_name", "treatment_name" etc. This is the variable that will be shown to enumerators in an ODK form, or as labels for an analysis output.')
                         ->notIn(['uuid'])
                         ->validationMessages([
                             'not_in' => 'uuid is a restricted variable name. Please use a different name.',
                         ])
+                        ->required()
                         ->nullable(),
 
                 ]),
