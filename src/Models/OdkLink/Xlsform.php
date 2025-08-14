@@ -187,6 +187,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                     // if this is the first time the form is created; locales may be null
                     if ($locales->count() === 0) {
                         $locales = $this->xlsformTemplate->locales;
+                        $this->locales()->sync($locales);
                     }
                 } else {
 

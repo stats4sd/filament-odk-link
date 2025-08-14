@@ -13,7 +13,7 @@ return new class extends Migration
 
         Schema::create('entities', function (Blueprint $table) use ($teamTable) {
             $table->id();
-            $table->foreignId('dataset_id')->constrained('datasets');
+            $table->foreignId('dataset_id')->constrained('datasets')->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreignId('parent_id')->nullable()->constrained('entities')->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreignId('owner_id')->constrained($teamTable)->cascadeOnDelete()->cascadeOnUpdate();
             $table->nullableMorphs('model');

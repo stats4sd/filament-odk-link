@@ -10,11 +10,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 trait OdkFormService
 {
@@ -33,7 +30,7 @@ trait OdkFormService
 
         $token = $this->authenticate();
 
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             throw new \Exception('The XLSForm file is missing. Please upload the file again and try to deploy the form again.', 500);
         }
 
@@ -60,7 +57,7 @@ trait OdkFormService
             throw new \Exception($response->json()['details']['error'], 500);
         } elseif ($response->status() !== 200) {
 
-            throw new \Exception('An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists. When contacting support, please include the following details: status: ' . $response->status() . '; message: ' . $response->json()['message']);
+            throw new \Exception('An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists. When contacting support, please include the following details: status: '.$response->status().'; message: '.$response->json()['message']);
         }
 
         // when creating a new draft for an existing form, the full form details are not returned. But if they are, we should set the odk_id immediately.
@@ -83,7 +80,6 @@ trait OdkFormService
         $xlsform->has_draft = true;
         $xlsform->enketo_draft_id = $draftDetails['enketoId'];
         $xlsform->odk_draft_updated_at = new Carbon($draftDetails['updatedAt']);
-
 
         return $xlsform;
 
@@ -162,16 +158,24 @@ trait OdkFormService
 
         $token = $this->authenticate();
 
-        Http::withToken($token)
-            ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=" . Carbon::now()->toDateTimeString())
-            ->throw()
-            ->json();
+        // failsafe - confirm draft exists; if not publish one.
+        $draftCheck = Http::withToken($token)
+            ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft");
+
+        // Only deploy draft if draft exists; otherwise we are out of sync with ODK Central, so continue with the current deployed version.
+        if (! $draftCheck->notFound()) {
+            Http::withToken($token)
+                ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=".Carbon::now()->toDateTimeString())
+                ->throw()
+                ->json();
+        }
 
         // Get the version information;
         $formDetails = Http::withToken($token)
             ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}")
             ->throw()
             ->json();
+
 
         if ($formDetails['state'] !== 'open') {
             $formDetails = $this->unArchiveForm($xlsform);
@@ -197,6 +201,9 @@ trait OdkFormService
         ]);
         $xlsform->save();
 
+        // delete any existing draft submisisons (to reset the pilot testing)
+        $xlsform->submissions()->onlyDraftData()->delete();
+
         return $xlsformVersion;
     }
 
@@ -213,13 +220,14 @@ trait OdkFormService
             'odk_version' => $versionDetails['version'],
             'active' => true,
             'schema' => $xlsform->schema,
+            'is_draft' => false,
         ]);
 
         // copy xlsform file to store linked to this version forever
         $xlsform->getMedia('xlsform_file')->first()->copy($xlsformVersion, 'xlsform_file');
 
         // copy any attached media
-        $xlsform->getMedia('attached_media')->each(fn($media) => $media->copy($xlsformVersion, 'attached_media'));
+        $xlsform->getMedia('attached_media')->each(fn ($media) => $media->copy($xlsformVersion, 'attached_media'));
 
         return $xlsformVersion;
     }

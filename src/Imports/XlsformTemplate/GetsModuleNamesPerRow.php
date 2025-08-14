@@ -37,8 +37,6 @@ trait GetsModuleNamesPerRow
 
                 $rowName = $row['type'].'_'.$row['name'];
 
-                ray($rowName);
-                ray($moduleRows->contains($rowName));
                 return $moduleRows->contains($rowName);
 
             })

@@ -11,7 +11,8 @@ use Filament\Resources\Pages\CreateRecord;
 use Filament\Support\Exceptions\Halt;
 use Illuminate\Validation\ValidationException;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
+use App\Models\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\XlsformValidationHelper;
 
 class CreateXlsformTemplate extends CreateRecord
@@ -87,7 +88,11 @@ class CreateXlsformTemplate extends CreateRecord
 
                         $xlsformTemplate = $xlsformTemplate->testOnOdkCentral();
 
+                       $this->beforeXlsformTemplateSaved($xlsformTemplate);
+
                         $xlsformTemplate->save();
+
+                       $this->afterXlsformTemplateSaved($xlsformTemplate);
 
                         Notification::make('xlsform_template_updated')
                             ->title('XLSForm Template Updated')
@@ -124,6 +129,8 @@ class CreateXlsformTemplate extends CreateRecord
                             ->persistent()
                             ->send();
 
+                        throw $e; // temporary;
+
                         throw ValidationException::withMessages(['data.fake-field' => [$notificationBody]]);
                     }
 
@@ -140,4 +147,14 @@ class CreateXlsformTemplate extends CreateRecord
                 ->schema([]),
         ];
     }
+
+
+    // Placeholder function - can override this function to perform extra actions
+    // - after the form is sent to ODK Central and is successfully validated, but before it is saved.
+    public function beforeXlsformTemplateSaved(?IsXlsformTemplate $xlsformTemplate = null)
+    {}
+
+    // placeholder function. Can override this function to perform extra actions after the $xlsformTemplate is saved
+    public function afterXlsformTemplateSaved(IsXlsformTemplate $xlsformTemplate)
+    {}
 }

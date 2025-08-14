@@ -2,8 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use Filament\Facades\Filament;
-use Filament\Notifications\Notification;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -11,21 +9,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Exception;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\FileAdder;
-use Spatie\MediaLibrary\MediaCollections\FileAdderFactory;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasUploadedXlsformFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
@@ -35,7 +26,7 @@ use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-class XlsformTemplate extends HasXlsformDrafts
+class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
 {
     use HasRelationships;
     use HasUploadedXlsformFile;
@@ -49,30 +40,28 @@ class XlsformTemplate extends HasXlsformDrafts
 
     protected static function booted(): void
     {
-        static::deleting(static function (XlsformTemplate $xlsformTemplate) {
+        static::deleting(static function (IsXlsformTemplate $xlsformTemplate) {
             $odkLinkService = app()->make(OdkLinkService::class);
             $xlsformTemplate->deleteFromOdkCentral($odkLinkService);
-
 
             $xlsformTemplate->xlsformModules()->delete();
         });
 
-        static::saving(static function (XlsformTemplate $xlsformTemplate) {
+        static::saving(static function (IsXlsformTemplate $xlsformTemplate) {
 
             if ($xlsformTemplate->newXlsfile instanceof UploadedFile) {
                 $xlsformTemplate->addMedia($xlsformTemplate->newXlsfile)->toMediaCollection('xlsform_file');
 
                 unset($xlsformTemplate->newXlsfile);
 
-
             }
         });
 
-        static::created(static function (XlsformTemplate $xlsformTemplate) {
+        static::created(static function (IsXlsformTemplate $xlsformTemplate) {
             $xlsformTemplate->afterXlsformFileUpdated();
         });
 
-        static::saved(static function (XlsformTemplate $xlsformTemplate) {
+        static::saved(static function (IsXlsformTemplate $xlsformTemplate) {
 
             // if the draft form has been updated; do the post processing
             if ($xlsformTemplate->isDirty('odk_draft_updated_at')) {
@@ -81,25 +70,43 @@ class XlsformTemplate extends HasXlsformDrafts
 
             // If the template is available, add a version of it to all teams where `shouldReceiveAllXlsformTemplates` is true
             if ($xlsformTemplate->available) {
-                config('filament-odk-link.models.form_owner')::all()
-                    ->filter(fn(WithXlsforms $owner) => $owner->should_receive_all_xlsform_templates)
-                    ->each(function (WithXlsforms $owner) use ($xlsformTemplate) {
-                        $xlsform = $owner->xlsforms()->whereHas('xlsformTemplate', function ($query) use ($xlsformTemplate) {
-                            $query->where('xlsform_templates.id', $xlsformTemplate->id);
-                        })->first();
 
-                        if (!$xlsform) {
-                            $xlsformTemplate->xlsforms()->create([
-                                'owner_id' => $owner->getKey(),
-                                'title' => $xlsformTemplate->title,
-                            ]);
-                        }
-                    });
+                $ownerType = config('filament-odk-link.models.form_owner');
+
+                // if the template belongs to 1 team, give it to that team.
+                if ($xlsformTemplate->owner instanceof $ownerType) {
+
+                    $owner = $xlsformTemplate->owner;
+
+                    $xlsformTemplate->deployTo($owner);
+
+                } else {
+
+                    $ownerType::all()
+                        ->filter(fn (WithXlsforms $owner) => $owner->should_receive_all_xlsform_templates)
+                        ->each(function (WithXlsforms $owner) use ($xlsformTemplate) {
+                            $xlsformTemplate->deployTo($owner);
+                        });
+                }
             }
         });
     }
 
-    public function afterXlsformFileUpdated()
+    public function deployTo(WithXlsforms $owner)
+    {
+        $xlsform = $owner->xlsforms()->whereHas('xlsformTemplate', function ($query) {
+            $query->where('xlsform_templates.id', $this->id);
+        })->first();
+
+        if (! $xlsform) {
+            $this->xlsforms()->create([
+                'owner_id' => $owner->getKey(),
+                'title' => $this->title,
+            ]);
+        }
+    }
+
+    public function afterXlsformFileUpdated(): void
     {
         $this->getRequiredMedia();
 
@@ -128,7 +135,7 @@ class XlsformTemplate extends HasXlsformDrafts
 
                 // get set of locales for each default module version
                 $locales = $this->xlsformModules->map(
-                    fn(XlsformModule $xlsformModule) => $xlsformModule
+                    fn (XlsformModule $xlsformModule) => $xlsformModule
                         ->defaultXlsformVersion
                         ->locales
                 );
@@ -164,7 +171,6 @@ class XlsformTemplate extends HasXlsformDrafts
             ->where('is_active', true);
     }
 
-    /** @return MorphTo */
     public function owner(): MorphTo
     {
         return $this->morphTo();
@@ -210,7 +216,8 @@ class XlsformTemplate extends HasXlsformDrafts
                     // HOLPA CHANGE! In Holpa we have moved to using ChoiceList and ChoiceListEntry to manage custom lookup tables, instead of datasets. We need to decide if this is a good change that should be brought into the main package or if we should merge ChoiceList and Dataset somehow...
 
                     // TODO: merge datasets + choice lists implimentation...
-                    ->orWhere('required_media.choice_list_id', '!=', null);
+                    ->orWhere('required_media.choice_list_id', '!=', null)
+                    ->orWhereHas('dataset');
             });
     }
 
@@ -253,12 +260,11 @@ class XlsformTemplate extends HasXlsformDrafts
         return $this->hasMany(XlsformModule::class, 'xlsform_template_id');
     }
 
-
     /** @return Attribute<Collection<XlsformModuleVersion>, never> */
     protected function xlsformDefaultModuleVersions(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->xlsformModules->map(fn(XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
+            get: fn () => $this->xlsformModules->map(fn (XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
         );
     }
 
@@ -340,7 +346,7 @@ class XlsformTemplate extends HasXlsformDrafts
     // get link to form in ODK Central
     public function getOdkLinkAttribute(): ?string
     {
-        return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . '/draft';
+        return config('filament-odk-link.odk.url').'/#/projects/'.$this->owner->odkProject->id.'/forms/'.$this->odk_id.'/draft';
     }
 
     /** @return Collection<XlsformTemplateSection> */
@@ -348,17 +354,17 @@ class XlsformTemplate extends HasXlsformDrafts
     {
 
         // set all existing sections to not current.
-        $this->repeatingSections()->each(fn($section) => $section->is_current = false);
+        $this->repeatingSections()->each(fn ($section) => $section->is_current = false);
 
         // create or find the repeat sections
-        $this->schema->filter(fn($item) => $item['type'] === 'repeat')
+        $this->schema->filter(fn ($item) => $item['type'] === 'repeat')
             ->each(function ($item) {
 
                 // check if this is a nested repeat by reviewing previously created repeat sections
                 $parent = null; // for direct children of the root section, we update the parent_id after creating the root section.
                 $possibleParentNames = collect(explode('/', $item['path']))
-                    ->filter(fn($name) => $name !== '')
-                    ->filter(fn($name) => $name !== $item['name']);
+                    ->filter(fn ($name) => $name !== '')
+                    ->filter(fn ($name) => $name !== $item['name']);
 
                 foreach ($possibleParentNames->reverse() as $possibleParentName) {
                     $repeatParent = $this->repeatingSections()->where('structure_item', $possibleParentName)->first();
@@ -376,12 +382,11 @@ class XlsformTemplate extends HasXlsformDrafts
                     'is_repeat' => true,
                     'is_current' => true,
                     'schema' => $this->schema->filter(
-                        fn($subItem) => Str::contains($subItem['path'], $item['path'] . '/')
+                        fn ($subItem) => Str::contains($subItem['path'], $item['path'].'/')
                             && $subItem['path'] !== $item['path']
                             && $subItem['type'] !== 'repeat'
                     ),
                 ]);
-
 
             });
 
@@ -397,7 +402,7 @@ class XlsformTemplate extends HasXlsformDrafts
                 }
 
                 $reviewSection->schema = $reviewSection->schema->filter(
-                    fn($item) => !Str::startsWith($item['path'], '/' . $reviewSection->structure_item . '/' . $section->structure_item . '/')
+                    fn ($item) => ! Str::startsWith($item['path'], '/'.$reviewSection->structure_item.'/'.$section->structure_item.'/')
                 );
 
                 $reviewSection->save();
@@ -425,7 +430,7 @@ class XlsformTemplate extends HasXlsformDrafts
             // 1. structure type item
             // 2. repeat type item
             // 3. item names belong to ODK variable names of all repeating sections
-            'schema' => $this->schema->filter(fn($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && !in_array($item['name'], $repeatingSectionItemNames)),
+            'schema' => $this->schema->filter(fn ($item) => $item['type'] !== 'structure' && $item['type'] !== 'repeat' && ! in_array($item['name'], $repeatingSectionItemNames)),
         ]);
 
         // add the root as the parent of the repeating sections that do not have a parent already.
@@ -433,15 +438,14 @@ class XlsformTemplate extends HasXlsformDrafts
             'parent_id' => $rootSection->id,
         ]);
 
-
         // add dataset variables for any sections that are linked to datasets
         $this->xlsformTemplateSections
-            ->filter(fn(XlsformTemplateSection $section) => $section->dataset)
+            ->filter(fn (XlsformTemplateSection $section) => $section->dataset)
             ->each(function (XlsformTemplateSection $section) {
 
                 $variables = $section->schema
-                    ->filter(fn($item) => isset($item['value_type']) && $item['value_type'] !== 'note')
-                    ->map(fn($item) => [
+                    ->filter(fn ($item) => isset($item['value_type']) && $item['value_type'] !== 'note')
+                    ->map(fn ($item) => [
                         'name' => $item['name'],
                         'label' => $item['name'],
                         'dataset_id' => $section->dataset->id,
@@ -452,7 +456,6 @@ class XlsformTemplate extends HasXlsformDrafts
                 DatasetVariable::upsert($variables->toArray(), ['name', 'dataset_id'], ['label', 'type', 'value_type']);
             });
 
-
         return $this->xlsformTemplateSections;
     }
 
@@ -461,7 +464,6 @@ class XlsformTemplate extends HasXlsformDrafts
     {
         $this->xlsforms()->update(['has_latest_template' => false]);
     }
-
 
     /**
      * @throws ConnectionException
@@ -480,5 +482,4 @@ class XlsformTemplate extends HasXlsformDrafts
         return $odkLinkService->createDraftForm($this, $this->newXlsfile->getRealPath());
 
     }
-
 }
