@@ -14,6 +14,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Unique;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages\CreateDataset;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages\EditDataset;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource\Pages\ListDatasets;
@@ -58,7 +59,12 @@ class DatasetResource extends Resource
                     Forms\Components\TextInput::make('name')
                         ->required()
                         ->label('Enter the name of the dataset')
+                        ->unique(modifyRuleUsing: fn(Unique $rule) => $rule->where('owner_id', Filament::getTenant()?->id ?? null))
+                        ->validationMessages([
+                            'unique' => 'Your project already has a dataset with this name. Please use a unique name to help clearly identify different datasets.'
+                        ])
                         ->helperText('This should be the plural name for the people, objects or ideas represented by each entity in the dataset. For example: "farms", "villages", "enumerators", "treatments"'),
+
                     Forms\Components\Textarea::make('description')
                         ->required()
                         ->label('Enter a brief description of the dataset')
@@ -87,8 +93,7 @@ class DatasetResource extends Resource
                         ->validationMessages([
                             'not_in' => 'uuid is a restricted variable name. Please use a different name.',
                         ])
-                        ->required()
-                        ->nullable(),
+                        ->required(),
 
                 ]),
             Forms\Components\Repeater::make('variables')
