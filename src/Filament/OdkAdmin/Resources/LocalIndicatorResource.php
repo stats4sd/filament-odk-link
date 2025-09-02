@@ -19,13 +19,7 @@ class LocalIndicatorResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    // change page title by changing label
-    protected static ?string $label = 'Custom Module';
-
-    // change navigation label
-    protected static ?string $navigationLabel = 'Custom Module';
-
-    protected static ?string $navigationGroup = 'Custom Module';
+    protected static ?string $navigationGroup = 'Module Builder';
 
     public static function form(Form $form): Form
     {
