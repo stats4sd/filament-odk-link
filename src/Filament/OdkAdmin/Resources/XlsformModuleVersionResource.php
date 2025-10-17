@@ -48,6 +48,10 @@ class XlsformModuleVersionResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            // it should only show default xlsform_module_version records
+            ->modifyQueryUsing(function($query) {
+                $query->where('is_default', true);
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('xlsformModule.form.title')
                     ->numeric()
