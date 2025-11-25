@@ -22,7 +22,7 @@
     "require": {
         "php": "^8.1|^8.2|^8.3",
         "awcodes/filament-table-repeater": "^3.0",
-        "awcodes/shout": "^2.0",
+        "awcodes/shout": "^3.0",
         "filament/filament": "^4.0",
         "filament/spatie-laravel-media-library-plugin": "^3.0",
         "haydenpierce/class-finder": "^0.5.3",
