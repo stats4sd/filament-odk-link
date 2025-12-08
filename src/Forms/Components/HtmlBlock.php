@@ -2,8 +2,8 @@
 
 namespace Stats4sd\FilamentOdkLink\Forms\Components;
 
-use Filament\Forms\Components\Component;
-use Filament\Forms\Components\Concerns\HasName;
+use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Concerns\HasName;
 
 class HtmlBlock extends Component
 {
