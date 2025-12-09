@@ -21,6 +21,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\DatasetResource;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Schemas\DatasetForm;
 
 class XlsformTemplateInfoList
 {
@@ -280,9 +281,11 @@ class XlsformTemplateInfoList
                                             ]),
                                     ];
                                 })
-                                ->mutateFormDataBeforeFill(fn ($data, ?XlsformTemplateSection $record) => [
-                                    'schema' => $record?->schema,
-                                ])
+                                ->fillForm(function (?XlsformTemplateSection $record): array {
+                                    return [
+                                        'schema' => $record?->schema,
+                                    ];
+                                })
                                 ->modalSubmitAction(false)
                                 ->modalCancelActionLabel('Close'),
                         ])
@@ -291,7 +294,7 @@ class XlsformTemplateInfoList
                     Select::make('dataset_id')
                         ->relationship('dataset', 'name')
                         ->label('Select which dataset the submissions should be linked to')
-                        ->createOptionForm(DatasetResource::getCreateFormFields())
+                        ->createOptionForm(DatasetForm::getCreateFormFields())
                         ->createOptionModalHeading('Create New Dataset'),
                 ]),
 
@@ -334,16 +337,18 @@ class XlsformTemplateInfoList
                                             ]),
                                     ];
                                 })
-                                ->mutateFormDataBeforeFill(fn ($data, ?XlsformTemplateSection $record) => [
-                                    'schema' => $record?->schema,
-                                ])
+                                ->fillForm(function (?XlsformTemplateSection $record): array {
+                                    return [
+                                        'schema' => $record?->schema,
+                                    ];
+                                })
                                 ->modalSubmitAction(false)
                                 ->modalCancelActionLabel('Close'),
                         ]),
                     Select::make('dataset_id')
                         ->relationship('dataset', 'name')
                         ->label('Select which dataset the submissions should be linked to')
-                        ->createOptionForm(DatasetResource::getCreateFormFields())
+                        ->createOptionForm(DatasetForm::getCreateFormFields())
                         ->createOptionModalHeading('Create New Dataset'),
                 ]),
         ];

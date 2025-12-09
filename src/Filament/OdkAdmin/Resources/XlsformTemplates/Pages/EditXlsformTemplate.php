@@ -8,6 +8,8 @@ use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Components\Wizard\Step;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateForm;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateInfoList;
 
 class EditXlsformTemplate extends EditRecord
 {
@@ -43,21 +45,21 @@ class EditXlsformTemplate extends EditRecord
             Step::make('1. Xlsform')
                 ->description('Upload your XLSForm file and give it a title')
                 ->schema(
-                    XlsformTemplateResource::getCreateFields(),
+                    XlsformTemplateForm::getCreateFields(),
                 ),
             Step::make('2. Add Media Files')
                 ->description('Add any static media required by the form')
                 ->schema(
-                    XlsformTemplateResource::getStaticMediaFields(),
+                    XlsformTemplateForm::getStaticMediaFields(),
                 ),
             Step::make('3. Link Required Datasets')
                 ->description('Add / link external datasets for lookup tables')
                 ->schema(
-                    XlsformTemplateResource::getDatasetMediaFields(),
+                    XlsformTemplateForm::getDatasetMediaFields(),
                 ),
             Step::make('4. Review Xlsform Structure')
                 ->description('How should the collected data be handled?')
-                ->schema(XlsformTemplateResource::getXlsformSectionFields()),
+                ->schema(XlsformTemplateInfoList::getXlsformSectionFields()),
 
         ];
     }

@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\XlsformValidationHelper;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateForm;
 
 class ViewXlsformTemplate extends ViewRecord
 {
@@ -45,14 +46,14 @@ class ViewXlsformTemplate extends ViewRecord
             Actions\Action::make('update_xlsform_template')
                 ->label('Replace XLSForm')
                 ->icon('heroicon-o-document-arrow-up')
-                ->schema(XlsformTemplateResource::getCreateFields())
-                ->mutateFormDataBeforeFill(function ($data) {
-                                $record = $this->getRecord();
+                ->schema(XlsformTemplateForm::getCreateFields())
+                ->fillForm(function () {
+                    $record = $this->getRecord();
 
-                                return [
-                                    'title' => $record->title,
-                                ];
-                            })
+                    return [
+                        'title' => $record->title,
+                    ];
+                })
                 ->action(function (array $data, XlsformTemplate $record) {
                     try {
 
