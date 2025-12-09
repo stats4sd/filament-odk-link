@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('label');
             $table->string('name');
             $table->unsignedInteger('default_order')->nullable();
+            $table->boolean('can_be_extended')->default(false);
+            $table->boolean('can_be_replaced')->default(false);
+            $table->json('row_names')->nullable();
             $table->timestamps();
 
             $table->unique(['xlsform_template_id','name']);
