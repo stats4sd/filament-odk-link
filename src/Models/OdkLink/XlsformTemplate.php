@@ -33,6 +33,8 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
 
     protected $table = 'xlsform_templates';
 
+    protected $guarded = [];
+
     protected $casts = [
         'schema' => 'collection',
         'odk_draft_updated_at' => 'timestamp',

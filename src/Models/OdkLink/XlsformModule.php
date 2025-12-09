@@ -20,6 +20,8 @@ class XlsformModule extends Model
 
     protected $table = 'xlsform_modules';
 
+    protected $guarded = [];
+
     protected function casts(): array
     {
         return [

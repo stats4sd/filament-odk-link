@@ -23,6 +23,8 @@ class XlsformModuleVersion extends Model implements HasMedia
 
     protected $table = 'xlsform_module_versions';
 
+    protected $guarded = [];
+
     protected $casts = [
         'is_default' => 'boolean',
     ];
