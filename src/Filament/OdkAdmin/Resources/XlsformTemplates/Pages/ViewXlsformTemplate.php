@@ -2,11 +2,12 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Pages;
 
-use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Validation\ValidationException;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\XlsformValidationHelper;
@@ -36,14 +37,14 @@ class ViewXlsformTemplate extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('make_template_available')
+            Action::make('make_template_available')
                 ->label('Make Template Available')
                 ->icon('heroicon-o-pencil')
                 ->disabled(fn ($record) => $record->available == true)
-                ->action(function (array $data, XlsformTemplate $record, Get $get) {
+                ->action(function (XlsformTemplate $record) {
                     $this->makeTemplateAvailable($record);
                 }),
-            Actions\Action::make('update_xlsform_template')
+            Action::make('update_xlsform_template')
                 ->label('Replace XLSForm')
                 ->icon('heroicon-o-document-arrow-up')
                 ->schema(XlsformTemplateForm::getCreateFields())
@@ -103,10 +104,10 @@ class ViewXlsformTemplate extends ViewRecord
                         throw ValidationException::withMessages(['data.fake-field' => $e->getMessage()]);
                     }
                 }),
-            Actions\EditAction::make()
+            EditAction::make()
                 ->icon('heroicon-o-pencil-square')
                 ->label('Edit Media & Data'),
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 
