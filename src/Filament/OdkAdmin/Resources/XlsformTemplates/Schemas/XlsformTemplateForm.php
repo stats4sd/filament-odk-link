@@ -119,9 +119,9 @@ class XlsformTemplateForm
                     $label = "<h4 class='font-bold text-xl'>Link Required Datasets</h4>";
 
                     if ($record?->requiredDataMedia()->count() > 0) {
-                        $label .= '<p>The Form requires the following media items. Please either upload static csv files to be used, or mark the item(s) as localisable for each team. </p>';
+                        $label .= '<p>The Form requires the following datasets. Please either upload static csv files to be used, or mark the item(s) as localisable for each team. </p>';
                     } else {
-                        $label .= '<p>This form does not require any media files. You may skip this step</p>';
+                        $label .= '<p>This form does not require any datasets. You may skip this step</p>';
                     }
 
                     return new HtmlString($label);
