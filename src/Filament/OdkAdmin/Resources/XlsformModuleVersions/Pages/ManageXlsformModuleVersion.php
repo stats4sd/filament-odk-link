@@ -10,10 +10,10 @@ class ManageXlsformModuleVersion extends ManageRecords
 {
     protected static string $resource = XlsformModuleVersionResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [
-            Actions\CreateAction::make(),
-        ];
-    }
+    // protected function getHeaderActions(): array
+    // {
+    //     return [
+    //         Actions\CreateAction::make(),
+    //     ];
+    // }
 }
