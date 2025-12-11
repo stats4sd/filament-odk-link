@@ -33,7 +33,7 @@ class DatasetForm
         } else {
             $ownerField = Select::make('owner_id')
                 ->relationship('owner', 'name')
-                ->label('Does a specific team own this dataset, or is it shared amongst all APNI projects?');
+                ->label('Does a specific team own this dataset, or is it shared amongst all projects?');
         }
 
         return [
