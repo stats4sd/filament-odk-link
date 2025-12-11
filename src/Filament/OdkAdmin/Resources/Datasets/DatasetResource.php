@@ -14,7 +14,7 @@ use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Pages\ListData
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Pages\CreateDataset;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Schemas\DatasetForm;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Tables\DatasetTable;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\DatasetInfoList;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Schemas\DatasetInfoList;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\RelationManagers\VariablesRelationManager;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\RelationManagers\XlsformTemplatesRelationManager;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\RelationManagers\XlsformTemplateSourcesRelationManager;
