@@ -11,6 +11,8 @@ class Continent extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    protected $guarded = [];
+
     public function regions(): HasMany
     {
         return $this->hasMany(Region::class);
