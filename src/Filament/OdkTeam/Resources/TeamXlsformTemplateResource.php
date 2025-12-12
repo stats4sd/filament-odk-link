@@ -2,17 +2,8 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources;
 
-use App\Filament\App\Resources\DatasetResource;
-use Awcodes\Shout\Components\ShoutEntry;
-use Awcodes\TableRepeater\Components\TableRepeater;
-use Awcodes\TableRepeater\Header;
 use Filament\Facades\Filament;
 use Filament\Forms;
-use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\Section;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\ViewEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -26,9 +17,7 @@ use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResou
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 
 // Use this resource for a panel scoped to a team
@@ -94,7 +83,7 @@ class TeamXlsformTemplateResource extends XlsformTemplateResource
                 Tables\Columns\TextColumn::make('title'),
                 Tables\Columns\IconColumn::make('has_version')
                     ->label('In use?')
-                    ->state(fn(Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->getKey())->count() > 0)
+                    ->state(fn (Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->getKey())->count() > 0)
                     ->boolean(),
                 Tables\Columns\TextColumn::make('owner_type')
                     ->label('Source')
@@ -120,12 +109,12 @@ class TeamXlsformTemplateResource extends XlsformTemplateResource
                 // TODO: setup a helper function that a) returns the current tenant as a "WithXlsforms" class, and b) makes sure that devs realise the Filament tenant must implement this interface.
                 Tables\Actions\Action::make('deploy')
                     ->label('Deploy Form')
-                    ->hidden(fn(Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->getKey())->count() > 0)
+                    ->hidden(fn (Xlsformtemplate $record) => $record->xlsforms->where('owner_id', Filament::getTenant()->getKey())->count() > 0)
                     ->icon('heroicon-o-cloud-arrow-up')
                     ->form([
                         Forms\Components\TextInput::make('title')
                             ->label('Please give the form a title.')
-                            ->default(fn(XlsformTemplate $record) => HelperService::getCurrentOwner()->name . ' - ' . $record->title)
+                            ->default(fn (XlsformTemplate $record) => HelperService::getCurrentOwner()->name.' - '.$record->title)
                             ->hint('Note that ODK form titles cannot be longer than 64 characters.'),
                     ])
                     ->action(function (XlsformTemplate $record, array $data) {
@@ -143,7 +132,7 @@ class TeamXlsformTemplateResource extends XlsformTemplateResource
                     }),
                 Tables\Actions\Action::make('download file')
                     ->label('Download XLS File')
-                    ->url(fn($record) => $record->getFirstMediaUrl('xlsform_file')),
+                    ->url(fn ($record) => $record->getFirstMediaUrl('xlsform_file')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

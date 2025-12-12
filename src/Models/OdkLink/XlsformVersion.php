@@ -20,6 +20,8 @@ class XlsformVersion extends Model implements HasMedia
         'is_draft' => 'boolean',
     ];
 
+    protected $guarded = [];
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('xlsform_file')

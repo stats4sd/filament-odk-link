@@ -38,6 +38,8 @@ class SurveyRow extends Model implements WithLanguageStrings
         'updated_during_import' => 'boolean',
     ];
 
+    protected $guarded = [];
+
     /** @return BelongsTo<XlsformModuleVersion, $this> */
     public function xlsformModuleVersion(): BelongsTo
     {

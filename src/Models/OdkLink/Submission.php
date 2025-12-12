@@ -32,7 +32,7 @@ class Submission extends Model implements HasMedia
 
     protected $table = 'submissions';
 
-    protected $guarded = ['id'];
+    protected $guarded = [];
 
     protected $casts = [
         'content' => 'array',

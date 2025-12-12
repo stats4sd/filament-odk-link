@@ -14,6 +14,8 @@ class XlsformTemplateSection extends Pivot
         'schema' => 'collection',
     ];
 
+    protected $guarded = [];
+
     protected static function booted(): void
     {
         // always sort by is_repeat, then by id
@@ -45,7 +47,7 @@ class XlsformTemplateSection extends Pivot
     {
         return $this->belongsTo(Dataset::class);
     }
-    
+
     /** @return BelongsTo<Dataset, $this> */
     public function dataSubjectDataset(): BelongsTo
     {

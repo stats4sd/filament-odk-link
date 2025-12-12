@@ -41,6 +41,8 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         'has_locales' => 'boolean',
     ];
 
+    protected $guarded = [];
+
     // ******************* SETUP ***********************************
     protected static function booted(): void
     {

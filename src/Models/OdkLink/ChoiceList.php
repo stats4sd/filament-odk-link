@@ -20,6 +20,8 @@ class ChoiceList extends Model
         'is_localisable' => 'boolean',
     ];
 
+    protected $guarded = [];
+
     protected static function booted()
     {
         static::deleting(function (ChoiceList $choiceList) {

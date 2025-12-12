@@ -33,6 +33,8 @@ class ChoiceListEntry extends Model implements WithLanguageStrings
         'updated_during_import' => 'boolean',
     ];
 
+    protected $guarded = [];
+
     protected static function booted(): void
     {
         // When Filament has tenancy enabled, we want to scope the choice list entries to the current tenant.

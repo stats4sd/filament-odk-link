@@ -17,6 +17,8 @@ class Platform extends Model implements WithXlsformTemplates
 
     protected $table = 'platforms';
 
+    protected $guarded = [];
+
     /** @return Attribute<string, never> */
     protected function name(): Attribute
     {

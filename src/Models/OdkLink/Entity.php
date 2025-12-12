@@ -16,6 +16,8 @@ class Entity extends Model
 {
     protected $table = 'entities';
 
+    protected $guarded = [];
+
     protected static function booted()
     {
         static::created(function (self $entity) {

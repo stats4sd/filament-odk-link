@@ -12,6 +12,8 @@ class DatasetVariable extends Model
 {
     protected $table = 'dataset_variables';
 
+    protected $guarded = [];
+
     protected $primaryKey = 'id';
 
     /** @return BelongsTo<Dataset, $this> */
