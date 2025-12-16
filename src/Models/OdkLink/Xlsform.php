@@ -17,10 +17,12 @@ use Maatwebsite\Excel\Facades\Excel;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
+use Stats4sd\FilamentOdkLink\Events\XlsformWasPublished;
 use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformWorkbookExport;
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\DeployDraftXlsformToOdkCentral;
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\NotifyUserThatXlsformFileIsDeployedAsDraft;
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\NotifyUserThatXlsformFileIsUpdated;
+use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\PublishXlsformOnOdkCentral;
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\UpdateXlsformFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
@@ -59,8 +61,11 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                 if ($xlsform->live_needs_update) {
                     XlsformDraftWasDeployed::dispatch($xlsform->id);
                 }
+            }
 
-                // TODO: do we need a Published notification here?
+            if ($xlsform->wasChanged('live_needs_update') && !$xlsform->live_needs_update) {
+                // notify user that the form file has been updated
+                XlsformWasPublished::dispatch($xlsform->id);
 
             }
 
@@ -126,12 +131,8 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         return new Attribute(
             get: function (): string {
 
-                if (!$this->odk_draft_token) {
+                if (!$this->odk_version_id) {
                     return 'NOT DEPLOYED';
-                }
-
-                if (!$this->has_latest_template || !$this->has_latest_media) {
-                    return 'UPDATES AVAILABLE';
                 }
 
                 if ($this->is_active) {
@@ -331,9 +332,14 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
             return null;
         }
 
+        // if this is immediately after publishing, skip regenerating the xlsfile
+        if($published) {
+            return DeployDraftXlsformToOdkCentral::dispatch($this, $withMedia, auth()->user());
+        }
+
         return $this->generateXlsfile()
             ->chain([
-                new DeployDraftXlsformToOdkCentral($this, $withMedia, $published, auth()->user()),
+                new DeployDraftXlsformToOdkCentral($this, $withMedia, auth()->user()),
             ]);
     }
 
@@ -343,15 +349,21 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      * @throws RequestException
      * @throws BindingResolutionException
      */
-    public function publishForm(): XlsformVersion
+    public function publishForm(): ?PendingDispatch
     {
+        if ($this->processing) {
+            return null;
+        }
 
-        $odkLinkService = app()->make(OdkLinkService::class);
-        $newVersion = $odkLinkService->publishForm($this);
+        if ($this->draft_needs_update) {
+            return $this->deployDraft()
+                ->chain([
+                    new PublishXlsformOnOdkCentral($this, auth()->user()),
+                ]);
+        }
 
-        // immediately after publishing, create a new draft. We always want a draft version available to the platform and users.
-        $this->deployDraft(published: true);
+        // if no draft update is needed, just publish the form:
+        return PublishXlsformOnOdkCentral::dispatch($this, auth()->user());
 
-        return $newVersion;
     }
 }

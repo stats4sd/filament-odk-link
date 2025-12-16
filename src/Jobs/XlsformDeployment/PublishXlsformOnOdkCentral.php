@@ -16,12 +16,13 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Throwable;
+use function Laravel\Prompts\search;
 
-class DeployDraftXlsformToOdkCentral implements ShouldQueue
+class PublishXlsformOnOdkCentral implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public Xlsform|XlsformTemplate $xlsform, public bool $withMedia, public ?Authenticatable $user)
+    public function __construct(public Xlsform|XlsformTemplate $xlsform, public ?Authenticatable $user)
     {
     }
 
@@ -30,29 +31,16 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->xlsform->save();
-
         $odkLinkService = app()->make(OdkLinkService::class);
 
-        $this->xlsform = $odkLinkService->createDraftForm($this->xlsform, $this->xlsform->xlsfile->getPath(), $this->withMedia);
+        $odkLinkService->publishForm($this->xlsform);
 
-        if ($this->xlsform instanceof Xlsform) {
-            $this->xlsform->draft_needs_update = false;
-        }
-
+        // Now that the form is published, re-deploy the draft to ensure there is always a draft version available for testing.
+        // pass the published flag to indicate this is a redeployment after publishing, so no new xlsform file is needed.
+        $this->xlsform->live_needs_update = false;
         $this->xlsform->save();
 
-        // only ever keep 1 "draft" version; we don't need to store all iterations of drafts as we don't keep the old submissions either
-        $this->xlsform->xlsformVersions()->updateOrCreate(
-            [
-                'is_draft' => true,
-            ],
-            [
-                'version' => $this->xlsform->current_version,
-                'odk_version' => $this->xlsform->current_version,
-                'active' => true,
-            ]
-        );
+        $this->xlsform->deployDraft(published: true);
 
     }
 
