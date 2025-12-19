@@ -1,12 +1,11 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource\Pages;
+namespace Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResources\Pages;
 
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Filament\Widgets\AvailableOdkTemplatesWidget;
+use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplates\TeamXlsformTemplateResource;
 
 class ListTeamXlsformTemplates extends ListRecords
 {
