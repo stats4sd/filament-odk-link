@@ -203,12 +203,12 @@ trait OdkSubmissionService
             // ******** CALL APP-SPECIFIC PROCESSING ******** //
 
 //            // if app developer has defined a method of processing submission content, call that method:
-//            $class = config('filament-odk-link.submission.process_method.class');
-//            $method = config('filament-odk-link.submission.process_method.method');
-//
-//            if ($class && $method) {
-//                $class::$method($submission);
-//            }
+           $class = config('filament-odk-link.submission.process_method.class');
+           $method = config('filament-odk-link.submission.process_method.method');
+
+           if ($class && $method) {
+               $class::$method($submission);
+           }
         }
 
         return $resultsToAdd->count();
