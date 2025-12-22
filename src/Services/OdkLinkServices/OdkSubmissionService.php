@@ -230,6 +230,21 @@ trait OdkSubmissionService
     /** Process the 'root' section of the survey based on the root XlsformTemplateSection schema */
     private function processRootSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, Submission $submission)
     {
+        // WIP: fix bug when retriving fieldwork form submissions from ODK central
+        // Fieldwork form root section does not relate to any dataset. 
+        // No further processing is required if a section does not relate to any dataset
+        
+        ray('OdkSubmissionService.processRootSection()...');
+        
+        ray($section->dataset);
+        
+        if ($section->dataset == null) {
+            ray('This XlsformTemplateSection does not relate to any dataset, no need to further process this section');
+            return;
+        }
+
+        ray('This XlsformTemplateSection relates to any dataset, further process this section');
+
         // exclude structure items from section schema, as there is no value to be stored for a structure item
         $schema = $section->schema->where('type', '!=', 'structure');
 
