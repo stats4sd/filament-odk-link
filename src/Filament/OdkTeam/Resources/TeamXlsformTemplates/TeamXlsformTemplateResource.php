@@ -11,10 +11,10 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateInfolist;
-use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResources\Pages\EditTeamXlsformTemplate;
-use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResources\Pages\ViewTeamXlsformTemplate;
-use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResources\Pages\ListTeamXlsformTemplates;
-use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplateResources\Pages\CreateTeamXlsformTemplate;
+use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplates\Pages\EditTeamXlsformTemplate;
+use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplates\Pages\ViewTeamXlsformTemplate;
+use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplates\Pages\ListTeamXlsformTemplates;
+use Stats4sd\FilamentOdkLink\Filament\OdkTeam\Resources\TeamXlsformTemplates\Pages\CreateTeamXlsformTemplate;
 
 // Use this resource for a panel scoped to a team
 // This resource is for templates available to all platform users
@@ -38,11 +38,11 @@ class TeamXlsformTemplateResource extends XlsformTemplateResource
         return Filament::getTenant();
     }
 
-    public static function shouldRegisterNavigation(): bool
-    {
-        // Check if the plugin has register navigation set on the current panel
-        return Filament::getCurrentPanel()->getPlugin('stats4sd-odk-link-team')->getShouldRegisterNavigation();
-    }
+    // public static function shouldRegisterNavigation(): bool
+    // {
+    //     // Check if the plugin has register navigation set on the current panel
+    //     return Filament::getCurrentPanel()->getPlugin('stats4sd-odk-link-team')->getShouldRegisterNavigation();
+    // }
 
     public static function getEloquentQuery(): Builder
     {
