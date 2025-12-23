@@ -40,7 +40,9 @@ class EntityExport implements FromArray, WithHeadings, WithTitle
                 // find value for each ODK variable
                 // add parent primary key if there is a parent dataset
                 if ($dataset->parent) {
-                    array_unshift($record, $entity->parent->values->where('dataset_variable_id', $dataset->parent->primary_key)->first()->value);
+                    // add checking to check if first record can be found
+                    // TODO: need checking for correctness on entities and entity_values records in backend database
+                    array_unshift($record, $entity->parent->values->where('dataset_variable_id', $dataset->parent->primary_key)->first()?->value);
                 }
 
                 return $record;
@@ -62,7 +64,8 @@ class EntityExport implements FromArray, WithHeadings, WithTitle
         }
 
         // add the parent-id heading to the entity-level headings as the first heading
-        if ($this->xlsformTemplateSection->dataset->parent) {
+        // add checking as a xlsformTemplateSection may not relate to a dataset
+        if ($this->xlsformTemplateSection->dataset?->parent) {
             array_unshift($headings, $this->xlsformTemplateSection->dataset->parent->primary_key);
         }
 
