@@ -10,6 +10,7 @@ use Filament\Resources\Pages\CreateRecord;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Validation\ValidationException;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\XlsformValidationHelper;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
@@ -21,6 +22,17 @@ class CreateXlsformTemplate extends CreateRecord
     use CreateRecord\Concerns\HasWizard;
 
     protected static string $resource = XlsformTemplateResource::class;
+
+    /**
+     * @param XlsformTemplate $xlsformTemplate
+     * @return string
+     * Gets the URL to redirect users to after creating a new xlsform template
+     * Can be overridden, e.g. when using a parent resource
+     */
+    public function getEditUrl(XlsformTemplate $xlsformTemplate)
+    {
+        return $this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]);
+    }
 
     protected function onValidationError(ValidationException $exception): void
     {
@@ -42,6 +54,12 @@ class CreateXlsformTemplate extends CreateRecord
             ->columns(null);
     }
 
+    // default approach to getting the 'current' form owner. This can be overridden in the app
+    protected function getFormOwner(): WithXlsformTemplates
+    {
+        return (static::getResource())::getFormOwner();
+    }
+
     public function getSteps(): array
     {
         return [
@@ -50,7 +68,7 @@ class CreateXlsformTemplate extends CreateRecord
                 ->schema(
                     XlsformTemplateForm::getCreateFields(),
                 )
-                ->afterValidation(function (Get $get) {
+                ->afterValidation(function (Get $get, self $livewire) {
 
                     try {
                         // find the full file path of the uploaded xlsform template excel file
@@ -77,7 +95,7 @@ class CreateXlsformTemplate extends CreateRecord
                         // wait to trigger the saved event until the xlsform file is attached.
 
                         // find the correct owner
-                        $owner = (static::getResource())::getFormOwner();
+                        $owner = $livewire->getFormOwner();
 
                         /** @var XlsformTemplate $xlsformTemplate */
                         $xlsformTemplate = XlsformTemplate::make([
@@ -102,7 +120,7 @@ class CreateXlsformTemplate extends CreateRecord
                             ->persistent()
                             ->send();
 
-                        return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
+                        return redirect($this->getEditUrl($xlsformTemplate));
                     } catch (ValidationException $e) {
 
                         Notification::make('xlsform_template_not_saved')
@@ -116,6 +134,9 @@ class CreateXlsformTemplate extends CreateRecord
                     } catch (\Throwable $e) {
 
                         // Generic catch-all for errors coming back from ODK Central. Convert them into validation errors to be displayed on the front-end.
+
+                        // TEMP
+                        throw $e;
 
                         $notificationBody = 'There was an error saving the XLSForm Template. ODK Returned the following error: '.$e->getMessage();
 
