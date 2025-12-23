@@ -148,9 +148,9 @@ class XlsformTemplateInfoList
                             ->inlineLabel()
                             ->url(function (?XlsformTemplate $record): ?string {
 
-                                if ($record->rootSection->dataset_id) {
-                                    return DatasetResource::getUrl('view', ['record' => $record->rootSection->dataset_id]);
-                                }
+                                // if ($record->rootSection->dataset_id) {
+                                //     return DatasetResource::getUrl('view', ['record' => $record->rootSection->dataset_id]);
+                                // }
 
                                 // if no dataset is linked, return null
                                 return null;
@@ -207,9 +207,9 @@ class XlsformTemplateInfoList
                                         ->inlineLabel()
                                         ->url(function (XlsformTemplateSection $record): ?string {
 
-                                            if ($record->dataset_id) {
-                                                return DatasetResource::getUrl('view', ['record' => $record->dataset_id]);
-                                            }
+                                            // if ($record->dataset_id) {
+                                            //     return DatasetResource::getUrl('view', ['record' => $record->dataset_id]);
+                                            // }
 
                                             // if no dataset is linked, return null
                                             return null;
