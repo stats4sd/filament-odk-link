@@ -42,7 +42,7 @@ class EntityExport implements FromArray, WithHeadings, WithTitle
                 if ($dataset->parent) {
                     // add checking to check if first record can be found
                     // TODO: need checking for correctness on entities and entity_values records in backend database
-                    array_unshift($record, $entity->parent->values->where('dataset_variable_id', $dataset->parent->primary_key)->first()?->value);
+                    array_unshift($record, $entity->parent->values->where('dataset_variable_name', $dataset->parent->primary_key)->first()?->value);
                 }
 
                 return $record;
@@ -85,7 +85,7 @@ class EntityExport implements FromArray, WithHeadings, WithTitle
     {
         // assume there is only one value for one ODK variable
         return $entity->values
-            ->whereIn('dataset_variable_id', $headings)
+            ->whereIn('dataset_variable_name', $headings)
             ->map(function ($value) {
                 return $value->value;
             })->toArray();
