@@ -448,9 +448,9 @@ trait OdkSubmissionService
     }
 
     /** Export all datasets data */
-    public function exportDatasetsAsExcelFile(Xlsform $xlsform): BinaryFileResponse
+    public function exportDatasetsAsExcelFile(): BinaryFileResponse
     {
-        return Excel::download(new SurveyDatasetExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
+        return Excel::download(new SurveyDatasetExport(), 'HOLPA Survey' . '-' . now()->toDateTimeString() . '.xlsx');
     }
 
     public function makeMultiSelectBooleans(Entity $entity, mixed $schemaItem, Collection $choices, mixed $value): array
