@@ -3,24 +3,25 @@
 namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Database\Eloquent\Collection;
 use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
-use Stats4sd\FilamentOdkLink\Jobs\OdkSubmissions\ProcessOdkSubmission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Stats4sd\FilamentOdkLink\Exports\SurveyDatasetExport;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\FilamentOdkLink\Jobs\OdkSubmissions\ProcessOdkSubmission;
 
 trait OdkSubmissionService
 {
@@ -444,6 +445,12 @@ trait OdkSubmissionService
     public function exportAsExcelFile(Xlsform $xlsform): BinaryFileResponse
     {
         return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
+    }
+
+    /** Export all datasets data */
+    public function exportDatasetsAsExcelFile(Xlsform $xlsform): BinaryFileResponse
+    {
+        return Excel::download(new SurveyDatasetExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
     }
 
     public function makeMultiSelectBooleans(Entity $entity, mixed $schemaItem, Collection $choices, mixed $value): array
