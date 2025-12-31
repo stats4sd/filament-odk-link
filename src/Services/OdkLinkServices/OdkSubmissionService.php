@@ -201,15 +201,6 @@ trait OdkSubmissionService
 
             $this->getAttachedMedia($entry, $token, $xlsform, $submission, $draft);
 
-            // ******** CALL APP-SPECIFIC PROCESSING ******** //
-
-//            // if app developer has defined a method of processing submission content, call that method:
-           $class = config('filament-odk-link.submission.process_method.class');
-           $method = config('filament-odk-link.submission.process_method.method');
-
-           if ($class && $method) {
-               $class::$method($submission);
-           }
         }
 
         return $resultsToAdd->count();
@@ -232,13 +223,13 @@ trait OdkSubmissionService
     private function processRootSection(Xlsform $xlsform, $entry, XlsformTemplateSection $section, Submission $submission)
     {
         // WIP: fix bug when retriving fieldwork form submissions from ODK central
-        // Fieldwork form root section does not relate to any dataset. 
+        // Fieldwork form root section does not relate to any dataset.
         // No further processing is required if a section does not relate to any dataset
-        
+
         ray('OdkSubmissionService.processRootSection()...');
-        
+
         ray($section->dataset);
-        
+
         if ($section->dataset == null) {
             ray('This XlsformTemplateSection does not relate to any dataset, no need to further process this section');
             return;
