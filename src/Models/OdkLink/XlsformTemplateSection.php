@@ -45,4 +45,10 @@ class XlsformTemplateSection extends Pivot
     {
         return $this->belongsTo(Dataset::class);
     }
+    
+    /** @return BelongsTo<Dataset, $this> */
+    public function dataSubjectDataset(): BelongsTo
+    {
+        return $this->belongsTo(Dataset::class, 'data_subject_dataset_id');
+    }
 }

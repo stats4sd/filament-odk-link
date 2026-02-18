@@ -67,7 +67,7 @@ trait OdkSubmissionService
             ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions");
 
         // simple error handling
-        if (!$results->ok()) {
+        if (! $results->ok()) {
             return null;
         }
 
@@ -96,12 +96,12 @@ trait OdkSubmissionService
         $oDataServiceUrl = "{$this->endpoint}/projects/{$submission->xlsform->owner->odkProject->id}/forms/{$submission->xlsform->odk_id}";
 
         $results = Http::withToken($token)
-            ->get($oDataServiceUrl . '.svc/Submissions?$expand=*&$filter=__system/updatedAt ge ' . $submission->updated_at->toISOString() . ' and __system/updatedAt le ' . $submission->updated_at->addSeconds(1)->toISOString())
+            ->get($oDataServiceUrl.'.svc/Submissions?$expand=*&$filter=__system/updatedAt ge '.$submission->updated_at->toISOString().' and __system/updatedAt le '.$submission->updated_at->addSeconds(1)->toISOString())
             ->throw()
             ->json();
 
         $result = collect($results['value'])
-            ->filter(fn($content) => $content['__id'] === $submission->odk_id)
+            ->filter(fn ($content) => $content['__id'] === $submission->odk_id)
             ->first();
 
         $submission->update([
@@ -112,33 +112,28 @@ trait OdkSubmissionService
     /** Retrieve and process all new submissions for a given Xlsform */
     public function getSubmissions(Xlsform $xlsform, bool $draft = false): int
     {
-        $currentSubmissions = $xlsform->submissions()->withTrashed()->get();
+        $currentSubmissions = $xlsform->submissions()->withoutGlobalScope('ignore_drafts')->withTrashed()->get();
 
         $currentSubmissionIds = $currentSubmissions->pluck('odk_id');
         $currentSubmissionLatestIds = $currentSubmissions->pluck('odk_latest_version_id');
-
 
         $token = $this->authenticate();
 
         $metadataUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions";
         $oDataServiceUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}";
 
-
         if ($draft) {
             $metadataUrl = Str::replaceLast('/submissions', '/draft/submissions', $metadataUrl);
             $oDataServiceUrl .= '/draft';
         }
-
 
         $submissionMetadata = Http::withToken($token)
             ->get($metadataUrl)
             ->throw()
             ->json();
 
-
-
         $newSubmissions = collect($submissionMetadata)
-            ->filter(fn(array $result) => $currentSubmissionIds->doesntContain($result['instanceId']));
+            ->filter(fn (array $result) => $currentSubmissionIds->doesntContain($result['instanceId']));
 
         $updatedSubmissions = collect($submissionMetadata)
             ->filter(fn(array $result) => $currentSubmissionIds->contains($result['instanceId']) &&
@@ -146,13 +141,13 @@ trait OdkSubmissionService
             );
 
         $results = Http::withToken($token)
-            ->get($oDataServiceUrl . '.svc/Submissions?$expand=*')
+            ->get($oDataServiceUrl.'.svc/Submissions?$expand=*')
             ->throw()
             ->json();
 
         // merge with metadata
         $resultsToAdd = collect($results['value'])
-            ->filter(fn(array $result) => $newSubmissions->contains('instanceId', $result['__id']) ||
+            ->filter(fn (array $result) => $newSubmissions->contains('instanceId', $result['__id']) ||
                 $updatedSubmissions->contains('instanceId', $result['__id'])
             )
             ->map(function (array $result) use ($submissionMetadata) {
@@ -169,7 +164,7 @@ trait OdkSubmissionService
                 ->with('submissions')
                 ->firstWhere('version', $entry['__system']['formVersion']);
 
-            if (!$xlsformVersion) {
+            if (! $xlsformVersion) {
 
                 $messageContent = collect([
                     'formVersion' => $entry['__system']['formVersion'],
@@ -182,7 +177,7 @@ trait OdkSubmissionService
                     throw new \Exception('The system tried to get submission data for a form version that does not exist. LOCAL ENVIRONMENT: if you are testing a form that may have been updated on ODK Central directly, or through another app environment, please run `php artisan app:update-xlsform-versions-from-odk-central`, and try pulling the submissions again.');
                 }
 
-                throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '), 500);
+                throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: '.$messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '), 500);
             }
 
             $submission = $xlsformVersion->submissions()->updateOrCreate(
@@ -195,21 +190,23 @@ trait OdkSubmissionService
                     'draft_data' => $draft,
                 ]);
 
-            // Queue processing
-            ProcessOdkSubmission::dispatch($submission, $entry, $xlsformVersion);
-            //$this->processSubmission($submission, $entry, $xlsformVersion);
+            // For live data, process into datasets + entities in the database
+            if (! $draft) {
 
-            $this->getAttachedMedia($entry, $token, $xlsform, $submission, $draft);
+                ProcessOdkSubmission::dispatch($submission, $entry, $xlsformVersion);
 
+                $this->getAttachedMedia($entry, $token, $xlsform, $submission, $draft);
+
+            }
             // ******** CALL APP-SPECIFIC PROCESSING ******** //
 
-//            // if app developer has defined a method of processing submission content, call that method:
-//            $class = config('filament-odk-link.submission.process_method.class');
-//            $method = config('filament-odk-link.submission.process_method.method');
-//
-//            if ($class && $method) {
-//                $class::$method($submission);
-//            }
+            //            // if app developer has defined a method of processing submission content, call that method:
+            //            $class = config('filament-odk-link.submission.process_method.class');
+            //            $method = config('filament-odk-link.submission.process_method.method');
+            //
+            //            if ($class && $method) {
+            //                $class::$method($submission);
+            //            }
         }
 
         return $resultsToAdd->count();
@@ -363,10 +360,10 @@ trait OdkSubmissionService
             ->get();
 
         foreach ($schema as $schemaItem) {
-            $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
+            $itemPath = 'root'.Str::replace('/', '.', $schemaItem['path']);
             $value = Arr::get($entry, $itemPath);
 
-            if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && !is_array($value)) {
+            if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && ! is_array($value)) {
                 // store ODK variable value as entity value record
 
                 // TODO: get label from correct language String entry.
@@ -379,7 +376,6 @@ trait OdkSubmissionService
                     'dataset_variable_name' => $schemaItem['name'],
                     'value' => $value,
                 ]);
-
 
                 // for select_multiples, add binary/ boolean columns for each possible response
                 $booleanEntityValues = $this->makeMultiSelectBooleans($entity, $schemaItem, $choices, $value);
@@ -408,16 +404,16 @@ trait OdkSubmissionService
         // find the path of repeat group first item
         $schemaPaths = $schema->pluck('path')->toArray();
 
-        $position = Str::position($schemaPaths[0], '/' . $section->structure_item . '/');
+        $position = Str::position($schemaPaths[0], '/'.$section->structure_item.'/');
 
         // construct the path for getting an array of repeat group
-        $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . '.' . $section->structure_item;
+        $repeatGroupArrayPath = 'root'.Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)).'.'.$section->structure_item;
 
         // get the array for repeat group
         $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
 
         // if $repeatGroupArray is null, it means this section has no entries and so does not exist in the submission data
-        if (!$repeatGroupArray) {
+        if (! $repeatGroupArray) {
             return;
         }
 
@@ -425,7 +421,7 @@ trait OdkSubmissionService
         foreach ($repeatGroupArray as $repeatGroupRecord) {
 
             // if the section is not linked to a dataset, move on;
-            if (!$section->dataset) {
+            if (! $section->dataset) {
                 continue;
             }
 
@@ -448,7 +444,6 @@ trait OdkSubmissionService
                 })
                 ->get();
 
-
             // get array element as record
             $repeatGroupEntry = ['rg' => $repeatGroupRecord];
 
@@ -457,16 +452,16 @@ trait OdkSubmissionService
             foreach ($schema as $schemaItem) {
 
                 $pathLength = Str::length($schemaItem['path']);
-                $position = Str::position($schemaItem['path'], '/' . $section->structure_item . '/');
+                $position = Str::position($schemaItem['path'], '/'.$section->structure_item.'/');
                 $lengthToCut = $pathLength - $position;
 
                 $itemPath = Str::substr($schemaItem['path'], ($position + 1) + Str::length($section->structure_item), $lengthToCut);
 
-                $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
+                $fullItemPath = 'rg'.Str::replace('/', '.', $itemPath);
 
                 $value = Arr::get($repeatGroupEntry, $fullItemPath);
 
-                if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && !is_array($value)) {
+                if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && ! is_array($value)) {
 
                     // TODO: get label from correct language String entry.
                     // $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([
@@ -534,7 +529,7 @@ trait OdkSubmissionService
     /** Export all submission data for a specific Xlsform. Gives one worksheet for the main survey and one worksheet per repeat group, similar to Kobotoolbox, Ona etc. */
     public function exportAsExcelFile(Xlsform $xlsform): BinaryFileResponse
     {
-        return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
+        return Excel::download(new SurveyExport($xlsform), $xlsform->title.'-'.now()->toDateTimeString().'.xlsx');
     }
 
     public function makeMultiSelectBooleans(Entity $entity, mixed $schemaItem, Collection $choices, mixed $value): array
@@ -546,13 +541,13 @@ trait OdkSubmissionService
             $choiceListName = Str::of($schemaItem['value_type'])->after('select_multiple ')->trim()->toString();
 
             /** @var ChoiceList $choiceList */
-            $choiceList = $choices->filter(fn(ChoiceList $list) => $list->list_name === $choiceListName)->first();
+            $choiceList = $choices->filter(fn (ChoiceList $list) => $list->list_name === $choiceListName)->first();
             $choiceListEntries = $choiceList->choiceListEntries->unique('name');
             $choicesSelected = Str::of($value)->lower()->explode(' ');
 
             foreach ($choiceListEntries as $choiceListEntry) {
                 $booleanEntityValues[] = EntityValue::make([
-                    'dataset_variable_name' => $schemaItem['name'] . '_' . Str::lower($choiceListEntry->name),
+                    'dataset_variable_name' => $schemaItem['name'].'_'.Str::lower($choiceListEntry->name),
                     'value' => $choicesSelected->contains(Str::lower($choiceListEntry->name)),
                 ]);
             }
@@ -577,7 +572,7 @@ trait OdkSubmissionService
                 $booleanEntityValues->push(
                     EntityValue::make([
                         'entity_id' => $entity['id'],
-                        'dataset_variable_name' => $surveyRow->name . '_' . Str::lower($choiceListEntry->name),
+                        'dataset_variable_name' => $surveyRow->name.'_'.Str::lower($choiceListEntry->name),
                         'value' => $choicesSelected->contains(Str::lower($choiceListEntry->name)),
                     ])
                 );

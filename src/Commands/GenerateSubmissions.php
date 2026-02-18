@@ -78,12 +78,6 @@ class GenerateSubmissions extends Command
                 $row = array_slice($row, 0, count($headings));
 
                 if (count($headings) !== count($row)) {
-                    ray("Skipping row: Headings and row count do not match", [
-                        'headings_count' => count($headings),
-                        'row_count' => count($row),
-                        'headings' => $headings,
-                        'row' => $row
-                    ]);
                     continue; // Skip problematic row
                 }
 

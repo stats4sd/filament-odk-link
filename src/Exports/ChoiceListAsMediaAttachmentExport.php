@@ -26,10 +26,9 @@ class ChoiceListAsMediaAttachmentExport implements FromCollection, WithHeadings
     /** @var Collection<ChoiceListEntry> */
     public Collection $choiceListEntries;
 
-    public function __construct(public HasXlsformDrafts $xlsform, public RequiredMedia $requiredMedia)
+    public function __construct(public HasXlsformDrafts $xlsform, public ChoiceList $choiceList)
     {
-
-        $this->choiceListEntries = $this->requiredMedia->choiceList?->getOwnedEntries($this->xlsform->owner);
+        $this->choiceListEntries = $this->choiceList->getOwnedEntries($this->xlsform->owner);
         $this->locales = $xlsform->owner->locales;
         $this->propertyHeadings = $this->getHeadingsFromPropertyList($this->getHeadingsFromProperties());
     }

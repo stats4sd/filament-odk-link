@@ -2,16 +2,17 @@
 
 namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
 
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\ConnectionException;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Exports\DatasetAsMediaAttachmentExport;
 use Stats4sd\FilamentOdkLink\Exports\ChoiceListAsMediaAttachmentExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 trait OdkFormMediaService
 {
@@ -101,7 +102,7 @@ trait OdkFormMediaService
         }
     }
 
-     /**
+    /**
      * Prepares a media attachment csv file based on a requiredDataMedia item for a specific xlsform.
      * Assumes that the ChoiceList containing the localised choices is named the same as the csv file.
      * @return string
@@ -113,14 +114,31 @@ trait OdkFormMediaService
 
         $filePath = 'xlsforms/' . $xlsform->id . '/' . $requiredMediaItem->name;
 
-        Excel::store(
-            export: new ChoiceListAsMediaAttachmentExport($xlsform, $requiredMediaItem),
-            filePath: $filePath,
-            diskName: config('filament-odk-link.storage.media')
-        );
+        // check if the requiredMedia is linked to a choice list or dataset
+        if ($requiredMediaItem->links_to_dataset) {
+
+            if($requiredMediaItem->dataset === null) {
+                abort(500, 'The dataset for the required media item ' . $requiredMediaItem->name . ' is not set. Please check the form template and ensure all required data media items are linked to a dataset or choice list.');
+            }
+
+            Excel::store(
+                export: new DatasetAsMediaAttachmentExport($xlsform, $requiredMediaItem->dataset),
+                filePath: $filePath,
+                diskName: config('filament-odk-link.storage.media')
+            );
+        } else {
+
+            if($requiredMediaItem->choiceList === null) {
+                abort(500, 'The choice list for the required media item ' . $requiredMediaItem->name . ' is not set. Please check the form template and ensure all required data media items are linked to a dataset or choice list.');
+            }
+
+            Excel::store(
+                export: new ChoiceListAsMediaAttachmentExport($xlsform, $requiredMediaItem->choiceList),
+                filePath: $filePath,
+                diskName: config('filament-odk-link.storage.media')
+            );
+        }
 
         return $filePath;
     }
-
-
 }

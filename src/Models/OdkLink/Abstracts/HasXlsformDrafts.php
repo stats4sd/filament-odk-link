@@ -41,7 +41,7 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts, HasM
     /** @return BelongsTo<Model, $this> */
     public function owner(): BelongsTo
     {
-        return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
+        return $this->belongsTo(config('filament-odk-link.models.form_owner'), 'owner_id');
     }
 
     /**************** METHODS *************************/

@@ -2,28 +2,29 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages;
 
-use App\Services\HelperService;
-use Filament\Facades\Filament;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
+use Filament\Support\Exceptions\Halt;
+use Illuminate\Validation\ValidationException;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
+use App\Models\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Services\XlsformValidationHelper;
 
 class CreateXlsformTemplate extends CreateRecord
 {
     use CreateRecord\Concerns\HasWizard;
 
     protected static string $resource = XlsformTemplateResource::class;
+
+    protected function onValidationError(ValidationException $exception): void
+    {
+
+    }
 
     // override form from HasWizard trait to add step to url
     public function form(Form $form): Form
@@ -51,19 +52,47 @@ class CreateXlsformTemplate extends CreateRecord
                 ->afterValidation(function (Get $get) {
 
                     try {
+                        // find the full file path of the uploaded xlsform template excel file
+                        $pathName = collect($get('newXlsfile'))->first()->getPathName();
+
+                        // call helper function to perform custom validation for type or_other
+                        $orOtherErrors = XlsformValidationHelper::validateTypeOrOther($pathName);
+                        $languageErrors = XlsformValidationHelper::validateColumnHeadersWithLanguageString($pathName);
+
+                        $errorMessages = $orOtherErrors->merge($languageErrors);
+
+                        // show error messages if any
+                        if ($errorMessages->count() > 0) {
+
+                            // fail the wizard step, keep user in step 1
+
+                            // Add the error messages to a fake field. In Filament 3, only 1 error is shown on a single field.
+                            // Filament 4 is updated to allow devs to show multiple errors for a single field if required.
+                            // To show all errors, we add a custom Shout() component that reads from the errorBag.
+                            // TODO: refactor this when Filament 4 is released.
+                            throw ValidationException::withMessages(['data.fake-field' => $errorMessages->toArray()]);
+                        }
 
                         // wait to trigger the saved event until the xlsform file is attached.
+
+                        // find the correct owner
+                        $owner = (static::getResource())::getFormOwner();
+
                         /** @var XlsformTemplate $xlsformTemplate */
                         $xlsformTemplate = XlsformTemplate::make([
                             'title' => $get('title'),
                             'newXlsfile' => collect($get('newXlsfile'))->first(),
                         ]);
 
-                        $xlsformTemplate->owner()->associate(Platform::first());
+                        $xlsformTemplate->owner()->associate($owner);
 
                         $xlsformTemplate = $xlsformTemplate->testOnOdkCentral();
 
+                       $this->beforeXlsformTemplateSaved($xlsformTemplate);
+
                         $xlsformTemplate->save();
+
+                       $this->afterXlsformTemplateSaved($xlsformTemplate);
 
                         Notification::make('xlsform_template_updated')
                             ->title('XLSForm Template Updated')
@@ -73,16 +102,34 @@ class CreateXlsformTemplate extends CreateRecord
                             ->send();
 
                         return redirect($this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]));
-                    } catch (\Throwable $e) {
+                    } catch (ValidationException $e) {
 
                         Notification::make('xlsform_template_not_saved')
                             ->title('XLSForm Template Not Saved')
-                            ->body('There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage())
+                            ->body('Please check the file upload and review the error messages.')
                             ->danger()
                             ->persistent()
                             ->send();
 
-                        return redirect($this->getResource()::getUrl('create') . '?step=1-xlsform&title=' . urlencode($get('title')));
+                        throw $e;
+                    } catch (\Throwable $e) {
+
+                        // Generic catch-all for errors coming back from ODK Central. Convert them into validation errors to be displayed on the front-end.
+
+                        $notificationBody = 'There was an error saving the XLSForm Template. ODK Returned the following error: '.$e->getMessage();
+
+                        if ($e->getMessage() == '') {
+                            $notificationBody = 'There was an error saving the XLSForm Template.';
+                        }
+
+                        Notification::make('xlsform_template_not_saved')
+                            ->title('XLSForm Template Not Saved')
+                            ->body($notificationBody)
+                            ->danger()
+                            ->persistent()
+                            ->send();
+
+                        throw ValidationException::withMessages(['data.fake-field' => [$notificationBody]]);
                     }
 
                 }),
@@ -98,4 +145,14 @@ class CreateXlsformTemplate extends CreateRecord
                 ->schema([]),
         ];
     }
+
+
+    // Placeholder function - can override this function to perform extra actions
+    // - after the form is sent to ODK Central and is successfully validated, but before it is saved.
+    public function beforeXlsformTemplateSaved(?IsXlsformTemplate $xlsformTemplate = null)
+    {}
+
+    // placeholder function. Can override this function to perform extra actions after the $xlsformTemplate is saved
+    public function afterXlsformTemplateSaved(IsXlsformTemplate $xlsformTemplate)
+    {}
 }

@@ -6,7 +6,6 @@ use Awcodes\Shout\Components\Shout;
 use Awcodes\Shout\Components\ShoutEntry;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
-use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Tabs;
@@ -24,18 +23,20 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\RelationManagers\XlsformModuleRelationManager;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\RelationManagers;
 use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 // Use this resource for an admin panel
 // This resource is for templates that can be made available to all platform users
 
-class XlsformTemplateResource extends resource
+class XlsformTemplateResource extends Resource
 {
     protected static ?string $model = XlsformTemplate::class;
 
@@ -43,10 +44,11 @@ class XlsformTemplateResource extends resource
 
     protected static ?string $navigationGroup = 'ODK Forms and Datasets';
 
-    public static function getEloquentQuery(): Builder
+    protected static WithXlsformTemplates $formOwner;
+
+    public static function getFormOwner(): WithXlsformTemplates
     {
-        return parent::getEloquentQuery()
-            ->where('owner_type', '=', Platform::class);
+        return Platform::first();
     }
 
     public static function form(Form $form): Form
@@ -81,7 +83,7 @@ class XlsformTemplateResource extends resource
                 }),
 
             Shout::make('file_info')
-                ->content(new HtmlString('Please upload a valid Xlsform file. Note that while in regular ODK the "settings" worksheet is optional, this system requires it, so please make sure you have a settings worksheet with at least the form_id and form_title variables added. See the <a href="https://docs.getodk.org/xlsform/#the-settings-sheet">ODK documentation here</a> for more information.')),
+                ->content(new HtmlString('Please upload a valid Xlsform file. If you have not yet validated your form, we recommend you do so here: <a target="_blank" href="https://getodk.org/xlsform/" class="underline text-primary-800">https://getodk.org/xlsform/</a>.<br/><br/>Note that while in regular ODK the "settings" worksheet is optional, this system requires it, so please make sure you have a settings worksheet with at least the form_id and form_title variables added. See the <a href="https://docs.getodk.org/xlsform/#the-settings-sheet">ODK documentation here</a> for more information.')),
             Forms\Components\FileUpload::make('newXlsfile')
                 ->storeFiles(false)
                 ->label('Upload your Xlsform File in Excel format')
@@ -91,6 +93,14 @@ class XlsformTemplateResource extends resource
                 ->hiddenOn(['edit'])
                 ->disabledOn(['edit'])
                 ->placeholder(__('File')),
+
+            // Custom validation display - because Filament fields only show 1 validation error message. This component shows all errors thrown at once.
+            // TODO: refactor in Filament 4, when we can set fields to show multiple errors if needed.
+            Shout::make('validation_info')
+                ->color('danger')
+                ->visible(fn($livewire): bool => $livewire->getErrorBag()->any())
+                ->content(fn($livewire): HtmlString => new HtmlString(collect($livewire->getErrorBag()->all())->join('<br/><br/>'))),
+
         ];
     }
 
@@ -147,29 +157,53 @@ class XlsformTemplateResource extends resource
                 ->relationship()
                 ->addable(false)
                 ->deletable(false)
-                ->schema([
+                ->schema(function (?IsXlsformTemplate $record) {
+                    $xlsformTemplate = $record;
 
-                    HtmlBlock::make('name')
-                        ->content(
-                            fn(?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
-                        ),
-                    Forms\Components\Toggle::make('is_static')
-                        ->label('Is this a static media file?')
-                        ->default(false)
-                        ->live(),
+                    return
+                        [
+                            HtmlBlock::make('name')
+                                ->content(
+                                    fn(?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
+                                ),
+                            Forms\Components\Toggle::make('is_static')
+                                ->label('Is this a static media file?')
+                                ->default(false)
+                                ->live(),
 
-                    // for static media
-                    Forms\Components\SpatieMediaLibraryFileUpload::make('file')
-                        ->preserveFilenames()
-                        ->downloadable()
-                        ->required()
-                        ->visible(fn(Get $get): bool => $get('is_static')),
+                            // for static media
+                            Forms\Components\Grid::make('static_media_info')
+                                ->visible(fn(Get $get): bool => $get('is_static'))
+                                ->schema([
+                                    Forms\Components\SpatieMediaLibraryFileUpload::make('file')
+                                        ->preserveFilenames()
+                                        ->downloadable()
+                                        ->required(),
+                                ]),
 
-                    // for non-static media (linked to datasets)
-                    Shout::make('dataset_info')
-                ->content('This platform is not set up to support ODK Entities. This csv file will be created based on individual team\'s choice list entries, which are editable through the front-end of this platform.')
-                    ->visible(fn(Get $get): bool => !$get('is_static')),
-                ]),
+                            // for non-static media (linked to datasets)
+                            Forms\Components\Grid::make('dataset_media_info')
+                                ->visible(fn(Get $get, ?RequiredMedia $record): bool => $record?->links_to_dataset && !$get('is_static'))
+                                ->schema([
+                                    Shout::make('dataset_info')
+                                        ->content(fn(?RequiredMedia $record): HtmlString => new HtmlString('Select the dataset that contains the list of entries for this linked dataset. When the form is published, the full content of the chosen dataset will be written to a csv file and uploaded to ODK as a file attachment.'))
+                                        ->visible(fn(Get $get): bool => !$get('is_static')),
+                                    Forms\Components\Select::make('dataset_id')
+                                        ->relationship('dataset', 'name', modifyQueryUsing: fn(Builder $query) => $query->whereHas('owner', fn(Builder $query) => $query->whereKey($xlsformTemplate->owner_id)))
+                                        ->preload()
+                                        ->searchable()
+                                        ->visible(fn(Get $get): bool => !$get('is_static')),
+                                ]),
+
+                            Forms\Components\Grid::make('choice_list_media_info')
+                                ->visible(fn(Get $get, ?RequiredMedia $record): bool => !$record?->links_to_dataset && !$get('is_static'))
+                                ->schema([
+                                    Shout::make('choice_list_info')
+                                        ->content(fn(?RequiredMedia $record): string => "This csv file will be automatically generated from the linked choice list " . $record->choiceList?->list_name . ". This list is editable by individual teams using versions of this Form Template."),
+                                ]),
+
+                        ];
+                }),
         ];
     }
 
@@ -320,7 +354,6 @@ class XlsformTemplateResource extends resource
                     ->action(function (array $data, XlsformTemplate $record) {
                         try {
 
-
                             $record->title = $data['title'];
                             $record->newXlsfile = $data['newXlsfile'];
 
@@ -334,7 +367,6 @@ class XlsformTemplateResource extends resource
                                 ->success()
                                 ->persistent()
                                 ->send();
-
 
                         } catch (\Exception $e) {
 
@@ -365,6 +397,7 @@ class XlsformTemplateResource extends resource
         return $infolist
             ->schema([
                 ShoutEntry::make('Processing')
+                    ->columnSpan('full')
                     ->visible(fn(?XlsformTemplate $record): bool => $record?->processing)
                     ->content('This Form is currently being processed, and is not yet available for use. This should only take a few minutes after being updated. If you see this notification for more than a few minutes, please contact support.'),
                 Section::make('Xlsform Details')
@@ -579,17 +612,17 @@ class XlsformTemplateResource extends resource
     public static function getRelations(): array
     {
         return [
-            XlsformModuleRelationManager::class,
+            RelationManagers\XlsformModuleRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages\ListXlsformTemplates::route('/'),
-            'create' => \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages\CreateXlsformTemplate::route('/create'),
-            'edit' => \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages\EditXlsformTemplate::route('/{record}/edit'),
-            'view' => \Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource\Pages\ViewXlsformTemplate::route('/{record}'),
+            'index' => Pages\ListXlsformTemplates::route('/'),
+            'create' => Pages\CreateXlsformTemplate::route('/create'),
+            'edit' => Pages\EditXlsformTemplate::route('/{record}/edit'),
+            'view' => Pages\ViewXlsformTemplate::route('/{record}'),
         ];
     }
 }

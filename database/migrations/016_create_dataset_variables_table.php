@@ -13,6 +13,8 @@ return new class extends Migration
             $table->foreignId('dataset_id')->constrained('datasets');
             $table->string('name');
             $table->string('label');
+            $table->string('type')->nulllable();
+            $table->string('value_type')->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
 

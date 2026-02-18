@@ -2,25 +2,13 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use Hoa\Compiler\Llk\Rule\Choice;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Rector\PhpAttribute\AnnotationToAttributeMapper\CurlyListNodeAnnotationToAttributeMapper;
 use ShiftOneLabs\LaravelCascadeDeletes\CascadesDeletes;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasLanguageStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithLanguageStrings;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
-use Stats4sd\FilamentOdkLink\Services\HelperService;
-use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasLanguageStrings;
 
 class SurveyRow extends Model implements WithLanguageStrings
 {
@@ -32,9 +20,9 @@ class SurveyRow extends Model implements WithLanguageStrings
 
         // When a survey row is changed, we need to recompile any draft xlsforms that include it.
         static::saved(function (self $surveyRow) {
-           $surveyRow->xlsformModuleVersion->xlsforms()->update([
-              'draft_needs_update' => true,
-           ]);
+            $surveyRow->xlsformModuleVersion->xlsforms()->update([
+                'draft_needs_update' => true,
+            ]);
         });
 
         static::deleting(function ($surveyRow) {
@@ -67,11 +55,15 @@ class SurveyRow extends Model implements WithLanguageStrings
     protected function typeAndChoiceList(): Attribute
     {
         return new Attribute(
-            get: function() {
-                if(Str::contains($this->type, 'select')) {
+            get: function () {
+                if (Str::contains($this->type, 'select')) {
                     $listName = $this->choiceList?->list_name;
 
-                    return Str::before($this->type, ' ') . ' ' . $listName;
+                    // TODO: update items linked to Dataset instead of ChoiceList
+                    // HACK: workaround is to ignore this if there is no linked list
+                    if ($listName) {
+                        return Str::before($this->type, ' ').' '.$listName;
+                    }
                 }
 
                 return $this->type;
@@ -97,6 +89,4 @@ class SurveyRow extends Model implements WithLanguageStrings
 
         return $type;
     }
-
-
 }

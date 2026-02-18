@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $teamTable = (new (config('filament-odk-link.models.team_model')))->getTable();
+        $teamTable = (new (config('filament-odk-link.models.form_owner')))->getTable();
 
         Schema::create('choice_list_entries_removed_owner', function (Blueprint $table) use ($teamTable) {
             $table->id();
