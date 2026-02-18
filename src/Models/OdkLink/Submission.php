@@ -80,7 +80,10 @@ class Submission extends Model implements HasMedia
             // if a submission is moved from test to live data, check and update the linked farm.
             if ($submission->isDirty('test_data')) {
                 $subject = $submission->primaryDataSubject;
-                $subject->updateCompletionStatus();
+
+                if ($subject) {
+                    $subject->updateCompletionStatus();
+                }
             }
 
         });

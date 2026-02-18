@@ -248,6 +248,11 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         return app()->make(OdkLinkService::class)->getSubmissions($this);
     }
 
+    public function getOneSubmission(): int
+    {
+        return app()->make(OdkLinkService::class)->getOneSubmission($this);
+    }
+
     /**
      * @throws BindingResolutionException
      * @throws \Exception
