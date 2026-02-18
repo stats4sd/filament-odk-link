@@ -443,12 +443,15 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
             ->filter(fn (XlsformTemplateSection $section) => $section->dataset)
             ->each(function (XlsformTemplateSection $section) {
 
+                $order = 0;
+
                 $variables = $section->schema
                     ->filter(fn ($item) => isset($item['value_type']) && $item['value_type'] !== 'note')
                     ->map(fn ($item) => [
                         'name' => $item['name'],
                         'label' => $item['name'],
                         'dataset_id' => $section->dataset->id,
+                        'order' => $order++,
                         'type' => $item['type'],
                         'value_type' => $item['value_type'],
                     ]);

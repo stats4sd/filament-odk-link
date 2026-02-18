@@ -13,7 +13,7 @@ return new class extends Migration
          */
         Schema::create('xlsform_versions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('xlsform_id')->constrained('xlsforms');
+            $table->foreignId('xlsform_id')->constrained('xlsforms')->cascadeOnDelete()->cascadeOnUpdate();
             $table->string('version');
             $table->string('odk_version');
 
