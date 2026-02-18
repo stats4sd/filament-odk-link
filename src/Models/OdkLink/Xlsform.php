@@ -24,8 +24,6 @@ use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\NotifyUserThatXlsformFileIsD
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\NotifyUserThatXlsformFileIsUpdated;
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\PublishXlsformOnOdkCentral;
 use Stats4sd\FilamentOdkLink\Events\XlsformDraftWasDeployed;
-use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformWorkbookExport;
-use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\DeployDraftXlsformToOdkCentral;
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\UpdateXlsformFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
@@ -53,12 +51,12 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         // when the model is created;
         static::saved(static function (self $xlsform) {
 
-            if (! $xlsform->has_latest_template) {
+            if (!$xlsform->has_latest_template) {
                 $xlsform->syncWithTemplate();
             }
 
             // check if the needs_up date was updated from true to false
-            if ($xlsform->wasChanged('draft_needs_update') && ! $xlsform->draft_needs_update) {
+            if ($xlsform->wasChanged('draft_needs_update') && !$xlsform->draft_needs_update) {
 
                 // if only draft was deployed
                 if ($xlsform->live_needs_update) {
@@ -113,7 +111,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     protected function xlsformId(): Attribute
     {
         return new Attribute(
-            get: fn (): string => str($this->title)->slug().'_'.$this->id,
+            get: fn(): string => str($this->title)->slug() . '_' . $this->id,
         );
     }
 
@@ -121,7 +119,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     protected function currentVersion(): Attribute
     {
         return new Attribute(
-            get: fn (): string => $this->xlsformVersions()->latest()->first()->version ?? '',
+            get: fn(): string => $this->xlsformVersions()->latest()->first()->version ?? '',
         );
     }
 
@@ -135,7 +133,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                     return 'PROCESSING';
                 }
 
-                if (! $this->odk_draft_token) {
+                if (!$this->odk_draft_token) {
                     return 'NOT DEPLOYED';
                 }
 
@@ -243,9 +241,9 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
     public function getOdkLinkAttribute(): ?string
     {
-        $appends = ! $this->is_active ? '/draft' : '';
+        $appends = !$this->is_active ? '/draft' : '';
 
-        return config('filament-odk-link.odk.url').'/#/projects/'.$this->owner->odkProject->id.'/forms/'.$this->odk_id.$appends;
+        return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
     }
 
     // make sure the xlsform is using the latest template
@@ -257,7 +255,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
             ->sortBy('default_order')
 
             // check for modules where the module version is not _already_ linked to this form (to avoid resetting custom ordering)
-            ->filter(fn (XlsformModule $module) => $this->xlsformModuleVersions->doesntContain('xlsform_module_id', $module->id))
+            ->filter(fn(XlsformModule $module) => $this->xlsformModuleVersions->doesntContain('xlsform_module_id', $module->id))
             ->each(function (XlsformModule $xlsformModule) use (&$countModules) {
                 $this->xlsformModuleVersions()->attach($xlsformModule->defaultXlsformVersion, ['order' => $xlsformModule->default_order]);
 
@@ -265,7 +263,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                 if ($xlsformModule->can_be_extended) {
                     $localModuleVersion = XlsformModuleVersion::firstOrCreate([
                         'owner_id' => $this->owner->id,
-                        'name' => 'Local '.$xlsformModule->name,
+                        'name' => 'Local ' . $xlsformModule->name,
                     ]);
 
                     $this->xlsformModuleVersions()->sync([$localModuleVersion->id => ['order' => $xlsformModule->default_order + 1]], detaching: false);
@@ -351,7 +349,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         // mark form as unready
         $this->updateQuietly(['processing' => true]);
 
-        $filePath = 'temp/'.$this->getKey().'/'.$this->title.'.xlsx';
+        $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
         $user = auth()->user();
 
         return Excel::queue(new XlsformWorkbookExport($this), $filePath, config('filament-odk-link.storage.xlsforms'))->chain(
@@ -374,7 +372,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         }
 
         // if this is immediately after publishing, skip regenerating the xlsfile
-        if($published) {
+        if ($published) {
             return DeployDraftXlsformToOdkCentral::dispatch($this, $withMedia, auth()->user());
         }
 
