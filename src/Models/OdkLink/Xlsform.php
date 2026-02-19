@@ -417,8 +417,12 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         $this->syncWithTemplate();
         $this->refresh();
 
-        if()
-        $this->deployDraft();
+        // Check the platform config to decide if the form should be deployed as a draft, or automatically published after creation
+        if(config('filament-odk-link.should_auto_publish_xlsforms')) {
+            $this->publishForm();
+        } else {
+            $this->deployDraft();
+        }
     }
 
     //
