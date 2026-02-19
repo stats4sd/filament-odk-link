@@ -396,7 +396,8 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
             return null;
         }
 
-        if ($this->draft_needs_update) {
+        // if the draft needs an update, or if the form has never been deployed, deploy the draft first before publishing.
+        if ($this->draft_needs_update || !$this->odk_id) {
             return $this->deployDraft()
                 ->chain([
                     new PublishXlsformOnOdkCentral($this, auth()->user()),
