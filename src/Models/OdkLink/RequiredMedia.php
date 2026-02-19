@@ -19,6 +19,8 @@ class RequiredMedia extends Pivot implements HasMedia
         'links_to_dataset' => 'boolean',
     ];
 
+    protected $guarded = [];
+
     protected static function booted(): void
     {
 

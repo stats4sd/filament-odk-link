@@ -17,6 +17,8 @@ class Dataset extends Model implements HasMedia
 {
     use InteractsWithMedia;
 
+    protected $guarded = [];
+
     /** @return BelongsTo<HasXlsforms, $this> */
     public function owner(): BelongsTo
     {

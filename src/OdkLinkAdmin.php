@@ -4,8 +4,8 @@ namespace Stats4sd\FilamentOdkLink;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\DatasetResource;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplateResource;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\DatasetResource;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
 use Stats4sd\FilamentOdkLink\Filament\Widgets\AvailableOdkTemplatesWidget;
 use Stats4sd\FilamentOdkLink\Filament\Widgets\OdkUrlAlertWidget;
 

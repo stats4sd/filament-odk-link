@@ -16,6 +16,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('dataset_id')->nullable()->constrained('datasets');
             $table->foreignId('xlsform_template_id')->constrained('xlsform_templates')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignId('choice_list_id')->nullable()->constrained('choice_lists');
 
             $table->string('name');
             $table->string('type');
@@ -24,6 +25,8 @@ return new class extends Migration
             $table->boolean('is_static')->default(true);
             $table->boolean('exists_on_odk')->default(false);
             $table->boolean('updated_during_import')->default(false);
+            $table->boolean('links_to_dataset')->default(0);
+            
             $table->timestamps();
         });
     }

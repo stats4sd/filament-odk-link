@@ -9,6 +9,8 @@ class ParentDatasetPivot extends Pivot
 {
     protected $table = 'dataset_parents';
 
+    protected $guarded = [];
+
     public $timestamps = true;
 
     /** @return BelongsTo<Dataset, $this> */

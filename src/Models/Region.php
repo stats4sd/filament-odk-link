@@ -13,6 +13,8 @@ class Region extends Model
     protected $keyType = 'string';
     public $incrementing = false;
 
+    protected $guarded = [];
+
 
     public function countries(): HasMany
     {

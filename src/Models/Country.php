@@ -17,6 +17,8 @@ class Country extends Model
 
     protected $table = 'countries';
 
+    protected $guarded = [];
+
     /** @return BelongsTo<Region, $this> */
     public function region(): BelongsTo
     {

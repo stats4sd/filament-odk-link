@@ -12,6 +12,7 @@ class AppUser extends Model
     protected $table = 'app_users';
 
     protected $appends = ['qr_code_string'];
+    protected $guarded = [];
 
     /** @return BelongsTo<OdkProject, $this> */
     public function odkProject(): BelongsTo

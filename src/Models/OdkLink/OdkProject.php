@@ -22,6 +22,8 @@ class OdkProject extends Model
         'odk_url',
     ];
 
+    protected $guarded = [];
+
      /** @return MorphTo<Model, $this> */
     public function owner(): MorphTo
     {

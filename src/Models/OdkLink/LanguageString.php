@@ -14,14 +14,13 @@ use Znck\Eloquent\Relations\BelongsToThrough;
 class LanguageString extends Model
 {
 
-
-
     use \Znck\Eloquent\Traits\BelongsToThrough;
 
     protected $casts = [
         'updated_during_import' => 'boolean',
     ];
 
+    protected $guarded = [];
 
     /** @return Attribute<string, string> */
     protected function text(): Attribute

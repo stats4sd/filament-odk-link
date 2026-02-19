@@ -11,6 +11,8 @@ class EntityValue extends Model
 {
     protected $table = 'entity_values';
 
+    protected $guarded = [];
+
     /** @return BelongsTo<DatasetVariable, $this> */
     public function datasetVariable(): BelongsTo
     {

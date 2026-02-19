@@ -10,6 +10,8 @@ class OdkDataset extends Model
 {
     protected $table = 'odk_datasets';
 
+    protected $guarded = [];
+
     /** @return BelongsTo<Dataset, $this> */
     public function dataset(): BelongsTo
     {
