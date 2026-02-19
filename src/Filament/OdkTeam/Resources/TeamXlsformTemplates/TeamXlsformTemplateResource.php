@@ -55,6 +55,7 @@ class TeamXlsformTemplateResource extends XlsformTemplateResource
                 $query
                     ->whereHasMorph(
                         relation: 'owner',
+                        // TODO: decide - do we allow for instances where the 'owner' is not the current tenant?
                         types: [get_class(Filament::getTenant())],
                         callback: function (Builder $subQuery) {
                             $subQuery->where('id', Filament::getTenant()->getKey());

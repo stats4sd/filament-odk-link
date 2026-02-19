@@ -140,7 +140,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                 }
 
                 if ($this->is_active) {
-                    return 'LIVE';
+                    return 'ACTIVE';
                 }
 
                 if ($this->xlsformVersions()->where('is_draft', false)->count() === 0) {
