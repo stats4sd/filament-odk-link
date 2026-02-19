@@ -85,4 +85,7 @@ return [
         ],
 
     ],
+
+    'should_auto_publish_xlsforms' => env('SHOULD_AUTO_PUBLISH_XLSFORMS', false),
+
 ];

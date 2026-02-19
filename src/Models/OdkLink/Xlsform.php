@@ -392,12 +392,14 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      */
     public function publishForm(): ?PendingDispatch
     {
+
         if ($this->processing) {
             return null;
         }
 
         // if the draft needs an update, or if the form has never been deployed, deploy the draft first before publishing.
-        if ($this->draft_needs_update || !$this->odk_id) {
+        if ($this->draft_needs_update || !$this->is_active) {
+
             return $this->deployDraft()
                 ->chain([
                     new PublishXlsformOnOdkCentral($this, auth()->user()),
@@ -414,6 +416,8 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     {
         $this->syncWithTemplate();
         $this->refresh();
+
+        if()
         $this->deployDraft();
     }
 
