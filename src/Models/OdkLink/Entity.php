@@ -99,7 +99,7 @@ class Entity extends Model
                 $entry['dataset_variable_name'] = $entry['dataset_variable_name'].".{$count}";
 
                 if ($count > 500) {
-                    dd('warning - infinite loop detected in Entity::addValues()');
+                    throw new Exception("Error Processing Request; Too many nested values.", 1);
                 }
             }
 
