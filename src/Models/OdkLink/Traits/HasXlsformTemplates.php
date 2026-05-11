@@ -77,7 +77,8 @@ trait HasXlsformTemplates
         return new Attribute(
             get: function (): ?string {
 
-                if (! $this->odkProject->appUsers->first()) {
+                // add null-safe operator to odkProject, to prevent crash on ->toArray() when a team without an ODK project 
+                if (! $this->odkProject?->appUsers->first()) {
                     return null;
                 }
 
