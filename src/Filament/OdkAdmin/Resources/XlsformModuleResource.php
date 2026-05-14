@@ -9,6 +9,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformModuleResource\Pages\ManageXlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 class XlsformModuleResource extends Resource
 {
@@ -24,6 +25,10 @@ class XlsformModuleResource extends Resource
         return $form
             ->columns(1)
             ->schema([
+                Forms\Components\Select::make('xlsform_template_id')
+                    ->label('Xlsform Template')
+                    ->relationship('xlsformTemplate', 'title')
+                    ->required(),
                 Forms\Components\TextInput::make('label')
                     ->label('Enter the readable name of the module type')
                     ->hint('e.g. "Dietary Diversity"')

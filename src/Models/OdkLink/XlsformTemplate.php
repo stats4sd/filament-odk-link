@@ -318,6 +318,10 @@ class XlsformTemplate extends HasXlsformDrafts
     // get required media from ODK Central and store in the database
     public function getRequiredMedia(): void
     {
+        if (! config('filament-odk-link.odk.url')) {
+            return;
+        }
+
         $odkLinkService = app()->make(OdkLinkService::class);
         $mediaItems = $odkLinkService->getRequiredMedia($this);
 
