@@ -25,10 +25,11 @@ class XlsformModuleVersionResource extends Resource
         return $form
             ->columns(1)
             ->schema([
+                // change xlsform_module_id from required to optional.
+                // This allows to create a new xlsform module version without linking it to any existing xlsform module
                 Forms\Components\Select::make('xlsform_module_id')
                     ->relationship('xlsformModule', 'label')
-                    ->getOptionLabelFromRecordUsing(fn (XlsformModule $xlsformModule): string => "{$xlsformModule->xlsformTemplate->title} - $xlsformModule->name")
-                    ->required(),
+                    ->getOptionLabelFromRecordUsing(fn (XlsformModule $xlsformModule): string => "{$xlsformModule->xlsformTemplate->title} - $xlsformModule->name"),
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
