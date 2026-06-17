@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Models\Country;
@@ -122,5 +123,70 @@ class XlsformModuleVersion extends Model implements HasMedia
     public function owner(): BelongsTo
     {
         return $this->belongsTo(config('filament-odk-link.models.team_model'), 'owner_id');
+    }
+
+    /**
+     * Deep-clone this version for a specific team owner.
+     *
+     * Copies the version record, all ChoiceLists (and their visible
+     * ChoiceListEntries + LanguageStrings), all SurveyRows (+ their
+     * LanguageStrings), and the locale pivot records. The IsLookupList
+     * global scope on ChoiceListEntry is intentionally preserved so only
+     * entries visible to the current team are cloned.
+     */
+    public function cloneForTeam(Model $team): static
+    {
+        return DB::transaction(function () use ($team) {
+            $newVersion = $this->replicate();
+            $newVersion->owner_id = $team->id;
+            $newVersion->is_default = false;
+            $newVersion->name = ($this->xlsformModule->name ?? $this->name) . ' - ' . $team->name;
+            $newVersion->save();
+
+            // Clone ChoiceLists first; build an old→new ID map for SurveyRow references.
+            $choiceListMap = [];
+            foreach ($this->choiceLists()->get() as $choiceList) {
+                $newList = $choiceList->replicate(['xlsform_module_version_id']);
+                $newList->xlsform_module_version_id = $newVersion->id;
+                $newList->save();
+                $choiceListMap[$choiceList->id] = $newList->id;
+
+                foreach ($choiceList->choiceListEntries()->get() as $entry) {
+                    $newEntry = $entry->replicate(['choice_list_id']);
+                    $newEntry->choice_list_id = $newList->id;
+                    $newEntry->save();
+
+                    foreach ($entry->languageStrings()->get() as $ls) {
+                        $newLs = $ls->replicate(['linked_entry_id']);
+                        $newLs->linked_entry_id = $newEntry->id;
+                        $newLs->save();
+                    }
+                }
+            }
+
+            foreach ($this->surveyRows()->get() as $row) {
+                $newRow = $row->replicate(['xlsform_module_version_id', 'choice_list_id']);
+                $newRow->xlsform_module_version_id = $newVersion->id;
+                $newRow->choice_list_id = $row->choice_list_id
+                    ? ($choiceListMap[$row->choice_list_id] ?? null)
+                    : null;
+                $newRow->save();
+
+                foreach ($row->languageStrings()->get() as $ls) {
+                    $newLs = $ls->replicate(['linked_entry_id']);
+                    $newLs->linked_entry_id = $newRow->id;
+                    $newLs->save();
+                }
+            }
+
+            foreach ($this->locales()->get() as $locale) {
+                $newVersion->locales()->attach($locale->id, [
+                    'needs_update' => false,
+                    'updated_during_import' => false,
+                ]);
+            }
+
+            return $newVersion;
+        });
     }
 }
