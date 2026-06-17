@@ -19,8 +19,7 @@ class XlsformModuleVersionForm
             ->schema([
                 Select::make('xlsform_module_id')
                     ->relationship('xlsformModule', 'label')
-                    ->getOptionLabelFromRecordUsing(fn (XlsformModule $xlsformModule): string => "{$xlsformModule->xlsformTemplate->title} - $xlsformModule->name")
-                    ->required(),
+                    ->getOptionLabelFromRecordUsing(fn (XlsformModule $xlsformModule): string => "{$xlsformModule->xlsformTemplate->title} - $xlsformModule->name"),
                 TextInput::make('name')
                     ->required()
                     ->maxLength(255),
