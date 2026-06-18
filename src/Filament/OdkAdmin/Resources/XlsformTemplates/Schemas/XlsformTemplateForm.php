@@ -4,7 +4,7 @@ namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\
 
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
-use Awcodes\Shout\Components\Shout;
+use Filament\Schemas\Components\Callout;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Tabs;
@@ -54,8 +54,9 @@ class XlsformTemplateForm
                     return request()->query('title');
                 }),
 
-            Shout::make('file_info')
-                ->content(new HtmlString('Please upload a valid Xlsform file. If you have not yet validated your form, we recommend you do so here: <a target="_blank" href="https://getodk.org/xlsform/" class="underline text-primary-800">https://getodk.org/xlsform/</a>.<br/><br/>Note that while in regular ODK the "settings" worksheet is optional, this system requires it, so please make sure you have a settings worksheet with at least the form_id and form_title variables added. See the <a href="https://docs.getodk.org/xlsform/#the-settings-sheet">ODK documentation here</a> for more information.')),
+            Callout::make()
+                ->info()
+                ->description(new HtmlString('Please upload a valid Xlsform file. If you have not yet validated your form, we recommend you do so here: <a target="_blank" href="https://getodk.org/xlsform/" class="underline text-primary-800">https://getodk.org/xlsform/</a>.<br/><br/>Note that while in regular ODK the "settings" worksheet is optional, this system requires it, so please make sure you have a settings worksheet with at least the form_id and form_title variables added. See the <a href="https://docs.getodk.org/xlsform/#the-settings-sheet">ODK documentation here</a> for more information.')),
             FileUpload::make('newXlsfile')
                 ->storeFiles(false)
                 ->label('Upload your Xlsform File in Excel format')
@@ -68,10 +69,10 @@ class XlsformTemplateForm
 
             // Custom validation display - because Filament fields only show 1 validation error message. This component shows all errors thrown at once.
             // TODO: refactor in Filament 4, when we can set fields to show multiple errors if needed.
-            Shout::make('validation_info')
-                ->color('danger')
+            Callout::make()
+                ->danger()
                 ->visible(fn($livewire): bool => $livewire->getErrorBag()->any())
-                ->content(fn($livewire): HtmlString => new HtmlString(collect($livewire->getErrorBag()->all())->join('<br/><br/>'))),
+                ->description(fn($livewire): HtmlString => new HtmlString(collect($livewire->getErrorBag()->all())->join('<br/><br/>'))),
 
         ];
     }
@@ -157,8 +158,9 @@ class XlsformTemplateForm
                             Grid::make('dataset_media_info')
                                 ->visible(fn(Get $get, ?RequiredMedia $record): bool => $record?->links_to_dataset && !$get('is_static'))
                                 ->schema([
-                                    Shout::make('dataset_info')
-                                        ->content(fn(?RequiredMedia $record): HtmlString => new HtmlString('Select the dataset that contains the list of entries for this linked dataset. When the form is published, the full content of the chosen dataset will be written to a csv file and uploaded to ODK as a file attachment.'))
+                                    Callout::make()
+                                        ->info()
+                                        ->description(fn(?RequiredMedia $record): HtmlString => new HtmlString('Select the dataset that contains the list of entries for this linked dataset. When the form is published, the full content of the chosen dataset will be written to a csv file and uploaded to ODK as a file attachment.'))
                                         ->visible(fn(Get $get): bool => !$get('is_static')),
                                     Select::make('dataset_id')
                                         ->relationship('dataset', 'name', modifyQueryUsing: fn(Builder $query) => $query->whereHas('owner', fn(Builder $query) => $query->whereKey($xlsformTemplate->owner_id)))
@@ -170,8 +172,9 @@ class XlsformTemplateForm
                             Grid::make('choice_list_media_info')
                                 ->visible(fn(Get $get, ?RequiredMedia $record): bool => !$record?->links_to_dataset && !$get('is_static'))
                                 ->schema([
-                                    Shout::make('choice_list_info')
-                                        ->content(fn(?RequiredMedia $record): string => "This csv file will be automatically generated from the linked choice list " . $record->choiceList?->list_name . ". This list is editable by individual teams using versions of this Form Template."),
+                                    Callout::make()
+                                        ->info()
+                                        ->description(fn(?RequiredMedia $record): string => "This csv file will be automatically generated from the linked choice list " . $record->choiceList?->list_name . ". This list is editable by individual teams using versions of this Form Template."),
                                 ]),
 
                         ];
