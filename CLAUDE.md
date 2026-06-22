@@ -21,6 +21,10 @@ composer format                     # Laravel Pint (custom rules in pint.json)
 
 Tests run via **Pest + Orchestra Testbench** — there is no host app, the package boots itself inside Testbench. [tests/TestCase.php](tests/TestCase.php) registers the Filament service providers manually and points the DB at an in-memory `testing` connection. New test files are auto-bound to `TestCase` by [tests/Pest.php](tests/Pest.php).
 
+## Plans
+
+Approved implementation plans live in [docs/plans/](docs/plans/). When work on a plan begins, store the plan there (one file per plan) and keep its status note current. After completing significant work on the plan, update the "`Status:`" line and `### Progress Log` section at the top of the document.
+
 ## Configuration & host-app contract
 
 All behaviour is driven by [config/filament-odk-link.php](config/filament-odk-link.php) (env-backed). The package does **not** ship the form-owner or user models — the host app supplies them:

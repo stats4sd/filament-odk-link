@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php -l *)"
+      "Bash(php -l *)",
+      "Bash(vendor/bin/pest)",
+      "Bash(vendor/bin/pest --no-coverage)",
+      "Bash(vendor/bin/pest * --no-coverage)",
+      "Bash(grep -rn '*' src/)",
+      "Bash(grep -rn 'protected static ?string $navigation' src/Filament/)"
     ]
   }
 }

@@ -6,8 +6,8 @@ use Filament\Forms;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -31,11 +31,11 @@ class ChoiceListEntriesRelationManager extends RelationManager
         return $record;
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->columns(1)
-            ->schema(function (ChoiceListEntriesRelationManager $livewire) {
+            ->schema(function () {
 
                 $choiceList = $this->getOwnerRecord();
 

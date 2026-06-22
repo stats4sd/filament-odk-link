@@ -8,7 +8,6 @@ class OdkUrlAlertWidget extends Widget
 {
     protected int | string | array $columnSpan = 'full';
 
-    /** @phpstan-ignore-next-line  */
-    protected static string $view = 'filament-odk-link::filament.widgets.odk-url-alert-widget';
+    protected string $view = 'filament-odk-link::filament.widgets.odk-url-alert-widget';
 
 }

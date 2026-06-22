@@ -1,5 +1,5 @@
 <?php
 
-it('can test', static function () {
+it('can test', function () {
     expect(true)->toBeTrue();
 });

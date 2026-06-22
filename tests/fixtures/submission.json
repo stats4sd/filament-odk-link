@@ -1,0 +1,21 @@
+{
+  "__id": "uuid:11111111-2222-3333-4444-555555555555",
+  "__system": {
+    "submissionDate": "2026-06-01T10:00:00.000Z",
+    "submitterId": "42",
+    "reviewState": null
+  },
+  "meta": {
+    "instanceID": "uuid:11111111-2222-3333-4444-555555555555"
+  },
+  "start_time": "2026-06-01T09:55:00.000+01:00",
+  "end_time": "2026-06-01T10:00:00.000+01:00",
+  "deviceid": "collect:abcdef123456",
+  "respondent_name": "Test Respondent",
+  "age": "34",
+  "region": "north",
+  "household_members": [
+    { "member_name": "Person A", "member_age": "10" },
+    { "member_name": "Person B", "member_age": "8" }
+  ]
+}
