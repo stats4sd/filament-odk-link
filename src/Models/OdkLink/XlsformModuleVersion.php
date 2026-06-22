@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Models\Country;
@@ -80,7 +81,7 @@ class XlsformModuleVersion extends Model implements HasMedia
         return $this->hasManyThrough(ChoiceListEntry::class, ChoiceList::class, 'xlsform_module_version_id', 'choice_list_id', 'id', 'id');
     }
 
-    /** @return BelongsToMany<Locale, $this> */
+    /** @return BelongsToMany<Locale, $this, XlsformModuleVersionLocale> */
     public function locales(): BelongsToMany
     {
         return $this->belongsToMany(Locale::class, 'xlsform_module_version_locale', 'xlsform_module_version_id', 'locale_id')
@@ -135,13 +136,13 @@ class XlsformModuleVersion extends Model implements HasMedia
      * global scope on ChoiceListEntry is intentionally preserved so only
      * entries visible to the current owner are cloned.
      */
-    public function cloneFoOwner(Model $owner): static
+    public function cloneFoOwner(HasXlsforms $owner): static
     {
         return DB::transaction(function () use ($owner) {
             $newVersion = $this->replicate();
-            $newVersion->owner_id = $owner->id;
+            $newVersion->owner_id = $owner->getKey();
             $newVersion->is_default = false;
-            $newVersion->name = ($this->xlsformModule->name ?? $this->name) . ' - ' . $owner->name;
+            $newVersion->name = ($this->xlsformModule->name ?? $this->name) . ' - ' . $owner->getName();
             $newVersion->save();
 
             // Clone ChoiceLists first; build an old→new ID map for SurveyRow references.
@@ -189,5 +190,5 @@ class XlsformModuleVersion extends Model implements HasMedia
 
             return $newVersion;
         });
-
+    }
 }
