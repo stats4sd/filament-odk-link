@@ -5,7 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\
 use Filament\Actions\Action;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
-use Awcodes\Shout\Components\Shout;
+use Filament\Schemas\Components\Callout;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
@@ -30,10 +30,11 @@ class XlsformTemplateInfoList
 
         return $schema
             ->schema([
-                Shout::make('Processing')
+                Callout::make()
+                    ->info()
                     ->columnSpan('full')
                     ->visible(fn(?XlsformTemplate $record): bool => $record?->processing)
-                    ->content('This Form is currently being processed, and is not yet available for use. This should only take a few minutes after being updated. If you see this notification for more than a few minutes, please contact support.'),
+                    ->description('This Form is currently being processed, and is not yet available for use. This should only take a few minutes after being updated. If you see this notification for more than a few minutes, please contact support.'),
                 Section::make('Xlsform Details')
                     ->schema([
                         TextEntry::make('title'),

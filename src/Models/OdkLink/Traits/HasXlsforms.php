@@ -29,6 +29,13 @@ trait HasXlsforms
     // Xls Form titles are in the format `$owner->$nameAttribute . '-' . $xlsform->title`
     public string $identifiableAttribute = 'name';
 
+    // Default 'identifier' is name; this can be overwritten in the main app:
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+
     /** @return HasMany<Dataset, $this> */
     public function datasets(): HasMany
     {
