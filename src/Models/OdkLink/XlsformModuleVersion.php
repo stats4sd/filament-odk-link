@@ -136,7 +136,7 @@ class XlsformModuleVersion extends Model implements HasMedia
      * global scope on ChoiceListEntry is intentionally preserved so only
      * entries visible to the current owner are cloned.
      */
-    public function cloneFoOwner(HasXlsforms $owner): static
+    public function cloneForOwner(HasXlsforms $owner): static
     {
         return DB::transaction(function () use ($owner) {
             $newVersion = $this->replicate();
