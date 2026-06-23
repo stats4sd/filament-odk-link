@@ -9,16 +9,16 @@ use Filament\FilamentServiceProvider;
 use Filament\Forms\FormsServiceProvider;
 use Filament\Infolists\InfolistsServiceProvider;
 use Filament\Notifications\NotificationsServiceProvider;
-use Filament\SpatieLaravelSettingsPluginServiceProvider;
-use Filament\SpatieLaravelTranslatablePluginServiceProvider;
 use Filament\Support\SupportServiceProvider;
 use Filament\Tables\TablesServiceProvider;
 use Filament\Widgets\WidgetsServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Livewire\LivewireServiceProvider;
+use Maatwebsite\Excel\ExcelServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use RyanChandler\BladeCaptureDirective\BladeCaptureDirectiveServiceProvider;
 use Stats4sd\FilamentOdkLink\FilamentOdkLinkServiceProvider;
+use Stats4sd\FilamentOdkLink\Tests\Models\Team;
 
 class TestCase extends Orchestra
 {
@@ -42,6 +42,7 @@ class TestCase extends Orchestra
             FormsServiceProvider::class,
             InfolistsServiceProvider::class,
             LivewireServiceProvider::class,
+            ExcelServiceProvider::class,
             NotificationsServiceProvider::class,
             SupportServiceProvider::class,
             TablesServiceProvider::class,
@@ -69,7 +70,7 @@ class TestCase extends Orchestra
 
         // The package does not ship the form-owner / user models — point them
         // at the lightweight test doubles in tests/Models.
-        config()->set('filament-odk-link.models.form_owner', \Stats4sd\FilamentOdkLink\Tests\Models\Team::class);
+        config()->set('filament-odk-link.models.form_owner', Team::class);
 
         // Default to the package's "local-only" mode: an empty odk.url disables
         // the model hooks that auto-create ODK Central projects/app-users on

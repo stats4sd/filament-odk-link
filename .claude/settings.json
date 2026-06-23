@@ -6,7 +6,18 @@
       "Bash(vendor/bin/pest --no-coverage)",
       "Bash(vendor/bin/pest * --no-coverage)",
       "Bash(grep -rn '*' src/)",
-      "Bash(grep -rn 'protected static ?string $navigation' src/Filament/)"
+      "Bash(grep -rn 'protected static ?string $navigation' src/Filament/)",
+      "Bash(grep -n 'protected $table' /Users/dave/Projects/PhpPackages/filament-odk-link/src/Models/Country.php /Users/dave/Projects/PhpPackages/filament-odk-link/src/Models/Continent.php)",
+      "Bash(php -r 'require '\\\\''vendor/autoload.php'\\\\''; $c = HaydenPierce\\\\ClassFinder\\\\ClassFinder::getClassesInNamespace\\('\\\\''Stats4sd\\\\FilamentOdkLink\\\\Models'\\\\''\\); var_dump\\(count\\($c\\), array_slice\\($c, 0, 5\\)\\);')",
+      "Bash(vendor/bin/pest tests/Unit/Services/OdkProjectServiceTest.php --no-coverage --filter=\"createProjectAppUser\")",
+      "Bash(grep -A 20 'protected $casts' src/Models/OdkLink/Xlsform.php)",
+      "Bash(vendor/bin/pest tests/Unit tests/Smoke)",
+      "Bash(vendor/bin/pest tests/Unit/Services/OdkSubmissionServiceTest.php --no-coverage --filter \"persists a new submission\")",
+      "Bash(_ZO_DOCTOR=0 php /tmp/dump_xlsx.php \"tests/assets/Test Mini HOLPA Household Survey.xlsx\")",
+      "Bash(_ZO_DOCTOR=0 php tests/fixtures/generate-xlsx-fixtures.php)",
+      "Bash(grep -vE \"github|ensure|persists|Disable|^$|_ZO\")",
+      "Bash(_ZO_DOCTOR=0 php /tmp/dump_xlsx.php tests/fixtures/valid-form.xlsx)",
+      "Bash(grep -vE \"zoxide|github|ensure|persists|Disable|_ZO|^$\")"
     ]
   }
 }
