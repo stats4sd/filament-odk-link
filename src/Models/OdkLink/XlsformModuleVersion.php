@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Stats4sd\FilamentOdkLink\Models\Country;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\XlsformModuleVersionLocale;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
@@ -136,7 +136,7 @@ class XlsformModuleVersion extends Model implements HasMedia
      * global scope on ChoiceListEntry is intentionally preserved so only
      * entries visible to the current owner are cloned.
      */
-    public function cloneForOwner(HasXlsforms $owner): static
+    public function cloneForOwner(WithXlsforms $owner): static
     {
         return DB::transaction(function () use ($owner) {
             $newVersion = $this->replicate();

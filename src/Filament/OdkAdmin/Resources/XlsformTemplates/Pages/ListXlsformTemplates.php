@@ -32,7 +32,7 @@ class ListXlsformTemplates extends ListRecords
 
             Actions\Action::make('view-platform-templates-on-odk-central')
             ->label('View Platform Templates on ODK Central')
-            ->url(Platform::first()->odkProject->odk_url)
+            ->url(Platform::first()?->odkProject?->odk_url)
             ->openUrlInNewTab(),
             Actions\CreateAction::make(),
         ];

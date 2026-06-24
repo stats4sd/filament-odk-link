@@ -56,31 +56,33 @@ class DatasetForm
                         ->rows(3)
                         ->columnSpanFull(),
                 ]),
-            Section::make('Variables')
-                ->description(fn (): HtmlString => new HtmlString('Every dataset requires a primary key to uniquely identify each entity. By default, this platform will create a uuid value for every entity in the dataset. You may also wish to include a custom unique identifier, e.g. a code that is used throughout the project (or program).<br/><br/>
-                  The dataset also requires a variable to act as a "label".This is the text that will be shown to enumerators if the dataset is used in an ODK form.'))
-                ->schema([
 
-                    TextInput::make('custom_key')
-                        ->label('Please enter the variable name for the primary key (unique identifier)')
-                        ->helperText('This variable must be unique across the dataset')
-                        ->notIn(['uuid'])
-                        ->validationMessages([
-                            'not_in' => 'uuid is a restricted variable name. Please use a different name.',
-                        ])
-                        ->helperText('E.g. "farm_code", "project_number", "id",')
-                        ->required(),
+            // Related to the Dataset / ODK Entity List / Choice List Reconciliation work; temporarily disabled so we can continue with other work without this blocking.
+            // Section::make('Variables')
+            //     ->description(fn (): HtmlString => new HtmlString('Every dataset requires a primary key to uniquely identify each entity. By default, this platform will create a uuid value for every entity in the dataset. You may also wish to include a custom unique identifier, e.g. a code that is used throughout the project (or program).<br/><br/>
+            //       The dataset also requires a variable to act as a "label".This is the text that will be shown to enumerators if the dataset is used in an ODK form.'))
+            //     ->schema([
 
-                    TextInput::make('label')
-                        ->label('Enter the variable name to be used as the main "label" when displaying entities in the dataset')
-                        ->helperText('E.g. "farm_name", "treatment_name" etc. This is the variable that will be shown to enumerators in an ODK form, or as labels for an analysis output.')
-                        ->notIn(['uuid'])
-                        ->validationMessages([
-                            'not_in' => 'uuid is a restricted variable name. Please use a different name.',
-                        ])
-                        ->required(),
+            //         TextInput::make('custom_key')
+            //             ->label('Please enter the variable name for the primary key (unique identifier)')
+            //             ->helperText('This variable must be unique across the dataset')
+            //             ->notIn(['uuid'])
+            //             ->validationMessages([
+            //                 'not_in' => 'uuid is a restricted variable name. Please use a different name.',
+            //             ])
+            //             ->helperText('E.g. "farm_code", "project_number", "id",')
+            //             ->required(),
 
-                ]),
+            //         TextInput::make('label')
+            //             ->label('Enter the variable name to be used as the main "label" when displaying entities in the dataset')
+            //             ->helperText('E.g. "farm_name", "treatment_name" etc. This is the variable that will be shown to enumerators in an ODK form, or as labels for an analysis output.')
+            //             ->notIn(['uuid'])
+            //             ->validationMessages([
+            //                 'not_in' => 'uuid is a restricted variable name. Please use a different name.',
+            //             ])
+            //             ->required(),
+
+            //     ]),
             Repeater::make('variables')
                 ->label('Optionally, add extra variables that you know the dataset will contain. This is optional, and additional variables will be added automatically when you import data from csv or ODK form submissions.')
                 ->relationship('variables')

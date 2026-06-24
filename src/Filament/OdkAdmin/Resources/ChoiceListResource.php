@@ -3,6 +3,7 @@
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources;
 
 use Exception;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -88,8 +89,8 @@ class ChoiceListResource extends Resource
                 Tables\Filters\Filter::make('has_custom_handling')
                     ->query(fn (Builder $query) => $query->where('has_custom_handling', true)),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ]);
     }
 

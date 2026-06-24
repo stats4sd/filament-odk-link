@@ -44,6 +44,8 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
  */
 interface WithXlsforms
 {
+    public function getName(): string;
+
     public function xlsforms(): HasMany;
 
     public function datasets(): HasMany;
