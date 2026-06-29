@@ -10,7 +10,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Tabs;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
-use Filament\Tables\Columns\Layout\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Forms\Components\FileUpload;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Schemas\Components\Utilities\Get;
@@ -145,7 +145,7 @@ class XlsformTemplateForm
                                 ->live(),
 
                             // for static media
-                            Grid::make('static_media_info')
+                            Group::make()
                                 ->visible(fn(Get $get): bool => $get('is_static'))
                                 ->schema([
                                     SpatieMediaLibraryFileUpload::make('file')
@@ -155,7 +155,7 @@ class XlsformTemplateForm
                                 ]),
 
                             // for non-static media (linked to datasets)
-                            Grid::make('dataset_media_info')
+                            Group::make()
                                 ->visible(fn(Get $get, ?RequiredMedia $record): bool => $record?->links_to_dataset && !$get('is_static'))
                                 ->schema([
                                     Callout::make()
@@ -169,7 +169,7 @@ class XlsformTemplateForm
                                         ->visible(fn(Get $get): bool => !$get('is_static')),
                                 ]),
 
-                            Grid::make('choice_list_media_info')
+                            Group::make()
                                 ->visible(fn(Get $get, ?RequiredMedia $record): bool => !$record?->links_to_dataset && !$get('is_static'))
                                 ->schema([
                                     Callout::make()
