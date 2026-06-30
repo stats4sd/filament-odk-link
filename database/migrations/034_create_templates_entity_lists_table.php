@@ -12,8 +12,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('xlsform_template_id')->constrained('xlsform_templates')->cascadeOnDelete();
             $table->string('list_name');
-            $table->string('label_expression');
-            $table->string('odk_entity_id_expression');
+            $table->string('label_expression')->nullable();
+            $table->string('odk_entity_id_expression')->nullable();
             $table->timestamps();
         });
     }
