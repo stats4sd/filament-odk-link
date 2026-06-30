@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 
 trait OdkFormService
@@ -104,7 +105,13 @@ trait OdkFormService
         }
 
         // get the xlsform and merge in specific details to the schema returned from ODK Central
-        $surveyExcel = (new XlsImport)->toCollection($file, null, \Maatwebsite\Excel\Excel::XLSX)['survey'];
+        $allSheets = (new XlsImport)->toCollection($file, null, \Maatwebsite\Excel\Excel::XLSX);
+        $surveyExcel = $allSheets['survey'];
+
+        // sync entity list declarations when processing a XlsformTemplate
+        if ($xlsform instanceof XlsformTemplate && $allSheets->has('entities')) {
+            $xlsform->syncEntityLists($allSheets['entities']);
+        }
 
         $schema = collect($schema)->map(function (array $item) use ($surveyExcel): array {
 
