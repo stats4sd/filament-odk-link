@@ -348,6 +348,11 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      */
     public function generateXlsfile(): PendingDispatch
     {
+        // Ensure entity lists are populated before generating the XLS.
+        // This is a no-op for templates without an entities sheet, and a self-healing
+        // sync for templates created before entity list syncing was introduced.
+        $this->xlsformTemplate->syncEntityListsFromFile();
+
         // mark form as unready
         $this->updateQuietly(['processing' => true]);
 

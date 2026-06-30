@@ -20,6 +20,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasUploadedXlsformFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Stats4sd\FilamentOdkLink\Services\UpdateXlsformTitleInFile;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
@@ -114,6 +115,22 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
 
         $this->extractSections();
         $this->markAllAsNotCurrent();
+        $this->syncEntityListsFromFile();
+    }
+
+    public function syncEntityListsFromFile(): void
+    {
+        $mediaFile = $this->getFirstMedia('xlsform_file');
+
+        if (!$mediaFile) {
+            return;
+        }
+
+        $allSheets = (new XlsImport)->toCollection($mediaFile->getPath(), null, \Maatwebsite\Excel\Excel::XLSX);
+
+        if ($allSheets->has('entities')) {
+            $this->syncEntityLists($allSheets['entities']);
+        }
     }
 
     public function registerMediaCollections(): void
