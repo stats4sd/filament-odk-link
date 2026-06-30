@@ -262,6 +262,27 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
         return $this->hasMany(XlsformModule::class, 'xlsform_template_id');
     }
 
+    /** @return HasMany<TemplateEntityList, $this> */
+    public function templateEntityLists(): HasMany
+    {
+        return $this->hasMany(TemplateEntityList::class);
+    }
+
+    public function syncEntityLists(Collection $entitiesSheet): void
+    {
+        $this->templateEntityLists()->delete();
+
+        $entitiesSheet
+            ->filter(fn ($row) => !empty($row['list_name']))
+            ->each(function ($row) {
+                $this->templateEntityLists()->create([
+                    'list_name' => $row['list_name'],
+                    'label_expression' => $row['label'] ?? '',
+                    'odk_entity_id_expression' => $row['entity_id'] ?? '',
+                ]);
+            });
+    }
+
     /** @return Attribute<Collection<XlsformModuleVersion>, never> */
     protected function xlsformDefaultModuleVersions(): Attribute
     {
