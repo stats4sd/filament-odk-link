@@ -21,6 +21,7 @@ class XlsImport implements ToCollection, WithHeadingRow, WithMultipleSheets
             'survey' => $this,
             'choices' => $this,
             'settings' => $this,
+            'entities' => $this,
         ];
     }
 }
