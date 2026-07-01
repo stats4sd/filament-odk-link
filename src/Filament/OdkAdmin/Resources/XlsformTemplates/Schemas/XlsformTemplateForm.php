@@ -119,7 +119,16 @@ class XlsformTemplateForm
                 ->label(function (?XlsformTemplate $record) {
                     $label = "<h4 class='font-bold text-xl'>Link Required Datasets</h4>";
 
-                    if ($record?->requiredDataMedia()->count() > 0) {
+                    $entityCsvNames = collect($record?->templateEntityLists)
+                        ->pluck('list_name')
+                        ->map(fn($n) => $n . '.csv')
+                        ->toArray();
+
+                    $dataMediaCount = $record?->requiredDataMedia()
+                        ->whereNotIn('name', $entityCsvNames)
+                        ->count() ?? 0;
+
+                    if ($dataMediaCount > 0) {
                         $label .= '<p>The Form requires the following datasets. Please either upload static csv files to be used, or mark the item(s) as localisable for each team. </p>';
                     } else {
                         $label .= '<p>This form does not require any datasets. You may skip this step</p>';
@@ -127,7 +136,15 @@ class XlsformTemplateForm
 
                     return new HtmlString($label);
                 })
-                ->relationship()
+                ->relationship(modifyQueryUsing: fn(Builder $query, ?XlsformTemplate $record): Builder =>
+                    $query->when(
+                        filled($record?->templateEntityLists?->pluck('list_name')->toArray()),
+                        fn(Builder $q) => $q->whereNotIn(
+                            'name',
+                            $record->templateEntityLists->pluck('list_name')->map(fn($n) => $n . '.csv')->toArray()
+                        )
+                    )
+                )
                 ->addable(false)
                 ->deletable(false)
                 ->schema(function (?IsXlsformTemplate $record) {
