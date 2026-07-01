@@ -179,6 +179,28 @@ class XlsformTemplateForm
 
                         ];
                 }),
+
+            Repeater::make('templateEntityLists')
+                ->label(new HtmlString(
+                    "<h4 class='font-bold text-xl'>Entities</h4>" .
+                    '<p>This form declares the following entity lists. Entity data is managed automatically by ODK Central — no CSV upload is required.</p>'
+                ))
+                ->relationship()
+                ->addable(false)
+                ->deletable(false)
+                ->schema([
+                    TextInput::make('list_name')
+                        ->label('Entity List Name')
+                        ->disabled(),
+                    TextInput::make('label_expression')
+                        ->label('Label Expression')
+                        ->disabled(),
+                    TextInput::make('odk_entity_id_expression')
+                        ->label('Entity ID Expression')
+                        ->disabled()
+                        ->visible(fn(?string $state): bool => !empty($state)),
+                ])
+                ->visible(fn(?XlsformTemplate $record): bool => (bool) $record?->templateEntityLists()->exists()),
         ];
     }
 
