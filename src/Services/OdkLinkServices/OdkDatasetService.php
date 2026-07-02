@@ -123,11 +123,14 @@ trait OdkDatasetService
     {
         $token = $this->authenticate();
 
+        // `source` is required by Central's bulk-create endpoint, unlike single-entity
+        // create - omitting it (as an earlier version of this method did via array_filter)
+        // fails with "Required parameter source missing".
         return Http::withToken($token)
-            ->post("{$this->endpoint}/projects/{$odkProject->id}/datasets/{$datasetName}/entities", array_filter([
+            ->post("{$this->endpoint}/projects/{$odkProject->id}/datasets/{$datasetName}/entities", [
                 'entities' => $entities,
-                'source' => $sourceName ? ['name' => $sourceName] : null,
-            ]))
+                'source' => ['name' => $sourceName ?? 'Bulk import'],
+            ])
             ->throw()
             ->json();
     }
