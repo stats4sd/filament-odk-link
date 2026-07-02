@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 
 trait OdkFormService
@@ -52,6 +53,28 @@ trait OdkFormService
             ->post($url);
 
         $responseBody = $response->json();
+/*
+        // 409: a form with this xmlFormId already exists on ODK Central (e.g. when testOnOdkCentral()
+        // runs on an unsaved template that was previously created). Retry against the draft endpoint.
+        if ($response->status() === 409 && !$xlsform->odk_id) {
+            $xmlFormId = $responseBody['details']['values'][1] ?? null;
+            if (!$xmlFormId && isset($responseBody['message'])) {
+                preg_match('/value\(s\) of \d+,(.+?)\.?\s*$/', $responseBody['message'], $matches);
+                $xmlFormId = $matches[1] ?? null;
+            }
+            if ($xmlFormId) {
+                $xlsform->odk_id = $xmlFormId;
+                $response = Http::withToken($token)
+                    ->withHeaders([
+                        'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'X-XlsForm-FormId-Fallback' => Str::slug($xlsform->title),
+                    ])
+                    ->withBody($file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                    ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xmlFormId}/draft?ignoreWarnings=true");
+                $responseBody = $response->json();
+            }
+        }
+*/
         // if the xlsform file is not valid, throw an error
         if (isset($responseBody['message']) && Str::startsWith($responseBody['message'], 'The given XLSForm file was not valid')) {
             throw new \Exception($response->json()['details']['error'], 500);
@@ -104,7 +127,14 @@ trait OdkFormService
         }
 
         // get the xlsform and merge in specific details to the schema returned from ODK Central
-        $surveyExcel = (new XlsImport)->toCollection($file, null, \Maatwebsite\Excel\Excel::XLSX)['survey'];
+        $allSheets = (new XlsImport)->toCollection($file, null, \Maatwebsite\Excel\Excel::XLSX);
+        $surveyExcel = $allSheets['survey'];
+
+        // sync entity list declarations when processing a saved XlsformTemplate
+        // guard with $xlsform->exists because testOnOdkCentral() runs before save() on creation
+        if ($xlsform instanceof XlsformTemplate && $xlsform->exists && $allSheets->has('entities')) {
+            $xlsform->syncEntityLists($allSheets['entities']);
+        }
 
         $schema = collect($schema)->map(function (array $item) use ($surveyExcel): array {
 

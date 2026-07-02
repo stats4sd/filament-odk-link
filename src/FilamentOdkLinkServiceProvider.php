@@ -141,8 +141,7 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
             '031_create_locale_owners_table',
             '032_create_selected_xlsform_module_versions_table',
             '033_create_dataset_parents_table',
-
-
+            '034_create_templates_entity_lists_table',
         ];
     }
 }

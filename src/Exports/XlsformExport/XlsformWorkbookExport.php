@@ -16,11 +16,16 @@ class XlsformWorkbookExport implements WithMultipleSheets, ShouldQueue
 
     public function sheets(): array
     {
-        return [
+        $sheets = [
             new XlsformSurveyExport($this->xlsform),
             new XlsformChoicesExport($this->xlsform),
             new XlsformSettingsExport($this->xlsform),
         ];
 
+        if ($this->xlsform->xlsformTemplate->templateEntityLists()->exists()) {
+            $sheets[] = new XlsformEntitiesExport($this->xlsform);
+        }
+
+        return $sheets;
     }
 }

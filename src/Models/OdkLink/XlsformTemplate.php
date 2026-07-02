@@ -20,6 +20,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasUploadedXlsformFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Stats4sd\FilamentOdkLink\Services\UpdateXlsformTitleInFile;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
@@ -114,6 +115,22 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
 
         $this->extractSections();
         $this->markAllAsNotCurrent();
+        $this->syncEntityListsFromFile();
+    }
+
+    public function syncEntityListsFromFile(): void
+    {
+        $mediaFile = $this->getFirstMedia('xlsform_file');
+
+        if (!$mediaFile) {
+            return;
+        }
+
+        $allSheets = (new XlsImport)->toCollection($mediaFile->getPath(), null, \Maatwebsite\Excel\Excel::XLSX);
+
+        if ($allSheets->has('entities')) {
+            $this->syncEntityLists($allSheets['entities']);
+        }
     }
 
     public function registerMediaCollections(): void
@@ -260,6 +277,27 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
     public function xlsformModules(): HasMany
     {
         return $this->hasMany(XlsformModule::class, 'xlsform_template_id');
+    }
+
+    /** @return HasMany<TemplateEntityList, $this> */
+    public function templateEntityLists(): HasMany
+    {
+        return $this->hasMany(TemplateEntityList::class);
+    }
+
+    public function syncEntityLists(Collection $entitiesSheet): void
+    {
+        $this->templateEntityLists()->delete();
+
+        $entitiesSheet
+            ->filter(fn ($row) => !empty($row['list_name']))
+            ->each(function ($row) {
+                $this->templateEntityLists()->create([
+                    'list_name' => $row['list_name'],
+                    'label_expression' => $row['label'] ?? '',
+                    'odk_entity_id_expression' => $row['entity_id'] ?? '',
+                ]);
+            });
     }
 
     /** @return Attribute<Collection<XlsformModuleVersion>, never> */

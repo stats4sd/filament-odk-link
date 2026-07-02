@@ -49,11 +49,22 @@ trait OdkFormMediaService
             }
         }
 
-        // dynamic files
+        // dynamic files — skip entity list CSVs (ODK Central manages these via its entities feature)
+        $entityCsvNames = match (true) {
+            $xlsform instanceof XlsformTemplate => $xlsform->templateEntityLists->pluck('list_name'),
+            $xlsform instanceof Xlsform         => $xlsform->xlsformTemplate->templateEntityLists->pluck('list_name'),
+            default                             => collect(),
+        };
+        $entityCsvNames = $entityCsvNames->map(fn(string $n) => $n . '.csv')->toArray();
+
         $requiredDataMedia = $xlsform->requiredDataMedia()->get();
 
         if (count($requiredDataMedia) > 0) {
             foreach ($requiredDataMedia as $requiredMediaItem) {
+
+                if (in_array($requiredMediaItem->name, $entityCsvNames)) {
+                    continue;
+                }
 
                 // if there is a static upload, use it;
                 // TODO: work out how to handle xlsforms where we might have a static media file for TESTING the template...

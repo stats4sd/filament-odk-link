@@ -10,7 +10,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Tabs;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
-use Filament\Tables\Columns\Layout\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Forms\Components\FileUpload;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Schemas\Components\Utilities\Get;
@@ -119,7 +119,16 @@ class XlsformTemplateForm
                 ->label(function (?XlsformTemplate $record) {
                     $label = "<h4 class='font-bold text-xl'>Link Required Datasets</h4>";
 
-                    if ($record?->requiredDataMedia()->count() > 0) {
+                    $entityCsvNames = collect($record?->templateEntityLists)
+                        ->pluck('list_name')
+                        ->map(fn($n) => $n . '.csv')
+                        ->toArray();
+
+                    $dataMediaCount = $record?->requiredDataMedia()
+                        ->whereNotIn('name', $entityCsvNames)
+                        ->count() ?? 0;
+
+                    if ($dataMediaCount > 0) {
                         $label .= '<p>The Form requires the following datasets. Please either upload static csv files to be used, or mark the item(s) as localisable for each team. </p>';
                     } else {
                         $label .= '<p>This form does not require any datasets. You may skip this step</p>';
@@ -127,7 +136,15 @@ class XlsformTemplateForm
 
                     return new HtmlString($label);
                 })
-                ->relationship()
+                ->relationship(modifyQueryUsing: fn(Builder $query, ?XlsformTemplate $record): Builder =>
+                    $query->when(
+                        filled($record?->templateEntityLists?->pluck('list_name')->toArray()),
+                        fn(Builder $q) => $q->whereNotIn(
+                            'name',
+                            $record->templateEntityLists->pluck('list_name')->map(fn($n) => $n . '.csv')->toArray()
+                        )
+                    )
+                )
                 ->addable(false)
                 ->deletable(false)
                 ->schema(function (?IsXlsformTemplate $record) {
@@ -145,7 +162,7 @@ class XlsformTemplateForm
                                 ->live(),
 
                             // for static media
-                            Grid::make('static_media_info')
+                            Group::make()
                                 ->visible(fn(Get $get): bool => $get('is_static'))
                                 ->schema([
                                     SpatieMediaLibraryFileUpload::make('file')
@@ -155,7 +172,7 @@ class XlsformTemplateForm
                                 ]),
 
                             // for non-static media (linked to datasets)
-                            Grid::make('dataset_media_info')
+                            Group::make()
                                 ->visible(fn(Get $get, ?RequiredMedia $record): bool => $record?->links_to_dataset && !$get('is_static'))
                                 ->schema([
                                     Callout::make()
@@ -169,7 +186,7 @@ class XlsformTemplateForm
                                         ->visible(fn(Get $get): bool => !$get('is_static')),
                                 ]),
 
-                            Grid::make('choice_list_media_info')
+                            Group::make()
                                 ->visible(fn(Get $get, ?RequiredMedia $record): bool => !$record?->links_to_dataset && !$get('is_static'))
                                 ->schema([
                                     Callout::make()
@@ -179,6 +196,28 @@ class XlsformTemplateForm
 
                         ];
                 }),
+
+            Repeater::make('templateEntityLists')
+                ->label(new HtmlString(
+                    "<h4 class='font-bold text-xl'>Entities</h4>" .
+                    '<p>This form declares the following entity lists. Entity data is managed automatically by ODK Central — no CSV upload is required.</p>'
+                ))
+                ->relationship()
+                ->addable(false)
+                ->deletable(false)
+                ->schema([
+                    TextInput::make('list_name')
+                        ->label('Entity List Name')
+                        ->disabled(),
+                    TextInput::make('label_expression')
+                        ->label('Label Expression')
+                        ->disabled(),
+                    TextInput::make('odk_entity_id_expression')
+                        ->label('Entity ID Expression')
+                        ->disabled()
+                        ->visible(fn(?string $state): bool => !empty($state)),
+                ])
+                ->visible(fn(?XlsformTemplate $record): bool => (bool) $record?->templateEntityLists()->exists()),
         ];
     }
 
