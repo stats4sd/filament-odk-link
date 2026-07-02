@@ -37,9 +37,10 @@ class HandleXlsformTemplateAdded
 
         $filePath = $event->media->getPath();
 
-        // for xlsform templates, create all the included xlsform modules.
+        // for xlsform templates, create all the included xlsform modules and sync entity lists.
         if ($model instanceof XlsformTemplate) {
             $this->createModules($filePath, $model);
+            $model->syncEntityListsFromFile();
         }
 
         $model->updateQuietly(['processing' => true]);
