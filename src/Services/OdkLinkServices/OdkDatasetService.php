@@ -100,6 +100,22 @@ trait OdkDatasetService
     }
 
     /**
+     * Fetches a single entity's current data by uuid - the live-read source for editing
+     * one entity, without pulling the whole dataset's feed just to find one row.
+     *
+     * @throws RequestException|ConnectionException
+     */
+    public function getOdkEntity(OdkProject $odkProject, string $datasetName, string $uuid): array
+    {
+        $token = $this->authenticate();
+
+        return Http::withToken($token)
+            ->get("{$this->endpoint}/projects/{$odkProject->id}/datasets/{$datasetName}/entities/{$uuid}")
+            ->throw()
+            ->json();
+    }
+
+    /**
      * Soft-deletes an entity in ODK Central.
      *
      * @throws RequestException|ConnectionException
