@@ -131,6 +131,21 @@ trait OdkDatasetService
     }
 
     /**
+     * Restores a soft-deleted entity in ODK Central.
+     *
+     * @throws RequestException|ConnectionException
+     */
+    public function restoreOdkEntity(OdkProject $odkProject, string $datasetName, string $uuid): bool
+    {
+        $token = $this->authenticate();
+
+        return Http::withToken($token)
+            ->post("{$this->endpoint}/projects/{$odkProject->id}/datasets/{$datasetName}/entities/{$uuid}/restore")
+            ->throw()
+            ->successful();
+    }
+
+    /**
      * @param  array<int, array{uuid?: string, label: string, data: array<string, string>}>  $entities
      *
      * @throws RequestException|ConnectionException
