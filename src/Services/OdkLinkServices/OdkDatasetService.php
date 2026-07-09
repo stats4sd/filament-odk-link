@@ -46,7 +46,8 @@ trait OdkDatasetService
 
     /**
      * Adds a property to a Dataset's schema. Safe to call for a property that already
-     * exists - Central treats re-adding the same property name as a no-op.
+     * exists - Central returns a 409 conflict if the property name is already present,
+     * which we swallow to make this method idempotent (a no-op on re-add).
      *
      * @throws RequestException|ConnectionException
      */
@@ -54,12 +55,17 @@ trait OdkDatasetService
     {
         $token = $this->authenticate();
 
-        return Http::withToken($token)
+        $response = Http::withToken($token)
             ->post("{$this->endpoint}/projects/{$odkProject->id}/datasets/{$datasetName}/properties", [
                 'name' => $propertyName,
-            ])
-            ->throw()
-            ->json();
+            ]);
+
+        // Central responds 409 when the property already exists on the dataset - treat as a no-op.
+        if ($response->status() === 409) {
+            return $response->json();
+        }
+
+        return $response->throw()->json();
     }
 
     /**
