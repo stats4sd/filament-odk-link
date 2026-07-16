@@ -259,20 +259,6 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
             // check for modules where the module version is not _already_ linked to this form (to avoid resetting custom ordering)
             ->filter(fn(XlsformModule $module) => $this->xlsformModuleVersions->doesntContain('xlsform_module_id', $module->id))
             ->each(function (XlsformModule $xlsformModule) {
-
-                // `can_be_replaced` modules never attach the global default - only the
-                // team's own local version, in the global version's place.
-                if ($xlsformModule->can_be_replaced) {
-                    $localModuleVersion = XlsformModuleVersion::firstOrCreate([
-                        'owner_id' => $this->owner->id,
-                        'name' => 'Local ' . $xlsformModule->name,
-                    ]);
-
-                    $this->xlsformModuleVersions()->sync([$localModuleVersion->id => ['order' => $xlsformModule->default_order]], detaching: false);
-
-                    return;
-                }
-
                 $this->xlsformModuleVersions()->attach($xlsformModule->defaultXlsformVersion, ['order' => $xlsformModule->default_order]);
 
                 // If the XlsformModule `can_be_extended` add a 'local' version of the module immediately after it
@@ -284,12 +270,62 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
                     $this->xlsformModuleVersions()->sync([$localModuleVersion->id => ['order' => $xlsformModule->default_order + 1]], detaching: false);
                 }
-
             });
+
+        // reload the pivot so the swap below sees any versions just attached
+        $this->load('xlsformModuleVersions');
+        $this->localiseModules();
 
         $this->has_latest_template = true;
         $this->saveQuietly();
     }
+
+    public function localiseModules(): void
+    {
+       // `can_be_replaced` modules: if the form is still using the global default,
+        // swap it for the team's own local version in the global version's place.
+        $this->xlsformTemplate->xlsformModules
+            ->filter(fn(XlsformModule $module) => $module->can_be_replaced)
+            ->each(function (XlsformModule $xlsformModule) {
+
+                ray('working on module vcan be replaced');
+
+                $currentModuleVersion = $this->xlsformModuleVersions
+                    ->firstWhere('xlsform_module_id', $xlsformModule->id);
+
+
+                ray("current_module_version");
+                ray($currentModuleVersion);
+
+                if (! $currentModuleVersion) {
+                    return;
+                }
+
+                if (! $currentModuleVersion->is_default) {
+                    return;
+                }
+
+                $localModuleVersion = XlsformModuleVersion::query()
+                    ->where('owner_id', $this->owner->id)
+                    ->where('name', 'Local ' . $xlsformModule->name)
+                    ->first();
+
+                ray('local module vesrion');
+                ray($localModuleVersion);
+
+                if (! $localModuleVersion) {
+                    return;
+                }
+
+                // keep the local version in the same position the global one held, then drop the global
+                $globalOrder = $currentModuleVersion->pivot->order;
+
+                $this->xlsformModuleVersions()->sync([$localModuleVersion->id => ['order' => $globalOrder]], detaching: false);
+                $this->xlsformModuleVersions()->detach($currentModuleVersion->id);
+            });
+
+    }
+
 
     /**
      * @throws BindingResolutionException
