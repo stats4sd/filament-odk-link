@@ -258,7 +258,21 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
             // check for modules where the module version is not _already_ linked to this form (to avoid resetting custom ordering)
             ->filter(fn(XlsformModule $module) => $this->xlsformModuleVersions->doesntContain('xlsform_module_id', $module->id))
-            ->each(function (XlsformModule $xlsformModule) use (&$countModules) {
+            ->each(function (XlsformModule $xlsformModule) {
+
+                // `can_be_replaced` modules never attach the global default - only the
+                // team's own local version, in the global version's place.
+                if ($xlsformModule->can_be_replaced) {
+                    $localModuleVersion = XlsformModuleVersion::firstOrCreate([
+                        'owner_id' => $this->owner->id,
+                        'name' => 'Local ' . $xlsformModule->name,
+                    ]);
+
+                    $this->xlsformModuleVersions()->sync([$localModuleVersion->id => ['order' => $xlsformModule->default_order]], detaching: false);
+
+                    return;
+                }
+
                 $this->xlsformModuleVersions()->attach($xlsformModule->defaultXlsformVersion, ['order' => $xlsformModule->default_order]);
 
                 // If the XlsformModule `can_be_extended` add a 'local' version of the module immediately after it
