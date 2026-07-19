@@ -115,8 +115,8 @@ class Locale extends Model implements HasMedia
 
     public function owners(): BelongsToMany
     {
-        return $this->BelongsToMany(config('filament-odk-link.models.form_owner'), 'language_owner', 'locale_id', 'owner_id')
-            ->withPivot(['langauge_id']);
+        return $this->belongsToMany(config('filament-odk-link.models.form_owner'), 'language_owner', 'locale_id', 'owner_id')
+            ->withPivot(['language_id']);
     }
 
     /** @return Attribute<string, never> */
