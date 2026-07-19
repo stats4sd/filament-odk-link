@@ -13,8 +13,10 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Protection;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
@@ -29,14 +31,26 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
     /** @var Collection<LanguageStringType> */
     public Collection $allLanguageStringTypes;
 
-    public function __construct(public XlsformTemplate $template, public Locale $currentLocale, public bool $withExistingStrings = false)
-    {
-
+    public function __construct(
+        public XlsformTemplate $template,
+        public Locale $currentLocale,
+        public bool $withExistingStrings = false,
+        public ?WithXlsforms $owner = null,
+    ) {
         $this->locales = $template->locales
-            ->filter(fn(Locale $locale) => $locale->is_default);
+            ->filter(fn (Locale $locale): bool => $locale->is_default && $this->ownerHasSelectedLanguage($locale))
+            ->values();
 
         $this->allLanguageStringTypes = LanguageStringType::all();
+    }
 
+    private function ownerHasSelectedLanguage(Locale $locale): bool
+    {
+        if (! $this->owner) {
+            return true;
+        }
+
+        return $this->owner->languages->contains('id', $locale->language_id);
     }
 
     public function headings(): array
@@ -144,6 +158,17 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
             // Apply white fill to the last column
             $sheet->getStyle(Coordinate::stringFromColumnIndex($lastColumnIndex) . "{$rowIndex}")->applyFromArray($whiteFill);
         }
+
+        // Lock the sheet so the identifier columns (A-E) and header row cannot be edited; cells
+        // default to locked when protection is on, so unlock only the translation data columns.
+        $sheet->getProtection()->setSheet(true);
+
+        if ($rowCount >= 2) {
+            $lastColumn = Coordinate::stringFromColumnIndex($lastColumnIndex);
+            $sheet->getStyle("F2:{$lastColumn}{$rowCount}")
+                ->getProtection()
+                ->setLocked(Protection::PROTECTION_UNPROTECTED);
+        }
     }
 
     public function columnWidths(): array
@@ -195,17 +220,16 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
                     $languageStringType->name,
                 ]);
 
-                $defaultLocaleStrings = $this->template->locales
-                    ->filter(fn(Locale $locale) => $locale->is_default)
+                $defaultLocaleStrings = $this->locales
                     ->map(function (Locale $locale) use ($strings): string {
-                        // For each language in XlsformTemplateLanguage, add the corresponding text
-                        // Find the language string for this language
+                        // For each default reference language, add the corresponding text.
                         $stringForLanguage = $strings->firstWhere('locale_id', $locale->id);
 
                         return $stringForLanguage ? $stringForLanguage->text : '';
                     });
 
-                // Add the current template language's translation (unless $empty is false, which means we should return an empty template
+                $currentStringForLanguage = null;
+
                 if ($this->withExistingStrings) {
                     $currentStringForLanguage = $strings->firstWhere('locale_id', $this->currentLocale->id);
                 }
