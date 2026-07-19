@@ -288,14 +288,10 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
             ->filter(fn(XlsformModule $module) => $module->can_be_replaced)
             ->each(function (XlsformModule $xlsformModule) {
 
-                ray('working on module vcan be replaced');
-
                 $currentModuleVersion = $this->xlsformModuleVersions
                     ->firstWhere('xlsform_module_id', $xlsformModule->id);
 
 
-                ray("current_module_version");
-                ray($currentModuleVersion);
 
                 if (! $currentModuleVersion) {
                     return;
@@ -309,9 +305,6 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                     ->where('owner_id', $this->owner->id)
                     ->where('name', 'Local ' . $xlsformModule->name)
                     ->first();
-
-                ray('local module vesrion');
-                ray($localModuleVersion);
 
                 if (! $localModuleVersion) {
                     return;
