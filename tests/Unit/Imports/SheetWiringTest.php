@@ -8,7 +8,7 @@ use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateWorkbookImpo
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 
 it('the generic XlsImport reads survey, choices and settings sheets', function () {
-    expect(array_keys((new XlsImport)->sheets()))->toBe(['survey', 'choices', 'settings']);
+    expect(array_keys((new XlsImport)->sheets()))->toContain('survey', 'choices', 'settings', 'entities');
 });
 
 it('the validator reads the survey and choices sheets', function () {

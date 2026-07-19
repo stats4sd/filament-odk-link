@@ -4,6 +4,7 @@ use Filament\Panel;
 use Filament\PanelRegistry;
 use Illuminate\Support\Facades\DB;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Tests\Models\Team;
 
@@ -70,17 +71,35 @@ it('attaches both the global and a local version when can_be_extended is true', 
     expect($versions[1]->owner_id)->toBe($this->team->id);
 });
 
-it('attaches only a local version when can_be_replaced is true, not the global default', function () {
+it('attaches a local version if exists when can_be_replaced is true, and falls back to the global default if a local version doesnt exist', function () {
     $template = makeXlsformTemplate();
-    addModuleVersion($template, 'Locations', ['default_order' => 1, 'can_be_replaced' => true]);
+    $globalVersion = addModuleVersion($template, 'locations', ['default_order' => 1, 'can_be_replaced' => true]);
 
     $xlsform = makeXlsformFor($template, $this->team);
+
+
+    // without a local version of the module to replace it with, check that the Xlsform defaults to the Global module.
     $xlsform->syncWithTemplate();
 
     $versions = $xlsform->xlsformModuleVersions()->get();
 
     expect($versions)->toHaveCount(1);
-    expect($versions->first()->name)->toBe('Local Locations');
+    expect($versions->first()->name)->toBe('Global locations');
+    expect($versions->first()->owner_id)->toBe(null);
+    expect($versions->first()->pivot->order)->toBe(1);
+
+    XlsformModuleVersion::create([
+        'xlsform_module_id' => $globalVersion->id,
+        'name' => 'Local locations',
+        'owner_id' => $this->team->id,
+    ]);
+
+    $xlsform->syncWithTemplate();
+
+    $versions = $xlsform->xlsformModuleVersions()->get();
+
+    expect($versions)->toHaveCount(1);
+    expect($versions->first()->name)->toBe('Local locations');
     expect($versions->first()->owner_id)->toBe($this->team->id);
     expect($versions->first()->pivot->order)->toBe(1);
 });
