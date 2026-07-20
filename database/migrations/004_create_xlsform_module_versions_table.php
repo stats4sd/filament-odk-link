@@ -26,7 +26,7 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->unique(['xlsform_module_id', 'name']);
+            $table->unique(['xlsform_module_id', 'owner_id', 'name']);
         });
     }
 
