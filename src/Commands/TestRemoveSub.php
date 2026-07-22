@@ -32,6 +32,14 @@ class TestRemoveSub extends Command
      */
     public function handle(): void
     {
+
+        // Enforce strict testing use only
+        if(config('app.env') !== "local") {
+            $this->error('This is a data-destroying command and can only be run when the app environment is set to local. Please never run this against a live database.');
+            return;
+        }
+
+
         // ask to clear all submissions or only from a specific xlsform
         $option = $this->choice('Do you want to completely clear the submissions, entities and entity_values tables, or only remove submissions from a specific xlsform?', ['All', 'Specific'], 'All');
 
