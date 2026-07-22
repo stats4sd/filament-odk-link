@@ -46,11 +46,11 @@ class PublishXlsformOnOdkCentral implements ShouldQueue
 
     public function failed(?Throwable $exception = null): void
     {
-        Log::error('Xlsform Deployment Failed', ['exception' => $exception]);
+        Log::error('Xlsform Publishing Failed', ['exception' => $exception]);
 
         if ($this->user) {
             Notification::make('xlsform_file_deployment_failed')
-                ->title('Draft Form "'.$this->xlsform->title.'" failed to deploy')
+                ->title('Form "'.$this->xlsform->title.'" failed to publish')
                 ->body(new HtmlString('The message below was returned from the ODK Server. It may indicate an issue with the Xlsform definition being used: <br/><br/>' . $exception->getmessage()))
                 ->danger()
                 ->persistent()
