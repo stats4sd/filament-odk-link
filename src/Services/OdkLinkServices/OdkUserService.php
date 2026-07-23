@@ -146,30 +146,4 @@ trait OdkUserService
             ->json();
 
     }
-
-    /**
-     * Updates a project name
-     *
-     * @return array $projectInfo
-     *
-     * @throws RequestException|ConnectionException
-     */
-    public function updateUser(WithOdkCentralAccount $user): array
-    {
-        $token = $this->authenticate();
-
-    }
-
-    /**
-     * Archives a project
-     *
-     * @return array $success
-     *
-     * @throws RequestException|ConnectionException
-     */
-    public function deleteUser(Authenticatable $user): array
-    {
-        $token = $this->authenticate();
-
-    }
 }

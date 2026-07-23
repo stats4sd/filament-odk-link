@@ -40,6 +40,6 @@ class DatasetVariable extends Model
     /** @return HasMany<EntityValue, $this> */
     public function values(): HasMany
     {
-        return $this->hasMany(EntityValue::class, 'entity_id');
+        return $this->hasMany(EntityValue::class, 'dataset_variable_name', 'name');
     }
 }

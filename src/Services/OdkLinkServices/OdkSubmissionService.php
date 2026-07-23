@@ -244,7 +244,7 @@ trait OdkSubmissionService
 
         $updatedSubmissions = collect($submissionMetadata)
             ->filter(fn(array $result) => $currentSubmissionIds->contains($result['instanceId']) &&
-                $currentSubmissionLatestIds->doesntContain(['currentVersion']['instanceId'])
+                $currentSubmissionLatestIds->doesntContain($result['currentVersion']['instanceId'])
             );
 
         $results = Http::withToken($token)

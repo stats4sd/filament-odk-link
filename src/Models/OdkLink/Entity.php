@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class Entity extends Model
@@ -22,7 +23,7 @@ class Entity extends Model
     {
         static::created(function (self $entity) {
             if ($entity->dataset->primary_key === 'uuid' && ! $entity->uuid) {
-                $entity->uuid = \Illuminate\Support\Str::uuid()->toString();
+                $entity->uuid = Str::uuid()->toString();
                 $entity->save();
 
                 $entity->values()->create([
@@ -79,7 +80,13 @@ class Entity extends Model
     /** @return BelongsToMany<DatasetVariable, $this> */
     public function datasetVariables(): BelongsToMany
     {
-        return $this->belongsToMany(DatasetVariable::class, 'entity_values', 'entity_id', 'dataset_variable_name')
+        return $this->belongsToMany(
+            DatasetVariable::class,
+            'entity_values',
+            'entity_id',
+            'dataset_variable_name',
+            relatedKey: 'name'
+            )
             ->using(EntityValue::class)
             ->withPivot('value');
     }
@@ -88,7 +95,7 @@ class Entity extends Model
     protected function primaryKey(): Attribute
     {
         return new Attribute(
-            get: fn () => $this->values->filter(fn(EntityValue $value) => $value->dataset_variable_name === $this->dataset->primary_key)->first()?->value ?? $this->id
+            get: fn () => $this->values->filter(fn (EntityValue $value) => $value->dataset_variable_name === $this->dataset->primary_key)->first()?->value ?? $this->id
         );
     }
 
@@ -109,11 +116,12 @@ class Entity extends Model
 
         $entries = $entries->map(function (EntityValue $entry) use (&$datasetVariableNames) {
             $entry['entity_id'] = $this->id;
+            $baseName = $entry['dataset_variable_name'];
 
             $count = 0;
             while ($datasetVariableNames->contains($entry['dataset_variable_name'])) {
                 $count++;
-                $entry['dataset_variable_name'] = $entry['dataset_variable_name'].".{$count}";
+                $entry['dataset_variable_name'] = "{$baseName}.{$count}";
 
                 if ($count > 500) {
                     throw new \RuntimeException('Infinite loop detected in Entity::addValues()');
@@ -184,6 +192,7 @@ class Entity extends Model
                 $entity->addValues($preparedValues);
 
                 return $entity;
-            });
+            }
+        );
     }
 }
