@@ -181,8 +181,6 @@ trait OdkFormService
     /**
      * Publishes the current draft form so it is available for live data collection
      *
-     * @return XlsformVersion $xlsformVersion
-     *
      * @throws RequestException
      */
     public function publishForm(Xlsform $xlsform): void

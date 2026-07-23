@@ -40,7 +40,7 @@ class EntityExport implements FromArray, WithHeadings, WithTitle
                 // find value for each ODK variable
                 // add parent primary key if there is a parent dataset
                 if ($dataset->parent) {
-                    array_unshift($record, $entity->parent->values->where('dataset_variable_id', $dataset->parent->primary_key)->first()->value);
+                    array_unshift($record, $entity->parent->values->where('dataset_variable_name', $dataset->parent->primary_key)->first()?->value);
                 }
 
                 return $record;
@@ -78,14 +78,18 @@ class EntityExport implements FromArray, WithHeadings, WithTitle
         return $schema->pluck('name')->toArray();
     }
 
-    public function getEntityValues(mixed $entity, array $headings): array
+    /**
+     * @param  array<int, string>  $headings
+     * @return array<int, mixed>
+     */
+    public function getEntityValues(Entity $entity, array $headings): array
     {
         // assume there is only one value for one ODK variable
-        return $entity->values
-            ->whereIn('dataset_variable_id', $headings)
-            ->map(function ($value) {
-                return $value->value;
-            })->toArray();
+        $values = $entity->values->keyBy('dataset_variable_name');
+
+        return collect($headings)
+            ->map(fn (string $heading) => $values->get($heading)?->value)
+            ->toArray();
     }
 
     // overwrite this function to add extra variables to the export
