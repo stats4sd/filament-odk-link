@@ -3,6 +3,9 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Tests\TestCase;
@@ -70,4 +73,48 @@ function addChoiceList(XlsformModuleVersion $version, string $listName, array $a
     ]);
 
     return ChoiceList::find($id);
+}
+
+function addChoiceListEntry(ChoiceList $choiceList, string $name, array $attrs = []): ChoiceListEntry
+{
+    $id = DB::table('choice_list_entries')->insertGetId([
+        'choice_list_id' => $choiceList->id,
+        'name' => $name,
+        'properties' => json_encode([]),
+        'created_at' => now(),
+        'updated_at' => now(),
+        ...$attrs,
+    ]);
+
+    return ChoiceListEntry::find($id);
+}
+
+function makeLocale(string $isoAlpha2 = 'en'): Locale
+{
+    $languageId = DB::table('languages')->insertGetId([
+        'iso_alpha2' => $isoAlpha2,
+        'name' => $isoAlpha2,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $localeId = DB::table('locales')->insertGetId([
+        'language_id' => $languageId,
+        'is_default' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return Locale::find($localeId);
+}
+
+function makeLanguageStringType(string $name = 'label'): LanguageStringType
+{
+    $id = DB::table('language_string_types')->insertGetId([
+        'name' => $name,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return LanguageStringType::find($id);
 }
