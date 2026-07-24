@@ -2,7 +2,8 @@
 
 use Filament\Panel;
 use Filament\PanelRegistry;
-use Illuminate\Database\QueryException;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\DB;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Tests\Models\Team;
@@ -59,17 +60,9 @@ beforeEach(function () {
 });
 
 // ─── markLookupListAsComplete ─────────────────────────────────────────────────
-//
-// NOTE: HasXlsforms::choiceLists() is declared as BelongsToMany(ChoiceListEntry, …)
-// but the pivot stores choice_list_id (pointing at choice_lists.id). The sync()
-// write succeeds, but hasCompletedLookupList() then executes a query that
-// references "choice_lists.id" in a join against choice_list_entries — a column
-// that does not exist in that query, causing a QueryException. The tests below
-// assert the DB side-effect that DID succeed and document the bug via toThrow().
 
-it('markLookupListAsComplete writes the pivot row with is_complete = 1', function () {
-    expect(fn () => $this->team->markLookupListAsComplete($this->choiceList))
-        ->toThrow(QueryException::class);
+it('markLookupListAsComplete writes the pivot row and returns true', function () {
+    expect($this->team->markLookupListAsComplete($this->choiceList))->toBeTrue();
 
     $this->assertDatabaseHas('choice_list_owner', [
         'owner_id' => $this->team->id,
@@ -79,11 +72,8 @@ it('markLookupListAsComplete writes the pivot row with is_complete = 1', functio
 });
 
 it('markLookupListAsComplete is idempotent: a second call does not duplicate the pivot row', function () {
-    // Each call throws after the sync, but neither should produce a duplicate.
-    expect(fn () => $this->team->markLookupListAsComplete($this->choiceList))
-        ->toThrow(QueryException::class);
-    expect(fn () => $this->team->markLookupListAsComplete($this->choiceList))
-        ->toThrow(QueryException::class);
+    $this->team->markLookupListAsComplete($this->choiceList);
+    $this->team->markLookupListAsComplete($this->choiceList);
 
     $count = DB::table('choice_list_owner')
         ->where('owner_id', $this->team->id)
@@ -95,7 +85,7 @@ it('markLookupListAsComplete is idempotent: a second call does not duplicate the
 
 // ─── markLookupListAsInComplete ───────────────────────────────────────────────
 
-it('markLookupListAsInComplete removes the pivot row', function () {
+it('markLookupListAsInComplete removes the pivot row and returns null', function () {
     DB::table('choice_list_owner')->insert([
         'owner_id' => $this->team->id,
         'choice_list_id' => $this->choiceList->id,
@@ -104,9 +94,7 @@ it('markLookupListAsInComplete removes the pivot row', function () {
         'updated_at' => now(),
     ]);
 
-    // detach() removes the row; hasCompletedLookupList() then throws the same bug.
-    expect(fn () => $this->team->markLookupListAsInComplete($this->choiceList))
-        ->toThrow(QueryException::class);
+    expect($this->team->markLookupListAsInComplete($this->choiceList))->toBeNull();
 
     $this->assertDatabaseMissing('choice_list_owner', [
         'owner_id' => $this->team->id,
@@ -115,8 +103,7 @@ it('markLookupListAsInComplete removes the pivot row', function () {
 });
 
 it('markLookupListAsInComplete is safe when no pivot row exists', function () {
-    expect(fn () => $this->team->markLookupListAsInComplete($this->choiceList))
-        ->toThrow(QueryException::class);
+    expect($this->team->markLookupListAsInComplete($this->choiceList))->toBeNull();
 
     $this->assertDatabaseMissing('choice_list_owner', [
         'owner_id' => $this->team->id,
@@ -124,25 +111,28 @@ it('markLookupListAsInComplete is safe when no pivot row exists', function () {
     ]);
 });
 
-// ─── hasCompletedLookupList bug ───────────────────────────────────────────────
+// ─── hasCompletedLookupList ───────────────────────────────────────────────────
 
-it('hasCompletedLookupList throws QueryException because of a mismatched table reference', function () {
-    // The choiceLists() relationship joins choice_list_entries but the where clause
-    // references choice_lists.id — a column not present in that join.
-    expect(fn () => $this->team->hasCompletedLookupList($this->choiceList))
-        ->toThrow(QueryException::class, 'no such column: choice_lists.id');
+it('hasCompletedLookupList returns true once the list is marked complete', function () {
+    $this->team->markLookupListAsComplete($this->choiceList);
+
+    expect($this->team->hasCompletedLookupList($this->choiceList))->toBeTrue();
+});
+
+it('hasCompletedLookupList returns null when the list has no pivot row', function () {
+    expect($this->team->hasCompletedLookupList($this->choiceList))->toBeNull();
 });
 
 // ─── relationship wiring ──────────────────────────────────────────────────────
 
 it('HasXlsforms exposes a datasets HasMany relationship', function () {
-    expect($this->team->datasets())->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class);
+    expect($this->team->datasets())->toBeInstanceOf(HasMany::class);
 });
 
 it('HasXlsforms exposes a xlsforms HasMany relationship', function () {
-    expect($this->team->xlsforms())->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class);
+    expect($this->team->xlsforms())->toBeInstanceOf(HasMany::class);
 });
 
 it('HasXlsforms exposes an odkProject MorphOne relationship', function () {
-    expect($this->team->odkProject())->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphOne::class);
+    expect($this->team->odkProject())->toBeInstanceOf(MorphOne::class);
 });

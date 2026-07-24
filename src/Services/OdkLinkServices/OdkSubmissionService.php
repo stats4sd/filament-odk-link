@@ -244,7 +244,7 @@ trait OdkSubmissionService
 
         $updatedSubmissions = collect($submissionMetadata)
             ->filter(fn(array $result) => $currentSubmissionIds->contains($result['instanceId']) &&
-                $currentSubmissionLatestIds->doesntContain(['currentVersion']['instanceId'])
+                $currentSubmissionLatestIds->doesntContain($result['currentVersion']['instanceId'])
             );
 
         $results = Http::withToken($token)
@@ -461,7 +461,7 @@ trait OdkSubmissionService
 
                 $value = Arr::get($repeatGroupEntry, $fullItemPath);
 
-                if ($schemaItem['type'] != 'repeat' && $value != null && $value != '' && ! is_array($value)) {
+                if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && ! is_array($value)) {
 
                     // TODO: get label from correct language String entry.
                     // $datasetVariable = $section->dataset->variables()->where('name', $schemaItem['name'])->firstOrCreate([

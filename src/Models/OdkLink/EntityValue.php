@@ -4,11 +4,12 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\Concerns\AsPivot;
 
 class EntityValue extends Model
 {
+    use AsPivot;
+
     protected $table = 'entity_values';
 
     protected $guarded = [];
