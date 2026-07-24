@@ -6,8 +6,10 @@ use Carbon\Carbon;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Excel;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
@@ -53,34 +55,34 @@ trait OdkFormService
             ->post($url);
 
         $responseBody = $response->json();
-/*
-        // 409: a form with this xmlFormId already exists on ODK Central (e.g. when testOnOdkCentral()
-        // runs on an unsaved template that was previously created). Retry against the draft endpoint.
-        if ($response->status() === 409 && !$xlsform->odk_id) {
-            $xmlFormId = $responseBody['details']['values'][1] ?? null;
-            if (!$xmlFormId && isset($responseBody['message'])) {
-                preg_match('/value\(s\) of \d+,(.+?)\.?\s*$/', $responseBody['message'], $matches);
-                $xmlFormId = $matches[1] ?? null;
-            }
-            if ($xmlFormId) {
-                $xlsform->odk_id = $xmlFormId;
-                $response = Http::withToken($token)
-                    ->withHeaders([
-                        'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                        'X-XlsForm-FormId-Fallback' => Str::slug($xlsform->title),
-                    ])
-                    ->withBody($file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                    ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xmlFormId}/draft?ignoreWarnings=true");
-                $responseBody = $response->json();
-            }
-        }
-*/
+        /*
+                // 409: a form with this xmlFormId already exists on ODK Central (e.g. when testOnOdkCentral()
+                // runs on an unsaved template that was previously created). Retry against the draft endpoint.
+                if ($response->status() === 409 && !$xlsform->odk_id) {
+                    $xmlFormId = $responseBody['details']['values'][1] ?? null;
+                    if (!$xmlFormId && isset($responseBody['message'])) {
+                        preg_match('/value\(s\) of \d+,(.+?)\.?\s*$/', $responseBody['message'], $matches);
+                        $xmlFormId = $matches[1] ?? null;
+                    }
+                    if ($xmlFormId) {
+                        $xlsform->odk_id = $xmlFormId;
+                        $response = Http::withToken($token)
+                            ->withHeaders([
+                                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                'X-XlsForm-FormId-Fallback' => Str::slug($xlsform->title),
+                            ])
+                            ->withBody($file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                            ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xmlFormId}/draft?ignoreWarnings=true");
+                        $responseBody = $response->json();
+                    }
+                }
+        */
         // if the xlsform file is not valid, throw an error
         if (isset($responseBody['message']) && Str::startsWith($responseBody['message'], 'The given XLSForm file was not valid')) {
             throw new \Exception($response->json()['details']['error'], 500);
         } elseif ($response->status() !== 200) {
 
-            throw new \Exception('An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists. When contacting support, please include the following details: status: '.$response->status().'; message: '.$response->json()['message']);
+            throw new \Exception('An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists. When contacting support, please include the following details: status: ' . $response->status() . '; message: ' . $response->json()['message']);
         }
 
         // when creating a new draft for an existing form, the full form details are not returned. But if they are, we should set the odk_id immediately.
@@ -127,7 +129,7 @@ trait OdkFormService
         }
 
         // get the xlsform and merge in specific details to the schema returned from ODK Central
-        $allSheets = (new XlsImport)->toCollection($file, null, \Maatwebsite\Excel\Excel::XLSX);
+        $allSheets = (new XlsImport)->toCollection($file, null, Excel::XLSX);
         $surveyExcel = $allSheets['survey'];
 
         // sync entity list declarations when processing a saved XlsformTemplate
@@ -179,11 +181,9 @@ trait OdkFormService
     /**
      * Publishes the current draft form so it is available for live data collection
      *
-     * @return XlsformVersion $xlsformVersion
-     *
      * @throws RequestException
      */
-    public function publishForm(Xlsform $xlsform): XlsformVersion
+    public function publishForm(Xlsform $xlsform): void
     {
 
         $token = $this->authenticate();
@@ -194,8 +194,10 @@ trait OdkFormService
 
         // Only deploy draft if draft exists; otherwise we are out of sync with ODK Central, so continue with the current deployed version.
         if (! $draftCheck->notFound()) {
+            $draftCheck->throw();
+
             Http::withToken($token)
-                ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=".Carbon::now()->toDateTimeString())
+                ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=" . Carbon::now()->toDateTimeString())
                 ->throw()
                 ->json();
         }
@@ -206,35 +208,34 @@ trait OdkFormService
             ->throw()
             ->json();
 
-
         if ($formDetails['state'] !== 'open') {
             $formDetails = $this->unArchiveForm($xlsform);
         }
 
         // TODO: move all of this into some form of XlsformVersion handler!
-        // deactivate all other versions;
-        $xlsform->xlsformVersions()->update([
-            'active' => false,
-        ]);
+        DB::transaction(function () use ($xlsform, $formDetails): void {
+            // deactivate all other versions;
+            $xlsform->xlsformVersions()->update([
+                'active' => false,
+            ]);
 
-        // get schema from latest draft version;
-        $formDetails['schema'] = $xlsform->xlsformDraftVersion->schema;
+            // get schema from latest draft version;
+            $formDetails['schema'] = $xlsform->xlsformDraftVersion->schema;
 
-        $xlsformVersion = $this->createNewVersion($xlsform, $formDetails);
+            $xlsformVersion = $this->createNewVersion($xlsform, $formDetails);
 
-        $xlsform->update([
-            'has_draft' => false,
-            'is_active' => true,
-            'odk_version_id' => $xlsformVersion->version,
-            'enketo_id' => $formDetails['enketoId'],
-            'odk_published_at' => Carbon::make($formDetails['publishedAt']),
-        ]);
-        $xlsform->save();
+            $xlsform->update([
+                'has_draft' => false,
+                'is_active' => true,
+                'odk_version_id' => $xlsformVersion->version,
+                'enketo_id' => $formDetails['enketoId'],
+                'odk_published_at' => Carbon::make($formDetails['publishedAt']),
+            ]);
+            $xlsform->save();
 
-        // delete any existing draft submisisons (to reset the pilot testing)
-        $xlsform->submissions()->onlyDraftData()->delete();
-
-        return $xlsformVersion;
+            // delete any existing draft submisisons (to reset the pilot testing)
+            $xlsform->submissions()->onlyDraftData()->delete();
+        });
     }
 
     // create a new xlsformVersion from an existing xlsform.

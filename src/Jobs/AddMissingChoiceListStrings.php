@@ -28,7 +28,10 @@ class AddMissingChoiceListStrings implements ShouldQueue
     {
 
         $choiceLists = $this->model->choiceLists()
-            ->whereDoesntHave('choiceListEntries.languageStrings')
+            ->whereHas('choiceListEntries', function (Builder $query) {
+                $query->whereDoesntHave('languageStrings');
+            })
+            ->with('choiceListEntries.languageStrings')
             ->get();
 
         $choiceLists->each(function (ChoiceList $choiceList) {
@@ -47,34 +50,32 @@ class AddMissingChoiceListStrings implements ShouldQueue
                 ->with('choiceListEntries.languageStrings')
                 ->first();
 
-
-            if(!$matchingList) {
+            if (! $matchingList) {
                 return;
             }
 
-            $choiceList->choiceListEntries->each(function (ChoiceListEntry $choiceListEntry) use ($matchingList) {
-                $matchingEntry = $matchingList->choiceListEntries
-                    ->where('name', $choiceListEntry->name)
-                    ->where('properties', $choiceListEntry->properties)
-                    ->where('cascade_filter', $choiceListEntry->cascade_filter)
-                    ->first();
+            $choiceList->choiceListEntries
+                ->reject(fn (ChoiceListEntry $choiceListEntry) => $choiceListEntry->languageStrings->isNotEmpty())
+                ->each(function (ChoiceListEntry $choiceListEntry) use ($matchingList) {
+                    $matchingEntry = $matchingList->choiceListEntries
+                        ->where('name', $choiceListEntry->name)
+                        ->where('properties', $choiceListEntry->properties)
+                        ->where('cascade_filter', $choiceListEntry->cascade_filter)
+                        ->first();
 
-                $stringsToAdd = $matchingEntry->languageStrings
-                    ->map(function (LanguageString $languageString) use ($choiceListEntry) {
-                        return new LanguageString([
-                            'linked_entry_id' => $choiceListEntry->id,
-                            'linked_entry_type' => ChoiceListEntry::class,
+                    if (! $matchingEntry) {
+                        return;
+                    }
+
+                    $matchingEntry->languageStrings->each(function (LanguageString $languageString) use ($choiceListEntry) {
+                        $choiceListEntry->languageStrings()->updateOrCreate([
                             'locale_id' => $languageString->locale_id,
                             'language_string_type_id' => $languageString->language_string_type_id,
+                        ], [
                             'text' => $languageString->text,
                         ]);
                     });
-
-                $choiceListEntry->languageStrings()->insert($stringsToAdd->toArray());
-
-
-            });
-
+                });
 
         });
 

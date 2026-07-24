@@ -2,18 +2,20 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\ChoiceListResource\RelationManagers;
 
-use Filament\Actions;
-use Filament\Forms;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
-use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
@@ -43,9 +45,9 @@ class ChoiceListEntriesRelationManager extends RelationManager
                 if (isset($choiceList->properties['extra_properties'])) {
                     $propFields = collect($choiceList->properties['extra_properties'])
                         ->map(
-                            fn ($property) => Forms\Components\TextInput::make('properties.' . $property['name'])
+                            fn ($property) => TextInput::make('properties.' . $property['name'])
                                 ->label($property['label'])
-                                ->helperText($property['helper_text'])
+                                ->helperText($property['hint'] ?? null)
                         );
                 } else {
                     $propFields = collect([]);
@@ -97,24 +99,23 @@ class ChoiceListEntriesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('name'),
-                Tables\Columns\TextColumn::make('languageStrings.text')
+                TextColumn::make('name'),
+                TextColumn::make('languageStrings.text')
                     ->separator(', '),
-
             ])
             ->filters([
                 //
             ])
             ->headerActions([
-                Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
-            ->actions([
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Actions\BulkActionGroup::make([
-                    Actions\DeleteBulkAction::make(),
+            ->groupedBulkActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

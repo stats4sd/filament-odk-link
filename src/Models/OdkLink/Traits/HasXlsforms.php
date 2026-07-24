@@ -1,4 +1,6 @@
-<?php /** @noinspection PhpStanGlobal */
+<?php
+
+/** @noinspection PhpStanGlobal */
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
 
@@ -6,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Stats4sd\FilamentOdkLink\Models\Country;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
@@ -34,7 +35,6 @@ trait HasXlsforms
     {
         return $this->name;
     }
-
 
     /** @return HasMany<Dataset, $this> */
     public function datasets(): HasMany
@@ -80,7 +80,7 @@ trait HasXlsforms
     /** @return BelongsToMany<ChoiceList, $this> */
     public function choiceLists(): BelongsToMany
     {
-        return $this->belongsToMany(ChoiceListEntry::class, 'choice_list_owner', 'owner_id', 'choice_list_id')
+        return $this->belongsToMany(ChoiceList::class, 'choice_list_owner', 'owner_id', 'choice_list_id')
             ->withPivot(['is_complete']);
     }
 

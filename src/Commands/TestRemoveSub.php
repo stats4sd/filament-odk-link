@@ -2,12 +2,8 @@
 
 namespace Stats4sd\FilamentOdkLink\Commands;
 
-use App\Models\Team;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 
@@ -32,6 +28,14 @@ class TestRemoveSub extends Command
      */
     public function handle(): void
     {
+
+        // Enforce strict testing use only
+        if (config('app.env') !== 'local') {
+            $this->error('This is a data-destroying command and can only be run when the app environment is set to local. Please never run this against a live database.');
+
+            return;
+        }
+
         // ask to clear all submissions or only from a specific xlsform
         $option = $this->choice('Do you want to completely clear the submissions, entities and entity_values tables, or only remove submissions from a specific xlsform?', ['All', 'Specific'], 'All');
 
@@ -46,14 +50,15 @@ class TestRemoveSub extends Command
 
             $xlsform->submissions->each(function (Submission $submission) {
                 $submission->entities()->delete();
-            })
-                ->forceDelete();
-        }
+                $submission->forceDelete();
+            });
 
-        Submission::all()->each(function (Submission $submission) {
-            $submission->entities()->delete();
-            $submission->forceDelete();
-        });
+        } else {
+            Submission::all()->each(function (Submission $submission) {
+                $submission->entities()->delete();
+                $submission->forceDelete();
+            });
+        }
 
         Cache::flush();
     }
