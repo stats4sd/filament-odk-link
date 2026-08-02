@@ -113,6 +113,8 @@ trait OdkFormService
             $this->uploadMediaFileAttachments($xlsform);
         }
 
+        $this->linkEntityListAttachments($xlsform);
+
         $draftDetails = $this->getXlsformDraftDetails($xlsform);
         $xlsform->odk_id = $draftDetails['xmlFormId'];
         $xlsform->odk_draft_token = $draftDetails['draftToken'];
