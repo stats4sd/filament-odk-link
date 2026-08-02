@@ -2,12 +2,10 @@
 
 namespace Stats4sd\FilamentOdkLink\Services;
 
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Response;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithOdkCentralAccount;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
+use Illuminate\Support\Facades\Log;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkDatasetService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkFormMediaService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkFormService;
@@ -20,12 +18,14 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkUserService;
  */
 class OdkLinkService
 {
-    use OdkProjectService;
-    use OdkUserService;
+    use OdkDatasetService;
     use OdkFormMediaService;
     use OdkFormService;
+    use OdkProjectService;
     use OdkSubmissionService;
-    use OdkDatasetService;
+    use OdkUserService;
+
+    private string $tokenCacheKey = 'odk-token';
 
     public function __construct(protected string $endpoint) {}
 
@@ -34,10 +34,19 @@ class OdkLinkService
      *
      * @return string $token
      */
-    public function authenticate(): string
+    public function authenticate(bool $forceRefresh = false): string
     {
+        if ($forceRefresh) {
+            $this->forgetToken();
+        }
+
         // if a token exists in the cache, return it. Otherwise, create a new session and store the token.
-        return Cache::remember('odk-token', now()->addHours(20), function () {
+        return Cache::remember($this->tokenCacheKey, now()->addHours(20), function () {
+
+            Log::info('Creating a new ODK Central session', [
+                'endpoint' => $this->endpoint,
+                'username' => config('filament-odk-link.odk.username'),
+            ]);
 
             $response = Http::post("{$this->endpoint}/sessions", [
                 'email' => config('filament-odk-link.odk.username'),
@@ -50,11 +59,20 @@ class OdkLinkService
         });
     }
 
-    public function authenticateAsUser($data): \Illuminate\Http\Client\Response
+    /**
+     * Drops the cached session token so the next authenticate() call starts a fresh
+     * ODK Central session. Needed because the token is cached for 20 hours, but ODK
+     * Central can invalidate a session at any point (server restart, session purge,
+     * password change) — leaving every request 401ing until the cache expires.
+     */
+    public function forgetToken(): void
+    {
+        Cache::forget($this->tokenCacheKey);
+    }
+
+    public function authenticateAsUser($data): Response
     {
         return Http::post("{$this->endpoint}/sessions", $data)
             ->throw();
     }
-
-
 }
