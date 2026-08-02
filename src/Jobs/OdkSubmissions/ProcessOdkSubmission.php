@@ -4,12 +4,15 @@ namespace Stats4sd\FilamentOdkLink\Jobs\OdkSubmissions;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Throwable;
 
 class ProcessOdkSubmission implements ShouldQueue
 {
+    use NotifiesOnJobFailure;
     use Queueable;
 
     public function __construct(public Submission $submission, public array $entry, public XlsformVersion $xlsformVersion)
@@ -33,5 +36,16 @@ class ProcessOdkSubmission implements ShouldQueue
             $class::$method($this->submission);
         }
 
+    }
+
+    public function failed(?Throwable $exception = null): void
+    {
+        $formTitle = $this->submission->xlsform->title ?? 'unknown form';
+
+        $this->notifyJobFailure(
+            "Submission processing failed: {$this->submission->odk_id} ({$formTitle})",
+            $exception,
+            $this->superAdmins(),
+        );
     }
 }

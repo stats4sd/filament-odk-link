@@ -8,6 +8,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Spatie\Permission\Models\Role;
+use Stats4sd\FilamentOdkLink\Concerns\ResetsProcessingOnFailure;
 use Stats4sd\FilamentOdkLink\Exports\XlsformTemplateTranslationsExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
@@ -16,6 +17,7 @@ use Stats4sd\FilamentTeamManagement\Models\User;
 class FinishXlsformTemplateImport implements ShouldQueue
 {
     use Queueable;
+    use ResetsProcessingOnFailure;
 
     public function __construct(public XlsformModuleVersion|XlsformTemplate $model)
     {

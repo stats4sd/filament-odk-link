@@ -2,25 +2,27 @@
 
 namespace Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment;
 
-use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\HtmlString;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Throwable;
-use function Laravel\Prompts\search;
 
 class PublishXlsformOnOdkCentral implements ShouldQueue
 {
+    use NotifiesOnJobFailure;
     use Queueable;
+
+    public int $tries = 3;
+
+    /** @var array<int, int> */
+    public array $backoff = [15, 60];
 
     public function __construct(public Xlsform|XlsformTemplate $xlsform, public ?Authenticatable $user)
     {
@@ -48,13 +50,24 @@ class PublishXlsformOnOdkCentral implements ShouldQueue
     {
         Log::error('Xlsform Publishing Failed', ['exception' => $exception]);
 
-        if ($this->user) {
-            Notification::make('xlsform_file_deployment_failed')
-                ->title('Form "'.$this->xlsform->title.'" failed to publish')
-                ->body(new HtmlString('The message below was returned from the ODK Server. It may indicate an issue with the Xlsform definition being used: <br/><br/>' . $exception->getmessage()))
-                ->danger()
-                ->persistent()
-                ->broadcast($this->user);
+        $this->xlsform->updateQuietly(['processing' => false]);
+
+        $message = $exception?->getMessage() ?? 'No error message was returned. Please check the application logs for details.';
+
+        $recipients = $this->user
+            ? collect([$this->user])
+            : $this->superAdmins();
+
+        $notification = Notification::make('xlsform_file_deployment_failed')
+            ->title('Form "' . $this->xlsform->title . '" failed to publish')
+            ->body(new HtmlString('The message below was returned from the ODK Server. It may indicate an issue with the Xlsform definition being used: <br/><br/>' . $message))
+            ->danger()
+            ->persistent();
+
+        foreach ($recipients as $recipient) {
+            $notification
+                ->sendToDatabase($recipient, isEventDispatched: true)
+                ->broadcast($recipient);
         }
     }
 }

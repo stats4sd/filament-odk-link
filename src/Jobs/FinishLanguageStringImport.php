@@ -5,6 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Jobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
+use Stats4sd\FilamentOdkLink\Concerns\ResetsProcessingOnFailure;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
@@ -15,6 +16,7 @@ use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
 class FinishLanguageStringImport implements ShouldQueue
 {
     use Queueable;
+    use ResetsProcessingOnFailure;
 
 
     public function __construct(public XlsformModuleVersion|XlsformTemplate $model, public string $heading)

@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Events\AfterImport;
+use Stats4sd\FilamentOdkLink\Concerns\ResetsProcessingOnFailure;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
@@ -20,6 +21,7 @@ class XlsformTemplateWorkbookImport implements WithMultipleSheets, ShouldQueue, 
 {
 
     use RegistersEventListeners;
+    use ResetsProcessingOnFailure;
     use Importable;
 
     public function __construct(public XlsformModuleVersion | XlsformTemplate $model, public Collection $translatableHeadings, public string $moduleColumn = 'module')

@@ -3,14 +3,17 @@
 namespace Stats4sd\FilamentOdkLink\Jobs;
 
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
+use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Throwable;
 
 /**
  * Temporary Job to pull submissions from an Xlsform without running any additional processing (for testing)
@@ -20,6 +23,7 @@ class PullSubmissionsFromXlsformQuietly implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
+    use NotifiesOnJobFailure;
     use Queueable;
     use SerializesModels;
 
@@ -63,7 +67,7 @@ class PullSubmissionsFromXlsformQuietly implements ShouldQueue
                     'ownerName' => $this->xlsform->owner->name,
                 ]);
 
-                abort(500, 'The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '));
+                throw new Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '));
             }
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?
@@ -74,5 +78,14 @@ class PullSubmissionsFromXlsformQuietly implements ShouldQueue
                 'content' => $entry,
             ]);
         }
+    }
+
+    public function failed(?Throwable $exception = null): void
+    {
+        $this->notifyJobFailure(
+            "Submission pull failed: {$this->xlsform->title} ({$this->xlsform->owner->name})",
+            $exception,
+            $this->superAdmins(),
+        );
     }
 }

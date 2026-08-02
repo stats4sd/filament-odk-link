@@ -7,6 +7,7 @@ use App\Services\HelperService;
 use Illuminate\Support\Collection;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Stats4sd\FilamentOdkLink\Concerns\ResetsProcessingOnFailure;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateLanguageStringImport;
@@ -14,6 +15,7 @@ use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateLanguageStri
 class ImportAllLanguageStrings implements ShouldQueue
 {
     use Queueable;
+    use ResetsProcessingOnFailure;
 
     /**
      * Create a new job instance.

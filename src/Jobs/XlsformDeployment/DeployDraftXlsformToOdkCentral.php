@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\HtmlString;
+use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
 use Stats4sd\FilamentOdkLink\Exceptions\OdkCentralRequestException;
 use Stats4sd\FilamentOdkLink\Exceptions\XlsformValidationException;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
@@ -18,6 +19,7 @@ use Throwable;
 
 class DeployDraftXlsformToOdkCentral implements ShouldQueue
 {
+    use NotifiesOnJobFailure;
     use Queueable;
 
     public int $tries = 3;
@@ -107,18 +109,25 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
             'exception' => $exception,
         ]);
 
-        if (! $this->user) {
-            return;
-        }
+        $this->xlsform->updateQuietly(['processing' => false]);
 
         $message = $exception?->getMessage() ?? 'No error message was returned. Please check the application logs for details.';
 
-        Notification::make('xlsform_file_deployment_failed')
+        $recipients = $this->user
+            ? collect([$this->user])
+            : $this->superAdmins();
+
+        $notification = Notification::make('xlsform_file_deployment_failed')
             ->title('Draft Form "' . $this->xlsform->title . '" failed to deploy')
             ->body(new HtmlString('The message below was returned from the ODK Server. It may indicate an issue with the Xlsform definition being used: <br/><br/>' . $message))
             ->danger()
-            ->persistent()
-            ->broadcast($this->user);
+            ->persistent();
+
+        foreach ($recipients as $recipient) {
+            $notification
+                ->sendToDatabase($recipient, isEventDispatched: true)
+                ->broadcast($recipient);
+        }
     }
 
     /**

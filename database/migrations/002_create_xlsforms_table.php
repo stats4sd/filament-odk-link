@@ -37,7 +37,6 @@ return new class extends Migration {
 
             // Processing
             $table->boolean('processing')->default(0)->comment('Is the form currently being processed? (helps to avoid duplicate deployments)');
-            $table->text('odk_error')->nullable()->comment('If an xlsfile upload returns an error from the ODK Aggregate service, it will be stored here');
 
             // The full schema of the form, as a json object
             $table->json('schema')->nullable();

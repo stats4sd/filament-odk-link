@@ -36,8 +36,6 @@ class Submission extends Model implements HasMedia
 
     protected $casts = [
         'content' => 'array',
-        'errors' => 'array',
-        'entries' => 'array',
         'draft_data' => 'boolean',
         'test_data' => 'boolean',
     ];
@@ -113,22 +111,6 @@ class Submission extends Model implements HasMedia
     public function parent(): BelongsToThrough
     {
         return $this->belongsToThrough();
-    }
-
-// $this->entries is an array of every Model entry created as a result of processing this submission.
-// This helper function makes it easy to update this array.
-    public function addEntry(string $model, array $ids): void
-    {
-        $value = $this->entries;
-
-        if ($value && array_key_exists($model, $value)) {
-            $value[$model] = array_merge($value[$model], $ids);
-        } else {
-            $value[$model] = $ids;
-        }
-
-        $this->entries = $value;
-        $this->save();
     }
 
     /** @return BelongsTo<XlsformVersion, $this> */

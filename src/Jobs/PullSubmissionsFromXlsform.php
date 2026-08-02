@@ -7,13 +7,16 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Throwable;
 
 class PullSubmissionsFromXlsform implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
+    use NotifiesOnJobFailure;
     use Queueable;
     use SerializesModels;
 
@@ -33,5 +36,14 @@ class PullSubmissionsFromXlsform implements ShouldQueue
         $odkLinkService = app()->make(OdkLinkService::class);
 
         $odkLinkService->getSubmissions($this->xlsform);
+    }
+
+    public function failed(?Throwable $exception = null): void
+    {
+        $this->notifyJobFailure(
+            "Submission pull failed: {$this->xlsform->title} ({$this->xlsform->owner->name})",
+            $exception,
+            $this->superAdmins(),
+        );
     }
 }
