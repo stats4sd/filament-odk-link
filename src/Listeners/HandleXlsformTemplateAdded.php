@@ -2,7 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Listeners;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
@@ -22,8 +21,6 @@ use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
 
 class HandleXlsformTemplateAdded
 {
-    public ?User $importedBy = null;
-
     public function handle(MediaHasBeenAddedEvent $event): void
     {
 

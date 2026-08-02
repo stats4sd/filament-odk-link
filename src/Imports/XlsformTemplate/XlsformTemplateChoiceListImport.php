@@ -8,18 +8,24 @@ use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\RegistersEventListeners;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithUpserts;
+use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Throwable;
 
-class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, ToModel, WithChunkReading, WithHeadingRow, WithMultipleSheets, WithUpserts
+class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, ToModel, WithChunkReading, WithEvents, WithHeadingRow, WithMultipleSheets, WithUpserts
 {
     use GetsModuleNamesPerRow;
     use Importable;
+    use NotifiesOnJobFailure;
+    use RegistersEventListeners;
 
     /**
      * @throws \Exception
@@ -111,5 +117,18 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
     public function batchSize(): int
     {
         return 1000;
+    }
+
+    public function failed(?Throwable $exception = null): void
+    {
+        $label = $this->model instanceof XlsformTemplate
+            ? $this->model->title
+            : $this->model->name;
+
+        $this->notifyJobFailure(
+            "Choice list import failed: {$label}",
+            $exception,
+            $this->superAdmins(),
+        );
     }
 }
