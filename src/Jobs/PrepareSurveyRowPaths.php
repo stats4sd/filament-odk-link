@@ -5,6 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Jobs;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Collection;
+use Stats4sd\FilamentOdkLink\Concerns\ResetsProcessingOnFailure;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
@@ -12,6 +13,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 class PrepareSurveyRowPaths implements ShouldQueue
 {
     use Queueable;
+    use ResetsProcessingOnFailure;
 
     /**
      * Create a new job instance.

@@ -2,17 +2,18 @@
 
 namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
 
-use Illuminate\Support\Facades\Http;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\ConnectionException;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Exports\DatasetAsMediaAttachmentExport;
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 use Stats4sd\FilamentOdkLink\Exports\ChoiceListAsMediaAttachmentExport;
+use Stats4sd\FilamentOdkLink\Exports\DatasetAsMediaAttachmentExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 trait OdkFormMediaService
 {
@@ -24,12 +25,12 @@ trait OdkFormMediaService
     public function getRequiredMedia(HasXlsformDrafts $xlsformTemplate): array
     {
         $token = $this->authenticate();
+
         return Http::withToken($token)
             ->get("{$this->endpoint}/projects/{$xlsformTemplate->owner->odkProject->id}/forms/{$xlsformTemplate->odk_id}/attachments")
             ->throw()
             ->json();
     }
-
 
     /**
      * Uploads all media files for an XLSform to ODK Central - both static files and dyncsv files
@@ -49,13 +50,8 @@ trait OdkFormMediaService
             }
         }
 
-        // dynamic files — skip entity list CSVs (ODK Central manages these via its entities feature)
-        $entityCsvNames = match (true) {
-            $xlsform instanceof XlsformTemplate => $xlsform->templateEntityLists->pluck('list_name'),
-            $xlsform instanceof Xlsform         => $xlsform->xlsformTemplate->templateEntityLists->pluck('list_name'),
-            default                             => collect(),
-        };
-        $entityCsvNames = $entityCsvNames->map(fn(string $n) => $n . '.csv')->toArray();
+        // dynamic files — skip entity list CSVs (these are linked to ODK Central datasets via linkEntityListAttachments)
+        $entityCsvNames = $this->entityListCsvNames($xlsform);
 
         $requiredDataMedia = $xlsform->requiredDataMedia()->get();
 
@@ -71,6 +67,7 @@ trait OdkFormMediaService
                 $media = $requiredMediaItem->getFirstMedia();
                 if ($media) {
                     $this->uploadSingleMediaFile($xlsform, $media->getPath());
+
                     continue;
                 }
 
@@ -81,6 +78,93 @@ trait OdkFormMediaService
         }
 
         return true;
+    }
+
+    /**
+     * Gets the attachments expected by the current draft of the given form
+     *
+     * @throws RequestException|ConnectionException
+     */
+    public function getDraftAttachments(HasXlsformDrafts $xlsform): array
+    {
+        $token = $this->authenticate();
+
+        return Http::withToken($token)
+            ->get("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/attachments")
+            ->throw()
+            ->json();
+    }
+
+    /**
+     * Links every draft attachment that matches a declared entity list ({list_name}.csv) to the
+     * corresponding dataset on ODK Central. Central only auto-links these when the first draft of a
+     * brand-new form is created, so re-deployed drafts must be linked explicitly.
+     *
+     * @throws RequestException|ConnectionException
+     */
+    public function linkEntityListAttachments(HasXlsformDrafts $xlsform): void
+    {
+        $entityCsvNames = $this->entityListCsvNames($xlsform);
+
+        if (count($entityCsvNames) === 0) {
+            return;
+        }
+
+        foreach ($this->getDraftAttachments($xlsform) as $attachment) {
+            if ($attachment['type'] !== 'file') {
+                continue;
+            }
+
+            if (! in_array($attachment['name'], $entityCsvNames)) {
+                continue;
+            }
+
+            if ($attachment['datasetExists'] ?? false) {
+                continue;
+            }
+
+            $this->linkDatasetToDraftAttachment($xlsform, $attachment['name']);
+        }
+    }
+
+    /**
+     * @throws RequestException|ConnectionException
+     */
+    public function linkDatasetToDraftAttachment(HasXlsformDrafts $xlsform, string $attachmentName): void
+    {
+        $token = $this->authenticate();
+
+        $response = Http::withToken($token)
+            ->patch("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/attachments/{$attachmentName}", [
+                'dataset' => true,
+            ]);
+
+        // 404 means the dataset does not exist on ODK Central yet; the link will be made on the
+        // next deployment after the dataset is created, so warn instead of failing the deployment.
+        if ($response->status() === 404) {
+            Log::warning('Could not link entity list to draft form attachment: no matching dataset on ODK Central', [
+                'xlsform_id' => $xlsform->getKey(),
+                'xlsform_type' => $xlsform::class,
+                'odk_form_id' => $xlsform->odk_id,
+                'attachment_name' => $attachmentName,
+            ]);
+
+            return;
+        }
+
+        $response->throw();
+    }
+
+    /** @return array<int, string> */
+    private function entityListCsvNames(HasXlsformDrafts $xlsform): array
+    {
+        $listNames = match (true) {
+            $xlsform instanceof XlsformTemplate => $xlsform->templateEntityLists->pluck('list_name'),
+            $xlsform instanceof Xlsform => $xlsform->xlsformTemplate->templateEntityLists->pluck('list_name'),
+            default => collect(),
+        };
+
+        return $listNames->map(fn (string $listName) => "{$listName}.csv")->toArray();
     }
 
     /**
@@ -116,19 +200,18 @@ trait OdkFormMediaService
     /**
      * Prepares a media attachment csv file based on a requiredDataMedia item for a specific xlsform.
      * Assumes that the ChoiceList containing the localised choices is named the same as the csv file.
-     * @return string
      * */
     public function prepareCsvFile(HasXlsformDrafts $xlsform, RequiredMedia $requiredMediaItem): string
     {
         // create folder structure if not exists
-        //Storage::disk(config('filament-odk-link.storage.media'))->makeDirectory('xlsforms');
+        // Storage::disk(config('filament-odk-link.storage.media'))->makeDirectory('xlsforms');
 
         $filePath = 'xlsforms/' . $xlsform->id . '/' . $requiredMediaItem->name;
 
         // check if the requiredMedia is linked to a choice list or dataset
         if ($requiredMediaItem->links_to_dataset) {
 
-            if($requiredMediaItem->dataset === null) {
+            if ($requiredMediaItem->dataset === null) {
                 abort(500, 'The dataset for the required media item ' . $requiredMediaItem->name . ' is not set. Please check the form template and ensure all required data media items are linked to a dataset or choice list.');
             }
 
@@ -139,7 +222,7 @@ trait OdkFormMediaService
             );
         } else {
 
-            if($requiredMediaItem->choiceList === null) {
+            if ($requiredMediaItem->choiceList === null) {
                 abort(500, 'The choice list for the required media item ' . $requiredMediaItem->name . ' is not set. Please check the form template and ensure all required data media items are linked to a dataset or choice list.');
             }
 

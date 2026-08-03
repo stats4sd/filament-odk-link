@@ -11,8 +11,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Filament\Notifications\Notification;
 use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
@@ -402,9 +404,9 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
         $user = auth()->user();
 
-        return Excel::queue(new XlsformWorkbookExport($this), $filePath, config('filament-odk-link.storage.xlsforms'))->chain(
+        return Excel::queue(new XlsformWorkbookExport($this, $user), $filePath, config('filament-odk-link.storage.xlsforms'))->chain(
             [
-                new UpdateXlsformFile($this, $filePath),
+                new UpdateXlsformFile($this, $filePath, $user),
             ]
         );
 
@@ -445,10 +447,27 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         }
 
         if ($this->draft_needs_update) {
-            return $this->deployDraft()
-                ->chain([
-                    new PublishXlsformOnOdkCentral($this, auth()->user()),
-                ]);
+            $user = auth()->user();
+            $deployment = $this->deployDraft();
+
+            if (! $deployment) {
+                Log::warning("Publishing skipped for xlsform {$this->id}: the draft deployment could not be queued because the form is already processing.");
+
+                if ($user) {
+                    Notification::make()
+                        ->title('Form "' . $this->title . '" could not be published')
+                        ->body('The form is currently being processed. Please wait for the current process to finish and try again.')
+                        ->danger()
+                        ->sendToDatabase($user, isEventDispatched: true)
+                        ->broadcast($user);
+                }
+
+                return null;
+            }
+
+            return $deployment->chain([
+                new PublishXlsformOnOdkCentral($this, $user),
+            ]);
         }
 
         // if no draft update is needed, just publish the form:

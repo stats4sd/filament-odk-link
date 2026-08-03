@@ -3,13 +3,18 @@
 namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
 
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Excel;
+use Stats4sd\FilamentOdkLink\Exceptions\OdkCentralRequestException;
+use Stats4sd\FilamentOdkLink\Exceptions\XlsformValidationException;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
@@ -26,7 +31,7 @@ trait OdkFormService
      * @return array $xlsformDetails
      *
      * @throws RequestException|ConnectionException
-     * @throws \Exception
+     * @throws XlsformValidationException|OdkCentralRequestException|Exception
      */
     public function createDraftForm(HasXlsformDrafts $xlsform, string $filePath, bool $withMedia = true): HasXlsformDrafts
     {
@@ -34,7 +39,7 @@ trait OdkFormService
         $token = $this->authenticate();
 
         if (! file_exists($filePath)) {
-            throw new \Exception('The XLSForm file is missing. Please upload the file again and try to deploy the form again.', 500);
+            throw new Exception('The XLSForm file is missing. Please upload the file again and try to deploy the form again.', 500);
         }
 
         $file = file_get_contents($filePath);
@@ -55,6 +60,24 @@ trait OdkFormService
             ->post($url);
 
         $responseBody = $response->json();
+
+        $validationError = $this->extractXlsformValidationError($responseBody);
+
+        if ($validationError !== null) {
+            $this->logDraftFormFailure($xlsform, $url, $response, 'the XLSForm file was rejected as invalid');
+
+            throw new XlsformValidationException($validationError, 500);
+        }
+
+        if ($response->status() !== 200) {
+            $this->logDraftFormFailure($xlsform, $url, $response, 'ODK Central returned an unexpected status');
+
+            if ($response->status() === 401) {
+                $this->forgetToken();
+            }
+
+            throw OdkCentralRequestException::fromResponse($response, 'creating the draft form', $url);
+        }
         /*
                 // 409: a form with this xmlFormId already exists on ODK Central (e.g. when testOnOdkCentral()
                 // runs on an unsaved template that was previously created). Retry against the draft endpoint.
@@ -77,14 +100,6 @@ trait OdkFormService
                     }
                 }
         */
-        // if the xlsform file is not valid, throw an error
-        if (isset($responseBody['message']) && Str::startsWith($responseBody['message'], 'The given XLSForm file was not valid')) {
-            throw new \Exception($response->json()['details']['error'], 500);
-        } elseif ($response->status() !== 200) {
-
-            throw new \Exception('An error occurred while creating the draft form. The error is not an XLSForm file validation issue, but something else that might require further investigation. Please try again later or contact support if the problem persists. When contacting support, please include the following details: status: ' . $response->status() . '; message: ' . $response->json()['message']);
-        }
-
         // when creating a new draft for an existing form, the full form details are not returned. But if they are, we should set the odk_id immediately.
         if (isset($responseBody['xmlFormId'])) {
             $xlsform->odk_id = $responseBody['xmlFormId'];
@@ -98,6 +113,8 @@ trait OdkFormService
             $this->uploadMediaFileAttachments($xlsform);
         }
 
+        $this->linkEntityListAttachments($xlsform);
+
         $draftDetails = $this->getXlsformDraftDetails($xlsform);
         $xlsform->odk_id = $draftDetails['xmlFormId'];
         $xlsform->odk_draft_token = $draftDetails['draftToken'];
@@ -108,6 +125,38 @@ trait OdkFormService
 
         return $xlsform;
 
+    }
+
+    /**
+     * @param  ?array<string, mixed>  $responseBody
+     */
+    private function extractXlsformValidationError(?array $responseBody): ?string
+    {
+        if (! isset($responseBody['message'])) {
+            return null;
+        }
+
+        if (! Str::startsWith($responseBody['message'], 'The given XLSForm file was not valid')) {
+            return null;
+        }
+
+        return $responseBody['details']['error'] ?? $responseBody['message'];
+    }
+
+    private function logDraftFormFailure(HasXlsformDrafts $xlsform, string $url, Response $response, string $reason): void
+    {
+        Log::error("Draft xlsform deployment to ODK Central failed: {$reason}", [
+            'xlsform_id' => $xlsform->getKey(),
+            'xlsform_type' => $xlsform::class,
+            'xlsform_title' => $xlsform->title,
+            'owner_id' => $xlsform->getAttribute('owner_id'),
+            'odk_project_id' => data_get($xlsform, 'owner.odkProject.id'),
+            'odk_form_id' => $xlsform->odk_id,
+            'request_url' => $url,
+            'response_status' => $response->status(),
+            'odk_message' => $response->json('message'),
+            'response_body' => Str::limit($response->body(), 4000),
+        ]);
     }
 
     // update the schema of a template for xlsform from the latest draft version on ODK Central

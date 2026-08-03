@@ -6,6 +6,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;
+use Stats4sd\FilamentOdkLink\Concerns\ResetsProcessingOnFailure;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
@@ -15,6 +16,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 class FinishChoiceListEntryImport implements ShouldQueue
 {
     use Queueable;
+    use ResetsProcessingOnFailure;
 
     public function __construct(public XlsformModuleVersion|XlsformTemplate $model)
     {

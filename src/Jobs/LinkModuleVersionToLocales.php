@@ -5,6 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Jobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Collection;
+use Stats4sd\FilamentOdkLink\Concerns\ResetsProcessingOnFailure;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Language;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
@@ -15,6 +16,7 @@ use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
 class LinkModuleVersionToLocales implements ShouldQueue
 {
     use Queueable;
+    use ResetsProcessingOnFailure;
 
     /** @var Collection<Language> */
     public Collection $languages;
