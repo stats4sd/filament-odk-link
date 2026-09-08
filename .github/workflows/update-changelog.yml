@@ -1,5 +1,10 @@
 name: "Update Changelog"
 
+# Prepends the GitHub release notes to the core package changelog.
+# Currently every release is assumed to belong to packages/odk-link-core.
+# The tag-to-package mapping (e.g. core-v1.2.3 vs filament-v1.2.3) is a
+# restructure step 7 decision; revisit this workflow when the subtree split lands.
+
 on:
   release:
     types: [released]
@@ -15,17 +20,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
-          ref: main
+          ref: dev
 
       - name: Update Changelog
         uses: stefanzweifel/changelog-updater-action@v1
         with:
-          latest-version: ${{ github.event.release.name }}
+          latest-version: ${{ github.event.release.tag_name }}
           release-notes: ${{ github.event.release.body }}
+          path-to-changelog: packages/odk-link-core/CHANGELOG.md
 
       - name: Commit updated CHANGELOG
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
-          branch: main
+          branch: dev
           commit_message: Update CHANGELOG
-          file_pattern: CHANGELOG.md
+          file_pattern: packages/odk-link-core/CHANGELOG.md

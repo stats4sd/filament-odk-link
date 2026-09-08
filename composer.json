@@ -1,85 +1,41 @@
 {
-    "name": "stats4sd/filament-odk-link",
-    "description": "Manage ODK forms  in a harmonised way with Laravel Filament ",
-    "keywords": [
-        "stats4sd",
-        "laravel",
-        "filament-odk-link"
-    ],
-    "homepage": "https://github.com/stats4sd/filament-odk-link",
-    "support": {
-        "issues": "https://github.com/stats4sd/filament-odk-link/issues",
-        "source": "https://github.com/stats4sd/filament-odk-link"
-    },
+    "name": "stats4sd/odk-link-monorepo",
+    "description": "Development workspace for the ODK Link packages and reference app. Not published.",
+    "type": "project",
     "license": "MIT",
-    "authors": [
+    "repositories": [
         {
-            "name": "Stats4SD",
-            "email": "support@stats4sd.org",
-            "role": "Developer"
+            "type": "path",
+            "url": "packages/*",
+            "options": {
+                "symlink": true
+            }
         }
     ],
     "require": {
         "php": "^8.4",
-        "filament/filament": "^5.0",
-        "filament/spatie-laravel-media-library-plugin": "^5.0",
-        "haydenpierce/class-finder": "^0.5.3",
-        "illuminate/contracts": "^13.0",
-        "maatwebsite/excel": "^3.1",
-        "shiftonelabs/laravel-cascade-deletes": "^2.0",
-        "simplesoftwareio/simple-qrcode": "^4.2",
-        "spatie/laravel-package-tools": "^1.15.0",
-        "spatie/laravel-permission": "^6.10",
-        "staudenmeir/belongs-to-through": "^2.18",
-        "staudenmeir/eloquent-has-many-deep": "^1.22"
+        "stats4sd/filament-odk-link": "@dev"
     },
     "require-dev": {
         "larastan/larastan": "^3.0",
         "laravel/pint": "^1.0",
-        "nunomaduro/collision": "^8.1",
         "orchestra/testbench": "^11.0",
-        "pestphp/pest": "^4.0",
-        "pestphp/pest-plugin-arch": "^4.0",
-        "pestphp/pest-plugin-laravel": "^4.0",
-        "phpstan/phpstan-deprecation-rules": "^2.0",
-        "phpstan/extension-installer": "^1.1",
-        "phpstan/phpstan-phpunit": "^2.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "Stats4sd\\FilamentOdkLink\\": "src/",
-            "Stats4sd\\FilamentOdkLink\\Database\\Factories\\": "database/factories/",
-            "Stats4sd\\FilamentOdkLink\\Database\\Seeders\\": "database/seeders/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Stats4sd\\FilamentOdkLink\\Tests\\": "tests/"
-        }
+        "pestphp/pest": "^4.0"
     },
     "scripts": {
-        "post-autoload-dump": "@php ./vendor/bin/testbench package:discover --ansi",
-        "analyse": "vendor/bin/phpstan analyse",
-        "test": "vendor/bin/pest",
-        "test-coverage": "vendor/bin/pest --coverage",
-        "format": "vendor/bin/pint"
+        "test": "@test:core",
+        "test:core": "@composer --working-dir=packages/odk-link-core test",
+        "analyse": "@analyse:core",
+        "analyse:core": "@composer --working-dir=packages/odk-link-core analyse",
+        "format": "@format:core",
+        "format:core": "@composer --working-dir=packages/odk-link-core format",
+        "install:packages": "@composer --working-dir=packages/odk-link-core install"
     },
     "config": {
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "phpstan/extension-installer": true
-        }
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "Stats4sd\\FilamentOdkLink\\FilamentOdkLinkServiceProvider",
-                "Stats4sd\\FilamentOdkLink\\FilamentOdkLinkEventServiceProvider"
-            ],
-            "aliases": {
-                "FilamentOdkLink": "Stats4sd\\FilamentOdkLink\\Facades\\FilamentOdkLink"
-            }
         }
     },
     "minimum-stability": "dev",

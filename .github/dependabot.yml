@@ -10,3 +10,13 @@ updates:
       interval: "weekly"
     labels:
       - "dependencies"
+
+  - package-ecosystem: "composer"
+    directory: "/packages/odk-link-core"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+    groups:
+      composer-minor-patch:
+        update-types: ["minor", "patch"]

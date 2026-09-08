@@ -1,0 +1,15 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 4
+    paths:
+        - src
+        - database
+    databaseMigrationsPath:
+        - database/migrations
+    tmpDir: build/phpstan
+    checkOctaneCompatibility: true
+    checkModelProperties: true
+    noUnnecessaryCollectionCallOnly: ['count', 'first']
+    noEnvCallsOutsideOfConfig: false

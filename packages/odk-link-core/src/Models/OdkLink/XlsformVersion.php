@@ -1,0 +1,79 @@
+<?php
+
+namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
+
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+
+class XlsformVersion extends Model implements HasMedia
+{
+    use InteractsWithMedia;
+
+    protected $table = 'xlsform_versions';
+
+    protected $casts = [
+        'schema' => 'collection',
+        'is_draft' => 'boolean',
+    ];
+
+    protected $guarded = [];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('xlsform_file')
+            ->singleFile()
+            ->useDisk(config('filament-odk-link.storage.xlsforms'));
+
+        $this->addMediaCollection('attached_media')
+            ->useDisk(config('filament-odk-link.storage.xlsforms'));
+    }
+
+    // **************** COMPUTED ATTRIBUTES ***********************
+
+    /** @return Attribute<string, never> */
+    protected function xlsfile(): Attribute
+    {
+        return new Attribute(
+            get: fn (): string => $this->getFirstMediaPath('xlsform_file'),
+        );
+    }
+
+    /** @return Attribute<string, never> */
+    protected function xlsfile_name(): Attribute
+    {
+        return new Attribute(
+            get: fn (): string => $this->getFirstMedia('xlsform_file')->file_name,
+        );
+    }
+
+    // ************ RELATIONSHIPS ***************
+
+    /** @return BelongsTo<Xlsform, $this> */
+    public function xlsform(): BelongsTo
+    {
+        return $this->belongsTo(Xlsform::class);
+    }
+
+    /** @return HasMany<Submission, $this> */
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(Submission::class)
+            ->withoutGlobalScope('ignore_drafts');
+    }
+
+    public function liveSubmissions(): HasMany
+    {
+        return $this->hasMany(Submission::class);
+    }
+
+    public function draftSubmissions(): HasMany
+    {
+        return $this->hasMany(Submission::class)
+            ->withoutGlobalScope('ignore_drafts')
+            ->OnlyDraftData();
+    }
+}
