@@ -25,7 +25,7 @@ composer test                       # run the full Pest suite
 vendor/bin/pest tests/ArchTest.php  # run a single test file
 vendor/bin/pest --filter="phrase"   # run tests matching a name
 composer test-coverage              # Pest with coverage (outputs to build/)
-composer analyse                    # PHPStan / Larastan (level 4, scans src + database)
+composer analyse                    # PHPStan / Larastan (level 4, scans src + database). New errors must be fixed, not added to phpstan-baseline.neon
 composer format                     # Laravel Pint (custom rules in pint.json)
 ```
 
