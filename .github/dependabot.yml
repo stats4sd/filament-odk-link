@@ -20,3 +20,13 @@ updates:
     groups:
       composer-minor-patch:
         update-types: ["minor", "patch"]
+
+  - package-ecosystem: "composer"
+    directory: "/apps/reference"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+    groups:
+      composer-minor-patch:
+        update-types: ["minor", "patch"]

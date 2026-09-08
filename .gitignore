@@ -6,7 +6,7 @@ build
 coverage
 docs
 node_modules
-phpunit.xml
+packages/*/phpunit.xml
 phpstan.neon
 testbench.yaml
 vendor
