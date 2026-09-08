@@ -163,12 +163,6 @@ parameters:
 			path: src/Filament/OdkAdmin/Resources/XlsformTemplates/Tables/XlsformTemplateTable.php
 
 		-
-			message: '#^Class Stats4sd\\FilamentOdkLink\\Filament\\OdkAdmin\\Resources\\XlsformTemplates\\Schemas\\XlsformTemplateInfoList referenced with incorrect case\: Stats4sd\\FilamentOdkLink\\Filament\\OdkAdmin\\Resources\\XlsformTemplates\\Schemas\\XlsformTemplateInfolist\.$#'
-			identifier: class.nameCase
-			count: 2
-			path: src/Filament/OdkAdmin/Resources/XlsformTemplates/XlsformTemplateResource.php
-
-		-
 			message: '#^Property Stats4sd\\FilamentOdkLink\\Filament\\Widgets\\AvailableOdkTemplatesWidget\:\:\$view \(view\-string\) does not accept default value of type string\.$#'
 			identifier: property.defaultValue
 			count: 1
