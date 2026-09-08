@@ -1,0 +1,93 @@
+name: core-ci
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: packages/odk-link-core
+
+env:
+  PKG: packages/odk-link-core
+
+jobs:
+  validate:
+    name: composer validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - name: Validate root workspace
+        working-directory: .
+        run: composer validate --no-check-publish
+      - name: Validate core package
+        run: composer validate --strict
+
+  tests:
+    name: tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4', '8.5']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, intl, gd, exif, fileinfo
+          coverage: none
+      - name: Setup problem matchers
+        run: |
+          echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+          echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+      - uses: ramsey/composer-install@v4
+        with:
+          working-directory: ${{ env.PKG }}
+          dependency-versions: highest
+          composer-options: --prefer-stable --prefer-dist
+      - run: composer show -D
+      - run: vendor/bin/pest --ci
+
+  phpstan:
+    name: phpstan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - uses: ramsey/composer-install@v4
+        with:
+          working-directory: ${{ env.PKG }}
+          dependency-versions: highest
+          composer-options: --prefer-stable --prefer-dist
+      - run: vendor/bin/phpstan analyse --error-format=github --no-progress
+
+  pint:
+    name: pint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - uses: ramsey/composer-install@v4
+        with:
+          working-directory: ${{ env.PKG }}
+          dependency-versions: highest
+          composer-options: --prefer-stable --prefer-dist
+      - run: vendor/bin/pint --test
