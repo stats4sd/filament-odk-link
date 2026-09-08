@@ -60,7 +60,7 @@ class TestCase extends Orchestra
         // Host-app-supplied tables (the form-owner model) that the package
         // migrations constrain against. The `0001_` prefix sorts this ahead of
         // the package's `000_`/`001_`/`002_` migrations, which depend on it.
-        $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
+        $this->loadMigrationsFrom(__DIR__ . '/Database/migrations');
     }
 
     public function getEnvironmentSetUp($app): void
