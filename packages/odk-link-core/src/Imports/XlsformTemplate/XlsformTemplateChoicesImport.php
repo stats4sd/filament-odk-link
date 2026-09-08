@@ -20,7 +20,7 @@ class XlsformTemplateChoicesImport implements ShouldQueue, SkipsEmptyRows, ToCol
 {
     use RemembersRowNumber;
 
-    public function __construct(public XlsformModuleVersion|XlsformTemplate $model, public Collection $translatableHeadings)
+    public function __construct(public XlsformModuleVersion | XlsformTemplate $model, public Collection $translatableHeadings)
     {
         $model->load('choiceLists');
     }

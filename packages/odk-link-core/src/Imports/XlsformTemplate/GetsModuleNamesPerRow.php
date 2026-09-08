@@ -10,7 +10,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 trait GetsModuleNamesPerRow
 {
     /** @return XlsformModuleVersion */
-    public function getModuleVersionAndNameFromRow(Collection $row, XlsformModuleVersion|XlsformTemplate $model, string $moduleColumn = 'module')
+    public function getModuleVersionAndNameFromRow(Collection $row, XlsformModuleVersion | XlsformTemplate $model, string $moduleColumn = 'module')
     {
         // find the moduleVersion for the current row
         if ($model instanceof XlsformModuleVersion) {
@@ -35,7 +35,7 @@ trait GetsModuleNamesPerRow
 
                 $moduleRows = $xlsformModule->row_names;
 
-                $rowName = $row['type'].'_'.$row['name'];
+                $rowName = $row['type'] . '_' . $row['name'];
 
                 return $moduleRows->contains($rowName);
 

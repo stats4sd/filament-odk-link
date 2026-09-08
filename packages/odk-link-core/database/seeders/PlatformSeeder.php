@@ -37,7 +37,7 @@ class PlatformSeeder extends Seeder
 
         $platform->odkProject()->forceCreateQuietly([
             'id' => config('filament-odk-link.odk.platform_project_id'),
-            'name' => config('app.name', 'Laravel Platform').' Platform',
+            'name' => config('app.name', 'Laravel Platform') . ' Platform',
         ]);
     }
 
@@ -48,10 +48,10 @@ class PlatformSeeder extends Seeder
         if (file_exists($path)) {
 
             // if the .env file is set but empty, update it.
-            if (str_contains(file_get_contents($path), 'ODK_PLATFORM_PROJECT_ID'.'=')) {
+            if (str_contains(file_get_contents($path), 'ODK_PLATFORM_PROJECT_ID' . '=')) {
                 file_put_contents($path, preg_replace(
                     pattern: '/^ODK_PLATFORM_PROJECT_ID=.*$/',
-                    replacement: 'ODK_PLATFORM_PROJECT_ID'.'='.$value,
+                    replacement: 'ODK_PLATFORM_PROJECT_ID' . '=' . $value,
                     subject: file_get_contents($path)
                 ));
 
@@ -59,7 +59,7 @@ class PlatformSeeder extends Seeder
             }
 
             // if the .env file is set but the key is not present, add it.
-            file_put_contents($path, PHP_EOL.'ODK_PLATFORM_PROJECT_ID'.'='.$value, FILE_APPEND);
+            file_put_contents($path, PHP_EOL . 'ODK_PLATFORM_PROJECT_ID' . '=' . $value, FILE_APPEND);
         }
     }
 }

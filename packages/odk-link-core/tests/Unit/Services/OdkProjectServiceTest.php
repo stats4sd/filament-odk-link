@@ -25,7 +25,8 @@ it('createProject prepends the app name prefix to the project name', function ()
 
     app(OdkLinkService::class)->createProject('My Survey');
 
-    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects'
+    Http::assertSent(
+        fn ($req) => $req->url() === 'https://odk.test/v1/projects'
         && $req['name'] === 'TestApp- My Survey'
     );
 });
@@ -41,7 +42,8 @@ it('createProject uses short_name over app name when configured', function () {
 
     app(OdkLinkService::class)->createProject('Survey');
 
-    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects'
+    Http::assertSent(
+        fn ($req) => $req->url() === 'https://odk.test/v1/projects'
         && $req['name'] === 'SHORT- Survey'
     );
 });
@@ -88,7 +90,8 @@ it('createProject limits the name to 57 characters when squish alone is insuffic
 
     app(OdkLinkService::class)->createProject($longName);
 
-    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects'
+    Http::assertSent(
+        fn ($req) => $req->url() === 'https://odk.test/v1/projects'
         && strlen($req['name']) === 57
     );
 });
@@ -139,7 +142,8 @@ it('updateProject POSTs to the correct URL with the new name', function () {
 
     app(OdkLinkService::class)->updateProject($odkProject, 'New Name');
 
-    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects/7'
+    Http::assertSent(
+        fn ($req) => $req->url() === 'https://odk.test/v1/projects/7'
         && $req['name'] === 'New Name'
     );
 });
@@ -162,7 +166,8 @@ it('archiveProject POSTs archived=true to the project URL', function () {
 
     app(OdkLinkService::class)->archiveProject($odkProject);
 
-    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects/5'
+    Http::assertSent(
+        fn ($req) => $req->url() === 'https://odk.test/v1/projects/5'
         && $req['archived'] === true
         && $req['name'] === 'To Archive'
     );

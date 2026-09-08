@@ -21,7 +21,7 @@ class NotifyUserThatXlsformFileIsDeployedAsDraft implements ShouldQueue
     {
         Notification::make('xlsform_form_deployed_as_draft')
             ->title('Xlsform File Draft Ready')
-            ->body('The Xlsform '.$this->xlsform->title.' belonging to '.$this->xlsform->owner->name.' is now available as a draft to test.')
+            ->body('The Xlsform ' . $this->xlsform->title . ' belonging to ' . $this->xlsform->owner->name . ' is now available as a draft to test.')
             ->success()
             ->broadcast($this->user);
     }

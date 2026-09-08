@@ -18,7 +18,7 @@ class FinishChoiceListEntryImport implements ShouldQueue
     use Queueable;
     use ResetsProcessingOnFailure;
 
-    public function __construct(public XlsformModuleVersion|XlsformTemplate $model) {}
+    public function __construct(public XlsformModuleVersion | XlsformTemplate $model) {}
 
     /**
      * Execute the job.
@@ -79,7 +79,7 @@ class FinishChoiceListEntryImport implements ShouldQueue
                 // these should be identifiable because the RequiredMedia name is ${list_name}_info.csv.
 
                 $matchedMedia = $this->model->requiredDataMedia()
-                    ->where('name', $choiceList->list_name.'_info.csv')
+                    ->where('name', $choiceList->list_name . '_info.csv')
                     ->first();
 
                 if ($matchedMedia instanceof RequiredMedia) {

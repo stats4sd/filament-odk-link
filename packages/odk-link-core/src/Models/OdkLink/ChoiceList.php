@@ -36,7 +36,7 @@ class ChoiceList extends Model
             ->where(function ($query) use ($owner) {
                 $query->whereDoesntHave('owner')
                     ->orWhereHas('owner', function ($query) use ($owner) {
-                        $query->where($owner->getTable().'.'.$owner->getKeyName(), $owner->getKey());
+                        $query->where($owner->getTable() . '.' . $owner->getKeyName(), $owner->getKey());
 
                     });
             })

@@ -71,7 +71,8 @@ class RequiredMedia extends Pivot implements HasMedia
                 }
 
                 return 'unlinked';
-            });
+            }
+        );
     }
 
     /** @return BelongsTo<XlsformTemplate, $this> */

@@ -27,7 +27,7 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            static fn (string $modelName) => 'Stats4sd\\FilamentOdkLink\\Database\\Factories\\'.class_basename($modelName).'Factory'
+            static fn (string $modelName) => 'Stats4sd\\FilamentOdkLink\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
         );
     }
 
@@ -55,12 +55,12 @@ class TestCase extends Orchestra
     {
         // The package registers its migrations for *publishing* only
         // (runsMigrations is false), so the suite loads them explicitly.
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
 
         // Host-app-supplied tables (the form-owner model) that the package
         // migrations constrain against. The `0001_` prefix sorts this ahead of
         // the package's `000_`/`001_`/`002_` migrations, which depend on it.
-        $this->loadMigrationsFrom(__DIR__.'/database/migrations');
+        $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
     }
 
     public function getEnvironmentSetUp($app): void

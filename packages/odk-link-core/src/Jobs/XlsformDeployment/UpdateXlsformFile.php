@@ -27,10 +27,10 @@ class UpdateXlsformFile implements ShouldQueue
         try {
             $this->xlsform->addMediaFromDisk($this->filePath, config('filament-odk-link.storage.xlsforms'))->toMediaCollection('xlsform_file');
         } catch (FileDoesNotExist $exception) {
-            Log::error('Trying to save file for Xlsform '.$this->xlsform->id.' that does not exist at path '.$this->filePath);
+            Log::error('Trying to save file for Xlsform ' . $this->xlsform->id . ' that does not exist at path ' . $this->filePath);
             $this->fail($exception);
         } catch (FileIsTooBig $exception) {
-            Log::error('Trying to save file for Xlsform '.$this->xlsform->id.' that is too big at path '.$this->filePath);
+            Log::error('Trying to save file for Xlsform ' . $this->xlsform->id . ' that is too big at path ' . $this->filePath);
             $this->fail($exception);
         } finally {
             $this->xlsform->updateQuietly(['processing' => false]);

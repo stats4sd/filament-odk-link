@@ -38,7 +38,7 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
 
     public ?string $relationship;
 
-    public function __construct(public XlsformModuleVersion|XlsformTemplate $model, public string $heading, public string $sheet)
+    public function __construct(public XlsformModuleVersion | XlsformTemplate $model, public string $heading, public string $sheet)
     {
 
         // init translation helper and get needed props from the provided heading;

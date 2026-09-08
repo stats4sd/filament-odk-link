@@ -30,8 +30,8 @@ class OdkCentralRequestException extends Exception
         }
 
         $message = "ODK Central returned HTTP {$response->status()} while {$action}."
-            .' This is not an XLSForm file validation issue.'
-            .($odkMessage !== null ? " ODK Central said: {$odkMessage}" : '');
+            . ' This is not an XLSForm file validation issue.'
+            . ($odkMessage !== null ? " ODK Central said: {$odkMessage}" : '');
 
         return new self($message, $response->status(), $odkMessage, $requestUrl);
     }

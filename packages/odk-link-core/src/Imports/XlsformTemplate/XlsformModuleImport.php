@@ -42,7 +42,7 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
         // If there are no modules defined at all, the entire form is put into a single generic module.
 
         $count = 1;
-        $genericModuleName = $this->xlsformTemplate->title.' - Unspecified Module '.$count;
+        $genericModuleName = $this->xlsformTemplate->title . ' - Unspecified Module ' . $count;
 
         $collection = $collection
             ->map(function ($row) use (&$genericModuleName, &$count) {
@@ -52,7 +52,7 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
 
                     // if there's a module specified, then we are done with the nth 'unspecified' module, and next time we need one we'll start n+1th unspecified module
                     $count++;
-                    $genericModuleName = $this->xlsformTemplate->title.' - Unspecified Module '.$count;
+                    $genericModuleName = $this->xlsformTemplate->title . ' - Unspecified Module ' . $count;
                 }
 
                 return $row;
@@ -75,7 +75,7 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
 
                 // temporarily store the survey row unique name/type combos so we can match the module to the generic survey row later on in the import
                 $rowNames = collect($row)->map(function ($rowEntry) {
-                    return $rowEntry['type'].'_'.$rowEntry['name'];
+                    return $rowEntry['type'] . '_' . $rowEntry['name'];
                 });
 
                 // make sure xlsformModule exists

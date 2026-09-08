@@ -14,7 +14,7 @@ class FinishLanguageStringImport implements ShouldQueue
     use Queueable;
     use ResetsProcessingOnFailure;
 
-    public function __construct(public XlsformModuleVersion|XlsformTemplate $model, public string $heading) {}
+    public function __construct(public XlsformModuleVersion | XlsformTemplate $model, public string $heading) {}
 
     /**
      * Execute the job.

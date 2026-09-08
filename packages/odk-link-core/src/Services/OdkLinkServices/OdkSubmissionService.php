@@ -96,7 +96,7 @@ trait OdkSubmissionService
         $oDataServiceUrl = "{$this->endpoint}/projects/{$submission->xlsform->owner->odkProject->id}/forms/{$submission->xlsform->odk_id}";
 
         $results = Http::withToken($token)
-            ->get($oDataServiceUrl.'.svc/Submissions?$expand=*&$filter=__system/updatedAt ge '.$submission->updated_at->toISOString().' and __system/updatedAt le '.$submission->updated_at->addSeconds(1)->toISOString())
+            ->get($oDataServiceUrl . '.svc/Submissions?$expand=*&$filter=__system/updatedAt ge ' . $submission->updated_at->toISOString() . ' and __system/updatedAt le ' . $submission->updated_at->addSeconds(1)->toISOString())
             ->throw()
             ->json();
 
@@ -136,18 +136,20 @@ trait OdkSubmissionService
             ->filter(fn (array $result) => $currentSubmissionIds->doesntContain($result['instanceId']));
 
         $updatedSubmissions = collect($submissionMetadata)
-            ->filter(fn (array $result) => $currentSubmissionIds->contains($result['instanceId']) &&
+            ->filter(
+                fn (array $result) => $currentSubmissionIds->contains($result['instanceId']) &&
                 $currentSubmissionLatestIds->doesntContain($result['currentVersion']['instanceId'])
             );
 
         $results = Http::withToken($token)
-            ->get($oDataServiceUrl.'.svc/Submissions?$expand=*')
+            ->get($oDataServiceUrl . '.svc/Submissions?$expand=*')
             ->throw()
             ->json();
 
         // merge with metadata
         $resultsToAdd = collect($results['value'])
-            ->filter(fn (array $result) => $newSubmissions->contains('instanceId', $result['__id']) ||
+            ->filter(
+                fn (array $result) => $newSubmissions->contains('instanceId', $result['__id']) ||
                 $updatedSubmissions->contains('instanceId', $result['__id'])
             )
             ->map(function (array $result) use ($submissionMetadata) {
@@ -177,7 +179,7 @@ trait OdkSubmissionService
                     throw new \Exception('The system tried to get submission data for a form version that does not exist. LOCAL ENVIRONMENT: if you are testing a form that may have been updated on ODK Central directly, or through another app environment, please run `php artisan app:update-xlsform-versions-from-odk-central`, and try pulling the submissions again.');
                 }
 
-                throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: '.$messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '), 500);
+                throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '), 500);
             }
 
             $submission = $xlsformVersion->submissions()->updateOrCreate(
@@ -188,7 +190,8 @@ trait OdkSubmissionService
                     'submitted_by' => $entry['__system']['submitterName'],
                     'content' => $entry,
                     'draft_data' => $draft,
-                ]);
+                ]
+            );
 
             // For live data, process into datasets + entities in the database
             if (! $draft) {
@@ -239,18 +242,20 @@ trait OdkSubmissionService
             ->filter(fn (array $result) => $currentSubmissionIds->doesntContain($result['instanceId']));
 
         $updatedSubmissions = collect($submissionMetadata)
-            ->filter(fn (array $result) => $currentSubmissionIds->contains($result['instanceId']) &&
+            ->filter(
+                fn (array $result) => $currentSubmissionIds->contains($result['instanceId']) &&
                 $currentSubmissionLatestIds->doesntContain($result['currentVersion']['instanceId'])
             );
 
         $results = Http::withToken($token)
-            ->get($oDataServiceUrl.'.svc/Submissions?$expand=*')
+            ->get($oDataServiceUrl . '.svc/Submissions?$expand=*')
             ->throw()
             ->json();
 
         // merge with metadata
         $resultsToAdd = collect($results['value'])
-            ->filter(fn (array $result) => $newSubmissions->contains('instanceId', $result['__id']) ||
+            ->filter(
+                fn (array $result) => $newSubmissions->contains('instanceId', $result['__id']) ||
                 $updatedSubmissions->contains('instanceId', $result['__id'])
             )
             ->map(function (array $result) use ($submissionMetadata) {
@@ -280,7 +285,7 @@ trait OdkSubmissionService
                 throw new \Exception('The system tried to get submission data for a form version that does not exist. LOCAL ENVIRONMENT: if you are testing a form that may have been updated on ODK Central directly, or through another app environment, please run `php artisan app:update-xlsform-versions-from-odk-central`, and try pulling the submissions again.');
             }
 
-            throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: '.$messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '), 500);
+            throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '), 500);
         }
 
         $submission = $xlsformVersion->submissions()->updateOrCreate(
@@ -291,7 +296,8 @@ trait OdkSubmissionService
                 'submitted_by' => $entry['__system']['submitterName'],
                 'content' => $entry,
                 'draft_data' => $draft,
-            ]);
+            ]
+        );
 
         // Queue processing
         ProcessOdkSubmission::dispatch($submission, $entry, $xlsformVersion);
@@ -355,7 +361,7 @@ trait OdkSubmissionService
             ->get();
 
         foreach ($schema as $schemaItem) {
-            $itemPath = 'root'.Str::replace('/', '.', $schemaItem['path']);
+            $itemPath = 'root' . Str::replace('/', '.', $schemaItem['path']);
             $value = Arr::get($entry, $itemPath);
 
             if ($schemaItem['type'] != 'repeat' && $value !== null && $value != '' && ! is_array($value)) {
@@ -399,10 +405,10 @@ trait OdkSubmissionService
         // find the path of repeat group first item
         $schemaPaths = $schema->pluck('path')->toArray();
 
-        $position = Str::position($schemaPaths[0], '/'.$section->structure_item.'/');
+        $position = Str::position($schemaPaths[0], '/' . $section->structure_item . '/');
 
         // construct the path for getting an array of repeat group
-        $repeatGroupArrayPath = 'root'.Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)).'.'.$section->structure_item;
+        $repeatGroupArrayPath = 'root' . Str::replace('/', '.', Str::substr($schemaPaths[0], 0, $position)) . '.' . $section->structure_item;
 
         // get the array for repeat group
         $repeatGroupArray = Arr::get($entry, $repeatGroupArrayPath);
@@ -447,12 +453,12 @@ trait OdkSubmissionService
             foreach ($schema as $schemaItem) {
 
                 $pathLength = Str::length($schemaItem['path']);
-                $position = Str::position($schemaItem['path'], '/'.$section->structure_item.'/');
+                $position = Str::position($schemaItem['path'], '/' . $section->structure_item . '/');
                 $lengthToCut = $pathLength - $position;
 
                 $itemPath = Str::substr($schemaItem['path'], ($position + 1) + Str::length($section->structure_item), $lengthToCut);
 
-                $fullItemPath = 'rg'.Str::replace('/', '.', $itemPath);
+                $fullItemPath = 'rg' . Str::replace('/', '.', $itemPath);
 
                 $value = Arr::get($repeatGroupEntry, $fullItemPath);
 
@@ -524,7 +530,7 @@ trait OdkSubmissionService
     /** Export all submission data for a specific Xlsform. Gives one worksheet for the main survey and one worksheet per repeat group, similar to Kobotoolbox, Ona etc. */
     public function exportAsExcelFile(Xlsform $xlsform): BinaryFileResponse
     {
-        return Excel::download(new SurveyExport($xlsform), $xlsform->title.'-'.now()->toDateTimeString().'.xlsx');
+        return Excel::download(new SurveyExport($xlsform), $xlsform->title . '-' . now()->toDateTimeString() . '.xlsx');
     }
 
     public function makeMultiSelectBooleans(Entity $entity, mixed $schemaItem, Collection $choices, mixed $value): array
@@ -542,7 +548,7 @@ trait OdkSubmissionService
 
             foreach ($choiceListEntries as $choiceListEntry) {
                 $booleanEntityValues[] = EntityValue::make([
-                    'dataset_variable_name' => $schemaItem['name'].'_'.Str::lower($choiceListEntry->name),
+                    'dataset_variable_name' => $schemaItem['name'] . '_' . Str::lower($choiceListEntry->name),
                     'value' => $choicesSelected->contains(Str::lower($choiceListEntry->name)),
                 ]);
             }
@@ -567,7 +573,7 @@ trait OdkSubmissionService
                 $booleanEntityValues->push(
                     EntityValue::make([
                         'entity_id' => $entity['id'],
-                        'dataset_variable_name' => $surveyRow->name.'_'.Str::lower($choiceListEntry->name),
+                        'dataset_variable_name' => $surveyRow->name . '_' . Str::lower($choiceListEntry->name),
                         'value' => $choicesSelected->contains(Str::lower($choiceListEntry->name)),
                     ])
                 );

@@ -19,7 +19,7 @@ class Platform extends Model implements WithXlsformTemplates
     protected function name(): Attribute
     {
         return new Attribute(
-            get: fn (): string => config('app.name', 'Laravel Platform').' Platform.php'.$this->id,
+            get: fn (): string => config('app.name', 'Laravel Platform') . ' Platform.php' . $this->id,
         );
     }
 

@@ -30,7 +30,7 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
     /**
      * @throws \Exception
      */
-    public function __construct(public XlsformTemplate|XlsformModuleVersion $model, public string $moduleColumn = 'module')
+    public function __construct(public XlsformTemplate | XlsformModuleVersion $model, public string $moduleColumn = 'module')
     {
         if ($model instanceof XlsformTemplate) {
             $model->load('xlsformModules.xlsformModuleVersions.choiceLists');

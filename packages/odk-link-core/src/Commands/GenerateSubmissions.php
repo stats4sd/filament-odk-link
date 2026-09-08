@@ -45,8 +45,8 @@ class GenerateSubmissions extends Command
             $activeGroups = [];
             $activeRepeats = [];
 
-            $filePath = 'temp/'.$xlsform->getKey().'/'.$xlsform->title.'.xlsx';
-            Storage::disk('local')->makeDirectory('temp/'.$xlsform->getKey());
+            $filePath = 'temp/' . $xlsform->getKey() . '/' . $xlsform->title . '.xlsx';
+            Storage::disk('local')->makeDirectory('temp/' . $xlsform->getKey());
             Excel::store(new XlsformWorkbookExport($xlsform), $filePath, 'local');
             $data = Excel::toArray(new XlsformWorkbookExport($xlsform), $filePath);
 
@@ -121,7 +121,7 @@ class GenerateSubmissions extends Command
             } else {
             }
 
-            $this->info('Generated submission #'.($i + 1).' of '.$count." for XLSForm ID: $xlsformId");
+            $this->info('Generated submission #' . ($i + 1) . ' of ' . $count . " for XLSForm ID: $xlsformId");
         }
     }
 
@@ -159,6 +159,7 @@ class GenerateSubmissions extends Command
                         $lastGroup = end($activeGroups);
                         if ($nextRow['name'] === $lastGroup['name'] && $lastGroup['level'] === count($activeGroups) - 1) {
                             array_shift($rows); // Removes the 'end_group' row and stops collecting
+
                             break;
                         }
                     }
@@ -223,6 +224,7 @@ class GenerateSubmissions extends Command
                         $lastRepeat = end($activeRepeats);
                         if ($nextRow['name'] === $lastRepeat['name'] && $lastRepeat['level'] === count($activeRepeats) - 1) {
                             array_shift($rows); // Removes the 'end_repeat' row and stops collecting
+
                             break;
                         }
                     }
@@ -438,7 +440,7 @@ class GenerateSubmissions extends Command
                 $submission[$row['name']] = $this->generateRandomGeopoint();
 
             } elseif ($row['type'] === 'start') {
-                $startTime = date('Y-m-d\TH:i:s.', time()).substr(microtime(), 2, 3).'Z';
+                $startTime = date('Y-m-d\TH:i:s.', time()) . substr(microtime(), 2, 3) . 'Z';
                 $submission['start'] = $startTime;
 
             } elseif ($row['type'] === 'end') {
@@ -446,8 +448,8 @@ class GenerateSubmissions extends Command
                     $randomMinutes = rand(1, 60);
                     $randomSeconds = rand(0, 59);
                     $startDateTime = new DateTime($startTime);
-                    $startDateTime->add(new DateInterval('PT'.$randomMinutes.'M'.$randomSeconds.'S'));
-                    $endTime = $startDateTime->format('Y-m-d\TH:i:s.').substr(microtime(), 2, 3).'Z';
+                    $startDateTime->add(new DateInterval('PT' . $randomMinutes . 'M' . $randomSeconds . 'S'));
+                    $endTime = $startDateTime->format('Y-m-d\TH:i:s.') . substr(microtime(), 2, 3) . 'Z';
                     $submission['end'] = $endTime;
                 }
 
@@ -508,11 +510,11 @@ class GenerateSubmissions extends Command
         foreach ($tokens as $token) {
             if (preg_match('/^\d+(\.\d+)?$/', $token)) {
                 // If it's a number, keep it as is
-                $parsedExpression .= ' '.$token.' ';
+                $parsedExpression .= ' ' . $token . ' ';
             } elseif (in_array($token, ['+', '-', '*', 'div', 'mod', '!=', '==', '>', '<', '>=', '<=', '(', ')'])) {
                 // Handle operators
                 $phpOperator = ($token === 'div') ? '/' : (($token === 'mod') ? '%' : $token);
-                $parsedExpression .= ' '.$phpOperator.' ';
+                $parsedExpression .= ' ' . $phpOperator . ' ';
             } elseif (preg_match('/^\$\{([^{}]+)\}$/', $token, $varMatch)) {
                 // Handle variable substitution
                 $variableName = $varMatch[1];
@@ -521,13 +523,13 @@ class GenerateSubmissions extends Command
                 if ($value === null || $value === '') {
                     $parsedExpression .= ' "" ';  // Represent empty values as an empty string
                 } elseif (is_numeric($value)) {
-                    $parsedExpression .= ' '.$value.' ';
+                    $parsedExpression .= ' ' . $value . ' ';
                 } else {
-                    $parsedExpression .= ' "'.addslashes($value).'" ';  // Preserve strings correctly
+                    $parsedExpression .= ' "' . addslashes($value) . '" ';  // Preserve strings correctly
                 }
             } elseif (preg_match('/^".*"$/', $token)) {
                 // Preserve string literals as they are
-                $parsedExpression .= ' '.$token.' ';
+                $parsedExpression .= ' ' . $token . ' ';
             }
         }
 
@@ -540,7 +542,7 @@ class GenerateSubmissions extends Command
         }
 
         try {
-            eval('$result = ('.$parsedExpression.');');
+            eval('$result = (' . $parsedExpression . ');');
 
             // If result is null, return 'ERROR'
             if ($result === null) {
@@ -634,15 +636,19 @@ class GenerateSubmissions extends Command
                 switch ($operator) {
                     case '>=':
                         $min = max($min, $value);
+
                         break;
                     case '<=':
                         $max = min($max, $value);
+
                         break;
                     case '>':
                         $min = max($min, $value + 1);
+
                         break;
                     case '<':
                         $max = min($max, $value - 1);
+
                         break;
                     case '=':
                         $exact = $value;
@@ -704,18 +710,23 @@ class GenerateSubmissions extends Command
                 switch ($operator) {
                     case '>=':
                         $min = max($min, $value);
+
                         break;
                     case '<=':
                         $max = min($max, $value);
+
                         break;
                     case '>':
                         $min = max($min, $value + 0.0001);
+
                         break;
                     case '<':
                         $max = min($max, $value - 0.0001);
+
                         break;
                     case '=':
                         $exact = $value;
+
                         break;
                 }
             }

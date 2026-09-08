@@ -113,7 +113,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     protected function xlsformId(): Attribute
     {
         return new Attribute(
-            get: fn (): string => str($this->title)->slug().'_'.$this->id,
+            get: fn (): string => str($this->title)->slug() . '_' . $this->id,
         );
     }
 
@@ -245,7 +245,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     {
         $appends = ! $this->is_active ? '/draft' : '';
 
-        return config('filament-odk-link.odk.url').'/#/projects/'.$this->owner->odkProject->id.'/forms/'.$this->odk_id.$appends;
+        return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
     }
 
     // make sure the xlsform is using the latest template
@@ -265,7 +265,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                 if ($xlsformModule->can_be_extended) {
                     $localModuleVersion = XlsformModuleVersion::firstOrCreate([
                         'owner_id' => $this->owner->id,
-                        'name' => 'Local '.$xlsformModule->name,
+                        'name' => 'Local ' . $xlsformModule->name,
                     ]);
 
                     $this->xlsformModuleVersions()->sync([$localModuleVersion->id => ['order' => $xlsformModule->default_order + 1]], detaching: false);
@@ -301,7 +301,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
                 $localModuleVersion = XlsformModuleVersion::query()
                     ->where('owner_id', $this->owner->id)
-                    ->where('name', 'Local '.$xlsformModule->name)
+                    ->where('name', 'Local ' . $xlsformModule->name)
                     ->first();
 
                 if (! $localModuleVersion) {
@@ -396,7 +396,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         // mark form as unready
         $this->updateQuietly(['processing' => true]);
 
-        $filePath = 'temp/'.$this->getKey().'/'.$this->title.'.xlsx';
+        $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
         $user = auth()->user();
 
         return Excel::queue(new XlsformWorkbookExport($this, $user), $filePath, config('filament-odk-link.storage.xlsforms'))->chain(
@@ -450,7 +450,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
                 if ($user) {
                     Notification::make()
-                        ->title('Form "'.$this->title.'" could not be published')
+                        ->title('Form "' . $this->title . '" could not be published')
                         ->body('The form is currently being processed. Please wait for the current process to finish and try again.')
                         ->danger()
                         ->sendToDatabase($user, isEventDispatched: true)

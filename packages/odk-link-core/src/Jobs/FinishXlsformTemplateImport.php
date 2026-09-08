@@ -17,7 +17,7 @@ class FinishXlsformTemplateImport implements ShouldQueue
     use Queueable;
     use ResetsProcessingOnFailure;
 
-    public function __construct(public XlsformModuleVersion|XlsformTemplate $model) {}
+    public function __construct(public XlsformModuleVersion | XlsformTemplate $model) {}
 
     /**
      * Execute the job.
@@ -33,7 +33,7 @@ class FinishXlsformTemplateImport implements ShouldQueue
 
             Notification::make('xlsform_template_imported')
                 ->title('Xlsform Template Imported')
-                ->body('The Xlsform Template '.$this->model->title.' belonging to '.$this->model->owner->name.' has been imported.')
+                ->body('The Xlsform Template ' . $this->model->title . ' belonging to ' . $this->model->owner->name . ' has been imported.')
                 ->success()
                 ->broadcast(Role::findByName('Super Admin')->users);
         }

@@ -37,7 +37,7 @@ class XlsformModule extends Model
 
             // make sure xlsformModuleVersion exists, so we can import the survey rows etc
             $module->xlsformModuleVersions()->firstOrCreate([
-                'name' => 'Global '.$module->name, // hard-code name for now
+                'name' => 'Global ' . $module->name, // hard-code name for now
                 'is_default' => true,
             ]);
 

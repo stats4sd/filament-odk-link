@@ -84,7 +84,8 @@ class Locale extends Model implements HasMedia
     {
         return $this->hasManyDeep(
             related: XlsformTemplate::class,
-            through: ['xlsform_module_version_locale', XlsformModule::class]);
+            through: ['xlsform_module_version_locale', XlsformModule::class]
+        );
     }
 
     /** @return HasMany<XlsformModuleVersionLocale, $this> */
@@ -123,7 +124,7 @@ class Locale extends Model implements HasMedia
     protected function languageLabel(): Attribute
     {
         return new Attribute(
-            get: fn () => $this->is_default ? $this->language->name.' (default)' : $this->description,
+            get: fn () => $this->is_default ? $this->language->name . ' (default)' : $this->description,
         );
     }
 
@@ -202,7 +203,7 @@ class Locale extends Model implements HasMedia
     protected function odkLabel(): Attribute
     {
         return new Attribute(
-            get: fn () => $this->language->name.' ('.$this->language->iso_alpha2.')',
+            get: fn () => $this->language->name . ' (' . $this->language->iso_alpha2 . ')',
         );
     }
 

@@ -97,10 +97,10 @@ abstract class HasXlsformDrafts extends Model implements HasMedia, WithXlsformDr
 
                 $settings = [
                     'general' => [
-                        'server_url' => config('filament-odk-link.odk.base_endpoint')."/test/$this->odk_draft_token/projects/{$this->owner->odkProject->id}/forms/$this->odk_id/draft",
+                        'server_url' => config('filament-odk-link.odk.base_endpoint') . "/test/$this->odk_draft_token/projects/{$this->owner->odkProject->id}/forms/$this->odk_id/draft",
                         'form_update_mode' => 'match_exactly',
                     ],
-                    'project' => ['name' => '(DRAFT) '.$this->title, 'icon' => '📝'],
+                    'project' => ['name' => '(DRAFT) ' . $this->title, 'icon' => '📝'],
                     'admin' => ['automatic_update' => true],
                 ];
 
@@ -140,7 +140,7 @@ abstract class HasXlsformDrafts extends Model implements HasMedia, WithXlsformDr
                     $this->refresh();
                 }
 
-                return config('filament-odk-link.odk.url').'/-/'.$this->enketo_draft_id;
+                return config('filament-odk-link.odk.url') . '/-/' . $this->enketo_draft_id;
 
             },
         );

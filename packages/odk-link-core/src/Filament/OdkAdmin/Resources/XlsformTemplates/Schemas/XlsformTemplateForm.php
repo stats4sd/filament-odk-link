@@ -121,7 +121,7 @@ class XlsformTemplateForm
 
                     $entityCsvNames = collect($record?->templateEntityLists)
                         ->pluck('list_name')
-                        ->map(fn ($n) => $n.'.csv')
+                        ->map(fn ($n) => $n . '.csv')
                         ->toArray();
 
                     $dataMediaCount = $record?->requiredDataMedia()
@@ -136,13 +136,14 @@ class XlsformTemplateForm
 
                     return new HtmlString($label);
                 })
-                ->relationship(modifyQueryUsing: fn (Builder $query, ?XlsformTemplate $record): Builder => $query->when(
-                    filled($record?->templateEntityLists?->pluck('list_name')->toArray()),
-                    fn (Builder $q) => $q->whereNotIn(
-                        'name',
-                        $record->templateEntityLists->pluck('list_name')->map(fn ($n) => $n.'.csv')->toArray()
+                ->relationship(
+                    modifyQueryUsing: fn (Builder $query, ?XlsformTemplate $record): Builder => $query->when(
+                        filled($record?->templateEntityLists?->pluck('list_name')->toArray()),
+                        fn (Builder $q) => $q->whereNotIn(
+                            'name',
+                            $record->templateEntityLists->pluck('list_name')->map(fn ($n) => $n . '.csv')->toArray()
+                        )
                     )
-                )
                 )
                 ->addable(false)
                 ->deletable(false)
@@ -190,7 +191,7 @@ class XlsformTemplateForm
                                 ->schema([
                                     Callout::make()
                                         ->info()
-                                        ->description(fn (?RequiredMedia $record): string => 'This csv file will be automatically generated from the linked choice list '.$record->choiceList?->list_name.'. This list is editable by individual teams using versions of this Form Template.'),
+                                        ->description(fn (?RequiredMedia $record): string => 'This csv file will be automatically generated from the linked choice list ' . $record->choiceList?->list_name . '. This list is editable by individual teams using versions of this Form Template.'),
                                 ]),
 
                         ];
@@ -198,7 +199,7 @@ class XlsformTemplateForm
 
             Repeater::make('templateEntityLists')
                 ->label(new HtmlString(
-                    "<h4 class='font-bold text-xl'>Entities</h4>".
+                    "<h4 class='font-bold text-xl'>Entities</h4>" .
                     '<p>This form declares the following entity lists. Entity data is managed automatically by ODK Central — no CSV upload is required.</p>'
                 ))
                 ->relationship()

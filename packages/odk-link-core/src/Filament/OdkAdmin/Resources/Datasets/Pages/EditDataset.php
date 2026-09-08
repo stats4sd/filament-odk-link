@@ -15,7 +15,7 @@ class EditDataset extends EditRecord
     /**
      * @phpstan-return Dataset
      */
-    public function getRecord(): Model|Dataset
+    public function getRecord(): Model | Dataset
     {
         /** @var Dataset $record */
         $record = parent::getRecord();

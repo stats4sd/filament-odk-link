@@ -19,9 +19,9 @@ class ChoiceListResource extends Resource
 {
     protected static ?string $model = ChoiceList::class;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Survey and Datasets';
+    protected static string | \UnitEnum | null $navigationGroup = 'Survey and Datasets';
 
     public static function form(Schema $schema): Schema
     {

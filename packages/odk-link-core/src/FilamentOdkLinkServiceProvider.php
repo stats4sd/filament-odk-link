@@ -65,8 +65,8 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
         // Asset Registration
         FilamentAsset::register(
             [
-                Css::make('filament-odk-link-styles', __DIR__.'/../resources/dist/filament-odk-link.css'),
-                Js::make('filament-odk-link-scripts', __DIR__.'/../resources/dist/filament-odk-link.js'),
+                Css::make('filament-odk-link-styles', __DIR__ . '/../resources/dist/filament-odk-link.css'),
+                Js::make('filament-odk-link-scripts', __DIR__ . '/../resources/dist/filament-odk-link.js'),
             ],
             'stats4sd/filament-odk-link'
         );
@@ -81,7 +81,7 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
     protected function getCommands(): array
     {
         // get all files in the Commands directory
-        $files = File::files(__DIR__.'/Commands');
+        $files = File::files(__DIR__ . '/Commands');
 
         return collect($files)->map(fn ($file) => $file->getFilenameWithoutExtension())
             ->map(fn ($filename) => "Stats4sd\\FilamentOdkLink\\Commands\\{$filename}")

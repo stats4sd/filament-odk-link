@@ -10,7 +10,9 @@ use Illuminate\Queue\SerializesModels;
 
 class XlsformModuleVersionWasImported implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
     public function __construct(public int $xlsformModuleId) {}
 

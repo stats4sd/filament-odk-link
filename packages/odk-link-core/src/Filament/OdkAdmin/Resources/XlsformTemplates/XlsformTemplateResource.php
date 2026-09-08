@@ -21,9 +21,9 @@ class XlsformTemplateResource extends Resource
 {
     protected static ?string $model = XlsformTemplate::class;
 
-    protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-document-duplicate';
+    protected static string | null | BackedEnum $navigationIcon = 'heroicon-o-document-duplicate';
 
-    protected static string|UnitEnum|null $navigationGroup = 'ODK Forms and Datasets';
+    protected static string | UnitEnum | null $navigationGroup = 'ODK Forms and Datasets';
 
     protected static WithXlsformTemplates $formOwner;
 

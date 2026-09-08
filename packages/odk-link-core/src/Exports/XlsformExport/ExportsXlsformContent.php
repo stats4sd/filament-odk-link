@@ -11,7 +11,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 
 trait ExportsXlsformContent
 {
-    public function mapPropertiesToPropertyHeadings(SurveyRow|ChoiceListEntry $entry): array
+    public function mapPropertiesToPropertyHeadings(SurveyRow | ChoiceListEntry $entry): array
     {
         return $this->propertyHeadings->mapWithKeys(function (string $heading) use ($entry) {
 
@@ -32,7 +32,7 @@ trait ExportsXlsformContent
             });
     }
 
-    private function getLanguageStrings(SurveyRow|ChoiceListEntry $row, string $string): Collection
+    private function getLanguageStrings(SurveyRow | ChoiceListEntry $row, string $string): Collection
     {
         return $this->locales
             ->mapWithKeys(function (Locale $locale) use ($row, $string) {

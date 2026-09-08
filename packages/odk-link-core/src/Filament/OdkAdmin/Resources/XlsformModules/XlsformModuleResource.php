@@ -16,9 +16,9 @@ class XlsformModuleResource extends Resource
 {
     protected static ?string $model = XlsformModule::class;
 
-    protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | null | BackedEnum $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static string|UnitEnum|null $navigationGroup = 'ODK Forms and Datasets';
+    protected static string | UnitEnum | null $navigationGroup = 'ODK Forms and Datasets';
 
     public static function form(Schema $schema): Schema
     {

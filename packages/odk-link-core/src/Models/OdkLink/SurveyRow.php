@@ -64,7 +64,7 @@ class SurveyRow extends Model implements WithLanguageStrings
                     // TODO: update items linked to Dataset instead of ChoiceList
                     // HACK: workaround is to ignore this if there is no linked list
                     if ($listName) {
-                        return Str::before($this->type, ' ').' '.$listName;
+                        return Str::before($this->type, ' ') . ' ' . $listName;
                     }
                 }
 

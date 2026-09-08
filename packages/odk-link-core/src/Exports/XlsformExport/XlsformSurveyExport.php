@@ -56,7 +56,7 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wit
                 'selected_xlsform_module_versions.order',
                 'selected_xlsform_module_versions.xlsform_module_version_id',
             ])
-            ->whereRaw('selected_xlsform_module_versions.xlsform_id = '.$this->xlsform->id)
+            ->whereRaw('selected_xlsform_module_versions.xlsform_id = ' . $this->xlsform->id)
             ->with(['languageStrings', 'xlsformModuleVersion.xlsforms'])
             ->distinct()
             ->orderBy('selected_xlsform_module_versions.order')
@@ -209,27 +209,27 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wit
         $sheet->getStyle('1:1')->getFont()->setBold(true);
 
         foreach ($wrapLabelList as $column) {
-            $sheet->getStyle($column.':'.$column)->applyFromArray($wrapStyle);
+            $sheet->getStyle($column . ':' . $column)->applyFromArray($wrapStyle);
         }
 
         foreach ($wrapHintList as $column) {
-            $sheet->getStyle($column.':'.$column)->applyFromArray($wrapStyle);
+            $sheet->getStyle($column . ':' . $column)->applyFromArray($wrapStyle);
         }
 
         foreach ($dynamicStylesRowLists['beginGroupRows'] as $row) {
-            $sheet->getStyle($row.':'.$row)->applyFromArray($beginGroupStyle);
+            $sheet->getStyle($row . ':' . $row)->applyFromArray($beginGroupStyle);
         }
 
         foreach ($dynamicStylesRowLists['endGroupRows'] as $row) {
-            $sheet->getStyle($row.':'.$row)->applyFromArray($endGroupStyle);
+            $sheet->getStyle($row . ':' . $row)->applyFromArray($endGroupStyle);
         }
 
         foreach ($dynamicStylesRowLists['beginRepeatRows'] as $row) {
-            $sheet->getStyle($row.':'.$row)->applyFromArray($beginRepeatStyle);
+            $sheet->getStyle($row . ':' . $row)->applyFromArray($beginRepeatStyle);
         }
 
         foreach ($dynamicStylesRowLists['endRepeatRows'] as $row) {
-            $sheet->getStyle($row.':'.$row)->applyFromArray($endRepeatStyle);
+            $sheet->getStyle($row . ':' . $row)->applyFromArray($endRepeatStyle);
         }
 
     }

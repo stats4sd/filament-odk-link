@@ -61,7 +61,7 @@ class HandleXlsformTemplateAdded
             ->flatten();
     }
 
-    public function processXlsformTemplate(string $filePath, XlsformModuleVersion|XlsformTemplate $model, string $moduleColumn = 'module'): void
+    public function processXlsformTemplate(string $filePath, XlsformModuleVersion | XlsformTemplate $model, string $moduleColumn = 'module'): void
     {
         // Get the translatable headings from the Xlsform workbook;
         $translatableHeadings = (new XlsformTranslationHelper)->getTranslatableColumnsFromFile($filePath);

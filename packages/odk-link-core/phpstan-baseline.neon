@@ -7,6 +7,18 @@ parameters:
 			path: database/migrations/016_create_dataset_variables_table.php
 
 		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Schema\\ColumnDefinition\:\:constrained\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: database/migrations/018_create_entity_values_table.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Schema\\ColumnDefinition\:\:constrained\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: database/migrations/023_create_m49_regions_tables.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Collection\<int, Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Xlsform\>\|Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Xlsform\:\:\$odk_project_id\.$#'
 			identifier: property.notFound
 			count: 1

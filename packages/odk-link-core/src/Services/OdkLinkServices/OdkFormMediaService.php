@@ -190,7 +190,7 @@ trait OdkFormMediaService
                 ->json();
         } catch (RequestException $exception) {
             if ($exception->getCode() === 404) {
-                abort(500, 'The file '.$fileName.' is not an expected file name for this ODK form template. Please review the form and check which media files are expected');
+                abort(500, 'The file ' . $fileName . ' is not an expected file name for this ODK form template. Please review the form and check which media files are expected');
             }
 
             throw ($exception);
@@ -206,13 +206,13 @@ trait OdkFormMediaService
         // create folder structure if not exists
         // Storage::disk(config('filament-odk-link.storage.media'))->makeDirectory('xlsforms');
 
-        $filePath = 'xlsforms/'.$xlsform->id.'/'.$requiredMediaItem->name;
+        $filePath = 'xlsforms/' . $xlsform->id . '/' . $requiredMediaItem->name;
 
         // check if the requiredMedia is linked to a choice list or dataset
         if ($requiredMediaItem->links_to_dataset) {
 
             if ($requiredMediaItem->dataset === null) {
-                abort(500, 'The dataset for the required media item '.$requiredMediaItem->name.' is not set. Please check the form template and ensure all required data media items are linked to a dataset or choice list.');
+                abort(500, 'The dataset for the required media item ' . $requiredMediaItem->name . ' is not set. Please check the form template and ensure all required data media items are linked to a dataset or choice list.');
             }
 
             Excel::store(
@@ -223,7 +223,7 @@ trait OdkFormMediaService
         } else {
 
             if ($requiredMediaItem->choiceList === null) {
-                abort(500, 'The choice list for the required media item '.$requiredMediaItem->name.' is not set. Please check the form template and ensure all required data media items are linked to a dataset or choice list.');
+                abort(500, 'The choice list for the required media item ' . $requiredMediaItem->name . ' is not set. Please check the form template and ensure all required data media items are linked to a dataset or choice list.');
             }
 
             Excel::store(

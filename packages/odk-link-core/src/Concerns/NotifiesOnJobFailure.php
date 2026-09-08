@@ -16,7 +16,7 @@ trait NotifiesOnJobFailure
     /**
      * @param  Model|Authenticatable|Collection<int, Model|Authenticatable>|array<int, Model|Authenticatable>  $recipients
      */
-    public function notifyJobFailure(string $title, ?Throwable $exception, Model|Authenticatable|Collection|array $recipients, ?string $actionUrl = null): void
+    public function notifyJobFailure(string $title, ?Throwable $exception, Model | Authenticatable | Collection | array $recipients, ?string $actionUrl = null): void
     {
         $notification = Notification::make()
             ->title($title)
@@ -53,7 +53,7 @@ trait NotifiesOnJobFailure
      * @param  Model|Authenticatable|Collection<int, Model|Authenticatable>|array<int, Model|Authenticatable>  $recipients
      * @return Collection<int, Model|Authenticatable>
      */
-    private function normaliseRecipients(Model|Authenticatable|Collection|array $recipients): Collection
+    private function normaliseRecipients(Model | Authenticatable | Collection | array $recipients): Collection
     {
         if ($recipients instanceof Collection) {
             return $recipients;

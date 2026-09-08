@@ -142,7 +142,7 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithBackgroun
 
         // Apply styles for the header row
         $lastColumnIndex = count($this->headings());
-        $headingRange = 'A1:'.Coordinate::stringFromColumnIndex($lastColumnIndex).'1';
+        $headingRange = 'A1:' . Coordinate::stringFromColumnIndex($lastColumnIndex) . '1';
         $sheet->getStyle($headingRange)->applyFromArray($h1);
 
         // Get total number of rows for styling
@@ -151,11 +151,11 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithBackgroun
         // Create a range for the data rows
         for ($rowIndex = 2; $rowIndex <= $rowCount; $rowIndex++) {
             // Apply orange fill to the entire row
-            $dataRange = "A{$rowIndex}:".Coordinate::stringFromColumnIndex($lastColumnIndex)."{$rowIndex}";
+            $dataRange = "A{$rowIndex}:" . Coordinate::stringFromColumnIndex($lastColumnIndex) . "{$rowIndex}";
             $sheet->getStyle($dataRange)->applyFromArray($orangeFill);
 
             // Apply white fill to the last column
-            $sheet->getStyle(Coordinate::stringFromColumnIndex($lastColumnIndex)."{$rowIndex}")->applyFromArray($whiteFill);
+            $sheet->getStyle(Coordinate::stringFromColumnIndex($lastColumnIndex) . "{$rowIndex}")->applyFromArray($whiteFill);
         }
 
         // Lock the sheet so the identifier columns (A-E) and header row cannot be edited; cells
@@ -197,7 +197,7 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithBackgroun
         return 'translations';
     }
 
-    public function processEntry(SurveyRow|ChoiceListEntry $entry): Collection
+    public function processEntry(SurveyRow | ChoiceListEntry $entry): Collection
     {
 
         // Get all language strings for this survey row grouped by type

@@ -56,7 +56,7 @@ it('leaves a gap in the ordering after a module that can be extended', function 
 it('parses the modules out of a real XLSForm fixture', function () {
     $template = makeXlsformTemplate('Valid Test Form');
 
-    (new XlsformModuleImport($template))->import(__DIR__.'/../../fixtures/valid-form.xlsx');
+    (new XlsformModuleImport($template))->import(__DIR__ . '/../../fixtures/valid-form.xlsx');
 
     $modules = $template->xlsformModules()->get();
 

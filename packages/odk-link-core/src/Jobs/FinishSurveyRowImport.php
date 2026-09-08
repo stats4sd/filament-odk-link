@@ -13,7 +13,7 @@ class FinishSurveyRowImport implements ShouldQueue
     use Queueable;
     use ResetsProcessingOnFailure;
 
-    public function __construct(public XlsformModuleVersion|XlsformTemplate $model) {}
+    public function __construct(public XlsformModuleVersion | XlsformTemplate $model) {}
 
     /**
      * Execute the job.

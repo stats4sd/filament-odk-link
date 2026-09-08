@@ -158,14 +158,15 @@ class Submission extends Model implements HasMedia
         return $this->belongsToThrough(
             config('filament-odk-link.models.form_owner'),
             [Xlsform::class, XlsformVersion::class],
-            foreignKeyLookup: [config('filament-odk-link.models.form_owner') => 'owner_id']);
+            foreignKeyLookup: [config('filament-odk-link.models.form_owner') => 'owner_id']
+        );
     }
 
     /** @return Attribute<string, never> */
     public function odkCentralViewPageUrl(): Attribute
     {
         return new Attribute(
-            get: fn () => config('filament-odk-link.odk.url')."/#/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}"
+            get: fn () => config('filament-odk-link.odk.url') . "/#/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}"
         );
 
     }
@@ -175,11 +176,11 @@ class Submission extends Model implements HasMedia
     {
 
         return new Attribute(
-            get: fn () => config('filament-odk-link.odk.base_endpoint')."/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}/edit",
+            get: fn () => config('filament-odk-link.odk.base_endpoint') . "/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}/edit",
         );
     }
 
-    public function editOnEnketo(string $returnUrl): Redirector|RedirectResponse
+    public function editOnEnketo(string $returnUrl): Redirector | RedirectResponse
     {
         $linkService = app()->make(OdkLinkService::class);
         $token = $linkService->authenticate();
@@ -193,9 +194,9 @@ class Submission extends Model implements HasMedia
         // TODO: handle 409 response
         // TODO: handle 404 response
 
-        $enketoUrl = config('filament-odk-link.odk.url').'/-/edit/'.$this->xlsform->enketo_id.'?instance_id='.$this->odk_latest_version_id.'&return_url='.route('submission.update', ['submission' => $this]);
+        $enketoUrl = config('filament-odk-link.odk.url') . '/-/edit/' . $this->xlsform->enketo_id . '?instance_id=' . $this->odk_latest_version_id . '&return_url=' . route('submission.update', ['submission' => $this]);
 
-        $url = config('filament-odk-link.odk.url').'/#/login?next='.urlencode($enketoUrl);
+        $url = config('filament-odk-link.odk.url') . '/#/login?next=' . urlencode($enketoUrl);
 
         // Manually return the editing url
         return redirect($enketoUrl);

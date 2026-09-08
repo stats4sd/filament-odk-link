@@ -43,10 +43,10 @@ class PullSubmissionsFromXlsformQuietly implements ShouldQueue
         $odkLinkService = app()->make(OdkLinkService::class);
 
         $token = $odkLinkService->authenticate();
-        $oDataServiceUrl = config('filament-odk-link.odk.base_endpoint')."/projects/{$this->xlsform->owner->odkProject->id}/forms/{$this->xlsform->odk_id}.svc";
+        $oDataServiceUrl = config('filament-odk-link.odk.base_endpoint') . "/projects/{$this->xlsform->owner->odkProject->id}/forms/{$this->xlsform->odk_id}.svc";
 
         $results = Http::withToken($token)
-            ->get($oDataServiceUrl.'/Submissions?$expand=*')
+            ->get($oDataServiceUrl . '/Submissions?$expand=*')
             ->throw()
             ->json();
 
@@ -67,7 +67,7 @@ class PullSubmissionsFromXlsformQuietly implements ShouldQueue
                     'ownerName' => $this->xlsform->owner->name,
                 ]);
 
-                throw new Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: '.$messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '));
+                throw new Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '));
             }
 
             // Question: For column submission.content, should we store the original $entry instead of the return value of processEntry()?

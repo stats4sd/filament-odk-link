@@ -26,7 +26,7 @@ class EditXlsformTemplate extends EditRecord
     /**
      * @phpstan-return XlsformTemplate
      */
-    public function getRecord(): Model|XlsformTemplate
+    public function getRecord(): Model | XlsformTemplate
     {
         /** @var XlsformTemplate $record */
         $record = parent::getRecord();
@@ -36,7 +36,7 @@ class EditXlsformTemplate extends EditRecord
 
     public function getTitle(): string
     {
-        return 'Edit '.self::getRecord()->title;
+        return 'Edit ' . self::getRecord()->title;
     }
 
     public function getSteps(): array

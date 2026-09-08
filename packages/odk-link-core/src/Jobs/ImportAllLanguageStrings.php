@@ -21,7 +21,7 @@ class ImportAllLanguageStrings implements ShouldQueue
      */
     public function __construct(
         public string $filePath,
-        public XlsformModuleVersion|XlsformTemplate $model,
+        public XlsformModuleVersion | XlsformTemplate $model,
         public Collection $translatableHeadings,
     ) {}
 

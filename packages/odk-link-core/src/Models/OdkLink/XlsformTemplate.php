@@ -387,7 +387,7 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
     // get link to form in ODK Central
     public function getOdkLinkAttribute(): ?string
     {
-        return config('filament-odk-link.odk.url').'/#/projects/'.$this->owner->odkProject->id.'/forms/'.$this->odk_id.'/draft';
+        return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . '/draft';
     }
 
     /** @return Collection<XlsformTemplateSection> */
@@ -412,6 +412,7 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
 
                     if ($repeatParent) {
                         $parent = $repeatParent;
+
                         break;
                     }
                 }
@@ -423,7 +424,7 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
                     'is_repeat' => true,
                     'is_current' => true,
                     'schema' => $this->schema->filter(
-                        fn ($subItem) => Str::contains($subItem['path'], $item['path'].'/')
+                        fn ($subItem) => Str::contains($subItem['path'], $item['path'] . '/')
                             && $subItem['path'] !== $item['path']
                             && $subItem['type'] !== 'repeat'
                     ),
@@ -443,7 +444,7 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
                 }
 
                 $reviewSection->schema = $reviewSection->schema->filter(
-                    fn ($item) => ! Str::startsWith($item['path'], '/'.$reviewSection->structure_item.'/'.$section->structure_item.'/')
+                    fn ($item) => ! Str::startsWith($item['path'], '/' . $reviewSection->structure_item . '/' . $section->structure_item . '/')
                 );
 
                 $reviewSection->save();

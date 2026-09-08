@@ -132,7 +132,7 @@ class CreateXlsformTemplate extends CreateRecord
 
                         // TEMP
                         throw $e;
-                        $notificationBody = 'There was an error saving the XLSForm Template. ODK Returned the following error: '.$e->getMessage();
+                        $notificationBody = 'There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage();
 
                         if ($e->getMessage() == '') {
                             $notificationBody = 'There was an error saving the XLSForm Template.';

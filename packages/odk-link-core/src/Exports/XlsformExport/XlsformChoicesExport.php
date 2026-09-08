@@ -47,7 +47,8 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wi
                 choice_lists.list_name,
                 choice_list_entries.name,
                 choice_list_entries.properties,
-                choice_list_entries.cascade_filter')
+                choice_list_entries.cascade_filter'
+            )
             ->leftJoinRelationship('choiceList')
             ->groupBy([
                 'choice_lists.list_name',
@@ -57,16 +58,21 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wi
             ])
 
             // only global entries and entries owned by the current form owner
-            ->where(fn (Builder $query) => $query
-                ->where('choice_list_entries.owner_id', $this->xlsform->owner->getKey())
-                ->orWhere('choice_list_entries.owner_id', null)
+            ->where(
+                fn (Builder $query) => $query
+                    ->where('choice_list_entries.owner_id', $this->xlsform->owner->getKey())
+                    ->orWhere('choice_list_entries.owner_id', null)
             )
 
             // only entries in lists linked to a module version of the current form
-            ->whereHas('xlsformModuleVersion', fn (Builder $query) => $query
-                ->whereHas('xlsforms', fn (Builder $query) => $query
-                    ->where('xlsforms.id', $this->xlsform->id)
-                )
+            ->whereHas(
+                'xlsformModuleVersion',
+                fn (Builder $query) => $query
+                    ->whereHas(
+                        'xlsforms',
+                        fn (Builder $query) => $query
+                            ->where('xlsforms.id', $this->xlsform->id)
+                    )
             )
             ->with(['languageStrings', 'choiceList.xlsformModuleVersion.xlsforms'])
             ->orderBy('choice_lists.list_name')

@@ -13,7 +13,7 @@ class UpdateXlsformTitleInFile
     /**
      * @throws Exception
      */
-    public static function process(Xlsform|XlsformTemplate $xlsform, string $filePath): void
+    public static function process(Xlsform | XlsformTemplate $xlsform, string $filePath): void
     {
         $spreadsheet = IOFactory::load($filePath);
 
@@ -42,7 +42,7 @@ class UpdateXlsformTitleInFile
 
                     // assume that the headers are on row < 10 and column < AA
                     $coordinates = str_split($coordinates);
-                    $newCoordinates = $coordinates[0].((int) $coordinates[1] + 1);
+                    $newCoordinates = $coordinates[0] . ((int) $coordinates[1] + 1);
                     $worksheet->setCellValue($newCoordinates, $formId);
                     $idUpdated = true;
                     if ($titleUpdated) {
@@ -56,7 +56,7 @@ class UpdateXlsformTitleInFile
 
                     // assume that the headers are on row < 10 and column < AA
                     $coordinates = str_split($coordinates);
-                    $newCoordinates = $coordinates[0].((int) $coordinates[1] + 1);
+                    $newCoordinates = $coordinates[0] . ((int) $coordinates[1] + 1);
 
                     $worksheet->setCellValue($newCoordinates, $xlsform->title);
 

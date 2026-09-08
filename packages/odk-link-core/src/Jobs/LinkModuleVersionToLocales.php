@@ -24,7 +24,7 @@ class LinkModuleVersionToLocales implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public XlsformModuleVersion|XlsformTemplate $model, Collection $headings)
+    public function __construct(public XlsformModuleVersion | XlsformTemplate $model, Collection $headings)
     {
         $this->languages = $headings->map(
             fn (Collection $headings) => $headings

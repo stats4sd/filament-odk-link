@@ -23,7 +23,7 @@ class XlsformTemplateWorkbookImport implements ShouldQueue, WithChunkReading, Wi
     use RegistersEventListeners;
     use ResetsProcessingOnFailure;
 
-    public function __construct(public XlsformModuleVersion|XlsformTemplate $model, public Collection $translatableHeadings, public string $moduleColumn = 'module') {}
+    public function __construct(public XlsformModuleVersion | XlsformTemplate $model, public Collection $translatableHeadings, public string $moduleColumn = 'module') {}
 
     // Specify the "survey" sheet
     public function sheets(): array

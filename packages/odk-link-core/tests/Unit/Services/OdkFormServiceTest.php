@@ -80,7 +80,8 @@ it('getXlsformDraftDetails GETs the draft from ODK Central and returns the decod
         ->and($result['draftToken'])->toBe('tok123')
         ->and($result['enketoId'])->toBe('enketo-abc');
 
-    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects/99/forms/test-form-001/draft'
+    Http::assertSent(
+        fn ($req) => $req->url() === 'https://odk.test/v1/projects/99/forms/test-form-001/draft'
     );
 });
 
@@ -94,7 +95,8 @@ it('archiveForm PATCHes state=closed to the form URL', function () {
 
     app(OdkLinkService::class)->archiveForm($this->xlsform);
 
-    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects/99/forms/test-form-001'
+    Http::assertSent(
+        fn ($req) => $req->url() === 'https://odk.test/v1/projects/99/forms/test-form-001'
         && $req['state'] === 'closed'
     );
 });
@@ -123,7 +125,8 @@ it('unArchiveForm PATCHes state=open to the form URL', function () {
 
     app(OdkLinkService::class)->unArchiveForm($this->xlsform);
 
-    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects/99/forms/test-form-001'
+    Http::assertSent(
+        fn ($req) => $req->url() === 'https://odk.test/v1/projects/99/forms/test-form-001'
         && $req['state'] === 'open'
     );
 });
@@ -139,7 +142,8 @@ it('deleteForm DELETEs the form on ODK Central and returns true', function () {
     $result = app(OdkLinkService::class)->deleteForm($this->xlsform);
 
     expect($result)->toBeTrue();
-    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects/99/forms/test-form-001'
+    Http::assertSent(
+        fn ($req) => $req->url() === 'https://odk.test/v1/projects/99/forms/test-form-001'
         && $req->method() === 'DELETE'
     );
 });

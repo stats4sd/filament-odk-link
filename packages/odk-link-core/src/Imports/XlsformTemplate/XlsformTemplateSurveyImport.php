@@ -23,7 +23,7 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
     use GetsModuleNamesPerRow;
     use RemembersRowNumber;
 
-    public function __construct(public XlsformModuleVersion|XlsformTemplate $model, public Collection $translatableHeadings, public string $moduleColumn = 'module') {}
+    public function __construct(public XlsformModuleVersion | XlsformTemplate $model, public Collection $translatableHeadings, public string $moduleColumn = 'module') {}
 
     public function model(array $row): ?SurveyRow
     {
@@ -64,7 +64,7 @@ class XlsformTemplateSurveyImport implements ShouldQueue, SkipsEmptyRows, ToMode
         // for end_group or end_repeats, the name might be empty.
         // In that case, we generate a unique name based on the type.
         if (! isset($data['name']) || $data['name'] == '') {
-            $data['name'] = $data['type'].'_'.$this->getRowNumber();
+            $data['name'] = $data['type'] . '_' . $this->getRowNumber();
         }
 
         // TODO: find alternative way to ensure uniqueness across teams without changing survey row name quietly

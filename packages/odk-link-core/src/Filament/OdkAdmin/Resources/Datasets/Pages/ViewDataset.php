@@ -15,7 +15,7 @@ class ViewDataset extends ViewRecord
     /**
      * @phpstan-return Dataset
      */
-    public function getRecord(): Model|Dataset
+    public function getRecord(): Model | Dataset
     {
         /** @var Dataset $record */
         $record = parent::getRecord();
@@ -23,8 +23,8 @@ class ViewDataset extends ViewRecord
         return $record;
     }
 
-    public function getTitle(): string|Htmlable
+    public function getTitle(): string | Htmlable
     {
-        return 'Dataset: '.$this->getRecord()->name;
+        return 'Dataset: ' . $this->getRecord()->name;
     }
 }

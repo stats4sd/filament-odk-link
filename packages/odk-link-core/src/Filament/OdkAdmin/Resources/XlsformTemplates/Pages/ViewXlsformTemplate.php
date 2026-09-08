@@ -21,7 +21,7 @@ class ViewXlsformTemplate extends ViewRecord
     /**
      * @phpstan-return XlsformTemplate
      */
-    public function getRecord(): Model|XlsformTemplate
+    public function getRecord(): Model | XlsformTemplate
     {
         /** @var XlsformTemplate $record */
         $record = parent::getRecord();
@@ -95,7 +95,7 @@ class ViewXlsformTemplate extends ViewRecord
 
                         Notification::make('xlsform_template_not_saved')
                             ->title('XLSForm Template Not Saved')
-                            ->body('There was an error saving the XLSForm Template. ODK Returned the following error: '.$e->getMessage())
+                            ->body('There was an error saving the XLSForm Template. ODK Returned the following error: ' . $e->getMessage())
                             ->danger()
                             ->send();
 

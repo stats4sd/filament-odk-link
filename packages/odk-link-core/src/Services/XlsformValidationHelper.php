@@ -45,6 +45,7 @@ class XlsformValidationHelper
         foreach ($types as $type) {
             if (Str::contains($type, 'or_other')) {
                 $result->add('Type "or_other" is not supported by this platform. It is not recommended by the ODK team, as it does not support translation or choice filters. Please update your form to add an "other" option to your choice lists and a follow-up "enter the other response" question if required. For more information, see the <a href="https://docs.getodk.org/form-question-types/#including-other-as-a-choice" class="text-blue-800 underline">ODK documentation</a>.');
+
                 break;
             }
         }
@@ -103,6 +104,7 @@ class XlsformValidationHelper
                 foreach ($languageStringTypes as $languageStringType) {
                     if (Str::startsWith($columnHeader, $languageStringType->name)) {
                         $isLanguageStringType = true;
+
                         break;
                     }
                 }
@@ -113,8 +115,9 @@ class XlsformValidationHelper
 
                     // if a column header belongs to a language string type, check if a column header contains a two chars language
                     foreach ($languages as $language) {
-                        if (Str::endsWith($columnHeader, '_'.$language->iso_alpha2)) {
+                        if (Str::endsWith($columnHeader, '_' . $language->iso_alpha2)) {
                             $hasLanguageCode = true;
+
                             break;
                         }
                     }
@@ -122,7 +125,7 @@ class XlsformValidationHelper
                     // if column header is a language string type, but without language code, add error message
                     if (! $hasLanguageCode) {
                         // Note: after loading excel file into collection, column header does not appear exactly the same in xlsform template excel file
-                        $result->add('Column header "'.$columnHeader.'" does not have a defined language code. To fully support translation of forms, please specify the language for each translatable column in your ODK form.  For more information, see the <a href="https://docs.getodk.org/form-language/" class="text-blue-800 underline">ODK documentation</a>.');
+                        $result->add('Column header "' . $columnHeader . '" does not have a defined language code. To fully support translation of forms, please specify the language for each translatable column in your ODK form.  For more information, see the <a href="https://docs.getodk.org/form-language/" class="text-blue-800 underline">ODK documentation</a>.');
                     }
 
                 }

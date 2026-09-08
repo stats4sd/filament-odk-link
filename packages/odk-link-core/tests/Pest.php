@@ -53,7 +53,7 @@ function addModuleVersion(XlsformTemplate $template, string $name, array $module
 
     $versionId = DB::table('xlsform_module_versions')->insertGetId([
         'xlsform_module_id' => $moduleId,
-        'name' => 'Global '.$name,
+        'name' => 'Global ' . $name,
         'is_default' => true,
         'created_at' => now(),
         'updated_at' => now(),
