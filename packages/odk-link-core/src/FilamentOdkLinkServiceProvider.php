@@ -8,7 +8,6 @@ use Filament\Support\Assets\Asset;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
-use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\File;
 use Livewire\Features\SupportTesting\Testable;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
@@ -75,14 +74,7 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
             'stats4sd/filament-odk-link'
         );
 
-        // Handle Stubs
-        if (app()->runningInConsole()) {
-            foreach (app(Filesystem::class)->files(__DIR__ . '/../stubs/') as $file) {
-                $this->publishes([
-                    $file->getRealPath() => base_path("stubs/filament-odk-link/{$file->getFilename()}"),
-                ], 'filament-odk-link-stubs');
-            }
-        }
+
 
         // Testing
         Testable::mixin(new TestsFilamentOdkLink);
