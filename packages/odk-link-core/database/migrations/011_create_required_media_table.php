@@ -26,7 +26,7 @@ return new class extends Migration
             $table->boolean('exists_on_odk')->default(false);
             $table->boolean('updated_during_import')->default(false);
             $table->boolean('links_to_dataset')->default(0);
-            
+
             $table->timestamps();
         });
     }

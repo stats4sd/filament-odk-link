@@ -5,10 +5,10 @@ namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
@@ -53,12 +53,10 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
             return null;
         }
 
-
         // skip select_from_file questions
         if (Str::contains(trim($row['type']), '_from_file')) {
 
             // TODO: refactor this - this should be in a more logical place to handle RequiredMedia.
-
 
             if ($this->model instanceof XlsformTemplate) {
                 $xlsformTemplate = $this->model;
@@ -75,7 +73,6 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
 
             return null;
         }
-
 
         // get current module
         $moduleVersion = $this->getModuleVersionAndNameFromRow($row, $this->model, $this->moduleColumn);

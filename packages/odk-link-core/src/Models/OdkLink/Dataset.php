@@ -2,8 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use App\Models\Project;
-use App\Models\ProjectActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;

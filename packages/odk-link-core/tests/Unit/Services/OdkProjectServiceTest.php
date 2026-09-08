@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Tests\Models\Team;
 
 // Each test owns its own Http::fake() to prevent stub-merging issues.
 // Only the cache is cleared globally so no test leaks a token.
@@ -24,8 +25,7 @@ it('createProject prepends the app name prefix to the project name', function ()
 
     app(OdkLinkService::class)->createProject('My Survey');
 
-    Http::assertSent(fn ($req) =>
-        $req->url() === 'https://odk.test/v1/projects'
+    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects'
         && $req['name'] === 'TestApp- My Survey'
     );
 });
@@ -41,8 +41,7 @@ it('createProject uses short_name over app name when configured', function () {
 
     app(OdkLinkService::class)->createProject('Survey');
 
-    Http::assertSent(fn ($req) =>
-        $req->url() === 'https://odk.test/v1/projects'
+    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects'
         && $req['name'] === 'SHORT- Survey'
     );
 });
@@ -89,8 +88,7 @@ it('createProject limits the name to 57 characters when squish alone is insuffic
 
     app(OdkLinkService::class)->createProject($longName);
 
-    Http::assertSent(fn ($req) =>
-        $req->url() === 'https://odk.test/v1/projects'
+    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects'
         && strlen($req['name']) === 57
     );
 });
@@ -98,7 +96,7 @@ it('createProject limits the name to 57 characters when squish alone is insuffic
 // ─── createProjectAppUser ─────────────────────────────────────────────────────
 
 it('createProjectAppUser POSTs to app-users then to the manager assignment', function () {
-    $team = \Stats4sd\FilamentOdkLink\Tests\Models\Team::factory()->create();
+    $team = Team::factory()->create();
     $odkProject = OdkProject::create([
         'id' => 99,
         'name' => 'Test Project',
@@ -126,7 +124,7 @@ it('createProjectAppUser POSTs to app-users then to the manager assignment', fun
 // ─── updateProject ────────────────────────────────────────────────────────────
 
 it('updateProject POSTs to the correct URL with the new name', function () {
-    $team = \Stats4sd\FilamentOdkLink\Tests\Models\Team::factory()->create();
+    $team = Team::factory()->create();
     $odkProject = OdkProject::create([
         'id' => 7,
         'name' => 'Old Name',
@@ -141,8 +139,7 @@ it('updateProject POSTs to the correct URL with the new name', function () {
 
     app(OdkLinkService::class)->updateProject($odkProject, 'New Name');
 
-    Http::assertSent(fn ($req) =>
-        $req->url() === 'https://odk.test/v1/projects/7'
+    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects/7'
         && $req['name'] === 'New Name'
     );
 });
@@ -150,7 +147,7 @@ it('updateProject POSTs to the correct URL with the new name', function () {
 // ─── archiveProject ───────────────────────────────────────────────────────────
 
 it('archiveProject POSTs archived=true to the project URL', function () {
-    $team = \Stats4sd\FilamentOdkLink\Tests\Models\Team::factory()->create();
+    $team = Team::factory()->create();
     $odkProject = OdkProject::create([
         'id' => 5,
         'name' => 'To Archive',
@@ -165,8 +162,7 @@ it('archiveProject POSTs archived=true to the project URL', function () {
 
     app(OdkLinkService::class)->archiveProject($odkProject);
 
-    Http::assertSent(fn ($req) =>
-        $req->url() === 'https://odk.test/v1/projects/5'
+    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/projects/5'
         && $req['archived'] === true
         && $req['name'] === 'To Archive'
     );

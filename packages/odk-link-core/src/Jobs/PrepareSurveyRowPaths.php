@@ -18,9 +18,7 @@ class PrepareSurveyRowPaths implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public XlsformModuleVersion|XlsformTemplate $model)
-    {
-    }
+    public function __construct(public XlsformModuleVersion|XlsformTemplate $model) {}
 
     /**
      * Execute the job.
@@ -36,11 +34,10 @@ class PrepareSurveyRowPaths implements ShouldQueue
         foreach ($surveyRows as $surveyRow) {
             // if begin group or begin repeat; append to path
 
-
             switch ($surveyRow->type) {
                 case 'begin group':
                 case 'begin_group':
-                    $path .= $surveyRow->name . '/';
+                    $path .= $surveyRow->name.'/';
                     $surveyRow->update([
                         'path' => $path,
                         'repeat_group_path' => $repeatPaths->last() ?? null,
@@ -59,7 +56,7 @@ class PrepareSurveyRowPaths implements ShouldQueue
 
                 case 'begin repeat':
                 case 'begin_repeat':
-                    $repeatPaths->push($path . $surveyRow->name . '/');
+                    $repeatPaths->push($path.$surveyRow->name.'/');
                     $path = '/';
                     $surveyRow->update([
                         'path' => $path,
@@ -82,15 +79,13 @@ class PrepareSurveyRowPaths implements ShouldQueue
 
                 default:
                     $surveyRow->update([
-                        'path' => $path . $surveyRow->name,
+                        'path' => $path.$surveyRow->name,
                         'repeat_group_path' => $repeatPaths->last() ?? null,
                     ]);
                     break;
             }
 
-
         }
-
 
     }
 }

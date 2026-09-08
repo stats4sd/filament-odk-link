@@ -5,19 +5,14 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
 // Trait to give your User model, if you want them to be able to log into ODK Central and have access to their projects
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 /** @phpstan-extends Model */
 trait HasOdkCentralAccount
 {
-
-    protected static function bootHasOdkCentralAccount()
-    {
-    }
+    protected static function bootHasOdkCentralAccount() {}
 
     /**
      * @throws RequestException
@@ -39,8 +34,6 @@ trait HasOdkCentralAccount
     }
 
     /**
-     *
-     *
      * @throws ConnectionException
      * @throws RequestException
      * @throws BindingResolutionException
@@ -57,5 +50,4 @@ trait HasOdkCentralAccount
         $this->update(['odk_id' => $response['id']]);
         $this->syncWithOdkCentral();
     }
-
 }

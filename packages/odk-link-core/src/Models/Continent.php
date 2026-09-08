@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 class Continent extends Model
 {
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $guarded = [];
@@ -22,5 +23,4 @@ class Continent extends Model
     {
         return $this->hasManyThrough(Country::class, Region::class);
     }
-
 }

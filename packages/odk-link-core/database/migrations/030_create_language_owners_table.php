@@ -13,8 +13,6 @@ return new class extends Migration
     {
         $teamTable = (new (config('filament-odk-link.models.form_owner')))->getTable();
 
-
-
         Schema::create('language_owner', function (Blueprint $table) use ($teamTable) {
             $table->id();
             $table->foreignId('language_id')->constrained('languages')->cascadeOnDelete()->cascadeOnUpdate();

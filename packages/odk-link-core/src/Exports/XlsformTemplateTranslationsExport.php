@@ -22,9 +22,8 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
-class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings, WithTitle, WithColumnWidths, WithStyles, WithBackgroundColor
+class XlsformTemplateTranslationsExport implements FromCollection, WithBackgroundColor, WithColumnWidths, WithHeadings, WithStyles, WithTitle
 {
-
     /** @var Collection<Locale> */
     public Collection $locales;
 
@@ -83,11 +82,11 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
     {
         $surveyRows = $this->template->surveyRows
             ->sortBy('row_number')
-            ->map(fn(SurveyRow $entry) => $this->processEntry($entry));
+            ->map(fn (SurveyRow $entry) => $this->processEntry($entry));
 
         $choiceListEntries = $this->template->choiceListEntries
             ->sortBy('row_number')
-            ->map(fn(ChoiceListEntry $entry) => $this->processEntry($entry));
+            ->map(fn (ChoiceListEntry $entry) => $this->processEntry($entry));
 
         return $surveyRows
             ->merge($choiceListEntries)
@@ -143,7 +142,7 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
 
         // Apply styles for the header row
         $lastColumnIndex = count($this->headings());
-        $headingRange = 'A1:' . Coordinate::stringFromColumnIndex($lastColumnIndex) . '1';
+        $headingRange = 'A1:'.Coordinate::stringFromColumnIndex($lastColumnIndex).'1';
         $sheet->getStyle($headingRange)->applyFromArray($h1);
 
         // Get total number of rows for styling
@@ -152,11 +151,11 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
         // Create a range for the data rows
         for ($rowIndex = 2; $rowIndex <= $rowCount; $rowIndex++) {
             // Apply orange fill to the entire row
-            $dataRange = "A{$rowIndex}:" . Coordinate::stringFromColumnIndex($lastColumnIndex) . "{$rowIndex}";
+            $dataRange = "A{$rowIndex}:".Coordinate::stringFromColumnIndex($lastColumnIndex)."{$rowIndex}";
             $sheet->getStyle($dataRange)->applyFromArray($orangeFill);
 
             // Apply white fill to the last column
-            $sheet->getStyle(Coordinate::stringFromColumnIndex($lastColumnIndex) . "{$rowIndex}")->applyFromArray($whiteFill);
+            $sheet->getStyle(Coordinate::stringFromColumnIndex($lastColumnIndex)."{$rowIndex}")->applyFromArray($whiteFill);
         }
 
         // Lock the sheet so the identifier columns (A-E) and header row cannot be edited; cells
@@ -207,7 +206,7 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
             ->groupBy('language_string_type_id')
             ->map(function (Collection $strings, $typeId) use ($entry): Collection {
                 $languageStringType = $this->allLanguageStringTypes
-                    ->filter(fn(LanguageStringType $languageStringType) => $languageStringType->id == $typeId)
+                    ->filter(fn (LanguageStringType $languageStringType) => $languageStringType->id == $typeId)
                     ->first();
 
                 // Create the initial row with the row type, 'name' and 'language string type'

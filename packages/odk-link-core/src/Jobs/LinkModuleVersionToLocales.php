@@ -27,9 +27,9 @@ class LinkModuleVersionToLocales implements ShouldQueue
     public function __construct(public XlsformModuleVersion|XlsformTemplate $model, Collection $headings)
     {
         $this->languages = $headings->map(
-            fn(Collection $headings) => $headings
+            fn (Collection $headings) => $headings
                 ->map(
-                    fn(string $heading) => (new XlsformTranslationHelper)
+                    fn (string $heading) => (new XlsformTranslationHelper)
                         ->getLanguageFromColumnHeader($heading)
                 )
         )->flatten();
@@ -56,7 +56,7 @@ class LinkModuleVersionToLocales implements ShouldQueue
         if ($this->model instanceof XlsformModuleVersion) {
             $xlsformModuleVersions = collect([$this->model]);
         } else {
-            $xlsformModuleVersions = $this->model->xlsformModules->map(fn(XlsformModule $module) => $module->defaultXlsformVersion);
+            $xlsformModuleVersions = $this->model->xlsformModules->map(fn (XlsformModule $module) => $module->defaultXlsformVersion);
         }
 
         foreach ($xlsformModuleVersions as $xlsformModuleVersion) {
@@ -72,13 +72,13 @@ class LinkModuleVersionToLocales implements ShouldQueue
             $xlsformModuleVersion->locales()
                 ->wherePivot('updated_during_import', false)
                 ->get()
-                ->each(fn(Locale $locale) => $xlsformModuleVersion->locales()->updateExistingPivot($locale->id, ['needs_update' => true]));
+                ->each(fn (Locale $locale) => $xlsformModuleVersion->locales()->updateExistingPivot($locale->id, ['needs_update' => true]));
 
             // mark all locales as no longer updated during import
             $xlsformModuleVersion->locales()
                 ->wherePivot('updated_during_import', true)
                 ->get()
-                ->each(fn(Locale $locale) => $xlsformModuleVersion->locales()->updateExistingPivot($locale->id, ['needs_update' => false]));
+                ->each(fn (Locale $locale) => $xlsformModuleVersion->locales()->updateExistingPivot($locale->id, ['needs_update' => false]));
         }
     }
 }

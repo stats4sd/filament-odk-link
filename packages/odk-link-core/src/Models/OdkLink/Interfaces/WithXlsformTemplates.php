@@ -16,7 +16,6 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
  * @property Collection<XlsformTemplate> $xlsformTemplates
  * @property OdkProject $odkProject
  * @property bool $should_receive_all_xlsform_templates
- *
  */
 interface WithXlsformTemplates
 {

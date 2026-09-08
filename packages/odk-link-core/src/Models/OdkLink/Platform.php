@@ -4,10 +4,6 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
-
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsformTemplates;
 
@@ -23,7 +19,7 @@ class Platform extends Model implements WithXlsformTemplates
     protected function name(): Attribute
     {
         return new Attribute(
-            get: fn (): string => config('app.name', 'Laravel Platform') . ' Platform.php' . $this->id,
+            get: fn (): string => config('app.name', 'Laravel Platform').' Platform.php'.$this->id,
         );
     }
 
@@ -35,5 +31,4 @@ class Platform extends Model implements WithXlsformTemplates
             get: fn (): bool => false,
         );
     }
-
 }

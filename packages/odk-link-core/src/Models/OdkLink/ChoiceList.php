@@ -2,18 +2,14 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Collection as SupportCollection;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
-
 
 class ChoiceList extends Model
 {
-
     protected $casts = [
         'properties' => 'collection',
         'can_be_hidden_from_context' => 'boolean',
@@ -31,7 +27,7 @@ class ChoiceList extends Model
         });
     }
 
-    //get entries for a specific owner
+    // get entries for a specific owner
     /** @return Collection<ChoiceListEntry> */
     public function getOwnedEntries(WithXlsforms $owner): Collection
     {
@@ -40,7 +36,7 @@ class ChoiceList extends Model
             ->where(function ($query) use ($owner) {
                 $query->whereDoesntHave('owner')
                     ->orWhereHas('owner', function ($query) use ($owner) {
-                        $query->where($owner->getTable() . '.' . $owner->getKeyName(), $owner->getKey());
+                        $query->where($owner->getTable().'.'.$owner->getKeyName(), $owner->getKey());
 
                     });
             })
@@ -64,5 +60,4 @@ class ChoiceList extends Model
     {
         return $this->hasMany(SurveyRow::class);
     }
-
 }

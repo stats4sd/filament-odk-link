@@ -2,17 +2,14 @@
 
 namespace Stats4sd\FilamentOdkLink\Services;
 
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
-
 class UpdateXlsformTitleInFile
 {
-
     /**
      * @throws Exception
      */
@@ -22,7 +19,7 @@ class UpdateXlsformTitleInFile
 
         $worksheet = $spreadsheet->getSheetByName('settings');
 
-        if (!$worksheet) {
+        if (! $worksheet) {
             throw new Exception('The file requires a "settings" worksheet.');
         }
 
@@ -45,7 +42,7 @@ class UpdateXlsformTitleInFile
 
                     // assume that the headers are on row < 10 and column < AA
                     $coordinates = str_split($coordinates);
-                    $newCoordinates = $coordinates[0] . ((int)$coordinates[1] + 1);
+                    $newCoordinates = $coordinates[0].((int) $coordinates[1] + 1);
                     $worksheet->setCellValue($newCoordinates, $formId);
                     $idUpdated = true;
                     if ($titleUpdated) {
@@ -59,7 +56,7 @@ class UpdateXlsformTitleInFile
 
                     // assume that the headers are on row < 10 and column < AA
                     $coordinates = str_split($coordinates);
-                    $newCoordinates = $coordinates[0] . ((int)$coordinates[1] + 1);
+                    $newCoordinates = $coordinates[0].((int) $coordinates[1] + 1);
 
                     $worksheet->setCellValue($newCoordinates, $xlsform->title);
 

@@ -9,8 +9,6 @@ use Stats4sd\FilamentOdkLink\Exports\XlsformExport\ExportsXlsformContent;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 
 class ChoiceListAsMediaAttachmentExport implements FromCollection, WithHeadings
@@ -33,9 +31,6 @@ class ChoiceListAsMediaAttachmentExport implements FromCollection, WithHeadings
         $this->propertyHeadings = $this->getHeadingsFromPropertyList($this->getHeadingsFromProperties());
     }
 
-    /**
-     * @return \Illuminate\Support\Collection
-     */
     public function collection(): \Illuminate\Support\Collection
     {
         return $this->choiceListEntries

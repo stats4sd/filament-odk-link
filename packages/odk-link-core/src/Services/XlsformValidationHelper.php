@@ -8,14 +8,12 @@ use Maatwebsite\Excel\Facades\Excel;
 use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateValidator;
 
 /**
- *
  * This helper class aims to centralise business logic to validate the uploaded xlsform template excel file before sending it to test on ODK central.
  * It includes below customised validations. More validations will be added from time to time.
  *
  * Customised validations:
  * 1. ODK variable with type "or_other"
  * 2. Language string column header without a defined language (without a language or with a non-existed language)
- *
  */
 class XlsformValidationHelper
 {
@@ -31,14 +29,14 @@ class XlsformValidationHelper
      *
      * Output parameters:
      *  - a collection of error messages
-     *
      */
-    public static function validateTypeOrOther($pathName): Collection {
+    public static function validateTypeOrOther($pathName): Collection
+    {
         // initialise error messages collection
         $result = collect();
 
         // convert the uploaded excel file into a collection
-        $collection = Excel::toCollection(new XlsformTemplateValidator(), $pathName);
+        $collection = Excel::toCollection(new XlsformTemplateValidator, $pathName);
 
         // get type columns of all ODK variables from survey excel sheet
         $types = $collection['survey']->pluck('type');
@@ -53,7 +51,6 @@ class XlsformValidationHelper
 
         return $result;
     }
-
 
     /**
      * A validation to check if the uploaded xlsform template excel file contains any column header without language or with a non-existed language.
@@ -77,9 +74,9 @@ class XlsformValidationHelper
      *
      * Output parameters:
      *  - a collection of error messages
-     *
      */
-    public static function validateColumnHeadersWithLanguageString($pathName): Collection {
+    public static function validateColumnHeadersWithLanguageString($pathName): Collection
+    {
         // initialise error messages collection
         $result = collect();
 
@@ -89,7 +86,7 @@ class XlsformValidationHelper
         $languages = $xlsformTranslationHelper->languages;
 
         // convert the uploaded excel file into a collection
-        $collection = Excel::toCollection(new XlsformTemplateValidator(), $pathName);
+        $collection = Excel::toCollection(new XlsformTemplateValidator, $pathName);
 
         // XlsformTemplateValidator returns survey excel sheet and choices excel sheet only, check all items in the returned collection
         foreach ($collection as $sheet) {
@@ -116,16 +113,16 @@ class XlsformValidationHelper
 
                     // if a column header belongs to a language string type, check if a column header contains a two chars language
                     foreach ($languages as $language) {
-                        if (Str::endsWith($columnHeader, '_' . $language->iso_alpha2)) {
+                        if (Str::endsWith($columnHeader, '_'.$language->iso_alpha2)) {
                             $hasLanguageCode = true;
                             break;
                         }
                     }
 
                     // if column header is a language string type, but without language code, add error message
-                    if (!$hasLanguageCode) {
+                    if (! $hasLanguageCode) {
                         // Note: after loading excel file into collection, column header does not appear exactly the same in xlsform template excel file
-                        $result->add('Column header "' . $columnHeader . '" does not have a defined language code. To fully support translation of forms, please specify the language for each translatable column in your ODK form.  For more information, see the <a href="https://docs.getodk.org/form-language/" class="text-blue-800 underline">ODK documentation</a>.');
+                        $result->add('Column header "'.$columnHeader.'" does not have a defined language code. To fully support translation of forms, please specify the language for each translatable column in your ODK form.  For more information, see the <a href="https://docs.getodk.org/form-language/" class="text-blue-800 underline">ODK documentation</a>.');
                     }
 
                 }
@@ -136,5 +133,4 @@ class XlsformValidationHelper
 
         return $result;
     }
-
 }

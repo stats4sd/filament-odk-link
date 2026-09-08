@@ -4,8 +4,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Tests\TestCase;
@@ -53,7 +53,7 @@ function addModuleVersion(XlsformTemplate $template, string $name, array $module
 
     $versionId = DB::table('xlsform_module_versions')->insertGetId([
         'xlsform_module_id' => $moduleId,
-        'name' => 'Global ' . $name,
+        'name' => 'Global '.$name,
         'is_default' => true,
         'created_at' => now(),
         'updated_at' => now(),

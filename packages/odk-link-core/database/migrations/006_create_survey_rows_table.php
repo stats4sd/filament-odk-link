@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -35,7 +36,6 @@ return new class extends Migration {
 
             $table->boolean('updated_during_import')->default(false); // used to track if the row was updated during import of a new version of the XlsformTemplate file;
             $table->timestamps();
-
 
             $table->unique(['xlsform_module_version_id', 'name', 'type'], 'unique_survey_rows');
         });

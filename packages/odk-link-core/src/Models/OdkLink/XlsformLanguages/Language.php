@@ -8,14 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Stats4sd\FilamentOdkLink\Models\Country;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 
 class Language extends Model
 {
-
-
-
     /** @return HasMany<XlsformModuleVersionLocale, $this> */
     public function xlsformModuleVersionLocales(): HasMany
     {
@@ -53,8 +48,7 @@ class Language extends Model
     /** @return BelongsToMany<Model, $this> */
     public function owners(): BelongsToMany
     {
-        return $this->BelongsToMany
-        (config('filament-odk-link.models.form_owner'), 'language_owner', 'language_id', 'owner_id')
+        return $this->BelongsToMany(config('filament-odk-link.models.form_owner'), 'language_owner', 'language_id', 'owner_id')
             ->withPivot(['locale_id']);
     }
 }

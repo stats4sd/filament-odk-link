@@ -2,17 +2,14 @@
 
 namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
 
-
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 
-
 trait OdkProjectService
 {
-
     /**
      * Creates a new project in ODK Central
      *
@@ -25,7 +22,7 @@ trait OdkProjectService
         $token = $this->authenticate();
 
         // prepend platform identifier to project name;
-        $name = (config('app.short_name') ?? config('app.name')) . '- ' . $name;
+        $name = (config('app.short_name') ?? config('app.name')).'- '.$name;
 
         // leave 7 characters for the "all " prefix and number suffix for the app user;
         if (Str::length($name) > 57) {
@@ -49,7 +46,7 @@ trait OdkProjectService
         $token = $this->authenticate();
 
         // truncate name to 64 characters
-        $displayName = Str::limit('All ' . $odkProject->name . ' ' . $odkProject->appUsers()->count() + 1, limit: 64, end: '');
+        $displayName = Str::limit('All '.$odkProject->name.' '.$odkProject->appUsers()->count() + 1, limit: 64, end: '');
 
         // create new app-user
         $userResponse = Http::withToken($token)

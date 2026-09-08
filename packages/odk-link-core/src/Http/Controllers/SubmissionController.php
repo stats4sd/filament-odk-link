@@ -4,7 +4,6 @@ namespace Stats4sd\FilamentOdkLink\Http\Controllers;
 
 use Illuminate\Support\Facades\Session;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 class SubmissionController

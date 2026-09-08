@@ -22,8 +22,7 @@ it('createUser POSTs email and password to /users', function () {
     $result = app(OdkLinkService::class)->createUser('new@odk.test', 'pass123');
 
     expect($result['id'])->toBe(77);
-    Http::assertSent(fn ($req) =>
-        $req->url() === 'https://odk.test/v1/users'
+    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/users'
         && $req['email'] === 'new@odk.test'
         && $req['password'] === 'pass123'
     );
@@ -45,7 +44,8 @@ it('createUser falls back to GET /users?q= when ODK Central returns 409', functi
 // ─── assignRole ───────────────────────────────────────────────────────────────
 
 it('assignRole POSTs to /assignments/{role}/{odk_id}', function () {
-    $user = new class implements WithOdkCentralAccount {
+    $user = new class implements WithOdkCentralAccount
+    {
         public int $odk_id = 42;
     };
 
@@ -61,7 +61,8 @@ it('assignRole POSTs to /assignments/{role}/{odk_id}', function () {
 });
 
 it('assignRole returns success without re-throwing when ODK Central returns 409', function () {
-    $user = new class implements WithOdkCentralAccount {
+    $user = new class implements WithOdkCentralAccount
+    {
         public int $odk_id = 42;
     };
 
@@ -85,7 +86,8 @@ it('addUserToProject POSTs to the manager assignment URL when user has odk_id', 
         'owner_type' => Team::class,
         'owner_id' => $team->id,
     ]);
-    $user = new class implements WithOdkCentralAccount {
+    $user = new class implements WithOdkCentralAccount
+    {
         public int $odk_id = 88;
     };
 
@@ -96,8 +98,7 @@ it('addUserToProject POSTs to the manager assignment URL when user has odk_id', 
 
     app(OdkLinkService::class)->addUserToProject($user, $odkProject);
 
-    Http::assertSent(fn ($req) =>
-        str_contains($req->url(), '/projects/5/assignments/manager/88')
+    Http::assertSent(fn ($req) => str_contains($req->url(), '/projects/5/assignments/manager/88')
     );
 });
 
@@ -109,7 +110,8 @@ it('addUserToProject skips the HTTP call and returns success when user has no od
         'owner_type' => Team::class,
         'owner_id' => $team->id,
     ]);
-    $user = new class implements WithOdkCentralAccount {
+    $user = new class implements WithOdkCentralAccount
+    {
         public ?int $odk_id = null;
     };
 
@@ -133,7 +135,8 @@ it('removeUserFromProject DELETEs the manager assignment', function () {
         'owner_type' => Team::class,
         'owner_id' => $team->id,
     ]);
-    $user = new class implements WithOdkCentralAccount {
+    $user = new class implements WithOdkCentralAccount
+    {
         public int $odk_id = 33;
     };
 
@@ -144,8 +147,7 @@ it('removeUserFromProject DELETEs the manager assignment', function () {
 
     app(OdkLinkService::class)->removeUserFromProject($user, $odkProject);
 
-    Http::assertSent(fn ($req) =>
-        str_contains($req->url(), '/projects/7/assignments/manager/33')
+    Http::assertSent(fn ($req) => str_contains($req->url(), '/projects/7/assignments/manager/33')
         && $req->method() === 'DELETE'
     );
 });

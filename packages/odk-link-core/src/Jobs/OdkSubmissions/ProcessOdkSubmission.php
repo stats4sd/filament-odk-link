@@ -15,9 +15,7 @@ class ProcessOdkSubmission implements ShouldQueue
     use NotifiesOnJobFailure;
     use Queueable;
 
-    public function __construct(public Submission $submission, public array $entry, public XlsformVersion $xlsformVersion)
-    {
-    }
+    public function __construct(public Submission $submission, public array $entry, public XlsformVersion $xlsformVersion) {}
 
     /**
      * Execute the job.

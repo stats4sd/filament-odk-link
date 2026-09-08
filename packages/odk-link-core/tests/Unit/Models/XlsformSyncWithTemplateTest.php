@@ -77,7 +77,6 @@ it('attaches a local version if exists when can_be_replaced is true, and falls b
 
     $xlsform = makeXlsformFor($template, $this->team);
 
-
     // without a local version of the module to replace it with, check that the Xlsform defaults to the Global module.
     $xlsform->syncWithTemplate();
 

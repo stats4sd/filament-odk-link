@@ -13,7 +13,6 @@ use Znck\Eloquent\Relations\BelongsToThrough;
 
 class LanguageString extends Model
 {
-
     use \Znck\Eloquent\Traits\BelongsToThrough;
 
     protected $casts = [
@@ -26,7 +25,7 @@ class LanguageString extends Model
     protected function text(): Attribute
     {
         return new Attribute(
-            set: fn($value) => $value ?? ' ',
+            set: fn ($value) => $value ?? ' ',
         );
     }
 

@@ -1,4 +1,6 @@
-<?php /** @noinspection ALL */
+<?php
+
+/** @noinspection ALL */
 
 /** @noinspection PhpStanGlobal */
 
@@ -15,7 +17,6 @@ use Maatwebsite\Excel\Facades\Excel;
 use Stats4sd\FilamentOdkLink\Exports\ChoiceListModelsExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
@@ -82,8 +83,7 @@ class HelperService
 
     // helper function to return the currently selected team in a Filament panel.
     // useful because it always returns a Team::class (or null), so you can use it in a type hint.
-    /** @return WithXlsforms | Model | null */
-    public static function getCurrentOwner(): WithXlsforms | Model | null
+    public static function getCurrentOwner(): WithXlsforms|Model|null
     {
         if (Filament::hasTenancy() && is_a(Filament::getTenant(), WithXlsforms::class)) {
 
@@ -116,20 +116,20 @@ class HelperService
     /**
      * Creates a new csv lookup file from the database;
      */
-    public function createCsvLookupFile(XLsform | XlsformTemplate $xlsform, RequiredMedia $requiredMedia): string
+    public function createCsvLookupFile(Xlsform|XlsformTemplate $xlsform, RequiredMedia $requiredMedia): string
     {
 
         $choiceList = $requiredMedia->choiceList;
 
-        $filePath = 'xlsforms/' . $xlsform->getKey() . '/' . $requiredMedia->name;
+        $filePath = 'xlsforms/'.$xlsform->getKey().'/'.$requiredMedia->name;
 
         // check if the folder exists; if not, create it
         if (! Storage::disk(config('filament-odk-link.storage.xlsforms'))->exists('xlsforms')) {
             Storage::disk(config('filament-odk-link.storage.xlsforms'))->makeDirectory('xlsforms');
         }
 
-        if (! Storage::disk(config('filament-odk-link.storage.xlsforms'))->exists('xlsforms/' . $xlsform->getKey())) {
-            Storage::disk(config('filament-odk-link.storage.xlsforms'))->makeDirectory('xlsforms/' . $xlsform->getKey());
+        if (! Storage::disk(config('filament-odk-link.storage.xlsforms'))->exists('xlsforms/'.$xlsform->getKey())) {
+            Storage::disk(config('filament-odk-link.storage.xlsforms'))->makeDirectory('xlsforms/'.$xlsform->getKey());
         }
 
         Excel::store(

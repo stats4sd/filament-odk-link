@@ -33,5 +33,4 @@ class PollForOdkData extends Command
                 PullSubmissionsFromXlsform::dispatch($xlsform);
             });
     }
-
 }

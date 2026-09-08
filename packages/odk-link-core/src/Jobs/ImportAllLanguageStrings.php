@@ -3,14 +3,13 @@
 namespace Stats4sd\FilamentOdkLink\Jobs;
 
 use App\Models\Team;
-use App\Services\HelperService;
-use Illuminate\Support\Collection;
-use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Collection;
 use Stats4sd\FilamentOdkLink\Concerns\ResetsProcessingOnFailure;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateLanguageStringImport;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 class ImportAllLanguageStrings implements ShouldQueue
 {
@@ -21,12 +20,10 @@ class ImportAllLanguageStrings implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        public string                               $filePath,
+        public string $filePath,
         public XlsformModuleVersion|XlsformTemplate $model,
-        public Collection                           $translatableHeadings,
-    )
-    {
-    }
+        public Collection $translatableHeadings,
+    ) {}
 
     /**
      * Execute the job.
@@ -42,9 +39,8 @@ class ImportAllLanguageStrings implements ShouldQueue
 
             $currentOwner = $this->model->owner ?? null;
 
-
             // If there is an owner, use the custom file path to retrieve the file.
-            if($currentOwner) {
+            if ($currentOwner) {
                 // get the file path of custom questions excel file stored by Spatie media library
                 $newFilePath = $currentOwner->getFirstMediaPath('custom_questions');
 
@@ -52,7 +48,6 @@ class ImportAllLanguageStrings implements ShouldQueue
                 $this->filePath = $newFilePath;
             }
         }
-
 
         // import the language strings for all the translatable headings in the surveys tab;
         foreach ($this->translatableHeadings as $sheet => $headings) {

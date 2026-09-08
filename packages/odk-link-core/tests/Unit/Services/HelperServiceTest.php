@@ -23,7 +23,7 @@ it('getOdkVariablesToIgnore returns all expected system fields', function () {
 // ─── importCsvFileToCollection ────────────────────────────────────────────────
 
 it('importCsvFileToCollection parses rows keyed by header', function () {
-    $path = __DIR__ . '/../../fixtures/lookup.csv';
+    $path = __DIR__.'/../../fixtures/lookup.csv';
 
     $rows = HelperService::importCsvFileToCollection($path);
 
@@ -34,7 +34,7 @@ it('importCsvFileToCollection parses rows keyed by header', function () {
 });
 
 it('importCsvFileToCollection maps all rows to correct values', function () {
-    $path = __DIR__ . '/../../fixtures/lookup.csv';
+    $path = __DIR__.'/../../fixtures/lookup.csv';
 
     $rows = HelperService::importCsvFileToCollection($path);
     $second = $rows->last();
@@ -45,7 +45,7 @@ it('importCsvFileToCollection maps all rows to correct values', function () {
 });
 
 it('importCsvFileToCollection strips trailing blank lines', function () {
-    $path = __DIR__ . '/../../fixtures/lookup.csv';
+    $path = __DIR__.'/../../fixtures/lookup.csv';
 
     // The fixture has a trailing newline; the result should only have 2 data rows.
     $rows = HelperService::importCsvFileToCollection($path);

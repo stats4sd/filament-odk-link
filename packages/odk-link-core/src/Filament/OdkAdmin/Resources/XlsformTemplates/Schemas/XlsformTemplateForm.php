@@ -2,23 +2,23 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas;
 
-use Filament\Schemas\Schema;
-use Illuminate\Support\HtmlString;
-use Filament\Schemas\Components\Callout;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Components\Tabs;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Group;
 use Filament\Forms\Components\FileUpload;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Schemas\Components\Utilities\Get;
-use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Callout;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
+use Stats4sd\FilamentOdkLink\Forms\Components\HtmlBlock;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 class XlsformTemplateForm
 {
@@ -71,8 +71,8 @@ class XlsformTemplateForm
             // TODO: refactor in Filament 4, when we can set fields to show multiple errors if needed.
             Callout::make()
                 ->danger()
-                ->visible(fn($livewire): bool => $livewire->getErrorBag()->any())
-                ->description(fn($livewire): HtmlString => new HtmlString(collect($livewire->getErrorBag()->all())->join('<br/><br/>'))),
+                ->visible(fn ($livewire): bool => $livewire->getErrorBag()->any())
+                ->description(fn ($livewire): HtmlString => new HtmlString(collect($livewire->getErrorBag()->all())->join('<br/><br/>'))),
 
         ];
     }
@@ -101,7 +101,7 @@ class XlsformTemplateForm
 
                     HtmlBlock::make('name')
                         ->content(
-                            fn(?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
+                            fn (?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
                         ),
 
                     SpatieMediaLibraryFileUpload::make('file')
@@ -121,7 +121,7 @@ class XlsformTemplateForm
 
                     $entityCsvNames = collect($record?->templateEntityLists)
                         ->pluck('list_name')
-                        ->map(fn($n) => $n . '.csv')
+                        ->map(fn ($n) => $n.'.csv')
                         ->toArray();
 
                     $dataMediaCount = $record?->requiredDataMedia()
@@ -136,14 +136,13 @@ class XlsformTemplateForm
 
                     return new HtmlString($label);
                 })
-                ->relationship(modifyQueryUsing: fn(Builder $query, ?XlsformTemplate $record): Builder =>
-                    $query->when(
-                        filled($record?->templateEntityLists?->pluck('list_name')->toArray()),
-                        fn(Builder $q) => $q->whereNotIn(
-                            'name',
-                            $record->templateEntityLists->pluck('list_name')->map(fn($n) => $n . '.csv')->toArray()
-                        )
+                ->relationship(modifyQueryUsing: fn (Builder $query, ?XlsformTemplate $record): Builder => $query->when(
+                    filled($record?->templateEntityLists?->pluck('list_name')->toArray()),
+                    fn (Builder $q) => $q->whereNotIn(
+                        'name',
+                        $record->templateEntityLists->pluck('list_name')->map(fn ($n) => $n.'.csv')->toArray()
                     )
+                )
                 )
                 ->addable(false)
                 ->deletable(false)
@@ -154,7 +153,7 @@ class XlsformTemplateForm
                         [
                             HtmlBlock::make('name')
                                 ->content(
-                                    fn(?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
+                                    fn (?RequiredMedia $record): HtmlString => new HtmlString("<b>Filename:</b> $record?->name")
                                 ),
                             Toggle::make('is_static')
                                 ->label('Is this a static media file?')
@@ -163,7 +162,7 @@ class XlsformTemplateForm
 
                             // for static media
                             Group::make()
-                                ->visible(fn(Get $get): bool => $get('is_static'))
+                                ->visible(fn (Get $get): bool => $get('is_static'))
                                 ->schema([
                                     SpatieMediaLibraryFileUpload::make('file')
                                         ->preserveFilenames()
@@ -173,25 +172,25 @@ class XlsformTemplateForm
 
                             // for non-static media (linked to datasets)
                             Group::make()
-                                ->visible(fn(Get $get, ?RequiredMedia $record): bool => $record?->links_to_dataset && !$get('is_static'))
+                                ->visible(fn (Get $get, ?RequiredMedia $record): bool => $record?->links_to_dataset && ! $get('is_static'))
                                 ->schema([
                                     Callout::make()
                                         ->info()
-                                        ->description(fn(?RequiredMedia $record): HtmlString => new HtmlString('Select the dataset that contains the list of entries for this linked dataset. When the form is published, the full content of the chosen dataset will be written to a csv file and uploaded to ODK as a file attachment.'))
-                                        ->visible(fn(Get $get): bool => !$get('is_static')),
+                                        ->description(fn (?RequiredMedia $record): HtmlString => new HtmlString('Select the dataset that contains the list of entries for this linked dataset. When the form is published, the full content of the chosen dataset will be written to a csv file and uploaded to ODK as a file attachment.'))
+                                        ->visible(fn (Get $get): bool => ! $get('is_static')),
                                     Select::make('dataset_id')
-                                        ->relationship('dataset', 'name', modifyQueryUsing: fn(Builder $query) => $query->whereHas('owner', fn(Builder $query) => $query->whereKey($xlsformTemplate->owner_id)))
+                                        ->relationship('dataset', 'name', modifyQueryUsing: fn (Builder $query) => $query->whereHas('owner', fn (Builder $query) => $query->whereKey($xlsformTemplate->owner_id)))
                                         ->preload()
                                         ->searchable()
-                                        ->visible(fn(Get $get): bool => !$get('is_static')),
+                                        ->visible(fn (Get $get): bool => ! $get('is_static')),
                                 ]),
 
                             Group::make()
-                                ->visible(fn(Get $get, ?RequiredMedia $record): bool => !$record?->links_to_dataset && !$get('is_static'))
+                                ->visible(fn (Get $get, ?RequiredMedia $record): bool => ! $record?->links_to_dataset && ! $get('is_static'))
                                 ->schema([
                                     Callout::make()
                                         ->info()
-                                        ->description(fn(?RequiredMedia $record): string => "This csv file will be automatically generated from the linked choice list " . $record->choiceList?->list_name . ". This list is editable by individual teams using versions of this Form Template."),
+                                        ->description(fn (?RequiredMedia $record): string => 'This csv file will be automatically generated from the linked choice list '.$record->choiceList?->list_name.'. This list is editable by individual teams using versions of this Form Template.'),
                                 ]),
 
                         ];
@@ -199,7 +198,7 @@ class XlsformTemplateForm
 
             Repeater::make('templateEntityLists')
                 ->label(new HtmlString(
-                    "<h4 class='font-bold text-xl'>Entities</h4>" .
+                    "<h4 class='font-bold text-xl'>Entities</h4>".
                     '<p>This form declares the following entity lists. Entity data is managed automatically by ODK Central — no CSV upload is required.</p>'
                 ))
                 ->relationship()
@@ -215,11 +214,9 @@ class XlsformTemplateForm
                     TextInput::make('odk_entity_id_expression')
                         ->label('Entity ID Expression')
                         ->disabled()
-                        ->visible(fn(?string $state): bool => !empty($state)),
+                        ->visible(fn (?string $state): bool => ! empty($state)),
                 ])
-                ->visible(fn(?XlsformTemplate $record): bool => (bool) $record?->templateEntityLists()->exists()),
+                ->visible(fn (?XlsformTemplate $record): bool => (bool) $record?->templateEntityLists()->exists()),
         ];
     }
-
-
 }

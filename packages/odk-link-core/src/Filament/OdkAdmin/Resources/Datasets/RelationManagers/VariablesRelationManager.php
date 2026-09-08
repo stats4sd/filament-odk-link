@@ -2,9 +2,9 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\RelationManagers;
 
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
+use Filament\Tables\Table;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Schemas\VariablesRelationManagerForm;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Tables\VariablesRelationManagerTable;
 
@@ -26,5 +26,4 @@ class VariablesRelationManager extends RelationManager
     {
         return VariablesRelationManagerTable::configure($table);
     }
-
 }

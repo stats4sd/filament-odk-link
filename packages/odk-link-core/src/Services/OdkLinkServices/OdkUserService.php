@@ -2,24 +2,19 @@
 
 namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
 
-
-use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithOdkCentralAccount;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
 
-
 trait OdkUserService
 {
-
     /**
      * Creates a new user in ODK Central
      *
      * requires an array with email and password
+     *
      * @return array $userData
      *
      * @throws RequestException|ConnectionException
@@ -108,7 +103,6 @@ trait OdkUserService
             // Check if the User account exists on ODK Central
             if ($user->odk_id) {
 
-
                 return Http::withToken($token)
                     ->post("{$this->endpoint}/projects/{$odkProject->id}/assignments/manager/{$user->odk_id}")
                     ->throw()
@@ -117,7 +111,7 @@ trait OdkUserService
 
             return [
                 'success' => true,
-                'message' => 'User does not exist on ODK Central.'
+                'message' => 'User does not exist on ODK Central.',
             ];
 
         } catch (RequestException $e) {

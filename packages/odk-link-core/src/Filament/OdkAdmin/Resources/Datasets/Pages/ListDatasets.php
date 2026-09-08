@@ -28,7 +28,7 @@ class ListDatasets extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-            ->createAnother(false),
+                ->createAnother(false),
         ];
     }
 }

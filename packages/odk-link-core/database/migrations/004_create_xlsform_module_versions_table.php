@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-         $teamTable = (new (config('filament-odk-link.models.form_owner')))->getTable();
+        $teamTable = (new (config('filament-odk-link.models.form_owner')))->getTable();
 
         Schema::create('xlsform_module_versions', function (Blueprint $table) use ($teamTable) {
             $table->id();

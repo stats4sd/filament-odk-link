@@ -136,7 +136,7 @@ trait OdkSubmissionService
             ->filter(fn (array $result) => $currentSubmissionIds->doesntContain($result['instanceId']));
 
         $updatedSubmissions = collect($submissionMetadata)
-            ->filter(fn(array $result) => $currentSubmissionIds->contains($result['instanceId']) &&
+            ->filter(fn (array $result) => $currentSubmissionIds->contains($result['instanceId']) &&
                 $currentSubmissionLatestIds->doesntContain($result['currentVersion']['instanceId'])
             );
 
@@ -220,41 +220,37 @@ trait OdkSubmissionService
         $currentSubmissionIds = $currentSubmissions->pluck('odk_id');
         $currentSubmissionLatestIds = $currentSubmissions->pluck('odk_latest_version_id');
 
-
         $token = $this->authenticate();
 
         $metadataUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/submissions";
         $oDataServiceUrl = "{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}";
-
 
         if ($draft) {
             $metadataUrl = Str::replaceLast('/submissions', '/draft/submissions', $metadataUrl);
             $oDataServiceUrl .= '/draft';
         }
 
-
         $submissionMetadata = Http::withToken($token)
             ->get($metadataUrl)
             ->throw()
             ->json();
 
-
         $newSubmissions = collect($submissionMetadata)
-            ->filter(fn(array $result) => $currentSubmissionIds->doesntContain($result['instanceId']));
+            ->filter(fn (array $result) => $currentSubmissionIds->doesntContain($result['instanceId']));
 
         $updatedSubmissions = collect($submissionMetadata)
-            ->filter(fn(array $result) => $currentSubmissionIds->contains($result['instanceId']) &&
+            ->filter(fn (array $result) => $currentSubmissionIds->contains($result['instanceId']) &&
                 $currentSubmissionLatestIds->doesntContain($result['currentVersion']['instanceId'])
             );
 
         $results = Http::withToken($token)
-            ->get($oDataServiceUrl . '.svc/Submissions?$expand=*')
+            ->get($oDataServiceUrl.'.svc/Submissions?$expand=*')
             ->throw()
             ->json();
 
         // merge with metadata
         $resultsToAdd = collect($results['value'])
-            ->filter(fn(array $result) => $newSubmissions->contains('instanceId', $result['__id']) ||
+            ->filter(fn (array $result) => $newSubmissions->contains('instanceId', $result['__id']) ||
                 $updatedSubmissions->contains('instanceId', $result['__id'])
             )
             ->map(function (array $result) use ($submissionMetadata) {
@@ -266,13 +262,12 @@ trait OdkSubmissionService
 
         $entry = $resultsToAdd->first();
 
-
         // ******* CREATE SUBMISSION RECORD ******* //
         $xlsformVersion = $xlsform->xlsformVersions()
             ->with('submissions')
             ->firstWhere('version', $entry['__system']['formVersion']);
 
-        if (!$xlsformVersion) {
+        if (! $xlsformVersion) {
 
             $messageContent = collect([
                 'formVersion' => $entry['__system']['formVersion'],
@@ -285,7 +280,7 @@ trait OdkSubmissionService
                 throw new \Exception('The system tried to get submission data for a form version that does not exist. LOCAL ENVIRONMENT: if you are testing a form that may have been updated on ODK Central directly, or through another app environment, please run `php artisan app:update-xlsform-versions-from-odk-central`, and try pulling the submissions again.');
             }
 
-            throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: ' . $messageContent->map(fn($item, $key) => "$key: $item")->implode(', '), 500);
+            throw new \Exception('The system tried to get submission data for a form version that does not exist.  Please copy the following details and send them to the system administrator: '.$messageContent->map(fn ($item, $key) => "$key: $item")->implode(', '), 500);
         }
 
         $submission = $xlsformVersion->submissions()->updateOrCreate(
@@ -300,19 +295,19 @@ trait OdkSubmissionService
 
         // Queue processing
         ProcessOdkSubmission::dispatch($submission, $entry, $xlsformVersion);
-        //$this->processSubmission($submission, $entry, $xlsformVersion);
+        // $this->processSubmission($submission, $entry, $xlsformVersion);
 
         $this->getAttachedMedia($entry, $token, $xlsform, $submission, $draft);
 
         // ******** CALL APP-SPECIFIC PROCESSING ******** //
 
-//            // if app developer has defined a method of processing submission content, call that method:
-//            $class = config('filament-odk-link.submission.process_method.class');
-//            $method = config('filament-odk-link.submission.process_method.method');
-//
-//            if ($class && $method) {
-//                $class::$method($submission);
-//            }
+        //            // if app developer has defined a method of processing submission content, call that method:
+        //            $class = config('filament-odk-link.submission.process_method.class');
+        //            $method = config('filament-odk-link.submission.process_method.method');
+        //
+        //            if ($class && $method) {
+        //                $class::$method($submission);
+        //            }
 
         return 1;
     }

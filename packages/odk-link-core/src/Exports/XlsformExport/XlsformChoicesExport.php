@@ -117,7 +117,6 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wi
         return 'choices';
     }
 
-
     public function styles(Worksheet $sheet): array
     {
         // starting at C, make 1 column auto-wrap per Xlsformtemplatelangauge

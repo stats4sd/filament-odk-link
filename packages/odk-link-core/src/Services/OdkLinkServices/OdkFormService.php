@@ -246,7 +246,7 @@ trait OdkFormService
             $draftCheck->throw();
 
             Http::withToken($token)
-                ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=" . Carbon::now()->toDateTimeString())
+                ->post("{$this->endpoint}/projects/{$xlsform->owner->odkProject->id}/forms/{$xlsform->odk_id}/draft/publish?version=".Carbon::now()->toDateTimeString())
                 ->throw()
                 ->json();
         }

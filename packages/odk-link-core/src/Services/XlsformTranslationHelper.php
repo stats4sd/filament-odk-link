@@ -39,9 +39,9 @@ class XlsformTranslationHelper
         // return a keyed collection for survey + choices headings.
         return (new XlsformTemplateHeadingRowImport)
             ->toCollection($filePath)
-            ->mapWithKeys(fn($value, $key) => [
+            ->mapWithKeys(fn ($value, $key) => [
                 $key => $value[0]
-                    ->map(fn($columnHeader) => self::isTranslatableColumn($columnHeader) ? $columnHeader : null)
+                    ->map(fn ($columnHeader) => self::isTranslatableColumn($columnHeader) ? $columnHeader : null)
                     ->filter(),
             ]);
     }
@@ -56,6 +56,6 @@ class XlsformTranslationHelper
         $typeNames = $this->languageStringTypes->pluck('name')->toArray();
         $languageCodes = $this->languages->pluck('iso_alpha2')->toArray();
 
-        return '/^(' . implode('|', $typeNames) . '):?:?([A-z]+)[_\s]\(?(' . implode('|', $languageCodes) . ')\)?$/';
+        return '/^('.implode('|', $typeNames).'):?:?([A-z]+)[_\s]\(?('.implode('|', $languageCodes).')\)?$/';
     }
 }

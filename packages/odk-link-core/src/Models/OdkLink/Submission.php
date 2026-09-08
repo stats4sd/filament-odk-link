@@ -129,7 +129,7 @@ class Submission extends Model implements HasMedia
     protected function xlsformTitle(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->xlsformVersion->xlsform->title,
+            get: fn (): string => $this->xlsformVersion->xlsform->title,
         );
     }
 
@@ -165,7 +165,7 @@ class Submission extends Model implements HasMedia
     public function odkCentralViewPageUrl(): Attribute
     {
         return new Attribute(
-            get: fn() => config('filament-odk-link.odk.url') . "/#/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}"
+            get: fn () => config('filament-odk-link.odk.url')."/#/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}"
         );
 
     }
@@ -175,7 +175,7 @@ class Submission extends Model implements HasMedia
     {
 
         return new Attribute(
-            get: fn() => config('filament-odk-link.odk.base_endpoint') . "/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}/edit",
+            get: fn () => config('filament-odk-link.odk.base_endpoint')."/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}/edit",
         );
     }
 
@@ -186,7 +186,6 @@ class Submission extends Model implements HasMedia
 
         Session::put('submission_return_url', $returnUrl);
 
-
         // Prime Enketo for editing
         // We don't care about the response; only the status - but this is required to load up the form in Enketo and make sure the $enketoUrl below works.
         $response = Http::withToken($token)
@@ -194,10 +193,9 @@ class Submission extends Model implements HasMedia
         // TODO: handle 409 response
         // TODO: handle 404 response
 
-        $enketoUrl = config('filament-odk-link.odk.url') . '/-/edit/' . $this->xlsform->enketo_id . '?instance_id=' . $this->odk_latest_version_id . '&return_url=' . route('submission.update', ['submission' => $this]);
+        $enketoUrl = config('filament-odk-link.odk.url').'/-/edit/'.$this->xlsform->enketo_id.'?instance_id='.$this->odk_latest_version_id.'&return_url='.route('submission.update', ['submission' => $this]);
 
-
-        $url = config('filament-odk-link.odk.url') . '/#/login?next=' . urlencode($enketoUrl);
+        $url = config('filament-odk-link.odk.url').'/#/login?next='.urlencode($enketoUrl);
 
         // Manually return the editing url
         return redirect($enketoUrl);
@@ -207,7 +205,7 @@ class Submission extends Model implements HasMedia
     protected function ifUpdatedAt(): Attribute
     {
         return new Attribute(
-            get: fn() => $this->updated_by ? $this->updated_at : null,
+            get: fn () => $this->updated_by ? $this->updated_at : null,
         );
     }
 }

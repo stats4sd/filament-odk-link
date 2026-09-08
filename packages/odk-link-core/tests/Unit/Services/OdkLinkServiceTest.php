@@ -17,8 +17,7 @@ it('authenticate POSTs credentials to /sessions and returns the token', function
     $token = app(OdkLinkService::class)->authenticate();
 
     expect($token)->toBe('abc123');
-    Http::assertSent(fn ($req) =>
-        $req->url() === 'https://odk.test/v1/sessions'
+    Http::assertSent(fn ($req) => $req->url() === 'https://odk.test/v1/sessions'
         && $req['email'] === 'platform@odk.test'
         && $req['password'] === 'secret'
     );

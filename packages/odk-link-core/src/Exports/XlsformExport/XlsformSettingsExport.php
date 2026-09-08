@@ -14,7 +14,7 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 
-class XlsformSettingsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithStyles, WithTitle, ShouldQueue
+class XlsformSettingsExport implements FromCollection, ShouldAutoSize, ShouldQueue, WithHeadings, WithStyles, WithTitle
 {
     public function __construct(public Xlsform $xlsform) {}
 

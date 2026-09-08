@@ -4,7 +4,6 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 
 class OdkDataset extends Model
 {

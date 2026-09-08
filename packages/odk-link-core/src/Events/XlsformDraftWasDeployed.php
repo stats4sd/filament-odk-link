@@ -15,14 +15,12 @@ class XlsformDraftWasDeployed implements ShouldBroadcast
     /**
      * Create a new event instance.
      */
-    public function __construct(public int $xlsformId)
-    {
-    }
+    public function __construct(public int $xlsformId) {}
 
     /**
      * Get the channels the event should broadcast on.
      *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
+     * @return array<int, Channel>
      */
     public function broadcastOn(): array
     {

@@ -11,7 +11,6 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 
@@ -23,7 +22,7 @@ class ChoiceListModelsExport implements FromCollection, WithHeadings, WithStrict
     // by default, we use the dataset variables as the columns. If you want to specify columns, you can pass them in as an array.
     public function __construct(
         public ChoiceList $choiceList,
-        public WithXlsformDrafts | Xlsform $xlsform
+        public WithXlsformDrafts|Xlsform $xlsform
     ) {
 
         /** @var WithXlsforms $owner */

@@ -4,10 +4,6 @@ namespace Stats4sd\FilamentOdkLink;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\DatasetResource;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Filament\Widgets\AvailableOdkTemplatesWidget;
-use Stats4sd\FilamentOdkLink\Filament\Widgets\OdkUrlAlertWidget;
 
 class OdkLinkAdmin implements Plugin
 {
@@ -25,11 +21,11 @@ class OdkLinkAdmin implements Plugin
     {
         $panel
             ->discoverResources(
-                in: __DIR__ . '/Filament/OdkAdmin/Resources',
+                in: __DIR__.'/Filament/OdkAdmin/Resources',
                 for: 'Stats4sd\\FilamentOdkLink\\Filament\\OdkAdmin\\Resources'
             )
             ->discoverWidgets(
-                in: __DIR__ . '/Filament/Widgets',
+                in: __DIR__.'/Filament/Widgets',
                 for: 'Stats4sd\\FilamentOdkLink\\Filament\\Widgets'
             );
     }

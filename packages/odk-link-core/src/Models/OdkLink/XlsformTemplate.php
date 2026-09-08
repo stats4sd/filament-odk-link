@@ -14,13 +14,14 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Excel;
 use PhpOffice\PhpSpreadsheet\Exception;
+use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasUploadedXlsformFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
-use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Stats4sd\FilamentOdkLink\Services\UpdateXlsformTitleInFile;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
@@ -122,11 +123,11 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
     {
         $mediaFile = $this->getFirstMedia('xlsform_file');
 
-        if (!$mediaFile) {
+        if (! $mediaFile) {
             return;
         }
 
-        $allSheets = (new XlsImport)->toCollection($mediaFile->getPath(), null, \Maatwebsite\Excel\Excel::XLSX);
+        $allSheets = (new XlsImport)->toCollection($mediaFile->getPath(), null, Excel::XLSX);
 
         if ($allSheets->has('entities')) {
             $this->syncEntityLists($allSheets['entities']);
@@ -290,7 +291,7 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
         $this->templateEntityLists()->delete();
 
         $entitiesSheet
-            ->filter(fn ($row) => !empty($row['list_name']))
+            ->filter(fn ($row) => ! empty($row['list_name']))
             ->each(function ($row) {
                 $this->templateEntityLists()->create([
                     'list_name' => $row['list_name'],

@@ -12,14 +12,12 @@ class XlsformModuleVersionWasImported implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public int $xlsformModuleId)
-    {
-    }
+    public function __construct(public int $xlsformModuleId) {}
 
     public function broadcastOn(): array
     {
         return [
-            new Channel('xlsforms')
+            new Channel('xlsforms'),
         ];
     }
 
@@ -27,5 +25,4 @@ class XlsformModuleVersionWasImported implements ShouldBroadcast
     {
         return 'FilamentOdkLink.XlsformModuleVersionWasImported';
     }
-
 }

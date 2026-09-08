@@ -24,9 +24,9 @@ class XlsformModuleForm
                     ->required()
                     ->maxLength(255),
                 Checkbox::make('can_be_replaced')
-                ->label('Can this module be fully replaced by teams with a local customised version?'),
+                    ->label('Can this module be fully replaced by teams with a local customised version?'),
                 Checkbox::make('can_be_extended')
-                ->label('Can teams add additional questions to this module during localisation?'),
+                    ->label('Can teams add additional questions to this module during localisation?'),
             ])
             ->columns(1);
     }

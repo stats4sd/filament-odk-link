@@ -86,7 +86,7 @@ class Entity extends Model
             'entity_id',
             'dataset_variable_name',
             relatedKey: 'name'
-            )
+        )
             ->using(EntityValue::class)
             ->withPivot('value');
     }

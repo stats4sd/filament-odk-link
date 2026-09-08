@@ -5,14 +5,12 @@ namespace Stats4sd\FilamentOdkLink\Exports\XlsformExport;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 
 trait ExportsXlsformContent
 {
-
     public function mapPropertiesToPropertyHeadings(SurveyRow|ChoiceListEntry $entry): array
     {
         return $this->propertyHeadings->mapWithKeys(function (string $heading) use ($entry) {
@@ -29,6 +27,7 @@ trait ExportsXlsformContent
         return $this->locales
             ->map(function (Locale $locale) use ($string) {
                 $outputString = $this->expandMediaColumnHeaders($string);
+
                 return "$outputString::{$locale->language->name} ({$locale->language->iso_alpha2})";
             });
     }
@@ -41,8 +40,8 @@ trait ExportsXlsformContent
 
                 $key = "$outputString::{$locale->language->name} ({$locale->language->iso_alpha2})";
                 $value = $row->languageStrings()
-                    ->whereHas('locale', fn(Builder $query) => $query->where('locales.id', $locale->id))
-                    ->whereHas('languageStringType', fn($query) => $query->where('name', $string))
+                    ->whereHas('locale', fn (Builder $query) => $query->where('locales.id', $locale->id))
+                    ->whereHas('languageStringType', fn ($query) => $query->where('name', $string))
                     ->first()->text ?? '';
 
                 return [$key => $value];
@@ -74,11 +73,10 @@ trait ExportsXlsformContent
         return $entries
             ->pluck('headings')
             ->filter() // remove null headings
-            ->map(fn($heading) => collect(json_decode($heading, true)))
+            ->map(fn ($heading) => collect(json_decode($heading, true)))
             ->flatten()
-            ->map(fn($heading) => $this->expandMediaColumnHeaders($heading))
+            ->map(fn ($heading) => $this->expandMediaColumnHeaders($heading))
             ->unique()
-            ->filter(fn($heading) => !Str::contains($heading, '::')); // remove any accidentally left-over language strings.
+            ->filter(fn ($heading) => ! Str::contains($heading, '::')); // remove any accidentally left-over language strings.
     }
-
 }

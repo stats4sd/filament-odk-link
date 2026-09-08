@@ -7,7 +7,6 @@ use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\RemembersRowNumber;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -17,7 +16,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
-class XlsformTemplateChoicesImport implements ShouldQueue, SkipsEmptyRows, ToCollection, WithChunkReading, WithHeadingRow, WithUpserts, WithBatchInserts
+class XlsformTemplateChoicesImport implements ShouldQueue, SkipsEmptyRows, ToCollection, WithBatchInserts, WithChunkReading, WithHeadingRow, WithUpserts
 {
     use RemembersRowNumber;
 
@@ -32,10 +31,9 @@ class XlsformTemplateChoicesImport implements ShouldQueue, SkipsEmptyRows, ToCol
 
         $newEntries = $rows->map(function (Collection $row) use ($choiceLists) {
 
-
             // there may be multiple choice lists with the same list name (one per module that includes it).
             $rowChoiceLists = $choiceLists
-                ->filter(fn(ChoiceList $choiceList) => $choiceList->list_name === $row['list_name']);
+                ->filter(fn (ChoiceList $choiceList) => $choiceList->list_name === $row['list_name']);
 
             if ($rowChoiceLists->count() === 0) {
                 return null;
@@ -46,16 +44,16 @@ class XlsformTemplateChoicesImport implements ShouldQueue, SkipsEmptyRows, ToCol
             $data['name'] = $row['name'];
 
             $data['properties'] = $row
-                ->filter(fn($value, $key) => !$this->translatableHeadings->contains($key))
-                ->filter(fn($value, $key) => $key !== 'name')
-                ->filter(fn($value, $key) => $key !== 'list_name')
-                ->filter(fn($value, $key) => $value !== null);
+                ->filter(fn ($value, $key) => ! $this->translatableHeadings->contains($key))
+                ->filter(fn ($value, $key) => $key !== 'name')
+                ->filter(fn ($value, $key) => $key !== 'list_name')
+                ->filter(fn ($value, $key) => $value !== null);
 
             // TODO: generalise after HOLPA ('filter' may not always be called 'filter')
             $data['cascade_filter'] = isset($row['filter']) ? $row['filter'] : null;
             $data['updated_during_import'] = true;
 
-            return $rowChoiceLists->map(fn(ChoiceList $choiceList) => [
+            return $rowChoiceLists->map(fn (ChoiceList $choiceList) => [
                 'choice_list_id' => $choiceList->id,
                 'name' => $data['name'],
                 'properties' => $data['properties']->toJson(),
@@ -81,8 +79,8 @@ class XlsformTemplateChoicesImport implements ShouldQueue, SkipsEmptyRows, ToCol
 
     public function isEmptyWhen(array $row): bool
     {
-        return (!isset($row['name']) || $row['name'] === '')
-            || (!isset($row['list_name']) || $row['list_name'] === '');
+        return (! isset($row['name']) || $row['name'] === '')
+            || (! isset($row['list_name']) || $row['list_name'] === '');
     }
 
     public function batchSize(): int

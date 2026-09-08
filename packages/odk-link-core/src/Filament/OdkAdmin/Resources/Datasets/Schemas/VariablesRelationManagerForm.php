@@ -2,9 +2,9 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Schemas;
 
-use Filament\Schemas\Schema;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Schema;
 
 class VariablesRelationManagerForm
 {
@@ -19,8 +19,8 @@ class VariablesRelationManagerForm
                     ->label('The label for the variable')
                     ->required()
                     ->maxLength(255),
-                Textarea::make('description')
+                Textarea::make('description'),
             ])
             ->columns(1);
     }
-} 
+}

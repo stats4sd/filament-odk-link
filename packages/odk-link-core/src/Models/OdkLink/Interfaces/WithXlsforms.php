@@ -2,15 +2,11 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces;
 
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Stats4sd\FilamentOdkLink\Models\Country;
@@ -26,6 +22,7 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 /**
  * @phpstan-require-extends Model
+ *
  * @phpstan-extends Model
  *
  * @property string $name
@@ -40,7 +37,6 @@ use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
  * @property Collection<XlsformModuleVersion> $xlsformModuleVersions
  * @property Collection<XlsformTemplate> $xlsformTemplates
  * @property OdkProject $odkProject
- *
  */
 interface WithXlsforms
 {
@@ -72,13 +68,11 @@ interface WithXlsforms
 
     public function xlsformModuleVersions(): HasMany;
 
-
-    //******** WITH XLSFORM TEMPLATES TOO
+    // ******** WITH XLSFORM TEMPLATES TOO
 
     public function xlsformTemplates(): MorphMany;
 
     public function odkProject(): MorphOne;
 
     public function createLinkedOdkProject(OdkLinkService $odkLinkService): void;
-
 }

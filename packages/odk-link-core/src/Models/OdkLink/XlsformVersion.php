@@ -38,7 +38,7 @@ class XlsformVersion extends Model implements HasMedia
     protected function xlsfile(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->getFirstMediaPath('xlsform_file'),
+            get: fn (): string => $this->getFirstMediaPath('xlsform_file'),
         );
     }
 
@@ -46,7 +46,7 @@ class XlsformVersion extends Model implements HasMedia
     protected function xlsfile_name(): Attribute
     {
         return new Attribute(
-            get: fn(): string => $this->getFirstMedia('xlsform_file')->file_name,
+            get: fn (): string => $this->getFirstMedia('xlsform_file')->file_name,
         );
     }
 

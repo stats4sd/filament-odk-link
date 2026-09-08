@@ -3,13 +3,13 @@
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Pages;
 
 use Filament\Actions;
-use Illuminate\Database\Eloquent\Model;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Components\Wizard\Step;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
+use Illuminate\Database\Eloquent\Model;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateForm;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateInfoList;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
 class EditXlsformTemplate extends EditRecord
 {
@@ -26,7 +26,7 @@ class EditXlsformTemplate extends EditRecord
     /**
      * @phpstan-return XlsformTemplate
      */
-    public function getRecord(): Model | XlsformTemplate
+    public function getRecord(): Model|XlsformTemplate
     {
         /** @var XlsformTemplate $record */
         $record = parent::getRecord();
@@ -36,7 +36,7 @@ class EditXlsformTemplate extends EditRecord
 
     public function getTitle(): string
     {
-        return 'Edit ' . self::getRecord()->title;
+        return 'Edit '.self::getRecord()->title;
     }
 
     public function getSteps(): array

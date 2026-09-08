@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\XlsformModuleVersionLocale;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
@@ -15,7 +14,6 @@ use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
 class XlsformModule extends Model
 {
-
     use HasRelationships;
 
     protected $table = 'xlsform_modules';
@@ -39,7 +37,7 @@ class XlsformModule extends Model
 
             // make sure xlsformModuleVersion exists, so we can import the survey rows etc
             $module->xlsformModuleVersions()->firstOrCreate([
-                'name' => 'Global ' . $module->name, // hard-code name for now
+                'name' => 'Global '.$module->name, // hard-code name for now
                 'is_default' => true,
             ]);
 
@@ -86,5 +84,4 @@ class XlsformModule extends Model
         )
             ->where('xlsform_module_versions.is_default', true);
     }
-
 }

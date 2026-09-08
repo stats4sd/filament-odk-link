@@ -13,7 +13,7 @@
  * The column layout mirrors the real XLSForms in tests/assets/.
  */
 
-require __DIR__ . '/../../vendor/autoload.php';
+require __DIR__.'/../../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -40,7 +40,7 @@ function writeWorkbook(string $path, array $sheets): void
     (new Xlsx($spreadsheet))->save($path);
     $spreadsheet->disconnectWorksheets();
 
-    echo 'wrote ' . $path . "\n";
+    echo 'wrote '.$path."\n";
 }
 
 // ── valid-form.xlsx ─────────────────────────────────────────────────────────
@@ -50,7 +50,7 @@ function writeWorkbook(string $path, array $sheets): void
 //  - a begin_repeat / end_repeat (end_repeat has no name → name generated)
 //  - the `required` column in true/false/1 forms
 
-writeWorkbook(__DIR__ . '/valid-form.xlsx', [
+writeWorkbook(__DIR__.'/valid-form.xlsx', [
     'survey' => [
         ['module', 'type', 'name', 'label::English (en)', 'hint::English (en)', 'required', 'relevant', 'appearance', 'calculation', 'constraint', 'choice_filter', 'repeat_count'],
         ['demographics', 'text', 'full_name', 'What is your name?', null, 'yes'],
@@ -76,7 +76,7 @@ writeWorkbook(__DIR__ . '/valid-form.xlsx', [
 // Same shape with a second label/hint language (Français) so translatable-
 // heading detection has more than one locale to find.
 
-writeWorkbook(__DIR__ . '/multilang-form.xlsx', [
+writeWorkbook(__DIR__.'/multilang-form.xlsx', [
     'survey' => [
         ['module', 'type', 'name', 'label::English (en)', 'label::Français (fr)', 'hint::English (en)', 'hint::Français (fr)', 'required'],
         ['demographics', 'text', 'full_name', 'What is your name?', 'Quel est votre nom?', null, null, 'yes'],

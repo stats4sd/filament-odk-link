@@ -28,7 +28,6 @@ class DatasetVariable extends Model
         return $this->hasOne(ParentDatasetPivot::class, 'foreign_key_variable_id');
     }
 
-
     /** @return BelongsToMany<Entity, $this> */
     public function entities(): BelongsToMany
     {

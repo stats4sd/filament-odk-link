@@ -7,24 +7,19 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithLanguageStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasLanguageStrings;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\IsLookupList;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
-use Stats4sd\FilamentOdkLink\Tests\Models\Team;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
 class ChoiceListEntry extends Model implements WithLanguageStrings
 {
+    use HasLanguageStrings;
     use IsLookupList;
     use \Znck\Eloquent\Traits\BelongsToThrough;
-    use HasLanguageStrings;
 
     protected $casts = [
         'is_localisable' => 'boolean',
@@ -42,9 +37,9 @@ class ChoiceListEntry extends Model implements WithLanguageStrings
 
             if ($owner = HelperService::getCurrentOwner()) {
 
-                $query->where(function(Builder $query) use ($owner) {
+                $query->where(function (Builder $query) use ($owner) {
                     $query->where('choice_list_entries.owner_id', $owner->getKey())
-                    ->orWhereNull('choice_list_entries.owner_id');
+                        ->orWhereNull('choice_list_entries.owner_id');
                 });
             }
         });
@@ -120,5 +115,4 @@ class ChoiceListEntry extends Model implements WithLanguageStrings
             $team->choiceListEntriesRemovedFromContext()->attach($this);
         }
     }
-
 }

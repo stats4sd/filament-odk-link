@@ -4,7 +4,6 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 trait IsLookupList
 {
@@ -13,7 +12,7 @@ trait IsLookupList
     protected function isGlobalEntry(): Attribute
     {
         return new Attribute(
-            get: fn(): bool => $this->isGLobal(),
+            get: fn (): bool => $this->isGLobal(),
         );
     }
 
@@ -26,7 +25,7 @@ trait IsLookupList
     protected function isCustomisedEntry(): Attribute
     {
         return new Attribute(
-            get: fn(): bool => $this->isCustomised(),
+            get: fn (): bool => $this->isCustomised(),
         );
     }
 
@@ -35,11 +34,9 @@ trait IsLookupList
         return $this->owner_id !== null;
     }
 
-
     /** @return BelongsTo<HasXlsforms, $this> */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(config('filament-odk-link.models.form_owner'), 'owner_id');
     }
-
 }

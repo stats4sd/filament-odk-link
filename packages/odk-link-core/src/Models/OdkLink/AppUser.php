@@ -12,6 +12,7 @@ class AppUser extends Model
     protected $table = 'app_users';
 
     protected $appends = ['qr_code_string'];
+
     protected $guarded = [];
 
     /** @return BelongsTo<OdkProject, $this> */
@@ -37,7 +38,7 @@ class AppUser extends Model
         // It is different from scanning QR code in ODK central...
         $settings = [
             'general' => [
-                'server_url' => config('filament-odk-link.odk.base_endpoint') . "/key/{$this->token}/projects/{$this->odkProject->id}",
+                'server_url' => config('filament-odk-link.odk.base_endpoint')."/key/{$this->token}/projects/{$this->odkProject->id}",
                 'form_update_mode' => 'match_exactly',
             ],
             'project' => ['name' => $this->odkProject->name],

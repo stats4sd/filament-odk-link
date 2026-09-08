@@ -9,14 +9,11 @@ use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Throwable;
 
-
-class XlsformWorkbookExport implements WithMultipleSheets, ShouldQueue
+class XlsformWorkbookExport implements ShouldQueue, WithMultipleSheets
 {
     use NotifiesOnJobFailure;
 
-    public function __construct(public Xlsform $xlsform, public ?Authenticatable $user = null)
-    {
-    }
+    public function __construct(public Xlsform $xlsform, public ?Authenticatable $user = null) {}
 
     public function sheets(): array
     {

@@ -11,10 +11,10 @@ class Region extends Model
     protected $table = 'regions';
 
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $guarded = [];
-
 
     public function countries(): HasMany
     {
@@ -35,6 +35,4 @@ class Region extends Model
     {
         return $this->hasMany(self::class, 'parent_id');
     }
-
-
 }

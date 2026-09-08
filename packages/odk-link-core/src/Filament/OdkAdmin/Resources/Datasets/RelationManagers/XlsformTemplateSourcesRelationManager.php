@@ -2,13 +2,12 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\RelationManagers;
 
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use Illuminate\Database\Eloquent\Model;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Schemas\XlsformTemplateSourcesRelationManagerForm;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Tables\XlsformTemplateSourcesRelationManagerTable;
-
 
 class XlsformTemplateSourcesRelationManager extends RelationManager
 {
@@ -28,5 +27,4 @@ class XlsformTemplateSourcesRelationManager extends RelationManager
     {
         return XlsformTemplateSourcesRelationManagerTable::configure($table);
     }
-
 }

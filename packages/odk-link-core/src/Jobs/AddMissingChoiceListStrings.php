@@ -11,17 +11,13 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
 
 class AddMissingChoiceListStrings implements ShouldQueue
 {
     use Queueable;
     use ResetsProcessingOnFailure;
 
-
-    public function __construct(public XlsformModuleVersion|XlsformTemplate $model)
-    {
-    }
+    public function __construct(public XlsformModuleVersion|XlsformTemplate $model) {}
 
     /**
      * Execute the job.
@@ -46,7 +42,7 @@ class AddMissingChoiceListStrings implements ShouldQueue
 
             $matchingList = ChoiceList::where('list_name', $choiceList->list_name)
                 ->whereHas($relationship, function (Builder $query) {
-                    $query->where($this->model->getTable() . '.' . $this->model->getKeyName(), $this->model->getKey());
+                    $query->where($this->model->getTable().'.'.$this->model->getKeyName(), $this->model->getKey());
                 })
                 ->whereHas('choiceListEntries.languageStrings')
                 ->with('choiceListEntries.languageStrings')

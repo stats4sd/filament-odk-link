@@ -17,16 +17,13 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
-class XlsformTemplateWorkbookImport implements WithMultipleSheets, ShouldQueue, WithChunkReading, WithEvents
+class XlsformTemplateWorkbookImport implements ShouldQueue, WithChunkReading, WithEvents, WithMultipleSheets
 {
-
+    use Importable;
     use RegistersEventListeners;
     use ResetsProcessingOnFailure;
-    use Importable;
 
-    public function __construct(public XlsformModuleVersion | XlsformTemplate $model, public Collection $translatableHeadings, public string $moduleColumn = 'module')
-    {
-    }
+    public function __construct(public XlsformModuleVersion|XlsformTemplate $model, public Collection $translatableHeadings, public string $moduleColumn = 'module') {}
 
     // Specify the "survey" sheet
     public function sheets(): array
@@ -49,7 +46,7 @@ class XlsformTemplateWorkbookImport implements WithMultipleSheets, ShouldQueue, 
             ->surveyRows()
             ->select(['survey_rows.id', 'survey_rows.updated_during_import'])
             ->get()
-            ->filter(fn(SurveyRow $surveyRow) => $surveyRow->updated_during_import === false);
+            ->filter(fn (SurveyRow $surveyRow) => $surveyRow->updated_during_import === false);
 
         // we need to actually get the models instead of deleting them with a query, because we need to trigger the deleting event.
         SurveyRow::destroy($surveyRowsToDelete->pluck('id'));
@@ -60,7 +57,7 @@ class XlsformTemplateWorkbookImport implements WithMultipleSheets, ShouldQueue, 
             ->where('choice_list_entries.owner_id', null) // do not delete entries owned by a team.
             ->select(['choice_list_entries.id', 'choice_list_entries.updated_during_import'])
             ->get()
-            ->filter(fn(ChoiceListEntry $choiceListEntry) => $choiceListEntry->updated_during_import === false);
+            ->filter(fn (ChoiceListEntry $choiceListEntry) => $choiceListEntry->updated_during_import === false);
 
         ChoiceListEntry::destroy($choicesToDelete->pluck('id'));
 

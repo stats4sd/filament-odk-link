@@ -22,7 +22,7 @@ return new class extends Migration
             $table->json('row_names')->nullable();
             $table->timestamps();
 
-            $table->unique(['xlsform_template_id','name']);
+            $table->unique(['xlsform_template_id', 'name']);
         });
     }
 

@@ -142,7 +142,7 @@ class XlsformModuleVersion extends Model implements HasMedia
             $newVersion = $this->replicate();
             $newVersion->owner_id = $owner->getKey();
             $newVersion->is_default = false;
-            $newVersion->name = ($this->xlsformModule->name ?? $this->name) . ' - ' . $owner->getName();
+            $newVersion->name = ($this->xlsformModule->name ?? $this->name).' - '.$owner->getName();
             $newVersion->save();
 
             // Clone ChoiceLists first; build an old→new ID map for SurveyRow references.

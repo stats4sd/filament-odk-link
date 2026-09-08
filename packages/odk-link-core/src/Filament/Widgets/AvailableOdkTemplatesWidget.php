@@ -6,8 +6,7 @@ use Filament\Widgets\Widget;
 
 class AvailableOdkTemplatesWidget extends Widget
 {
-
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected string $view = 'filament-odk-link::filament.widgets.available-templates-widget';
 }

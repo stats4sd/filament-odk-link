@@ -2,8 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink;
 
-use Filament\Facades\Filament;
-use Filament\Support\Assets\AlpineComponent;
 use Filament\Support\Assets\Asset;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
@@ -55,10 +53,9 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
             return new OdkLinkService(config('filament-odk-link.odk.base_endpoint'));
         });
 
-        $this->app->singleton(XlsformTranslationHelper::class, function($app) {
-            return new XlsformTranslationHelper();
+        $this->app->singleton(XlsformTranslationHelper::class, function ($app) {
+            return new XlsformTranslationHelper;
         });
-
 
         $this->app->register(FilamentOdkLinkEventServiceProvider::class);
     }
@@ -68,18 +65,15 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
         // Asset Registration
         FilamentAsset::register(
             [
-                Css::make('filament-odk-link-styles', __DIR__ . '/../resources/dist/filament-odk-link.css'),
-                Js::make('filament-odk-link-scripts', __DIR__ . '/../resources/dist/filament-odk-link.js'),
+                Css::make('filament-odk-link-styles', __DIR__.'/../resources/dist/filament-odk-link.css'),
+                Js::make('filament-odk-link-scripts', __DIR__.'/../resources/dist/filament-odk-link.js'),
             ],
             'stats4sd/filament-odk-link'
         );
 
-
-
         // Testing
         Testable::mixin(new TestsFilamentOdkLink);
     }
-
 
     /**
      * @return array<class-string>
@@ -87,10 +81,10 @@ class FilamentOdkLinkServiceProvider extends PackageServiceProvider
     protected function getCommands(): array
     {
         // get all files in the Commands directory
-        $files = File::files(__DIR__ . '/Commands');
+        $files = File::files(__DIR__.'/Commands');
 
-        return collect($files)->map(fn($file) => $file->getFilenameWithoutExtension())
-            ->map(fn($filename) => "Stats4sd\\FilamentOdkLink\\Commands\\{$filename}")
+        return collect($files)->map(fn ($file) => $file->getFilenameWithoutExtension())
+            ->map(fn ($filename) => "Stats4sd\\FilamentOdkLink\\Commands\\{$filename}")
             ->toArray();
     }
 

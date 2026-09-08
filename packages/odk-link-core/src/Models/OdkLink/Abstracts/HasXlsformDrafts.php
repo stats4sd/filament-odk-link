@@ -3,27 +3,21 @@
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts;
 
 use Carbon\Carbon;
-use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Str;
 use JsonException;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\DeployDraftXlsformToOdkCentral;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\PublishesToOdkCentral;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Throwable;
 
 /**
  * @property bool $has_draft
@@ -34,7 +28,7 @@ use Throwable;
  * @property ?Carbon $odk_draft_updated_at
  * @property Media|UploadedFile|null $xlsfile
  */
-abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts, HasMedia
+abstract class HasXlsformDrafts extends Model implements HasMedia, WithXlsformDrafts
 {
     use InteractsWithMedia;
 
@@ -97,16 +91,16 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts, HasM
         return new Attribute(
             get: function () {
 
-                if (!$this->has_draft) {
+                if (! $this->has_draft) {
                     return null;
                 }
 
                 $settings = [
                     'general' => [
-                        'server_url' => config('filament-odk-link.odk.base_endpoint') . "/test/$this->odk_draft_token/projects/{$this->owner->odkProject->id}/forms/$this->odk_id/draft",
+                        'server_url' => config('filament-odk-link.odk.base_endpoint')."/test/$this->odk_draft_token/projects/{$this->owner->odkProject->id}/forms/$this->odk_id/draft",
                         'form_update_mode' => 'match_exactly',
                     ],
-                    'project' => ['name' => '(DRAFT) ' . $this->title, 'icon' => '📝'],
+                    'project' => ['name' => '(DRAFT) '.$this->title, 'icon' => '📝'],
                     'admin' => ['automatic_update' => true],
                 ];
 
@@ -131,7 +125,7 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts, HasM
     protected function xlsfileName(): Attribute
     {
         return new Attribute(
-            get: fn(): ?string => $this->getFirstMedia('xlsform_file')?->file_name,
+            get: fn (): ?string => $this->getFirstMedia('xlsform_file')?->file_name,
         );
     }
 
@@ -141,16 +135,14 @@ abstract class HasXlsformDrafts extends Model implements WithXlsformDrafts, HasM
         return new Attribute(
             get: function () {
                 // if there is no enketo id in the database, retrieve it from ODK Central
-                if (!$this->enketo_draft_id || Str::endsWith($this->enketo_draft_id, '/-/')) {
+                if (! $this->enketo_draft_id || Str::endsWith($this->enketo_draft_id, '/-/')) {
                     $this->updateDraftDetails(app()->make(OdkLinkService::class));
                     $this->refresh();
                 }
 
-                return config('filament-odk-link.odk.url') . '/-/' . $this->enketo_draft_id;
+                return config('filament-odk-link.odk.url').'/-/'.$this->enketo_draft_id;
 
             },
         );
     }
-
-
 }

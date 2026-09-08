@@ -24,9 +24,7 @@ class PublishXlsformOnOdkCentral implements ShouldQueue
     /** @var array<int, int> */
     public array $backoff = [15, 60];
 
-    public function __construct(public Xlsform|XlsformTemplate $xlsform, public ?Authenticatable $user)
-    {
-    }
+    public function __construct(public Xlsform|XlsformTemplate $xlsform, public ?Authenticatable $user) {}
 
     /**
      * Execute the job.
@@ -59,8 +57,8 @@ class PublishXlsformOnOdkCentral implements ShouldQueue
             : $this->superAdmins();
 
         $notification = Notification::make('xlsform_file_deployment_failed')
-            ->title('Form "' . $this->xlsform->title . '" failed to publish')
-            ->body(new HtmlString('The message below was returned from the ODK Server. It may indicate an issue with the Xlsform definition being used: <br/><br/>' . $message))
+            ->title('Form "'.$this->xlsform->title.'" failed to publish')
+            ->body(new HtmlString('The message below was returned from the ODK Server. It may indicate an issue with the Xlsform definition being used: <br/><br/>'.$message))
             ->danger()
             ->persistent();
 

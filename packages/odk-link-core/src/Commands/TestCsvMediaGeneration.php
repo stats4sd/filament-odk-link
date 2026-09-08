@@ -46,7 +46,7 @@ class TestCsvMediaGeneration extends Command
             $csv = app()->make(OdkLinkService::class)
                 ->createCsvLookupFile($xlsform, $media);
 
-            $this->info('Csv file created at ' . $csv);
+            $this->info('Csv file created at '.$csv);
         } else {
             $this->error('Media not found');
         }

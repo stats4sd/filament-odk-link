@@ -45,7 +45,7 @@ class ChoiceListEntriesRelationManager extends RelationManager
                 if (isset($choiceList->properties['extra_properties'])) {
                     $propFields = collect($choiceList->properties['extra_properties'])
                         ->map(
-                            fn ($property) => TextInput::make('properties.' . $property['name'])
+                            fn ($property) => TextInput::make('properties.'.$property['name'])
                                 ->label($property['label'])
                                 ->helperText($property['hint'] ?? null)
                         );
@@ -83,7 +83,7 @@ class ChoiceListEntriesRelationManager extends RelationManager
                                     /** @var Locale $locale */
                                     $locale = $locales->firstWhere('id', $get('locale_id'));
 
-                                    return 'Label::' . $locale->language_label;
+                                    return 'Label::'.$locale->language_label;
                                 })
                                 ->required(),
                         ])

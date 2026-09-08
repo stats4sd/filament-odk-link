@@ -196,5 +196,5 @@ it('getSubmissions throws when the submission references an unknown form version
     fakeOdkSubmissions('uuid-bad-version', '9999999999');
 
     expect(fn () => app(OdkLinkService::class)->getSubmissions($this->xlsform))
-        ->toThrow(\Exception::class);
+        ->toThrow(Exception::class);
 });

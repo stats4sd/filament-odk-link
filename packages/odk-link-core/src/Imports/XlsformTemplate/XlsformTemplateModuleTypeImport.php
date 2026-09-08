@@ -9,7 +9,7 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithUpserts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 
-class XlsformTemplateModuleTypeImport implements ToModel, WithUpserts, ShouldQueue, WithChunkReading, SkipsEmptyRows
+class XlsformTemplateModuleTypeImport implements ShouldQueue, SkipsEmptyRows, ToModel, WithChunkReading, WithUpserts
 {
     public function model(array $row): XlsformModule
     {

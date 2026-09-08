@@ -2,16 +2,16 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Schemas;
 
-use Filament\Schemas\Schema;
 use Filament\Facades\Filament;
-use Illuminate\Support\HtmlString;
 use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Illuminate\Validation\Rules\Unique;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Illuminate\Support\HtmlString;
+use Illuminate\Validation\Rules\Unique;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
 
 class DatasetForm
@@ -20,7 +20,7 @@ class DatasetForm
     {
 
         return $schema
-            ->schema(fn (?Dataset $record) => static::getCreateFormFields($record));;
+            ->schema(fn (?Dataset $record) => static::getCreateFormFields($record));
     }
 
     public static function getCreateFormFields(?Dataset $record = null): array
@@ -44,9 +44,9 @@ class DatasetForm
                     TextInput::make('name')
                         ->required()
                         ->label('Enter the name of the dataset')
-                        ->unique(modifyRuleUsing: fn(Unique $rule) => $rule->where('owner_id', Filament::getTenant()?->id ?? null))
+                        ->unique(modifyRuleUsing: fn (Unique $rule) => $rule->where('owner_id', Filament::getTenant()?->id ?? null))
                         ->validationMessages([
-                            'unique' => 'Your project already has a dataset with this name. Please use a unique name to help clearly identify different datasets.'
+                            'unique' => 'Your project already has a dataset with this name. Please use a unique name to help clearly identify different datasets.',
                         ])
                         ->helperText('This should be the plural name for the people, objects or ideas represented by each entity in the dataset. For example: "farms", "villages", "enumerators", "treatments"'),
 
@@ -106,5 +106,4 @@ class DatasetForm
                 ->addActionLabel('Add variable'),
         ];
     }
-
 }

@@ -2,9 +2,9 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Schemas;
 
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 
 class DatasetInfoList
 {
@@ -12,7 +12,7 @@ class DatasetInfoList
     {
         return $schema
             ->schema([
-               Section::make('Dataset Details')
+                Section::make('Dataset Details')
                     ->schema([
                         TextEntry::make('name'),
                         TextEntry::make('primary_key'),

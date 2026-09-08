@@ -2,19 +2,17 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates;
 
-use UnitEnum;
 use BackedEnum;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Pages;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\RelationManagers;
+use Filament\Schemas\Schema;
+use Filament\Tables\Table;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateForm;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateInfolist;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Tables\XlsformTemplateTable;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use UnitEnum;
 
 // Use this resource for an admin panel
 // This resource is for templates that can be made available to all platform users
@@ -23,9 +21,9 @@ class XlsformTemplateResource extends Resource
 {
     protected static ?string $model = XlsformTemplate::class;
 
-    protected static string | null | \BackedEnum $navigationIcon = 'heroicon-o-document-duplicate';
+    protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-document-duplicate';
 
-    protected static string | UnitEnum | null $navigationGroup = 'ODK Forms and Datasets';
+    protected static string|UnitEnum|null $navigationGroup = 'ODK Forms and Datasets';
 
     protected static WithXlsformTemplates $formOwner;
 

@@ -13,7 +13,7 @@ use Stats4sd\FilamentOdkLink\Listeners\HandleXlsformTemplateAdded;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Tests\Models\Team;
 
-$fixture = fn () => __DIR__ . '/../../fixtures/valid-form.xlsx';
+$fixture = fn () => __DIR__.'/../../fixtures/valid-form.xlsx';
 
 it('ignores media added to models that are not templates or module versions', function () {
     // A Media whose owning model is a Team must not trigger any import work.

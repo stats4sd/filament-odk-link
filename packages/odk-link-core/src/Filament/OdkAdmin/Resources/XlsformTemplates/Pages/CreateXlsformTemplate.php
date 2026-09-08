@@ -2,20 +2,19 @@
 
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Pages;
 
-use Filament\Schemas\Schema;
-use Filament\Support\Exceptions\Halt;
-use Filament\Schemas\Components\Wizard;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
-use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Schema;
 use Illuminate\Validation\ValidationException;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateForm;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\XlsformValidationHelper;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateForm;
 
 class CreateXlsformTemplate extends CreateRecord
 {
@@ -24,20 +23,16 @@ class CreateXlsformTemplate extends CreateRecord
     protected static string $resource = XlsformTemplateResource::class;
 
     /**
-     * @param XlsformTemplate $xlsformTemplate
      * @return string
-     * Gets the URL to redirect users to after creating a new xlsform template
-     * Can be overridden, e.g. when using a parent resource
+     *                Gets the URL to redirect users to after creating a new xlsform template
+     *                Can be overridden, e.g. when using a parent resource
      */
     public function getEditUrl(XlsformTemplate $xlsformTemplate)
     {
         return $this->getResource()::getUrl('edit', ['record' => $xlsformTemplate]);
     }
 
-    protected function onValidationError(ValidationException $exception): void
-    {
-
-    }
+    protected function onValidationError(ValidationException $exception): void {}
 
     // override form from HasWizard trait to add step to url
     public function schema(Schema $schema): Schema
@@ -107,11 +102,11 @@ class CreateXlsformTemplate extends CreateRecord
 
                         $xlsformTemplate = $xlsformTemplate->testOnOdkCentral();
 
-                       $this->beforeXlsformTemplateSaved($xlsformTemplate);
+                        $this->beforeXlsformTemplateSaved($xlsformTemplate);
 
                         $xlsformTemplate->save();
 
-                       $this->afterXlsformTemplateSaved($xlsformTemplate);
+                        $this->afterXlsformTemplateSaved($xlsformTemplate);
 
                         Notification::make('xlsform_template_updated')
                             ->title('XLSForm Template Updated')
@@ -137,7 +132,6 @@ class CreateXlsformTemplate extends CreateRecord
 
                         // TEMP
                         throw $e;
-
                         $notificationBody = 'There was an error saving the XLSForm Template. ODK Returned the following error: '.$e->getMessage();
 
                         if ($e->getMessage() == '') {
@@ -168,13 +162,10 @@ class CreateXlsformTemplate extends CreateRecord
         ];
     }
 
-
     // Placeholder function - can override this function to perform extra actions
     // - after the form is sent to ODK Central and is successfully validated, but before it is saved.
-    public function beforeXlsformTemplateSaved(?IsXlsformTemplate $xlsformTemplate = null)
-    {}
+    public function beforeXlsformTemplateSaved(?IsXlsformTemplate $xlsformTemplate = null) {}
 
     // placeholder function. Can override this function to perform extra actions after the $xlsformTemplate is saved
-    public function afterXlsformTemplateSaved(IsXlsformTemplate $xlsformTemplate)
-    {}
+    public function afterXlsformTemplateSaved(IsXlsformTemplate $xlsformTemplate) {}
 }

@@ -3,11 +3,11 @@
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Pages;
 
 use Filament\Actions;
-use Livewire\Attributes\On;
 use Filament\Resources\Pages\ListRecords;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
-use Stats4sd\FilamentOdkLink\Filament\Widgets\OdkUrlAlertWidget;
+use Livewire\Attributes\On;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
+use Stats4sd\FilamentOdkLink\Filament\Widgets\OdkUrlAlertWidget;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
 
 class ListXlsformTemplates extends ListRecords
 {
@@ -31,9 +31,9 @@ class ListXlsformTemplates extends ListRecords
         return [
 
             Actions\Action::make('view-platform-templates-on-odk-central')
-            ->label('View Platform Templates on ODK Central')
-            ->url(Platform::first()?->odkProject?->odk_url)
-            ->openUrlInNewTab(),
+                ->label('View Platform Templates on ODK Central')
+                ->url(Platform::first()?->odkProject?->odk_url)
+                ->openUrlInNewTab(),
             Actions\CreateAction::make(),
         ];
     }

@@ -3,10 +3,10 @@
 namespace Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\Pages;
 
 use Filament\Actions;
-use Illuminate\Database\Eloquent\Model;
 use Filament\Resources\Pages\EditRecord;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
+use Illuminate\Database\Eloquent\Model;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\DatasetResource;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
 
 class EditDataset extends EditRecord
 {
@@ -15,7 +15,7 @@ class EditDataset extends EditRecord
     /**
      * @phpstan-return Dataset
      */
-    public function getRecord(): Model | Dataset
+    public function getRecord(): Model|Dataset
     {
         /** @var Dataset $record */
         $record = parent::getRecord();
