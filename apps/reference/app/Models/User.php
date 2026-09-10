@@ -37,7 +37,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     /** @return BelongsToMany<Team, $this> */
     public function teams(): BelongsToMany
     {
-        return $this->belongsToMany(Team::class);
+        return $this->belongsToMany(Team::class)->withTimestamps();
     }
 
     // Reference app: every user may enter every panel. Roles gate features inside the package, not panel entry.

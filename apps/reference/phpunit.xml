@@ -16,6 +16,10 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <env name="ODK_URL" value=""/>
+        <env name="ODK_USERNAME" value=""/>
+        <env name="ODK_PASSWORD" value=""/>
+        <env name="ODK_PLATFORM_PROJECT_ID" value=""/>
         <env name="APP_KEY" value="base64:Mir2yeu5zyXkfuw9nZyQfIcIZU+1UcCCy4Dmf1txTn8="/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
