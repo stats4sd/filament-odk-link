@@ -2,13 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-# PHP / Laravel Coding Guidelines
+# Guidelines
 
-Follow the coding guidelines in @.claude/laravel-php-guidelines.md
-
-# Code Project Working Patterns
-
-Follow the working patterns in @.claude/code-project-working-patterns.md
+The PHP/Laravel coding guidelines and the project working patterns are included from the root [CLAUDE.md](../../CLAUDE.md) (`.claude/` lives at the monorepo root, not in this package).
 
 # Project-Specific:
 
@@ -48,9 +44,9 @@ Migrations are explicitly ordered and registered by numeric prefix in `getMigrat
 
 ## Architecture
 
-### Two Filament plugins
-- [OdkLinkAdmin](src/OdkLinkAdmin.php) — platform-admin panel. Discovers resources in `src/Filament/OdkAdmin/Resources` (manage templates, modules, module versions, datasets, choice lists).
-- [OdkLinkTeam](src/OdkLinkTeam.php) — tenant-facing panel. **Requires the panel to have tenancy enabled** (throws otherwise). Discovers resources in `src/Filament/OdkTeam/Resources`.
+### One Filament plugin
+- [OdkLinkAdmin](src/OdkLinkAdmin.php) — platform-admin panel. Discovers resources in `src/Filament/OdkAdmin/Resources` (manage templates, modules, module versions, datasets, choice lists) and widgets in `src/Filament/Widgets`.
+- There is no team-facing plugin in the package today. Tenant UI lives in host apps; extracting it is roadmap steps 5 and 6 in the root `RESTRUCTURING.md`.
 
 ### Domain model (the core to understand)
 The form hierarchy lives in `src/Models/OdkLink/`:

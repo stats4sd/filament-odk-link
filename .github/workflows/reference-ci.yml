@@ -1,0 +1,81 @@
+name: reference-ci
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Job names are prefixed with "reference" on purpose. Required status checks in the `dev`
+# ruleset match by check-run name across every workflow, so a job called `pint` here would be
+# indistinguishable from core-ci's `pint`.
+
+defaults:
+  run:
+    working-directory: apps/reference
+
+env:
+  PKG: apps/reference
+
+jobs:
+  validate:
+    name: reference composer validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      # Not --strict: the path requirement on the core package is `@dev`, which --strict rejects.
+      - run: composer validate --no-check-publish
+
+  tests:
+    name: reference tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, intl, gd, exif, fileinfo
+          coverage: none
+      - name: Setup problem matchers
+        run: |
+          echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+          echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+      - uses: ramsey/composer-install@v4
+        with:
+          working-directory: ${{ env.PKG }}
+          dependency-versions: locked
+          composer-options: --prefer-dist
+      - run: composer show -D
+      - run: vendor/bin/pest --ci
+
+  pint:
+    name: reference pint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - uses: ramsey/composer-install@v4
+        with:
+          working-directory: ${{ env.PKG }}
+          dependency-versions: locked
+          composer-options: --prefer-dist
+      - run: vendor/bin/pint --test
