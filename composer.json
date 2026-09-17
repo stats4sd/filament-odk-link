@@ -25,11 +25,22 @@
     "scripts": {
         "test": "@test:core",
         "test:core": "@composer --working-dir=packages/odk-link-core test",
+        "test:reference": "@composer --working-dir=apps/reference test",
+        "test:all": [
+            "@test:core",
+            "@test:reference"
+        ],
         "analyse": "@analyse:core",
         "analyse:core": "@composer --working-dir=packages/odk-link-core analyse",
         "format": "@format:core",
         "format:core": "@composer --working-dir=packages/odk-link-core format",
-        "install:packages": "@composer --working-dir=packages/odk-link-core install"
+        "format:reference": "@composer --working-dir=apps/reference exec pint",
+        "install:packages": "@composer --working-dir=packages/odk-link-core install",
+        "install:reference": "@composer --working-dir=apps/reference install",
+        "install:all": [
+            "@install:packages",
+            "@install:reference"
+        ]
     },
     "config": {
         "sort-packages": true,

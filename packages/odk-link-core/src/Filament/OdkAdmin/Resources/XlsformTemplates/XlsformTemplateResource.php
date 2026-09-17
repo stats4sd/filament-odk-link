@@ -7,7 +7,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateForm;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateInfolist;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateInfoList;
 use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Tables\XlsformTemplateTable;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
@@ -44,7 +44,7 @@ class XlsformTemplateResource extends Resource
 
     public static function infolist(Schema $schema): Schema
     {
-        return XlsformTemplateInfolist::configure($schema);
+        return XlsformTemplateInfoList::configure($schema);
     }
 
     public static function getRelations(): array
