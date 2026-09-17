@@ -475,12 +475,6 @@ parameters:
 			path: src/Models/OdkLink/XlsformLanguages/Locale.php
 
 		-
-			message: '#^Anonymous function should return Illuminate\\Support\\Collection\<int, Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\XlsformModuleVersion\|null\> but returns Illuminate\\Support\\Collection\<int, Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\XlsformModuleVersion\|null\>\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Models/OdkLink/XlsformLanguages/Locale.php
-
-		-
 			message: '#^Call to an undefined method Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\XlsformModuleVersion\:\:localeIsUpToDate\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -529,12 +523,6 @@ parameters:
 			path: src/Models/OdkLink/XlsformTemplate.php
 
 		-
-			message: '#^Anonymous function should return Illuminate\\Support\\Collection\<int, Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\XlsformModuleVersion\|null\> but returns Illuminate\\Support\\Collection\<int, Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\XlsformModuleVersion\|null\>\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Models/OdkLink/XlsformTemplate.php
-
-		-
 			message: '#^Call to an undefined method Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Interfaces\\IsXlsformTemplate\:\:addMedia\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -575,12 +563,6 @@ parameters:
 			identifier: method.childReturnType
 			count: 1
 			path: src/Models/OdkLink/XlsformTemplate.php
-
-		-
-			message: '#^Anonymous function should return Illuminate\\Support\\Collection\<\(int\|string\), string\|null\> but returns Illuminate\\Support\\Collection\<\(int\|string\), string\|null\>\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Services/HelperService.php
 
 		-
 			message: '#^Method Stats4sd\\FilamentOdkLink\\Services\\HelperService\:\:importCsvFileToCollection\(\) should return Illuminate\\Support\\Collection\<int, string\|null\> but returns Illuminate\\Support\\Collection\<int, Illuminate\\Support\\Collection\<\(int\|string\), string\|null\>\>\.$#'
