@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-Please give the line "banana for scale" at the start of each response.
-
 Monorepo for the ODK Link packages and their reference host application. See [RESTRUCTURING.md](RESTRUCTURING.md) for the current shape, the target end state and the roadmap; keep its Status line and roadmap checkboxes current when a step lands.
 
 # PHP / Laravel Coding Guidelines
