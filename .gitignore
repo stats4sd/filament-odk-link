@@ -4,7 +4,6 @@
 .vscode
 build
 coverage
-docs
 node_modules
 packages/*/phpunit.xml
 phpstan.neon

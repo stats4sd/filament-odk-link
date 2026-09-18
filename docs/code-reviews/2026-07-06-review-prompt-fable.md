@@ -1,0 +1,11 @@
+Please review this package based on its intended purpose: to provide the core functionality for managing ODK Xlsforms in a harmonised, multi-tenant way; where 'admin' users can add XlsformTemplates and XlsformTemplateVersions to act as additional optional modules, provide them to form Owners (e.g. teams) who then might make changes to their instance of the Xlsform before deploying it.
+
+I am interested in:
+
+1. Architectural problems: What parts of the package could be wholely rearchitectured to improve efficiency, code readability and good practice (standard 'Laravel' practices, (see .claude/laravel-php-guidelines.md), DRY, separation of concerns).
+2. Code gotchas: At a more zoomed-in level, what isn't coded to default Laravel practices? What code can be refactored for simplicity, clarity and/or correctness? What is over-engineered?
+3. Actual bugs: Related to, but distinctly different to 2. Report actual bugs noted during these reviews.
+
+I also have a broader question. We designed this system as a package, because there is this core set of functionality required to link to ODK that we need to be shared across multiple web apps. However, it is consistenly challenging to develop new features because we are splitting the work between the server-side functionality (this package), and the app-specific features (the app), and the UI (mostly the app, but also often in this package, e.g. the FilamentResources and Widgets this ships with). I have often thought about re-architecturing this as a full Laravel web app, and then making each new 'app' a fork of the primary app (to allow customisations like branding, specific features that aren't shared, app-unique front-end pages etc.). What are the pros and cons of each approach? As we are beginning to appraoch a more "stable" version of this package, should we keep it as a package; should we re-architect it in some other format?
+
+Please output your report into docs/code-reviews. 1 section per point above. Please output your response to the broader question into a separate document, also in docs/code-reviews.
