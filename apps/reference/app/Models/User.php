@@ -15,13 +15,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Stats4sd\FilamentOdkLink\Contracts\PlatformUser;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable implements FilamentUser, HasTenants
+class User extends Authenticatable implements FilamentUser, HasTenants, PlatformUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable;
+    use HasFactory;
+
+    use HasRoles;
+    use Notifiable;
 
     /**
      * @return array<string, string>
@@ -40,7 +44,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         return $this->belongsToMany(Team::class)->withTimestamps();
     }
 
-    // Reference app: every user may enter every panel. Roles gate features inside the package, not panel entry.
+    // Reference app: every user may enter every panel. Recipient roles are a host choice; applications must supply their own authorization policies.
     public function canAccessPanel(Panel $panel): bool
     {
         return true;
