@@ -67,3 +67,15 @@ it('skips the host-app callback when only the class is configured', function () 
 
     expect(SubmissionProcessSpy::$calls)->toBe([]);
 });
+
+it('does not invoke host post processing if core ingestion fails', function () {
+    $this->service->shouldReceive('processSubmission')->once()->andThrow(new RuntimeException('Ingestion failed'));
+
+    config()->set('filament-odk-link.submission.process_method.class', SubmissionProcessSpy::class);
+    config()->set('filament-odk-link.submission.process_method.method', 'record');
+
+    expect(fn () => (new ProcessOdkSubmission($this->submission, $this->entry, $this->version))->handle())
+        ->toThrow(RuntimeException::class, 'Ingestion failed');
+
+    expect(SubmissionProcessSpy::$calls)->toBe([]);
+});
