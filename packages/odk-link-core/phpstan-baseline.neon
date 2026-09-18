@@ -199,12 +199,6 @@ parameters:
 			path: src/Imports/XlsformTemplate/XlsformTemplateWorkbookImport.php
 
 		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:getFirstMediaPath\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/Jobs/ImportAllLanguageStrings.php
-
-		-
 			message: '#^Property Stats4sd\\FilamentOdkLink\\Jobs\\XlsformDeployment\\DeployDraftXlsformToOdkCentral\:\:\$xlsform \(Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Xlsform\|Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\XlsformTemplate\) does not accept Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Abstracts\\HasXlsformDrafts\.$#'
 			identifier: assign.propertyType
 			count: 1
@@ -229,18 +223,6 @@ parameters:
 			path: src/Models/OdkLink/Dataset.php
 
 		-
-			message: '#^Method Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Dataset\:\:owner\(\) has invalid return type Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Traits\\HasXlsforms\.$#'
-			identifier: return.trait
-			count: 1
-			path: src/Models/OdkLink/Dataset.php
-
-		-
-			message: '#^Method Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Dataset\:\:owner\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Traits\\HasXlsforms, \$this\(Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Dataset\)\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<Illuminate\\Database\\Eloquent\\Model, \$this\(Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Dataset\)\>\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Models/OdkLink/Dataset.php
-
-		-
 			message: '#^Method Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Dataset\:\:parentDatasets\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Dataset, \$this\(Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Dataset\), Illuminate\\Database\\Eloquent\\Relations\\Pivot, ''pivot''\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Dataset, \$this\(Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Dataset\), Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\ParentDatasetPivot, ''pivot''\>\.$#'
 			identifier: return.type
 			count: 1
@@ -255,12 +237,6 @@ parameters:
 		-
 			message: '#^Method Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Dataset\:\:xlsformTemplates\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\XlsformTemplate, \$this\(Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Dataset\), Illuminate\\Database\\Eloquent\\Relations\\Pivot, ''pivot''\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\XlsformTemplate, \$this\(Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Dataset\), Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\RequiredMedia, ''pivot''\>\.$#'
 			identifier: return.type
-			count: 1
-			path: src/Models/OdkLink/Dataset.php
-
-		-
-			message: '#^Type Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Traits\\HasXlsforms in generic type Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Traits\\HasXlsforms, \$this\(Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Dataset\)\> in PHPDoc tag @return is not subtype of template type TRelatedModel of Illuminate\\Database\\Eloquent\\Model of class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\.$#'
-			identifier: generics.notSubtype
 			count: 1
 			path: src/Models/OdkLink/Dataset.php
 
@@ -361,20 +337,8 @@ parameters:
 			path: src/Models/OdkLink/Interfaces/IsXlsformTemplate.php
 
 		-
-			message: '#^PHPDoc tag @phpstan\-extends has invalid value \(Model\)\: Unexpected token "\\n \*", expected ''\<'' at offset 66 on line 4$#'
-			identifier: phpDoc.parseError
-			count: 1
-			path: src/Models/OdkLink/Interfaces/WithXlsforms.php
-
-		-
 			message: '#^Method Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Submission\:\:belongsToThrough\(\) invoked with 0 parameters, 2\-6 required\.$#'
 			identifier: arguments.count
-			count: 1
-			path: src/Models/OdkLink/Submission.php
-
-		-
-			message: '#^Method Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Submission\:\:owner\(\) should return Znck\\Eloquent\\Relations\\BelongsToThrough\<Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Interfaces\\WithXlsforms, \$this\(Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Submission\)\> but returns Znck\\Eloquent\\Relations\\BelongsToThrough\<Illuminate\\Database\\Eloquent\\Model, \$this\(Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Submission\)\>\.$#'
-			identifier: return.type
 			count: 1
 			path: src/Models/OdkLink/Submission.php
 
@@ -394,12 +358,6 @@ parameters:
 			message: '#^Type Illuminate\\Database\\Eloquent\\Model\|Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Interfaces\\IsPrimaryDataSubject in generic type Illuminate\\Database\\Eloquent\\Relations\\MorphTo\<Illuminate\\Database\\Eloquent\\Model\|Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Interfaces\\IsPrimaryDataSubject, \$this\(Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Submission\)\> in PHPDoc tag @return is not subtype of template type TRelatedModel of Illuminate\\Database\\Eloquent\\Model of class Illuminate\\Database\\Eloquent\\Relations\\MorphTo\.$#'
 			identifier: generics.notSubtype
 			count: 2
-			path: src/Models/OdkLink/Submission.php
-
-		-
-			message: '#^Type Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Interfaces\\WithXlsforms in generic type Znck\\Eloquent\\Relations\\BelongsToThrough\<Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Interfaces\\WithXlsforms, \$this\(Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Submission\)\> in PHPDoc tag @return is not subtype of template type TRelatedModel of Illuminate\\Database\\Eloquent\\Model of class Znck\\Eloquent\\Relations\\BelongsToThrough\.$#'
-			identifier: generics.notSubtype
-			count: 1
 			path: src/Models/OdkLink/Submission.php
 
 		-
@@ -443,12 +401,6 @@ parameters:
 			identifier: trait.unused
 			count: 1
 			path: src/Models/OdkLink/Traits/PublishesToOdkCentral.php
-
-		-
-			message: '#^Access to an undefined property Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Interfaces\\WithXlsforms\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Models/OdkLink/Xlsform.php
 
 		-
 			message: '#^Access to an undefined property Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Xlsform\:\:\$has_locales\.$#'
@@ -511,12 +463,6 @@ parameters:
 			path: src/Models/OdkLink/XlsformTemplate.php
 
 		-
-			message: '#^Access to an undefined property Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Interfaces\\WithXlsforms\:\:\$should_receive_all_xlsform_templates\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Models/OdkLink/XlsformTemplate.php
-
-		-
 			message: '#^Access to an undefined property Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\XlsformTemplate\:\:\$newXlsfile\.$#'
 			identifier: property.notFound
 			count: 2
@@ -559,18 +505,6 @@ parameters:
 			path: src/Models/OdkLink/XlsformTemplate.php
 
 		-
-			message: '#^Return type \(Illuminate\\Database\\Eloquent\\Relations\\MorphTo\) of method Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\XlsformTemplate\:\:owner\(\) should be compatible with return type \(Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<Illuminate\\Database\\Eloquent\\Model, \$this\(Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Abstracts\\HasXlsformDrafts\)\>\) of method Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Abstracts\\HasXlsformDrafts\:\:owner\(\)$#'
-			identifier: method.childReturnType
-			count: 1
-			path: src/Models/OdkLink/XlsformTemplate.php
-
-		-
-			message: '#^Method Stats4sd\\FilamentOdkLink\\Services\\HelperService\:\:importCsvFileToCollection\(\) should return Illuminate\\Support\\Collection\<int, string\|null\> but returns Illuminate\\Support\\Collection\<int, Illuminate\\Support\\Collection\<\(int\|string\), string\|null\>\>\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Services/HelperService.php
-
-		-
 			message: '#^Access to an undefined property Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Abstracts\\HasXlsformDrafts\:\:\$id\.$#'
 			identifier: property.notFound
 			count: 1
@@ -592,12 +526,6 @@ parameters:
 			message: '#^Access to an undefined property Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Interfaces\\WithOdkCentralAccount\:\:\$odk_id\.$#'
 			identifier: property.notFound
 			count: 4
-			path: src/Services/OdkLinkService.php
-
-		-
-			message: '#^Access to an undefined property Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Interfaces\\WithXlsforms\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
 			path: src/Services/OdkLinkService.php
 
 		-

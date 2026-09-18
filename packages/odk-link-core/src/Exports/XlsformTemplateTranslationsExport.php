@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Exports;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithBackgroundColor;
@@ -15,8 +16,8 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Protection;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
@@ -34,7 +35,7 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithBackgroun
         public XlsformTemplate $template,
         public Locale $currentLocale,
         public bool $withExistingStrings = false,
-        public ?WithXlsforms $owner = null,
+        public (Model & FormOwner) | null $owner = null,
     ) {
         $this->locales = $template->locales
             ->filter(fn (Locale $locale): bool => $locale->is_default && $this->ownerHasSelectedLanguage($locale))

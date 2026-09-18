@@ -5,7 +5,9 @@ namespace Stats4sd\FilamentOdkLink\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
 class Country extends Model
@@ -28,10 +30,10 @@ class Country extends Model
         return $this->belongsToThrough(Continent::class, Region::class);
     }
 
-    /** @return BelongsTo<Model, $this> */
+    /** @return BelongsTo<Model&FormOwner, $this> */
     public function owners(): BelongsTo
     {
-        return $this->belongsTo(config('filament-odk-link.models.form_owner'), 'owner_id');
+        return $this->belongsTo(app(ConfiguredModels::class)->formOwnerClass(), 'owner_id');
     }
 
     public function xlsformModuleVersions(): HasMany

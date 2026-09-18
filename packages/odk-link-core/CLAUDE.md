@@ -35,12 +35,12 @@ Approved implementation plans live in [docs/plans/](docs/plans/). When work on a
 
 All behaviour is driven by [config/filament-odk-link.php](config/filament-odk-link.php) (env-backed). The package does **not** ship the form-owner or user models — the host app supplies them:
 
-- `ODK_FORM_OWNER_MODEL` (default `App\Models\Team`) — the tenant/owner model. It **must** use the `HasXlsforms` trait ([src/Models/OdkLink/Traits/HasXlsforms.php](src/Models/OdkLink/Traits/HasXlsforms.php)). Only **one** model may own forms; every Xlsform belongs to one.
-- `ODK_USER_MODEL` (default `App\Models\User`).
+- `ODK_FORM_OWNER_MODEL` (no package default) — the tenant/owner model. It **must** implement `FormOwner`, normally using the `HasXlsforms` trait ([src/Models/OdkLink/Traits/HasXlsforms.php](src/Models/OdkLink/Traits/HasXlsforms.php)). Only **one** model may own forms; every Xlsform belongs to one.
+- `ODK_USER_MODEL` (no package default) — an Eloquent model implementing `PlatformUser`, normally using Laravel `Notifiable`.
 - `ODK_URL`, `ODK_USERNAME`, `ODK_PASSWORD`, `ODK_PLATFORM_PROJECT_ID` — credentials for the single "platform" account on ODK Central that owns every deployed form.
-- `submission.process_method` / `foreign_key_process_method` — host-app class+method called to post-process incoming submissions.
+- `contracts.submission_processor`, `contracts.role_resolver`, `contracts.current_owner_resolver` and `contracts.operation_notifier` resolve container-injected host services. See the package README for defaults, validation and migration. Populated legacy static callback settings are rejected.
 
-Migrations are explicitly ordered and registered by numeric prefix in `getMigrations()` in the service provider — when adding a table, add both the file and its entry there.
+Migrations are explicitly ordered and registered by numeric prefix in `getMigrations()` in `OdkLinkCoreServiceProvider` — when adding a table, add both the file and its entry there.
 
 ## Architecture
 
@@ -66,7 +66,7 @@ Uploading an `.xlsx` triggers Spatie's `MediaHasBeenAddedEvent`, wired in [Filam
 
 ### Deployment & submissions flow
 - **Deploy:** `Xlsform`/`XlsformTemplate` model events (`booted()`) and the `src/Jobs/XlsformDeployment/` jobs push drafts/published forms to ODK Central (`DeployDraftXlsformToOdkCentral`, `PublishXlsformOnOdkCentral`, `UpdateXlsformFile`) and fire `XlsformDraftWasDeployed` / `XlsformWasPublished` events. Model `saved` hooks track `draft_needs_update` / `live_needs_update` flags.
-- **Collect:** the `odk:poll-for-odk-data` command ([PollForOdkData](src/Commands/PollForOdkData.php)) dispatches `PullSubmissionsFromXlsform` for every active form; `ProcessOdkSubmission` ingests each submission and the host-app `submission.process_method` is invoked. Console commands in `src/Commands/` are auto-registered from the directory by the service provider.
+- **Collect:** the `odk:poll-for-odk-data` command ([PollForOdkData](src/Commands/PollForOdkData.php)) dispatches `PullSubmissionsFromXlsform` for every active form; `ProcessOdkSubmission` ingests each submission and the configured `SubmissionProcessor` runs after successful ingestion. Console commands in `src/Commands/` are auto-registered from the directory by the service provider.
 
 ## Conventions
 

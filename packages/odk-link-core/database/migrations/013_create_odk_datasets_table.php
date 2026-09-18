@@ -3,12 +3,13 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        $teamTable = (new (config('filament-odk-link.models.form_owner')))->getTable();
+        $teamTable = (new (app(ConfiguredModels::class)->formOwnerClass()))->getTable();
 
         /**
          * Table to store the relationship link between app users and xlsforms (which forms is each app user assigned to?)

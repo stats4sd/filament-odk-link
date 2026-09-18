@@ -9,7 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 
 class Dataset extends Model implements HasMedia
 {
@@ -17,10 +18,10 @@ class Dataset extends Model implements HasMedia
 
     protected $guarded = [];
 
-    /** @return BelongsTo<HasXlsforms, $this> */
+    /** @return BelongsTo<Model&FormOwner, $this> */
     public function owner(): BelongsTo
     {
-        return $this->belongsTo(config('filament-odk-link.models.form_owner'), 'owner_id');
+        return $this->belongsTo(app(ConfiguredModels::class)->formOwnerClass(), 'owner_id');
     }
 
     // Datasets might relate to one another with 'parent-child' style relationships.

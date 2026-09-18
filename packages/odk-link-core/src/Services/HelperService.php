@@ -6,28 +6,25 @@
 
 namespace Stats4sd\FilamentOdkLink\Services;
 
-use Filament\Facades\Filament;
-use HaydenPierce\ClassFinder\ClassFinder;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 use Stats4sd\FilamentOdkLink\Exports\ChoiceListModelsExport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModelRegistry;
+use Stats4sd\FilamentOdkLink\Support\CurrentOwner;
 
 class HelperService
 {
     public static function getModels(): Collection
     {
-        $models = ClassFinder::getClassesInNamespace('App\Models');
-        $packageModels = ClassFinder::getClassesInNamespace('Stats4sd\FilamentOdkLink\Models');
-
-        return collect($models)->merge($packageModels);
+        return app(ConfiguredModelRegistry::class)->classes();
     }
 
     public static function getOdkVariablesToIgnore(): array
@@ -55,7 +52,7 @@ class HelperService
         ];
     }
 
-    /** @return Collection<int, string|null>
+    /** @return Collection<int, covariant Collection<string, covariant string|null>>
      * @throws FileNotFoundException
      */
     public static function importCsvFileToCollection(string $filePath): Collection
@@ -72,44 +69,24 @@ class HelperService
         // Split by new line. Use the PHP_EOL constant for cross-platform compatibility.
         $lines = explode(PHP_EOL, $csvFileContent);
 
-        // Extract the header and convert it into a Laravel collection.
-        $header = collect(str_getcsv(array_shift($lines)));
+        $header = str_getcsv(array_shift($lines));
+        $rows = [];
 
-        // Map through the rows and combine them with the header to produce the final collection.
-        return collect($lines)->map(function ($row) use ($header): Collection {
-            return $header->combine(str_getcsv($row));
-        });
-    }
-
-    // helper function to return the currently selected team in a Filament panel.
-    // useful because it always returns a Team::class (or null), so you can use it in a type hint.
-    public static function getCurrentOwner(): WithXlsforms | Model | null
-    {
-        if (Filament::hasTenancy() && is_a(Filament::getTenant(), WithXlsforms::class)) {
-
-            return Filament::getTenant();
+        foreach ($lines as $line) {
+            $rows[] = new Collection(array_combine($header, str_getcsv($line)));
         }
 
-        return null;
+        return new Collection($rows);
     }
 
-    // helper function to get model by table name
-    public static function getModelByTablename($tableName)
+    public static function getCurrentOwner(): (Model & FormOwner) | null
     {
-        // get all models
-        $classes = HelperService::getModels();
+        return app(CurrentOwner::class)->current();
+    }
 
-        foreach ($classes as $class) {
-            $model = new $class;
-
-            if ($model->getTable() == $tableName) {
-                // found a matched model
-                return $model;
-            }
-        }
-
-        // cannot find a matched model
-        return null;
+    public static function getModelByTablename(string $tableName): ?Model
+    {
+        return app(ConfiguredModelRegistry::class)->findByTable($tableName);
     }
 
     // TODO: Move this into the ODK Link package when we move over the ChoiceList stuff

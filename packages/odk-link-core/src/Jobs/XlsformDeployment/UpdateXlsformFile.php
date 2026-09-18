@@ -2,13 +2,14 @@
 
 namespace Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment;
 
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
+use Stats4sd\FilamentOdkLink\Contracts\PlatformUser;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Throwable;
 
@@ -17,7 +18,7 @@ class UpdateXlsformFile implements ShouldQueue
     use NotifiesOnJobFailure;
     use Queueable;
 
-    public function __construct(public Xlsform $xlsform, public string $filePath, public ?Authenticatable $user = null) {}
+    public function __construct(public Xlsform $xlsform, public string $filePath, public (Model & PlatformUser) | null $user = null) {}
 
     /**
      * Execute the job.
@@ -45,7 +46,7 @@ class UpdateXlsformFile implements ShouldQueue
         $this->notifyJobFailure(
             "Form file update failed: {$this->xlsform->title}",
             $exception,
-            $this->user ?? $this->superAdmins(),
+            $this->user,
         );
     }
 }

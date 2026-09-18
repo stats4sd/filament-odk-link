@@ -11,10 +11,11 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 use Stats4sd\FilamentOdkLink\Models\Country;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\XlsformModuleVersionLocale;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
@@ -121,10 +122,10 @@ class XlsformModuleVersion extends Model implements HasMedia
             ->withPivot(['order']);
     }
 
-    /** @return BelongsTo<Model, $this> */
+    /** @return BelongsTo<Model&FormOwner, $this> */
     public function owner(): BelongsTo
     {
-        return $this->belongsTo(config('filament-odk-link.models.form_owner'), 'owner_id');
+        return $this->belongsTo(app(ConfiguredModels::class)->formOwnerClass(), 'owner_id');
     }
 
     /**
@@ -136,7 +137,7 @@ class XlsformModuleVersion extends Model implements HasMedia
      * global scope on ChoiceListEntry is intentionally preserved so only
      * entries visible to the current owner are cloned.
      */
-    public function cloneForOwner(WithXlsforms $owner): static
+    public function cloneForOwner(Model & FormOwner $owner): static
     {
         return DB::transaction(function () use ($owner) {
             $newVersion = $this->replicate();

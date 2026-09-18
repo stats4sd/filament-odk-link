@@ -2,7 +2,6 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use Filament\Notifications\Notification;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -29,6 +28,9 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
+use Stats4sd\FilamentOdkLink\Support\OperationNotification;
+use Stats4sd\FilamentOdkLink\Support\OperationNotifications;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
@@ -264,7 +266,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                 // If the XlsformModule `can_be_extended` add a 'local' version of the module immediately after it
                 if ($xlsformModule->can_be_extended) {
                     $localModuleVersion = XlsformModuleVersion::firstOrCreate([
-                        'owner_id' => $this->owner->id,
+                        'owner_id' => $this->owner->getKey(),
                         'name' => 'Local ' . $xlsformModule->name,
                     ]);
 
@@ -300,7 +302,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                 }
 
                 $localModuleVersion = XlsformModuleVersion::query()
-                    ->where('owner_id', $this->owner->id)
+                    ->where('owner_id', $this->owner->getKey())
                     ->where('name', 'Local ' . $xlsformModule->name)
                     ->first();
 
@@ -388,6 +390,8 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      */
     public function generateXlsfile(): PendingDispatch
     {
+        $user = app(ConfiguredModels::class)->validateUser(auth()->user());
+
         // Ensure entity lists are populated before generating the XLS.
         // This is a no-op for templates without an entities sheet, and a self-healing
         // sync for templates created before entity list syncing was introduced.
@@ -397,7 +401,6 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         $this->updateQuietly(['processing' => true]);
 
         $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
-        $user = auth()->user();
 
         return Excel::queue(new XlsformWorkbookExport($this, $user), $filePath, config('filament-odk-link.storage.xlsforms'))->chain(
             [
@@ -420,12 +423,12 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
         // if this is immediately after publishing, skip regenerating the xlsfile
         if ($published) {
-            return DeployDraftXlsformToOdkCentral::dispatch($this, $withMedia, auth()->user());
+            return DeployDraftXlsformToOdkCentral::dispatch($this, $withMedia, app(ConfiguredModels::class)->validateUser(auth()->user()));
         }
 
         return $this->generateXlsfile()
             ->chain([
-                new DeployDraftXlsformToOdkCentral($this, $withMedia, auth()->user()),
+                new DeployDraftXlsformToOdkCentral($this, $withMedia, app(ConfiguredModels::class)->validateUser(auth()->user())),
             ]);
     }
 
@@ -442,19 +445,19 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         }
 
         if ($this->draft_needs_update) {
-            $user = auth()->user();
+            $user = app(ConfiguredModels::class)->validateUser(auth()->user());
             $deployment = $this->deployDraft();
 
             if (! $deployment) {
                 Log::warning("Publishing skipped for xlsform {$this->id}: the draft deployment could not be queued because the form is already processing.");
 
                 if ($user) {
-                    Notification::make()
-                        ->title('Form "' . $this->title . '" could not be published')
-                        ->body('The form is currently being processed. Please wait for the current process to finish and try again.')
-                        ->danger()
-                        ->sendToDatabase($user, isEventDispatched: true)
-                        ->broadcast($user);
+                    app(OperationNotifications::class)->send(new OperationNotification(
+                        title: 'Form "' . $this->title . '" could not be published',
+                        body: 'The form is currently being processed. Please wait for the current process to finish and try again.',
+                        severity: 'danger',
+                        database: true,
+                    ), collect([$user]));
                 }
 
                 return null;
@@ -466,7 +469,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         }
 
         // if no draft update is needed, just publish the form:
-        return PublishXlsformOnOdkCentral::dispatch($this, auth()->user());
+        return PublishXlsformOnOdkCentral::dispatch($this, app(ConfiguredModels::class)->validateUser(auth()->user()));
 
     }
 
