@@ -9,7 +9,7 @@ use Throwable;
  * Failure hook for the template-import chain jobs. Each job holds the model being
  * imported as a public $model property (XlsformTemplate or XlsformModuleVersion);
  * on failure the `processing` flag is cleared so the template is not stuck, and
- * Super Admins get a durable notification.
+ * host-selected recipients get a durable notification.
  */
 trait ResetsProcessingOnFailure
 {
@@ -23,6 +23,6 @@ trait ResetsProcessingOnFailure
             ? "Xlsform template import failed: {$this->model->title}"
             : "Module questions import failed: {$this->model->name}";
 
-        $this->notifyJobFailure($title, $exception, $this->superAdmins());
+        $this->notifyJobFailure($title, $exception);
     }
 }

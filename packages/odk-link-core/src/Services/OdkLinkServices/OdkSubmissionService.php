@@ -201,15 +201,6 @@ trait OdkSubmissionService
                 $this->getAttachedMedia($entry, $token, $xlsform, $submission, $draft);
 
             }
-            // ******** CALL APP-SPECIFIC PROCESSING ******** //
-
-            //            // if app developer has defined a method of processing submission content, call that method:
-            //            $class = config('filament-odk-link.submission.process_method.class');
-            //            $method = config('filament-odk-link.submission.process_method.method');
-            //
-            //            if ($class && $method) {
-            //                $class::$method($submission);
-            //            }
         }
 
         return $resultsToAdd->count();
@@ -305,16 +296,6 @@ trait OdkSubmissionService
 
         $this->getAttachedMedia($entry, $token, $xlsform, $submission, $draft);
 
-        // ******** CALL APP-SPECIFIC PROCESSING ******** //
-
-        //            // if app developer has defined a method of processing submission content, call that method:
-        //            $class = config('filament-odk-link.submission.process_method.class');
-        //            $method = config('filament-odk-link.submission.process_method.method');
-        //
-        //            if ($class && $method) {
-        //                $class::$method($submission);
-        //            }
-
         return 1;
     }
 
@@ -354,7 +335,7 @@ trait OdkSubmissionService
             ->with('choiceListEntries', function ($query) use ($xlsform) {
                 $query
                     ->whereHas('owner', function ($query) use ($xlsform) {
-                        $query->where('id', $xlsform->owner->id);
+                        $query->where('id', $xlsform->owner->getKey());
                     })
                     ->orWhereNull('owner_id');
             })
@@ -439,7 +420,7 @@ trait OdkSubmissionService
                 ->with('choiceListEntries', function ($query) use ($xlsform) {
                     $query
                         ->whereHas('owner', function ($query) use ($xlsform) {
-                            $query->where('id', $xlsform->owner->id);
+                            $query->where('id', $xlsform->owner->getKey());
                         })
                         ->orWhereNull('owner_id');
                 })

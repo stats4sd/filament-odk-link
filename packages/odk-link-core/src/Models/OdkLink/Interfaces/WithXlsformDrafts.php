@@ -9,12 +9,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
 /**
  * @phpstan-require-extends Model
  *
- * @property WithXlsforms $owner
+ * @property (Model&FormOwner)|(Model&WithXlsformTemplates) $owner
  * @property Collection $schema
  * @property string $xlsfile
  * @property string $xlsfile_name

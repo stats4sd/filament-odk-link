@@ -10,13 +10,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
@@ -39,10 +40,10 @@ class Locale extends Model implements HasMedia
 
             // if the locale is default, check all teams to see if they are linked to the language and do not yet have a locale
 
-            /** @var Collection<WithXlsforms> $owners */
-            $owners = config('filament-odk-link.models.form_owner')::all();
+            /** @var Collection<int, Model&FormOwner> $owners */
+            $owners = app(ConfiguredModels::class)->formOwnerClass()::all();
 
-            $owners->each(function (WithXlsforms $owner) use ($locale) {
+            $owners->each(function (Model & FormOwner $owner) use ($locale) {
                 if (
                     // if the owner is linked to the language
                     $owner->languages->contains($locale->language) &&
@@ -108,15 +109,15 @@ class Locale extends Model implements HasMedia
         return $this->belongsToMany(Xlsform::class);
     }
 
-    /** @return BelongsTo<Model, $this> */
+    /** @return BelongsTo<Model&FormOwner, $this> */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(config('filament-odk-link.models.form_owner'), 'creator_id');
+        return $this->belongsTo(app(ConfiguredModels::class)->formOwnerClass(), 'creator_id');
     }
 
     public function owners(): BelongsToMany
     {
-        return $this->belongsToMany(config('filament-odk-link.models.form_owner'), 'language_owner', 'locale_id', 'owner_id')
+        return $this->belongsToMany(app(ConfiguredModels::class)->formOwnerClass(), 'language_owner', 'locale_id', 'owner_id')
             ->withPivot(['language_id']);
     }
 
@@ -163,14 +164,6 @@ class Locale extends Model implements HasMedia
                 }
 
                 $moduleVersions = $this->xlsformModuleVersions;
-                $allModuleVersions = $xlsforms
-                    ->map(
-                        fn (Xlsform $xlsform) => $xlsform
-                            ->xlsformTemplate
-                            ->xlsformModules
-                            ->map(fn (XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
-                    )->flatten();
-
                 if ($this->is_default) {
                     return 'Ready for use';
                 }
@@ -211,7 +204,15 @@ class Locale extends Model implements HasMedia
     protected function isEditable(): Attribute
     {
         return new Attribute(
-            get: fn () => $this->creator?->getKey() === HelperService::getCurrentOwner()->getKey(),
+            get: function (): bool {
+                $owner = HelperService::getCurrentOwner();
+
+                if ($owner === null || $this->creator === null) {
+                    return false;
+                }
+
+                return $this->creator->is($owner);
+            },
         );
     }
 

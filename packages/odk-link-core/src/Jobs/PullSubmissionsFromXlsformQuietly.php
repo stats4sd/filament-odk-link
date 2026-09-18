@@ -85,7 +85,6 @@ class PullSubmissionsFromXlsformQuietly implements ShouldQueue
         $this->notifyJobFailure(
             "Submission pull failed: {$this->xlsform->title} ({$this->xlsform->owner->name})",
             $exception,
-            $this->superAdmins(),
         );
     }
 }

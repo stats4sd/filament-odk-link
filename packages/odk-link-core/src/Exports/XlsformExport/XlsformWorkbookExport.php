@@ -2,10 +2,11 @@
 
 namespace Stats4sd\FilamentOdkLink\Exports\XlsformExport;
 
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Model;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
+use Stats4sd\FilamentOdkLink\Contracts\PlatformUser;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Throwable;
 
@@ -13,7 +14,7 @@ class XlsformWorkbookExport implements ShouldQueue, WithMultipleSheets
 {
     use NotifiesOnJobFailure;
 
-    public function __construct(public Xlsform $xlsform, public ?Authenticatable $user = null) {}
+    public function __construct(public Xlsform $xlsform, public (Model & PlatformUser) | null $user = null) {}
 
     public function sheets(): array
     {
@@ -37,7 +38,7 @@ class XlsformWorkbookExport implements ShouldQueue, WithMultipleSheets
         $this->notifyJobFailure(
             "Form file generation failed: {$this->xlsform->title}",
             $exception,
-            $this->user ?? $this->superAdmins(),
+            $this->user,
         );
     }
 }
