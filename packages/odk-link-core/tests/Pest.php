@@ -8,13 +8,15 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Tests\Headless\HeadlessTestCase;
 use Stats4sd\FilamentOdkLink\Tests\TestCase;
 
-uses(TestCase::class)->in(__DIR__);
+uses(TestCase::class)->in('Unit', 'Smoke', 'Architecture', 'ArchTest.php', 'ExampleTest.php');
+uses(HeadlessTestCase::class)->in('Headless');
 
 // Run package + test migrations for every test that touches the database.
 // ArchTest and other pure tests are unaffected (no DB queries = no migration cost beyond setup).
-uses(RefreshDatabase::class)->in(__DIR__);
+uses(RefreshDatabase::class)->in('Unit', 'Smoke', 'Architecture', 'ArchTest.php', 'ExampleTest.php');
 
 /*
  * Shared fixture builders for the import/export tests.

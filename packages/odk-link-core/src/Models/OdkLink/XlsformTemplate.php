@@ -307,9 +307,13 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
     /** @return Attribute<covariant Collection<int, covariant XlsformModuleVersion|null>, never> */
     protected function xlsformDefaultModuleVersions(): Attribute
     {
-        return Attribute::get(
-            fn () => $this->xlsformModules->toBase()->map(fn (XlsformModule $module): ?XlsformModuleVersion => $module->defaultXlsformVersion)
-        );
+        return Attribute::get(fn () => $this->collectDefaultModuleVersions());
+    }
+
+    /** @return Collection<int, covariant XlsformModuleVersion|null> */
+    private function collectDefaultModuleVersions(): Collection
+    {
+        return $this->xlsformModules->toBase()->map(fn (XlsformModule $module): ?XlsformModuleVersion => $module->defaultXlsformVersion);
     }
 
     /** @return HasManyDeep<SurveyRow, $this> */

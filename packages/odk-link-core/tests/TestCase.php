@@ -19,6 +19,7 @@ use Orchestra\Testbench\TestCase as Orchestra;
 use RyanChandler\BladeCaptureDirective\BladeCaptureDirectiveServiceProvider;
 use Stats4sd\FilamentOdkLink\FilamentOdkLinkServiceProvider;
 use Stats4sd\FilamentOdkLink\Tests\Models\Team;
+use Stats4sd\FilamentOdkLink\Tests\Models\User;
 
 class TestCase extends Orchestra
 {
@@ -71,6 +72,7 @@ class TestCase extends Orchestra
         // The package does not ship the form-owner / user models — point them
         // at the lightweight test doubles in tests/Models.
         config()->set('filament-odk-link.models.form_owner', Team::class);
+        config()->set('filament-odk-link.models.user_model', User::class);
 
         // Default to the package's "local-only" mode: an empty odk.url disables
         // the model hooks that auto-create ODK Central projects/app-users on

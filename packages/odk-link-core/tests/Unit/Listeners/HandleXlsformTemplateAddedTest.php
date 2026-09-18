@@ -1,15 +1,19 @@
 <?php
 
 use Illuminate\Support\Facades\Bus;
+use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Stats4sd\FilamentOdkLink\Jobs\AddMissingChoiceListStrings;
 use Stats4sd\FilamentOdkLink\Jobs\FinishChoiceListEntryImport;
+use Stats4sd\FilamentOdkLink\Jobs\FinishLanguageStringImport;
 use Stats4sd\FilamentOdkLink\Jobs\FinishSurveyRowImport;
 use Stats4sd\FilamentOdkLink\Jobs\FinishXlsformTemplateImport;
 use Stats4sd\FilamentOdkLink\Jobs\ImportAllLanguageStrings;
 use Stats4sd\FilamentOdkLink\Jobs\LinkModuleVersionToLocales;
 use Stats4sd\FilamentOdkLink\Jobs\PrepareSurveyRowPaths;
 use Stats4sd\FilamentOdkLink\Listeners\HandleXlsformTemplateAdded;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
 use Stats4sd\FilamentOdkLink\Tests\Models\Team;
 
@@ -76,4 +80,40 @@ it('queues the import-completion chain in order for a template', function () use
         ImportAllLanguageStrings::class,
         FinishXlsformTemplateImport::class,
     ]);
+});
+
+it('passes the supplied workbook through an owner-backed module import without owner media support', function () use ($fixture) {
+    $owner = Team::factory()->create();
+    $version = addModuleVersion(makeXlsformTemplate(), 'demographics');
+    $version->updateQuietly(['owner_id' => $owner->id]);
+    $row = $version->surveyRows()->create(['type' => 'text', 'name' => 'full_name', 'row_number' => 2]);
+    makeLocale();
+    makeLanguageStringType();
+    makeLanguageStringType('hint');
+
+    Bus::fake();
+    (new HandleXlsformTemplateAdded)->processXlsformTemplate($fixture(), $version);
+    $commands = (new ReflectionObject(Bus::getFacadeRoot()))->getProperty('commands')->getValue(Bus::getFacadeRoot());
+    $languageJob = null;
+    foreach ($commands as $instances) {
+        foreach ($instances as $command) {
+            foreach ($command->chained as $serialized) {
+                $job = unserialize($serialized);
+                if ($job instanceof ImportAllLanguageStrings) {
+                    $languageJob = $job;
+                }
+            }
+        }
+    }
+
+    expect($owner)->not->toBeInstanceOf(HasMedia::class)
+        ->and($languageJob)->toBeInstanceOf(ImportAllLanguageStrings::class)
+        ->and($languageJob->filePath)->toBe($fixture())
+        ->and($languageJob->translatableHeadings->flatten())->not->toBeEmpty();
+
+    $languageJob->handle();
+    expect($languageJob->filePath)->toBe($fixture())
+        ->and(LanguageString::where('linked_entry_id', $row->id)->where('linked_entry_type', $row::class)->value('text'))->toBe('What is your name?');
+    Bus::assertDispatchedSync(FinishLanguageStringImport::class);
+    Bus::assertDispatchedSync(AddMissingChoiceListStrings::class);
 });
