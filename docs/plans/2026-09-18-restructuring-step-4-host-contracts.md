@@ -1,6 +1,8 @@
 # Restructuring Step 4: replace host coupling with explicit contracts
 
-**Status**: Not Started
+**Status**: Completed
+
+Implemented on the user-requested current branch `restructuring-prep-for-ui-split`, based on `cde5795` (then-current `origin/dev`). Independent review findings were resolved, and final verification passed: 230 core tests, 22 reference tests with one pre-existing skip, PHPStan, both Pint checks and Composer validation. Implementation record: [change log](../change-logs/2026-09-18-step-4-host-contracts.md). PR review/merge is separate and remains for the user.
 
 **Date**: 2026-09-18
 
@@ -11,6 +13,8 @@
 **Proposed implementation branch**: `restructure/host-contracts`, created from current `dev`. Keep the work in one Step 4 PR, with the commit sequence below.
 
 ### Progress Log
+
+- 2026-09-18: Completed contracts, provider split, domain migration, explicit reference bindings, synchronized eleven published migrations, dependency cleanup and architecture enforcement. Verified actual saved-submission processing, imported translation content, queue recipient behavior and headless boot/config caching. See the linked implementation change log for baseline differences and final evidence.
 
 - 2026-09-18: Inspected the package, reference app, existing tests and restructuring decisions; wrote this implementation plan. Independent plan review completed and its owner-model compatibility finding addressed; document links, code fences and whitespace mechanically checked. No production code changed and no runtime checks run. Planning record: [change log](../change-logs/2026-09-18-step-4-plan.md).
 
@@ -212,4 +216,4 @@ Include migration instructions for old `WithXlsforms` implementations, removal o
 
 Step 4 is complete only when all contracts are used by production callers, the reference host demonstrates the bindings, headless/adapter behavior is covered, architecture checks pass and the two suites plus analysis/formatting gates are green. A file containing four unused interfaces is not completion. Record runtime tests separately from static architecture checks and preserve any remaining deferred issues in `RESTRUCTURING.md`.
 
-This plan and its planning change log live under gitignored `docs/`. The implementation must put durable API/setup documentation in tracked READMEs. The roadmap remains at Step 4 pending until the implementation lands.
+This plan and its planning change log were originally local; `docs/` became tracked in PR #153 before implementation. The implementation must put durable API/setup documentation in tracked READMEs. The roadmap records Step 4 as implemented and locally verified, with PR review/merge pending and Step 5 next.
