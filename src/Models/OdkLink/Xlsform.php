@@ -305,6 +305,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
                 $localModuleVersion = XlsformModuleVersion::query()
                     ->where('owner_id', $this->owner->id)
+                    ->where('xlsform_module_id', $xlsformModule->id)
                     ->where('name', 'Local ' . $xlsformModule->name)
                     ->first();
 

@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
@@ -60,10 +61,14 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
 
         // now all entries have a module, process them:
 
+        // Without a localisable_module column the file says nothing about the flags, so they must be left as they are
+        // (they may have been set in the admin panel); only a file that has the column is authoritative.
+        $hasLocalisableModuleColumn = $collection->contains(fn ($row) => Arr::exists($row, 'localisable_module'));
+
         $order = 1;
         $collection
             ->groupBy('module')
-            ->each(function ($row, $key) use (&$order) {
+            ->each(function ($row, $key) use (&$order, $hasLocalisableModuleColumn) {
 
                 $canBeExtended = false;
                 $canBeReplaced = false;
@@ -85,9 +90,11 @@ class XlsformModuleImport implements SkipsEmptyRows, ToCollection, WithHeadingRo
                 ], [
                     'label' => $key,
                     'default_order' => $order,
-                    'can_be_extended' => $canBeExtended,
-                    'can_be_replaced' => $canBeReplaced,
                     'row_names' => $rowNames,
+                    ...($hasLocalisableModuleColumn ? [
+                        'can_be_extended' => $canBeExtended,
+                        'can_be_replaced' => $canBeReplaced,
+                    ] : []),
                 ]);
 
                 // if the module can be extended, it means we need to leave space for a 'localised_$name' module directly after it, so increment $order by 2.
