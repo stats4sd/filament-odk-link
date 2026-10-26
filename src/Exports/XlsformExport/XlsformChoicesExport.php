@@ -42,12 +42,21 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wi
     {
         return ChoiceListEntry::query()
             ->selectRaw(
-                'max(choice_list_entries.id) as id,
+                'coalesce(
+                    max(case when exists (
+                        select 1 from language_strings
+                        where language_strings.linked_entry_type = ?
+                        and language_strings.linked_entry_id = choice_list_entries.id
+                    ) then choice_list_entries.id end),
+                    max(choice_list_entries.id)
+                ) as id,
                 max(choice_list_entries.choice_list_id) as choice_list_id,
                 choice_lists.list_name,
                 choice_list_entries.name,
                 choice_list_entries.properties,
-                choice_list_entries.cascade_filter')
+                choice_list_entries.cascade_filter',
+                [ChoiceListEntry::class]
+            )
             ->leftJoinRelationship('choiceList')
             ->groupBy([
                 'choice_lists.list_name',
@@ -70,7 +79,7 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wi
             )
             ->with(['languageStrings', 'choiceList.xlsformModuleVersion.xlsforms'])
             ->orderBy('choice_lists.list_name')
-            ->orderBy('choice_list_entries.name');
+            ->orderByRaw('min(choice_list_entries.id)');
     }
 
     public function map($row): array

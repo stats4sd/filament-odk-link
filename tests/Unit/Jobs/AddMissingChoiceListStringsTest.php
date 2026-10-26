@@ -96,3 +96,68 @@ it('backfills remaining entries of a partially translated choice list without du
     expect($targetNo->refresh()->languageStrings)->toHaveCount(1);
     expect($targetNo->refresh()->languageStrings->first()->text)->toBe('No');
 });
+
+function addLabel(ChoiceListEntry $entry, $locale, $labelType, string $text): void
+{
+    DB::table('language_strings')->insert([
+        'locale_id' => $locale->id,
+        'language_string_type_id' => $labelType->id,
+        'linked_entry_id' => $entry->id,
+        'linked_entry_type' => ChoiceListEntry::class,
+        'text' => $text,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+}
+
+it('does not use the list being filled as its own source when it only holds labelled team entries', function () {
+    $template = makeXlsformTemplate();
+    $cropsVersion = addModuleVersion($template, 'crops');
+    $intensificationVersion = addModuleVersion($template, 'crop_intensification');
+
+    $cropsList = addChoiceList($cropsVersion, 'crop_list');
+    $intensificationList = addChoiceList($intensificationVersion, 'crop_list');
+
+    $teamId = DB::table('teams')->insertGetId(['name' => 'Team', 'created_at' => now(), 'updated_at' => now()]);
+
+    $locale = makeLocale();
+    $labelType = makeLanguageStringType('label');
+
+    $cropsGlobalRice = addChoiceListEntry($cropsList, '1');
+    $cropsTeamBean = addChoiceListEntry($cropsList, '41', ['owner_id' => $teamId]);
+    $intensificationGlobalRice = addChoiceListEntry($intensificationList, '1');
+    $intensificationTeamBean = addChoiceListEntry($intensificationList, '41', ['owner_id' => $teamId]);
+
+    addLabel($cropsTeamBean, $locale, $labelType, 'Bean');
+    addLabel($intensificationGlobalRice, $locale, $labelType, 'Rice');
+    addLabel($intensificationTeamBean, $locale, $labelType, 'Bean');
+
+    (new AddMissingChoiceListStrings($template))->handle();
+
+    expect($cropsGlobalRice->refresh()->languageStrings)->toHaveCount(1);
+    expect($cropsGlobalRice->languageStrings->first()->text)->toBe('Rice');
+});
+
+it('does not copy a label from a team entry owned by a different team', function () {
+    $template = makeXlsformTemplate();
+    $sourceVersion = addModuleVersion($template, 'source');
+    $targetVersion = addModuleVersion($template, 'target');
+
+    $sourceList = addChoiceList($sourceVersion, 'crop_list');
+    $targetList = addChoiceList($targetVersion, 'crop_list');
+
+    $teamOneId = DB::table('teams')->insertGetId(['name' => 'Team 1', 'created_at' => now(), 'updated_at' => now()]);
+    $teamTwoId = DB::table('teams')->insertGetId(['name' => 'Team 2', 'created_at' => now(), 'updated_at' => now()]);
+
+    $locale = makeLocale();
+    $labelType = makeLanguageStringType('label');
+
+    $sourceTeamTwoBean = addChoiceListEntry($sourceList, '41', ['owner_id' => $teamTwoId]);
+    $targetTeamOneBean = addChoiceListEntry($targetList, '41', ['owner_id' => $teamOneId]);
+
+    addLabel($sourceTeamTwoBean, $locale, $labelType, 'Frijol de team two');
+
+    (new AddMissingChoiceListStrings($template))->handle();
+
+    expect($targetTeamOneBean->refresh()->languageStrings)->toHaveCount(0);
+});

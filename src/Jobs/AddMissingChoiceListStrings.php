@@ -44,25 +44,31 @@ class AddMissingChoiceListStrings implements ShouldQueue
                 $relationship = 'xlsformModuleVersion';
             }
 
-            $matchingList = ChoiceList::where('list_name', $choiceList->list_name)
+            $sourceLists = ChoiceList::where('list_name', $choiceList->list_name)
+                ->where('id', '!=', $choiceList->id)
                 ->whereHas($relationship, function (Builder $query) {
                     $query->where($this->model->getTable() . '.' . $this->model->getKeyName(), $this->model->getKey());
                 })
                 ->whereHas('choiceListEntries.languageStrings')
                 ->with('choiceListEntries.languageStrings')
-                ->first();
+                ->get();
 
-            if (! $matchingList) {
+            if ($sourceLists->isEmpty()) {
                 return;
             }
 
             $choiceList->choiceListEntries
                 ->reject(fn (ChoiceListEntry $choiceListEntry) => $choiceListEntry->languageStrings->isNotEmpty())
-                ->each(function (ChoiceListEntry $choiceListEntry) use ($matchingList) {
-                    $matchingEntry = $matchingList->choiceListEntries
-                        ->where('name', $choiceListEntry->name)
-                        ->where('properties', $choiceListEntry->properties)
-                        ->where('cascade_filter', $choiceListEntry->cascade_filter)
+                ->each(function (ChoiceListEntry $choiceListEntry) use ($sourceLists) {
+                    $matchingEntry = $sourceLists
+                        ->map(fn (ChoiceList $sourceList) => $sourceList->choiceListEntries
+                            ->where('name', $choiceListEntry->name)
+                            ->where('properties', $choiceListEntry->properties)
+                            ->where('cascade_filter', $choiceListEntry->cascade_filter)
+                            ->where('owner_id', $choiceListEntry->owner_id)
+                            ->first(fn (ChoiceListEntry $candidate) => $candidate->languageStrings->isNotEmpty())
+                        )
+                        ->filter()
                         ->first();
 
                     if (! $matchingEntry) {
