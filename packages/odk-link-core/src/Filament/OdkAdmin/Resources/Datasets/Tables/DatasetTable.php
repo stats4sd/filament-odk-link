@@ -9,6 +9,7 @@ use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\DatasetResource;
 
 class DatasetTable
 {
@@ -28,7 +29,7 @@ class DatasetTable
                 //
             ])
             ->recordUrl(
-                fn ($record) => route('filament.admin.resources.datasets.view', ['record' => $record])
+                fn ($record) => DatasetResource::getUrl('view', ['record' => $record])
             )
             ->recordActions([
                 ViewAction::make(),
