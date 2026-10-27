@@ -79,6 +79,7 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wi
             )
             ->with(['languageStrings', 'choiceList.xlsformModuleVersion.xlsforms'])
             ->orderBy('choice_lists.list_name')
+            ->orderByRaw('min(case when choice_list_entries.owner_id is null then 0 else 1 end)')
             ->orderByRaw('min(choice_list_entries.id)');
     }
 

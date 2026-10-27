@@ -133,3 +133,22 @@ it('exports choices in template order, with entries added later by the team last
         ->toBe(['5', '4', '3', '2', '1']);
     expect($rows->pluck('list_name')->unique()->values()->all())->toBe(['rapport', 'reliability']);
 });
+
+it('exports team entries after the global ones even when the global entries were recreated later', function () {
+    $template = makeXlsformTemplate();
+    $version = addModuleVersion($template, 'crops');
+    $list = addChoiceList($version, 'crop_list');
+
+    addChoiceListEntry($list, '41', ['owner_id' => $this->teamId]);
+    addChoiceListEntry($list, '42', ['owner_id' => $this->teamId]);
+
+    foreach (['1', '2', '3', '97'] as $name) {
+        addChoiceListEntry($list, $name);
+    }
+
+    $form = makeFormUsing($template, $this->teamId, $version);
+
+    $rows = choicesExportFor($form)->query()->get();
+
+    expect($rows->pluck('name')->values()->all())->toBe(['1', '2', '3', '97', '41', '42']);
+});
