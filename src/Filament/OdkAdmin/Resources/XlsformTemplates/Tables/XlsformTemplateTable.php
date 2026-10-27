@@ -48,8 +48,7 @@ class XlsformTemplateTable
                     ->disabled(fn(XlsformTemplate $record) => $record->processing)
                     ->label('Replace XLSForm')
                     ->icon('heroicon-o-document-arrow-up')
-                    ->modalWidth('lg')
-                    ->modalContent(fn(XlsformTemplate $record) => XlsformTemplateForm::getCreateFields())
+                    ->schema(XlsformTemplateForm::getCreateFields())
                     ->fillForm(function (XlsformTemplate $record) {
                         return [
                             'title' => $record->title,
