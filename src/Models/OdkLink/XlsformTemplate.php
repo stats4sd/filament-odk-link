@@ -20,6 +20,8 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasUploadedXlsformFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
+use Maatwebsite\Excel\Excel;
+use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateSettingsImport;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Stats4sd\FilamentOdkLink\Services\UpdateXlsformTitleInFile;
@@ -126,10 +128,51 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
             return;
         }
 
-        $allSheets = (new XlsImport)->toCollection($mediaFile->getPath(), null, \Maatwebsite\Excel\Excel::XLSX);
+        $allSheets = (new XlsImport)->toCollection($mediaFile->getPath(), null, Excel::XLSX);
 
         if ($allSheets->has('entities')) {
             $this->syncEntityLists($allSheets['entities']);
+        }
+    }
+
+    /**
+     * @return array{
+     *   instance_name: ?string,
+     *   default_language: ?string
+     * }|null
+     */
+    public function readSettingsFromFile(?string $filePath = null): ?array
+    {
+        $filePath ??= $this->getFirstMedia('xlsform_file')?->getPath();
+
+        if (! $filePath) {
+            return null;
+        }
+
+        $sheets = (new XlsformTemplateSettingsImport)->toCollection($filePath, null, Excel::XLSX);
+
+        if (! $sheets->has('settings')) {
+            return null;
+        }
+
+        $settingsRow = $sheets['settings']->first();
+
+        $readCell = fn (string $column): ?string => filled($settingsRow?->get($column)) ?
+            trim((string) $settingsRow->get($column)) :
+            null;
+
+        return [
+            'instance_name' => $readCell('instance_name'),
+            'default_language' => $readCell('default_language'),
+        ];
+    }
+
+    public function syncSettingsFromFile(?string $filePath = null): void
+    {
+        $settings = $this->readSettingsFromFile($filePath);
+
+        if ($settings !== null) {
+            $this->updateQuietly($settings);
         }
     }
 
