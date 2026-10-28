@@ -41,3 +41,11 @@ it('runs all package migrations on the test connection', function (string $table
     'locale_owner',
     'dataset_parents',
 ]);
+
+it('adds instance_name to xlsform_templates', function () {
+    expect(Schema::hasColumn('xlsform_templates', 'instance_name'))->toBeTrue();
+});
+
+it('adds default_language to xlsform_templates', function () {
+    expect(Schema::hasColumn('xlsform_templates', 'default_language'))->toBeTrue();
+});
