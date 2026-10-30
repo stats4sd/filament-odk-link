@@ -31,12 +31,13 @@ class ChoiceList extends Model
         });
     }
 
-    //get entries for a specific owner
+    // get entries for a specific owner, leaving out entries the owner has removed from context
     /** @return Collection<ChoiceListEntry> */
     public function getOwnedEntries(WithXlsforms $owner): Collection
     {
 
         return $this->choiceListEntries()
+            ->notRemovedFor($owner)
             ->where(function ($query) use ($owner) {
                 $query->whereDoesntHave('owner')
                     ->orWhereHas('owner', function ($query) use ($owner) {

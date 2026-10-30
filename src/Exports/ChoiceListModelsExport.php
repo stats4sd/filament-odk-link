@@ -31,7 +31,7 @@ class ChoiceListModelsExport implements FromCollection, WithHeadings, WithStrict
 
         $locales = $owner->locales;
 
-        $this->entries = $choiceList->choiceListEntries
+        $this->entries = $choiceList->choiceListEntries()->notRemovedFor($owner)->get()
             // may not need explicit filter when running on front-end with Filament Tenancy, but won't hurt
             ->filter(fn (ChoiceListEntry $choiceListEntry) => $choiceListEntry->owner_id === $xlsform->owner->getKey() || $choiceListEntry->owner_id === null)
             ->mapWithKeys(function (ChoiceListEntry $choiceListEntry) use ($locales) {
