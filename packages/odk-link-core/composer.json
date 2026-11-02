@@ -29,7 +29,7 @@
         "shiftonelabs/laravel-cascade-deletes": "^2.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-package-tools": "^1.15.0",
-        "spatie/laravel-permission": "^6.10",
+        "spatie/laravel-permission": "^8.3",
         "staudenmeir/belongs-to-through": "^2.18",
         "staudenmeir/eloquent-has-many-deep": "^1.22"
     },
