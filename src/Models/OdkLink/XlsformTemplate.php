@@ -403,6 +403,39 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
         );
     }
 
+    // The relations above run through every version of every module, including team-owned (local and cloned) ones.
+    // The file import only ever creates and updates global (default) versions, so it must only read and clean up those.
+
+    /** @return HasManyDeep<SurveyRow, $this> */
+    public function surveyRowsForImport(): HasManyDeep
+    {
+        return $this->surveyRows()->where('xlsform_module_versions.is_default', true);
+    }
+
+    /** @return HasManyDeep<ChoiceList, $this> */
+    public function choiceListsForImport(): HasManyDeep
+    {
+        return $this->choiceLists()->where('xlsform_module_versions.is_default', true);
+    }
+
+    /** @return HasManyDeep<ChoiceListEntry, $this> */
+    public function choiceListEntriesForImport(): HasManyDeep
+    {
+        return $this->choiceListEntries()->where('xlsform_module_versions.is_default', true);
+    }
+
+    /** @return HasManyDeep<LanguageString, $this> */
+    public function surveyLanguageStringsForImport(): HasManyDeep
+    {
+        return $this->surveyLanguageStrings()->where('xlsform_module_versions.is_default', true);
+    }
+
+    /** @return HasManyDeep<LanguageString, $this> */
+    public function choiceListEntryLanguageStringsForImport(): HasManyDeep
+    {
+        return $this->choiceListEntryLanguageStrings()->where('xlsform_module_versions.is_default', true);
+    }
+
     // ****************** METHODS ************************
 
     // get required media from ODK Central and store in the database

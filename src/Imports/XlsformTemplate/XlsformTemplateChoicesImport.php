@@ -28,7 +28,8 @@ class XlsformTemplateChoicesImport implements ShouldQueue, SkipsEmptyRows, ToCol
 
     public function collection(Collection $rows): void
     {
-        $choiceLists = $this->model->choiceLists()->get();
+        // only the lists of the imported versions: a team's copy of a list stays the snapshot it was.
+        $choiceLists = $this->model->choiceListsForImport()->get();
 
         $newEntries = $rows->map(function (Collection $row) use ($choiceLists) {
 

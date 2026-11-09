@@ -28,7 +28,7 @@ class FinishChoiceListEntryImport implements ShouldQueue
     public function handle(): void
     {
         // If choice list entries are localisable, make sure the whole ChoiceList is too
-        $localisableChoiceLists = $this->model->choiceLists()
+        $localisableChoiceLists = $this->model->choiceListsForImport()
             ->whereHas('choiceListEntries', function (Builder $query) {
                 $query->whereLike('properties', '%localisable": true%');
             })

@@ -5,6 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
@@ -41,6 +42,9 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
 
     public ?string $relationship;
 
+    /** @var Collection<int, mixed>|null */
+    private ?Collection $importedItems = null;
+
     public function __construct(public XlsformModuleVersion|XlsformTemplate $model, public string $heading, public string $sheet)
     {
 
@@ -51,8 +55,8 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
         $this->languageStringType = $this->xlsformTranslationHelper->getLanguageStringTypeFromColumnHeader($this->heading);
 
         $this->relationship = match ($sheet) {
-            'survey' => 'surveyRows',
-            'choices' => 'choiceListEntries',
+            'survey' => 'surveyRowsForImport',
+            'choices' => 'choiceListEntriesForImport',
             default => null
         };
 
@@ -91,9 +95,11 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
         $row = collect($row);
 
         $class = $this->class;
-        $relationship = $this->relationship;
 
-        $items = $this->model->$relationship
+        // loaded once and kept for the whole import; only rows of the imported versions, never a team's own copy of a same-named row.
+        $this->importedItems ??= $this->model->{$this->relationship}()->get()->toBase();
+
+        $items = $this->importedItems
             ->filter(fn($item) => (string)$item->name === (string)$row['name']);
 
         // filter survey row entries by type as well as name
@@ -169,7 +175,7 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
 
         // find all Survey Rows linked to the XlsformTemplate that were not updated during the import... and delete them.
         $toDelete = $this->model
-            ->choiceListEntryLanguageStrings()
+            ->choiceListEntryLanguageStringsForImport()
             ->where('language_string_type_id', $this->languageStringType->id)
             ->where('locale_id', $this->language->defaultLocale->id)
             ->where('linked_entry_type', $type)
@@ -181,7 +187,7 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
             ->get();
 
         $toDeleteToo = $this->model
-            ->surveyLanguageStrings()
+            ->surveyLanguageStringsForImport()
             ->where('language_string_type_id', $this->languageStringType->id)
             ->where('locale_id', $this->language->defaultLocale->id)
             ->where('linked_entry_type', $type)
