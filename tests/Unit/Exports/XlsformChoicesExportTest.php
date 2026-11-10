@@ -152,3 +152,113 @@ it('exports team entries after the global ones even when the global entries were
 
     expect($rows->pluck('name')->values()->all())->toBe(['1', '2', '3', '97', '41', '42']);
 });
+
+function removeFromContext(int $teamId, ChoiceListEntry ...$entries): void
+{
+    foreach ($entries as $entry) {
+        DB::table('choice_list_entries_removed_owner')->insert([
+            'owner_id' => $teamId,
+            'choice_list_entry_id' => $entry->id,
+        ]);
+    }
+}
+
+it('leaves out an entry the owner removed from context but keeps the others in the list', function () {
+    $template = makeXlsformTemplate();
+    $version = addModuleVersion($template, 'crops');
+    $list = addChoiceList($version, 'crop_list');
+
+    $rice = addChoiceListEntry($list, 'rice');
+    addChoiceListEntry($list, 'maize');
+
+    removeFromContext($this->teamId, $rice);
+
+    $form = makeFormUsing($template, $this->teamId, $version);
+
+    expect(choicesExportFor($form)->query()->get()->pluck('name')->all())->toBe(['maize']);
+});
+
+it('does not apply a removal made by another team', function () {
+    $template = makeXlsformTemplate();
+    $version = addModuleVersion($template, 'crops');
+    $list = addChoiceList($version, 'crop_list');
+
+    $rice = addChoiceListEntry($list, 'rice');
+
+    $otherTeamId = DB::table('teams')->insertGetId(['name' => 'Other', 'created_at' => now(), 'updated_at' => now()]);
+    removeFromContext($otherTeamId, $rice);
+
+    $form = makeFormUsing($template, $this->teamId, $version);
+
+    expect(choicesExportFor($form)->query()->get()->pluck('name')->all())->toBe(['rice']);
+});
+
+it('leaves out a team-owned entry that has the same name as a removed entry', function () {
+    $template = makeXlsformTemplate();
+    $version = addModuleVersion($template, 'crops');
+    $list = addChoiceList($version, 'crop_list');
+
+    $global = addChoiceListEntry($list, 'rice');
+    addChoiceListEntry($list, 'rice', ['owner_id' => $this->teamId, 'properties' => json_encode(['x' => 1])]);
+    addChoiceListEntry($list, 'maize');
+
+    removeFromContext($this->teamId, $global);
+
+    $form = makeFormUsing($template, $this->teamId, $version);
+
+    expect(choicesExportFor($form)->query()->get()->pluck('name')->all())->toBe(['maize']);
+});
+
+it('leaves out the entry from every same-named list when it was removed in only one copy', function () {
+    $template = makeXlsformTemplate();
+    $intensificationVersion = addModuleVersion($template, 'crop_intensification');
+    $cropsVersion = addModuleVersion($template, 'crops');
+
+    $intensificationList = addChoiceList($intensificationVersion, 'crop_list');
+    $cropsList = addChoiceList($cropsVersion, 'crop_list');
+
+    addChoiceListEntry($intensificationList, 'rice');
+    $cropsRice = addChoiceListEntry($cropsList, 'rice');
+    addChoiceListEntry($intensificationList, 'maize');
+    addChoiceListEntry($cropsList, 'maize');
+
+    removeFromContext($this->teamId, $cropsRice);
+
+    $form = makeFormUsing($template, $this->teamId, $intensificationVersion, $cropsVersion);
+
+    expect(choicesExportFor($form)->query()->get()->pluck('name')->all())->toBe(['maize']);
+});
+
+it('does not leave out an entry with the same name in a different list', function () {
+    $template = makeXlsformTemplate();
+    $version = addModuleVersion($template, 'crops');
+
+    $cropList = addChoiceList($version, 'crop_list');
+    $otherList = addChoiceList($version, 'other_list');
+
+    $removed = addChoiceListEntry($cropList, '1');
+    addChoiceListEntry($otherList, '1');
+
+    removeFromContext($this->teamId, $removed);
+
+    $form = makeFormUsing($template, $this->teamId, $version);
+
+    $rows = choicesExportFor($form)->query()->get();
+
+    expect($rows->pluck('list_name')->all())->toBe(['other_list']);
+});
+
+it('leaves removed entries out of getOwnedEntries', function () {
+    $template = makeXlsformTemplate();
+    $version = addModuleVersion($template, 'crops');
+    $list = addChoiceList($version, 'crop_list');
+
+    $rice = addChoiceListEntry($list, 'rice');
+    addChoiceListEntry($list, 'maize');
+
+    removeFromContext($this->teamId, $rice);
+
+    $owner = Xlsform::find(makeFormUsing($template, $this->teamId, $version)->id)->owner;
+
+    expect($list->getOwnedEntries($owner)->pluck('name')->all())->toBe(['maize']);
+});

@@ -114,6 +114,39 @@ class XlsformModuleVersion extends Model implements HasMedia
         );
     }
 
+    // A module version is already a single version, so the import scope is the whole relation.
+    // These mirror the methods of the same names on XlsformTemplate so the import code can use either model.
+
+    /** @return HasMany<SurveyRow, $this> */
+    public function surveyRowsForImport(): HasMany
+    {
+        return $this->surveyRows();
+    }
+
+    /** @return HasMany<ChoiceList, $this> */
+    public function choiceListsForImport(): HasMany
+    {
+        return $this->choiceLists();
+    }
+
+    /** @return HasManyThrough<ChoiceListEntry, ChoiceList, $this> */
+    public function choiceListEntriesForImport(): HasManyThrough
+    {
+        return $this->choiceListEntries();
+    }
+
+    /** @return HasManyThrough<LanguageString, SurveyRow, $this> */
+    public function surveyLanguageStringsForImport(): HasManyThrough
+    {
+        return $this->surveyLanguageStrings();
+    }
+
+    /** @return HasManyDeep<LanguageString, $this> */
+    public function choiceListEntryLanguageStringsForImport(): HasManyDeep
+    {
+        return $this->choiceListEntryLanguageStrings();
+    }
+
     /** @return BelongsToMany<Xlsform, $this> */
     public function xlsforms(): BelongsToMany
     {

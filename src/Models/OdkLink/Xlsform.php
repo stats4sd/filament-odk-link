@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Filament\Notifications\Notification;
 use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\MediaLibrary\HasMedia;
@@ -253,6 +254,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     // make sure the xlsform is using the latest template
     public function syncWithTemplate(): void
     {
+        $alreadyHasModules = $this->xlsformModuleVersions->isNotEmpty();
 
         // check through the template modules; If this form is missing any, add the default version
         $this->xlsformTemplate->xlsformModules
@@ -260,8 +262,15 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
             // check for modules where the module version is not _already_ linked to this form (to avoid resetting custom ordering)
             ->filter(fn(XlsformModule $module) => $this->xlsformModuleVersions->doesntContain('xlsform_module_id', $module->id))
-            ->each(function (XlsformModule $xlsformModule) {
-                $this->xlsformModuleVersions()->attach($xlsformModule->defaultXlsformVersion, ['order' => $xlsformModule->default_order]);
+            ->each(function (XlsformModule $xlsformModule) use ($alreadyHasModules) {
+
+                // A form that already has modules keeps their order (a team may have re-ordered them), so a module that
+                // was added to the template later is slotted in after the module that precedes it in the template.
+                $order = $alreadyHasModules && $xlsformModule->default_order !== null
+                    ? $this->makeRoomForModule($xlsformModule)
+                    : $xlsformModule->default_order;
+
+                $this->xlsformModuleVersions()->attach($xlsformModule->defaultXlsformVersion, ['order' => $order]);
 
                 // If the XlsformModule `can_be_extended` add a 'local' version of the module immediately after it
                 if ($xlsformModule->can_be_extended) {
@@ -270,7 +279,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                         'name' => 'Local ' . $xlsformModule->name,
                     ]);
 
-                    $this->xlsformModuleVersions()->sync([$localModuleVersion->id => ['order' => $xlsformModule->default_order + 1]], detaching: false);
+                    $this->xlsformModuleVersions()->sync([$localModuleVersion->id => ['order' => $order + 1]], detaching: false);
                 }
             });
 
@@ -280,6 +289,45 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
         $this->has_latest_template = true;
         $this->saveQuietly();
+    }
+
+    // Opens up the order positions a new module needs (one, or two when it also gets a 'Local' version) directly after
+    // the module that comes before it in the template, and returns the first of them. Everything after that is pushed
+    // back, so the relative order of the modules already in the form does not change.
+    private function makeRoomForModule(XlsformModule $newModule): int
+    {
+        $selectedVersions = $this->xlsformModuleVersions()->get();
+
+        $precedingModule = $this->xlsformTemplate->xlsformModules
+            ->filter(fn(XlsformModule $module) => $module->default_order !== null && $module->default_order < $newModule->default_order)
+            ->filter(fn(XlsformModule $module) => $selectedVersions->contains(fn(XlsformModuleVersion $version) => $this->isVersionOfModule($version, $module)))
+            ->sortByDesc('default_order')
+            ->first();
+
+        $insertAt = $precedingModule
+            ? $selectedVersions
+                ->filter(fn(XlsformModuleVersion $version) => $this->isVersionOfModule($version, $precedingModule))
+                ->max(fn(XlsformModuleVersion $version) => data_get($version, 'pivot.order')) + 1
+            : $selectedVersions->min(fn(XlsformModuleVersion $version) => data_get($version, 'pivot.order')) ?? 1;
+
+        DB::table('selected_xlsform_module_versions')
+            ->where('xlsform_id', $this->getKey())
+            ->where('order', '>=', $insertAt)
+            ->increment('order', $newModule->can_be_extended ? 2 : 1);
+
+        return $insertAt;
+    }
+
+    // a module's versions are its global, local-replacement and cloned versions, plus the 'Local {module}' extension that has no module id
+    private function isVersionOfModule(XlsformModuleVersion $version, XlsformModule $module): bool
+    {
+        if ($version->xlsform_module_id === $module->id) {
+            return true;
+        }
+
+        return $version->xlsform_module_id === null
+            && $version->owner_id === $this->owner_id
+            && $version->name === 'Local ' . $module->name;
     }
 
     public function localiseModules(): void

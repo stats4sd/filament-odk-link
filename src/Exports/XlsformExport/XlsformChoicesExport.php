@@ -71,6 +71,9 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wi
                 ->orWhere('choice_list_entries.owner_id', null)
             )
 
+            // leave out entries the owner has removed from context (in any same-named list)
+            ->notRemovedFor($this->xlsform->owner)
+
             // only entries in lists linked to a module version of the current form
             ->whereHas('xlsformModuleVersion', fn (Builder $query) => $query
                 ->whereHas('xlsforms', fn (Builder $query) => $query

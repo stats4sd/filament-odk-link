@@ -102,14 +102,45 @@ class ChoiceListEntry extends Model implements WithLanguageStrings
         return $this->belongsToMany(config('filament-odk-link.models.form_owner'), 'choice_list_entries_removed_owner', 'choice_list_entry_id', 'owner_id');
     }
 
+    /**
+     * Exclude entries the owner has removed from context.
+     *
+     * The same list_name can exist once per module version and teams manage the copies as one list,
+     * so an entry counts as removed when the owner removed ANY entry with the same list_name and name.
+     *
+     * @param  Builder<ChoiceListEntry>  $query
+     */
+    public function scopeNotRemovedFor(Builder $query, WithXlsforms $owner): void
+    {
+        $query->whereNotExists(function ($removedQuery) use ($owner) {
+            $removedQuery->selectRaw('1')
+                ->from('choice_list_entries_removed_owner as removed')
+                ->join('choice_list_entries as removed_entry', 'removed_entry.id', '=', 'removed.choice_list_entry_id')
+                ->join('choice_lists as removed_list', 'removed_list.id', '=', 'removed_entry.choice_list_id')
+                ->join('choice_lists as own_list', 'own_list.list_name', '=', 'removed_list.list_name')
+                ->where('removed.owner_id', $owner->getKey())
+                ->whereColumn('own_list.id', 'choice_list_entries.choice_list_id')
+                ->whereColumn('removed_entry.name', 'choice_list_entries.name');
+        });
+    }
+
     public function canBeHiddenFromContext(): bool
     {
         return $this->choiceList->can_be_hidden_from_context;
     }
 
+    /**
+     * Same rule as scopeNotRemovedFor(): the entry counts as removed when the team removed
+     * any entry with the same list_name and name, so the UI matches the generated form.
+     */
     public function isRemoved(WithXlsforms $team): bool
     {
-        return $team->choiceListEntriesRemovedFromContext->contains($this);
+        $this->loadMissing('choiceList');
+
+        return $team->choiceListEntriesRemovedFromContext
+            ->loadMissing('choiceList')
+            ->contains(fn (ChoiceListEntry $removed) => $removed->name === $this->name
+                && $removed->choiceList->list_name === $this->choiceList->list_name);
     }
 
     public function toggleRemoved(WithXlsforms $team): void

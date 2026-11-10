@@ -38,6 +38,7 @@ class HandleXlsformTemplateAdded
         if ($model instanceof XlsformTemplate) {
             $this->createModules($filePath, $model);
             $model->syncEntityListsFromFile();
+            $model->syncSettingsFromFile($filePath);
         }
 
         $model->updateQuietly(['processing' => true]);

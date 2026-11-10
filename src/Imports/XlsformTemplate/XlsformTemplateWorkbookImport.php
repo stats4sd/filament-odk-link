@@ -44,9 +44,10 @@ class XlsformTemplateWorkbookImport implements WithMultipleSheets, ShouldQueue, 
 
     public function afterImport(AfterImport $event): void
     {
-        // find all Survey Rows linked to the XlsformTemplate that were not updated during the import... and delete them.
+        // find all Survey Rows in the imported versions that were not updated during the import... and delete them.
+        // For a template, only the global versions are imported; rows of team-owned (local and cloned) versions never are, so they must not be touched.
         $surveyRowsToDelete = $this->model
-            ->surveyRows()
+            ->surveyRowsForImport()
             ->select(['survey_rows.id', 'survey_rows.updated_during_import'])
             ->get()
             ->filter(fn(SurveyRow $surveyRow) => $surveyRow->updated_during_import === false);
@@ -56,7 +57,7 @@ class XlsformTemplateWorkbookImport implements WithMultipleSheets, ShouldQueue, 
 
         // we also need to delete the choiceLists that were not updated during the import.
         $choicesToDelete = $this->model
-            ->choiceListEntries()
+            ->choiceListEntriesForImport()
             ->where('choice_list_entries.owner_id', null) // do not delete entries owned by a team.
             ->select(['choice_list_entries.id', 'choice_list_entries.updated_during_import'])
             ->get()
@@ -64,6 +65,11 @@ class XlsformTemplateWorkbookImport implements WithMultipleSheets, ShouldQueue, 
 
         ChoiceListEntry::destroy($choicesToDelete->pluck('id'));
 
-        ChoiceList::has('choiceListEntries', '=', 0)->delete();
+        // only choice lists of the imported versions: lists of other templates or of team-owned versions are none of this import's business.
+        $this->model
+            ->choiceListsForImport()
+            ->doesntHave('choiceListEntries')
+            ->get()
+            ->each(fn(ChoiceList $choiceList) => $choiceList->delete());
     }
 }

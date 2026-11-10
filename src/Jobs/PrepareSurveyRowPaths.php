@@ -29,7 +29,9 @@ class PrepareSurveyRowPaths implements ShouldQueue
     {
 
         /** @var Collection<SurveyRow> $surveyRows */
-        $surveyRows = $this->model->surveyRows()->orderBy('row_number')->get();
+        // all global versions of the template are walked together (a group can start in one module and end in another),
+        // but never team-owned copies: their row numbers overlap with the global rows and would corrupt the running path.
+        $surveyRows = $this->model->surveyRowsForImport()->orderBy('row_number')->get();
         $path = '/';
         $repeatPaths = collect(); // for nested repeats
 

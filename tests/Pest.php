@@ -4,6 +4,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
@@ -117,4 +118,48 @@ function makeLanguageStringType(string $name = 'label'): LanguageStringType
     ]);
 
     return LanguageStringType::find($id);
+}
+
+/**
+ * Insert a form that uses one module version per key of $questionNamesPerModule, each holding survey rows with the given names.
+ *
+ * @param  array<string, array<int, string>>  $questionNamesPerModule
+ */
+function makeXlsformWithQuestions(XlsformTemplate $template, array $questionNamesPerModule): Xlsform
+{
+    $teamId = DB::table('teams')->insertGetId(['name' => 'Team', 'created_at' => now(), 'updated_at' => now()]);
+
+    $xlsformId = DB::table('xlsforms')->insertGetId([
+        'xlsform_template_id' => $template->id,
+        'owner_id' => $teamId,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $order = 0;
+
+    foreach ($questionNamesPerModule as $moduleName => $questionNames) {
+        $moduleVersion = addModuleVersion($template, $moduleName);
+
+        DB::table('selected_xlsform_module_versions')->insert([
+            'xlsform_id' => $xlsformId,
+            'xlsform_module_version_id' => $moduleVersion->id,
+            'order' => ++$order,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        foreach ($questionNames as $rowNumber => $questionName) {
+            DB::table('survey_rows')->insert([
+                'xlsform_module_version_id' => $moduleVersion->id,
+                'row_number' => $rowNumber + 1,
+                'name' => $questionName,
+                'type' => 'text',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    return Xlsform::withoutGlobalScopes()->find($xlsformId);
 }
