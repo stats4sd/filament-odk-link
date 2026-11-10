@@ -275,7 +275,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                 // If the XlsformModule `can_be_extended` add a 'local' version of the module immediately after it
                 if ($xlsformModule->can_be_extended) {
                     $localModuleVersion = XlsformModuleVersion::firstOrCreate([
-                        'owner_id' => $this->owner->id,
+                        'owner_id' => $this->owner_id,
                         'name' => 'Local ' . $xlsformModule->name,
                     ]);
 
@@ -352,7 +352,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
                 }
 
                 $localModuleVersion = XlsformModuleVersion::query()
-                    ->where('owner_id', $this->owner->id)
+                    ->where('owner_id', $this->owner_id)
                     ->where('xlsform_module_id', $xlsformModule->id)
                     ->where('name', 'Local ' . $xlsformModule->name)
                     ->first();
