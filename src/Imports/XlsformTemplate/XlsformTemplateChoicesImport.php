@@ -66,8 +66,56 @@ class XlsformTemplateChoicesImport implements ShouldQueue, SkipsEmptyRows, ToCol
         })
             ->filter()
             ->flatten(1);
-        ChoiceListEntry::upsert($newEntries->toArray(), ['name', 'choice_list_id', 'cascade_filter']);
 
+        // cascade_filter is mostly NULL, and a unique index never sees NULL = NULL, so an upsert on the unique key would
+        // insert a new row on every import; the old rows would then be deleted (with the language strings of any team locale).
+        // So match the existing global entries ourselves and update them by id.
+        $existingIds = $this->existingGlobalEntryIds($choiceLists->pluck('id')->all());
+
+        [$existing, $new] = $newEntries->partition(
+            fn (array $entry) => $existingIds->has($this->entryKey($entry['choice_list_id'], $entry['name'], $entry['cascade_filter']))
+        );
+
+        if ($existing->isNotEmpty()) {
+            ChoiceListEntry::upsert(
+                $existing->map(fn (array $entry) => [
+                    ...$entry,
+                    'id' => $existingIds->get($this->entryKey($entry['choice_list_id'], $entry['name'], $entry['cascade_filter'])),
+                ])->values()->toArray(),
+                ['id'],
+                ['properties', 'updated_during_import'],
+            );
+        }
+
+        if ($new->isNotEmpty()) {
+            ChoiceListEntry::upsert($new->values()->toArray(), ['name', 'choice_list_id', 'cascade_filter']);
+        }
+    }
+
+    /**
+     * Ids of the existing global entries (owner_id NULL) of the given lists, keyed by list, name and cascade_filter.
+     * If a key exists more than once, the first id wins; the others stay un-updated and are removed by the cleanup after the import.
+     *
+     * @param  array<int, int>  $choiceListIds
+     * @return Collection<string, int<0, max>>
+     */
+    private function existingGlobalEntryIds(array $choiceListIds): Collection
+    {
+        return ChoiceListEntry::withoutGlobalScopes()
+            ->whereNull('owner_id')
+            ->whereIn('choice_list_id', $choiceListIds)
+            ->orderBy('id')
+            ->get(['id', 'choice_list_id', 'name', 'cascade_filter'])
+            ->reverse() // so that the lowest id is written last and wins
+            ->mapWithKeys(fn (ChoiceListEntry $entry) => [
+                $this->entryKey($entry->choice_list_id, $entry->name, $entry->cascade_filter) => $entry->id,
+            ]);
+    }
+
+    // a NULL cascade_filter equals another NULL here (it is not the same as an empty string).
+    private function entryKey(int|string $choiceListId, int|string $name, int|string|null $cascadeFilter): string
+    {
+        return json_encode([(int) $choiceListId, (string) $name, $cascadeFilter === null ? null : (string) $cascadeFilter]);
     }
 
     public function chunkSize(): int
