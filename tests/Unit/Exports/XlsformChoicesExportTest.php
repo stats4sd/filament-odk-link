@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformChoicesExport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
@@ -261,4 +262,119 @@ it('leaves removed entries out of getOwnedEntries', function () {
     $owner = Xlsform::find(makeFormUsing($template, $this->teamId, $version)->id)->owner;
 
     expect($list->getOwnedEntries($owner)->pluck('name')->all())->toBe(['maize']);
+});
+
+function labelEntryIn(ChoiceListEntry $entry, Locale $locale, string $text): void
+{
+    $labelTypeId = DB::table('language_string_types')->where('name', 'label')->value('id') ?? makeLanguageStringType('label')->id;
+
+    DB::table('language_strings')->insert([
+        'locale_id' => $locale->id,
+        'language_string_type_id' => $labelTypeId,
+        'linked_entry_id' => $entry->id,
+        'linked_entry_type' => ChoiceListEntry::class,
+        'text' => $text,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+}
+
+function choicesExportWithLocales(Xlsform $xlsform, Locale ...$locales): XlsformChoicesExport
+{
+    $export = choicesExportFor($xlsform);
+    $export->locales = collect($locales);
+    $export->propertyHeadings = collect();
+
+    return $export;
+}
+
+it('does not pick an entry that only has blank placeholder rows as the representative', function () {
+    $english = makeLocale('en');
+
+    $template = makeXlsformTemplate();
+    $labelledVersion = addModuleVersion($template, 'labelled');
+    $placeholderVersion = addModuleVersion($template, 'placeholder');
+
+    $labelled = addChoiceListEntry(addChoiceList($labelledVersion, 'who_family'), 'female_adult');
+    $placeholder = addChoiceListEntry(addChoiceList($placeholderVersion, 'who_family'), 'female_adult');
+
+    labelEntryIn($labelled, $english, 'Female adult');
+    labelEntryIn($placeholder, $english, '');
+
+    $form = makeFormUsing($template, $this->teamId, $labelledVersion, $placeholderVersion);
+
+    $rows = choicesExportFor($form)->query()->get();
+
+    expect($rows)->toHaveCount(1);
+    expect($rows->first()->id)->toBe($labelled->id);
+    expect($placeholder->id)->toBeGreaterThan($labelled->id);
+});
+
+it('fills each locale from whichever same-named entry has text for it', function () {
+    $english = makeLocale('en');
+    $spanish = makeLocale('es');
+
+    $template = makeXlsformTemplate();
+    $englishVersion = addModuleVersion($template, 'english_only');
+    $spanishVersion = addModuleVersion($template, 'spanish_only');
+
+    $englishEntry = addChoiceListEntry(addChoiceList($englishVersion, 'who_family'), 'female_adult');
+    $spanishEntry = addChoiceListEntry(addChoiceList($spanishVersion, 'who_family'), 'female_adult');
+
+    labelEntryIn($englishEntry, $english, 'Female adult');
+    labelEntryIn($spanishEntry, $spanish, 'Mujer adulta');
+
+    $form = makeFormUsing($template, $this->teamId, $englishVersion, $spanishVersion);
+    $export = choicesExportWithLocales($form, $english, $spanish);
+
+    $row = $export->query()->get()->first();
+    $mapped = $export->map($row);
+
+    expect($mapped['label::en (en)'])->toBe('Female adult');
+    expect($mapped['label::es (es)'])->toBe('Mujer adulta');
+});
+
+it('exports the labels of the complete entry when a newer duplicate only holds blank rows for other locales', function () {
+    $english = makeLocale('en');
+    $spanish = makeLocale('es');
+    $teamSpanish = makeLocale('gt');
+
+    $template = makeXlsformTemplate();
+    $completeVersion = addModuleVersion($template, 'complete');
+    $placeholderVersion = addModuleVersion($template, 'placeholders');
+
+    $complete = addChoiceListEntry(addChoiceList($completeVersion, 'who_family'), 'female_adult');
+    $placeholder = addChoiceListEntry(addChoiceList($placeholderVersion, 'who_family'), 'female_adult');
+
+    labelEntryIn($complete, $english, 'Female adult');
+    labelEntryIn($complete, $spanish, 'Mujer adulta');
+    labelEntryIn($placeholder, $spanish, '');
+    labelEntryIn($placeholder, $teamSpanish, '');
+
+    $form = makeFormUsing($template, $this->teamId, $completeVersion, $placeholderVersion);
+    $export = choicesExportWithLocales($form, $english, $teamSpanish);
+
+    $mapped = $export->map($export->query()->get()->first());
+
+    expect($mapped['label::en (en)'])->toBe('Female adult');
+    expect($mapped['label::gt (gt)'])->toBe('');
+});
+
+it('leaves a locale blank when no same-named entry has text for it', function () {
+    $english = makeLocale('en');
+    $spanish = makeLocale('es');
+
+    $template = makeXlsformTemplate();
+    $version = addModuleVersion($template, 'only');
+
+    $entry = addChoiceListEntry(addChoiceList($version, 'who_family'), 'female_adult');
+    labelEntryIn($entry, $english, 'Female adult');
+
+    $form = makeFormUsing($template, $this->teamId, $version);
+    $export = choicesExportWithLocales($form, $english, $spanish);
+
+    $mapped = $export->map($export->query()->get()->first());
+
+    expect($mapped['label::en (en)'])->toBe('Female adult');
+    expect($mapped['label::es (es)'])->toBe('');
 });

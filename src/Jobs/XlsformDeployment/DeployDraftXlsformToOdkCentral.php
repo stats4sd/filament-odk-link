@@ -11,9 +11,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\HtmlString;
 use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
 use Stats4sd\FilamentOdkLink\Exceptions\OdkCentralRequestException;
+use Stats4sd\FilamentOdkLink\Exceptions\XlsformOwnerMissingException;
 use Stats4sd\FilamentOdkLink\Exceptions\XlsformValidationException;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Services\ChoiceLabelDiagnostics;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Throwable;
 
@@ -34,6 +36,12 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
      */
     public function handle(): void
     {
+        if ($this->xlsform->owner()->doesntExist()) {
+            $this->fail(new XlsformOwnerMissingException("The owner of the form \"{$this->xlsform->title}\" no longer exists, so the form cannot be deployed."));
+
+            return;
+        }
+
         $this->xlsform->save();
 
         $odkLinkService = app()->make(OdkLinkService::class);
@@ -52,7 +60,7 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
             $this->xlsform = $odkLinkService->createDraftForm($this->xlsform, $xlsfile->getPath(), $this->withMedia);
         } catch (XlsformValidationException $exception) {
             // the form definition itself is broken; retrying cannot help.
-            $this->fail($exception);
+            $this->fail($this->withMissingLabelExplanation($exception, $xlsfile->getPath()));
 
             return;
         } catch (OdkCentralRequestException $exception) {
@@ -98,8 +106,37 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
         ]);
     }
 
+    private function withMissingLabelExplanation(XlsformValidationException $exception, string $xlsfilePath): XlsformValidationException
+    {
+        try {
+            $explanation = app(ChoiceLabelDiagnostics::class)->explain($exception->getMessage(), $xlsfilePath);
+        } catch (Throwable $diagnosticsFailure) {
+            Log::warning('Could not explain the XLSForm validation error', [
+                ...$this->logContext(),
+                'diagnostics_error' => $diagnosticsFailure->getMessage(),
+            ]);
+
+            return $exception;
+        }
+
+        if ($explanation === null) {
+            return $exception;
+        }
+
+        return new XlsformValidationException($explanation, $exception->getCode(), $exception);
+    }
+
     public function failed(?Throwable $exception = null): void
     {
+        if ($exception instanceof XlsformOwnerMissingException) {
+            Log::warning('Skipped deploying a form whose owner no longer exists', [
+                'xlsform_id' => $this->xlsform->id,
+                'xlsform_type' => $this->xlsform::class,
+            ]);
+
+            return;
+        }
+
         Log::error('Xlsform Deployment Failed', [
             ...$this->logContext(),
             'attempts' => $this->attempts(),

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
-use Stats4sd\FilamentOdkLink\Tests\Database\Factories\TeamFactory;
+use Stats4sd\FilamentOdkLink\Tests\database\Factories\TeamFactory;
 
 class Team extends Model implements WithXlsforms
 {

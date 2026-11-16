@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Tests\Database\Factories;
+namespace Stats4sd\FilamentOdkLink\Tests\database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Stats4sd\FilamentOdkLink\Tests\Models\Team;
