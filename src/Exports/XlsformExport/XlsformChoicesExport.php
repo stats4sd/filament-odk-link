@@ -116,7 +116,8 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wi
 
     /**
      * Labels are filled one locale at a time: a locale's label comes from the group's representative if it has one,
-     * otherwise from any same-named duplicate that does. This stops a duplicate that only holds blank placeholder rows
+     * otherwise from any same-named duplicate that does. A locale with no label at all uses the label of the default
+     * locale of its language, found the same way. This stops a duplicate that only holds blank placeholder rows
      * from hiding the labels held by its siblings.
      *
      * @return array<string, string>
@@ -130,13 +131,24 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wi
 
         return $this->locales
             ->mapWithKeys(function (Locale $locale) use ($memberIds) {
-                $text = $memberIds
-                    ->map(fn (int $id) => $this->labelIndex[$id][$locale->id] ?? '')
-                    ->first(fn (string $text) => trim($text) !== '') ?? '';
+                $text = $this->firstLabel($memberIds, $locale->id);
+
+                if ($text === '') {
+                    $defaultLocaleId = $this->defaultLocaleIdFor($locale);
+                    $text = $defaultLocaleId ? $this->firstLabel($memberIds, $defaultLocaleId) : '';
+                }
 
                 return ["label::{$locale->language->name} ({$locale->language->iso_alpha2})" => $text];
             })
             ->all();
+    }
+
+    /** @param Collection<int, int> $memberIds */
+    private function firstLabel(Collection $memberIds, int $localeId): string
+    {
+        return $memberIds
+            ->map(fn (int $id) => $this->labelIndex[$id][$localeId] ?? '')
+            ->first(fn (string $text) => trim($text) !== '') ?? '';
     }
 
     private function groupKey(string $listName, ChoiceListEntry $entry): string
