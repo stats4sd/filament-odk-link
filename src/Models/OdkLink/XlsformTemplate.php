@@ -5,6 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Exception;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
@@ -434,6 +436,54 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
     public function choiceListEntryLanguageStringsForImport(): HasManyDeep
     {
         return $this->choiceListEntryLanguageStrings()->where('xlsform_module_versions.is_default', true);
+    }
+
+    // The translation file lists what a team's form really uses: the module versions selected by the owner's form(s) of
+    // this template, limited to versions of the template's own modules. Without an owner, or when the owner's form has
+    // selected nothing, it falls back to the default (global) versions so the file is never empty.
+
+    /** @return Collection<int, int> */
+    public function selectedModuleVersionIdsFor(WithXlsforms $owner): Collection
+    {
+        return DB::table('selected_xlsform_module_versions')
+            ->join('xlsforms', 'xlsforms.id', '=', 'selected_xlsform_module_versions.xlsform_id')
+            ->where('xlsforms.owner_id', $owner->getKey())
+            ->where('xlsforms.xlsform_template_id', $this->getKey())
+            ->pluck('selected_xlsform_module_versions.xlsform_module_version_id');
+    }
+
+    /** @return EloquentCollection<int, SurveyRow> */
+    public function surveyRowsForTranslation(?WithXlsforms $owner = null): EloquentCollection
+    {
+        $selectedVersionIds = $owner ? $this->selectedModuleVersionIdsFor($owner) : collect();
+
+        $query = $selectedVersionIds->isEmpty()
+            ? $this->surveyRowsForImport()
+            : $this->surveyRows()->whereIn('xlsform_module_versions.id', $selectedVersionIds);
+
+        return $query->with(['languageStrings', 'choiceList'])->get();
+    }
+
+    /** @return EloquentCollection<int, ChoiceListEntry> */
+    public function choiceListEntriesForTranslation(?WithXlsforms $owner = null): EloquentCollection
+    {
+        $selectedVersionIds = $owner ? $this->selectedModuleVersionIdsFor($owner) : collect();
+
+        $query = $selectedVersionIds->isEmpty()
+            ? $this->choiceListEntriesForImport()
+            : $this->choiceListEntries()->whereIn('xlsform_module_versions.id', $selectedVersionIds);
+
+        if ($owner) {
+            // same rules as the generated form (XlsformChoicesExport): global entries and the owner's own, minus the ones the owner removed
+            $query
+                ->withoutGlobalScope('owner')
+                ->where(fn (Builder $ownerQuery) => $ownerQuery
+                    ->where('choice_list_entries.owner_id', $owner->getKey())
+                    ->orWhereNull('choice_list_entries.owner_id'))
+                ->notRemovedFor($owner);
+        }
+
+        return $query->with(['languageStrings', 'choiceList'])->get();
     }
 
     // ****************** METHODS ************************
