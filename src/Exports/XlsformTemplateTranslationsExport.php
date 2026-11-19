@@ -31,6 +31,8 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
     /** @var Collection<LanguageStringType> */
     public Collection $allLanguageStringTypes;
 
+    private ?Collection $collection = null;
+
     public function __construct(
         public XlsformTemplate $template,
         public Locale $currentLocale,
@@ -81,11 +83,17 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
 
     public function collection(): Collection
     {
-        $surveyRows = $this->template->surveyRows
+        // styles() asks for the collection again to count the rows; build it once so both agree
+        return $this->collection ??= $this->buildCollection();
+    }
+
+    private function buildCollection(): Collection
+    {
+        $surveyRows = $this->template->surveyRowsForTranslation($this->owner)
             ->sortBy('row_number')
             ->map(fn(SurveyRow $entry) => $this->processEntry($entry));
 
-        $choiceListEntries = $this->template->choiceListEntries
+        $choiceListEntries = $this->template->choiceListEntriesForTranslation($this->owner)
             ->sortBy('row_number')
             ->map(fn(ChoiceListEntry $entry) => $this->processEntry($entry));
 
