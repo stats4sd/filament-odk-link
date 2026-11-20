@@ -35,7 +35,7 @@ class XlsformWorkbookExport implements WithMultipleSheets, ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        $this->xlsform->updateQuietly(['processing' => false]);
+        $this->xlsform->releaseClaim(needsUpdate: true);
 
         $this->notifyJobFailure(
             "Form file generation failed: {$this->xlsform->title}",
