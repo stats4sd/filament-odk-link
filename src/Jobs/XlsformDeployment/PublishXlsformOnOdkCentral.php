@@ -42,7 +42,7 @@ class PublishXlsformOnOdkCentral implements ShouldQueue
         $this->xlsform->live_needs_update = false;
         $this->xlsform->save();
 
-        $this->xlsform->deployDraft(published: true);
+        $this->xlsform->deployDraft(published: true, alreadyClaimed: true, user: $this->user);
 
     }
 
