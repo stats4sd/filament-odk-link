@@ -6,8 +6,6 @@ Monorepo for the ODK Link packages and their reference host application. See [RE
 
 Follow the working patterns in @.claude/code-project-working-patterns.md
 
-`docs/` is gitignored. Plans, change logs and code reviews live there on the machine where they were written; anything that must survive goes in a tracked file (`RESTRUCTURING.md`, `.github/workflows/README.md`, package READMEs).
-
 # Layout
 
 | Path | What | Guidance |
@@ -25,5 +23,5 @@ The core suite must run inside `packages/odk-link-core`, never against the root 
 
 # Conventions that span directories
 
-- Root `.gitignore` patterns are mostly unanchored (`vendor`, `node_modules`, `docs`, `build`) and apply to every nested directory. `phpunit.xml` is anchored to `packages/*/` so the reference app can commit its own.
+- Root `.gitignore` patterns are mostly unanchored (`vendor`, `node_modules`, `build`) and apply to every nested directory. `phpunit.xml` is anchored to `packages/*/` so the reference app can commit its own.
 - The reference app holds published copies of the package config and migrations. When the core adds a migration, re-publish in the app (`php artisan vendor:publish --tag=filament-odk-link-migrations`) and commit the new file. See the app README for the ordering caveat.
