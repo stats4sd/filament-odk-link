@@ -1,10 +1,13 @@
 <?php
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Collection;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Stats4sd\FilamentOdkLink\Contracts\CurrentOwnerResolver;
 use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 use Stats4sd\FilamentOdkLink\Contracts\RoleResolver;
+use Stats4sd\FilamentOdkLink\Events\MediaHasBeenAddedEvent;
 use Stats4sd\FilamentOdkLink\Models\Country;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
 use Stats4sd\FilamentOdkLink\Support\ConfiguredModelRegistry;
@@ -18,6 +21,8 @@ class OtherFormOwner extends Model implements FormOwner
 {
     use HasXlsforms;
 }
+
+class IncompatibleImporter extends Authenticatable {}
 
 class SameTeamTable extends Model
 {
@@ -104,3 +109,27 @@ it('rejects invalid registry entries', function ($class) {
     config()->set('filament-odk-link.models.registry', [$class]);
     expect(fn () => app(ConfiguredModelRegistry::class)->classes())->toThrow(InvalidArgumentException::class, 'models.registry');
 })->with([stdClass::class, RegistryNeedsArgument::class, 'NoSuchModel']);
+
+it('rejects a published config that predates the registry instead of finding nothing', function () {
+    config()->set('filament-odk-link.models', ['form_owner' => Team::class, 'user_model' => User::class]);
+
+    expect(fn () => app(ConfiguredModelRegistry::class)->findByTable('countries'))->toThrow(InvalidArgumentException::class, 'models.registry');
+});
+
+it('records the configured platform user as the media importer', function () {
+    $importer = new User;
+
+    $explicit = new MediaHasBeenAddedEvent(new Media, $importer);
+
+    $this->actingAs($importer);
+    $fromAuth = new MediaHasBeenAddedEvent(new Media);
+
+    expect($explicit->importedBy)->toBe($importer)
+        ->and($fromAuth->importedBy)->toBe($importer);
+});
+
+it('rejects a logged-in importer that is not the configured platform user', function () {
+    $this->actingAs(new IncompatibleImporter);
+
+    expect(fn () => new MediaHasBeenAddedEvent(new Media))->toThrow(InvalidArgumentException::class, 'models.user_model');
+});

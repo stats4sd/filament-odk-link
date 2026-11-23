@@ -73,18 +73,6 @@ parameters:
 			path: src/Commands/TestCsvMediaGeneration.php
 
 		-
-			message: '#^Parameter \$importedBy of method Stats4sd\\FilamentOdkLink\\Events\\MediaHasBeenAddedEvent\:\:__construct\(\) has invalid type Stats4sd\\FilamentTeamManagement\\Models\\User\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Events/MediaHasBeenAddedEvent.php
-
-		-
-			message: '#^Property Stats4sd\\FilamentOdkLink\\Events\\MediaHasBeenAddedEvent\:\:\$importedBy has unknown class Stats4sd\\FilamentTeamManagement\\Models\\User as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Events/MediaHasBeenAddedEvent.php
-
-		-
 			message: '#^Access to an undefined property Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Entity\:\:\$uuid\.$#'
 			identifier: property.notFound
 			count: 1

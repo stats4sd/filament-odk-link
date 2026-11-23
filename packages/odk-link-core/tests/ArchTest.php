@@ -18,9 +18,11 @@ it('keeps domain namespaces independent of host and UI dependencies')
         'Stats4sd\FilamentOdkLink\Exports',
         'Stats4sd\FilamentOdkLink\Imports',
         'Stats4sd\FilamentOdkLink\Listeners',
+        'Stats4sd\FilamentOdkLink\Events',
+        'Stats4sd\FilamentOdkLink\Http',
         'Stats4sd\FilamentOdkLink\OdkLinkCoreServiceProvider',
     ])
-    ->not->toUse(['App', 'Filament', 'Livewire', 'Spatie\Permission', 'HaydenPierce\ClassFinder', 'Stats4sd\FilamentOdkLink\Filament', 'Stats4sd\FilamentOdkLink\Forms', 'Stats4sd\FilamentOdkLink\Testing']);
+    ->not->toUse(['App', 'Filament', 'Livewire', 'Spatie\Permission', 'Stats4sd\FilamentTeamManagement', 'HaydenPierce\ClassFinder', 'Stats4sd\FilamentOdkLink\Filament', 'Stats4sd\FilamentOdkLink\Forms', 'Stats4sd\FilamentOdkLink\Testing']);
 
 it('enforces the boundary across every shipping PHP file including executable class strings', function () {
     $root = dirname(__DIR__);
@@ -57,6 +59,7 @@ it('recognizes aliases fully qualified calls and executable strings while ignori
         '<?php return ["model" => \'App\\\\Models\\\\Team\'];',
         '<?php return \'Stats4sd\\\\FilamentOdkLink\\\\Tests\\\\Models\\\\Team\';',
         '<?php return \'Super Admin\';',
+        '<?php use Stats4sd\\FilamentTeamManagement\\Models\\User;',
         '<?php $class::$method($submission);',
     ] as $source) {
         expect(ShippingBoundary::violations($source, false))->not->toBeEmpty();

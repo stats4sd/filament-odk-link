@@ -2,18 +2,23 @@
 
 namespace Stats4sd\FilamentOdkLink\Events;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Queue\SerializesModels;
+use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent as SpatieMediaHasBeenAddedEvent;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Stats4sd\FilamentTeamManagement\Models\User;
+use Stats4sd\FilamentOdkLink\Contracts\PlatformUser;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 
-class MediaHasBeenAddedEvent extends \Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent
+class MediaHasBeenAddedEvent extends SpatieMediaHasBeenAddedEvent
 {
     use SerializesModels;
 
-    public function __construct(public Media $media, public ?User $importedBy)
+    public (Model & PlatformUser) | null $importedBy;
+
+    public function __construct(public Media $media, (Model & PlatformUser) | null $importedBy = null)
     {
         parent::__construct($media);
 
-        $this->importedBy = $importedBy ?? auth()->user();
+        $this->importedBy = $importedBy ?? app(ConfiguredModels::class)->validateUser(auth()->user());
     }
 }

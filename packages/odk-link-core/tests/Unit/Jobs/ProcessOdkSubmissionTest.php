@@ -62,8 +62,15 @@ it('does not invoke host post processing if core ingestion fails', function () {
     expect(fn () => (new ProcessOdkSubmission($this->submission, $this->entry, $this->version))->handle())->toThrow(RuntimeException::class, 'Ingestion failed');
 });
 
-it('rejects populated legacy callbacks instead of silently skipping host logic', function (string $legacy, array $value) {
-    $this->service->shouldReceive('processSubmission')->once();
+it('rejects an invalid configured processor before ingesting the submission', function () {
+    $this->service->shouldNotReceive('processSubmission');
+    config()->set('filament-odk-link.contracts.submission_processor', stdClass::class);
+
+    expect(fn () => (new ProcessOdkSubmission($this->submission, $this->entry, $this->version))->handle())->toThrow(InvalidArgumentException::class, 'filament-odk-link.contracts.submission_processor');
+});
+
+it('rejects populated legacy callbacks before ingesting instead of silently skipping host logic', function (string $legacy, array $value) {
+    $this->service->shouldNotReceive('processSubmission');
     config()->set("filament-odk-link.submission.{$legacy}", $value);
     expect(fn () => (new ProcessOdkSubmission($this->submission, $this->entry, $this->version))->handle())->toThrow(InvalidArgumentException::class, "filament-odk-link.submission.{$legacy}");
 })->with([

@@ -24,14 +24,16 @@ class ProcessOdkSubmission implements ShouldQueue
      */
     public function handle(): void
     {
+        // Ingestion creates entity rows on every attempt, so integration misconfiguration must fail before it runs.
+        app(ConfiguredContracts::class)->validateSubmissionConfiguration();
+
+        $submissionProcessor = app(SubmissionProcessor::class);
+
         $odkLinkService = app()->make(OdkLinkService::class);
 
         $odkLinkService->processSubmission($this->submission, $this->entry, $this->xlsformVersion);
 
-        app(ConfiguredContracts::class)->validateSubmissionConfiguration();
-
-        app(SubmissionProcessor::class)->process($this->submission);
-
+        $submissionProcessor->process($this->submission);
     }
 
     public function failed(?Throwable $exception = null): void

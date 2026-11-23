@@ -7,7 +7,7 @@ class ShippingBoundary
     /** @return list<string> */
     public static function violations(string $source, bool $ui): array
     {
-        $forbidden = ['App\\', 'Tests\\', 'Stats4sd\\FilamentOdkLink\\Tests\\', 'HaydenPierce\\ClassFinder', 'Spatie\\Permission\\'];
+        $forbidden = ['App\\', 'Tests\\', 'Stats4sd\\FilamentOdkLink\\Tests\\', 'Stats4sd\\FilamentTeamManagement\\', 'HaydenPierce\\ClassFinder', 'Spatie\\Permission\\'];
 
         if (! $ui) {
             $forbidden = [...$forbidden, 'Filament\\', 'Livewire\\', 'Stats4sd\\FilamentOdkLink\\Filament\\', 'Stats4sd\\FilamentOdkLink\\Forms\\', 'Stats4sd\\FilamentOdkLink\\Testing\\'];

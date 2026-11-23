@@ -27,10 +27,12 @@ class ConfiguredModelRegistry
     private function models(): Collection
     {
         $key = 'filament-odk-link.models.registry';
-        $classes = config($key, []);
+        $classes = config($key);
 
+        // A published config from before the registry existed replaces the whole `models` array, so the key can be
+        // absent; fail loudly rather than letting table lookups silently find nothing.
         if (! is_array($classes)) {
-            throw new InvalidArgumentException("{$key} must be an array of concrete Eloquent model classes.");
+            throw new InvalidArgumentException("{$key} must be an array of concrete Eloquent model classes; re-publish the package config or copy its registry entries.");
         }
 
         $models = collect();
