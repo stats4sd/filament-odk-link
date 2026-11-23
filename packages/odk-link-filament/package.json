@@ -3,9 +3,7 @@
     "type": "module",
     "scripts": {
         "dev:styles": "npx @tailwindcss/cli -i resources/css/index.css -o resources/dist/filament-odk-link.css --watch",
-        "dev:scripts": "node bin/build.js --dev",
         "build:styles": "npx @tailwindcss/cli -i resources/css/index.css -o resources/dist/filament-odk-link.css --minify",
-        "build:scripts": "node bin/build.js",
         "dev": "npm-run-all --parallel dev:*",
         "build": "npm-run-all build:*"
     },

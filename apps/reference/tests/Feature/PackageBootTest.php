@@ -2,11 +2,13 @@
 
 use App\Models\Team;
 use Illuminate\Support\Facades\Schema;
-use Stats4sd\FilamentOdkLink\FilamentOdkLinkServiceProvider;
+use Stats4sd\FilamentOdkLink\Filament\OdkLinkFilamentServiceProvider;
+use Stats4sd\FilamentOdkLink\OdkLinkCoreServiceProvider;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
-it('registers the package service provider', function () {
-    expect(app()->getProviders(FilamentOdkLinkServiceProvider::class))->not->toBeEmpty();
+it('registers the core and Filament package service providers once each', function () {
+    expect(app()->getProviders(OdkLinkCoreServiceProvider::class))->toHaveCount(1);
+    expect(app()->getProviders(OdkLinkFilamentServiceProvider::class))->toHaveCount(1);
     expect(app(OdkLinkService::class))->toBeInstanceOf(OdkLinkService::class);
 });
 

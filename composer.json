@@ -10,14 +10,16 @@
             "options": {
                 "symlink": true,
                 "versions": {
-                    "stats4sd/filament-odk-link": "dev-dev"
+                    "stats4sd/filament-odk-link": "dev-dev",
+                    "stats4sd/odk-link-filament": "dev-dev"
                 }
             }
         }
     ],
     "require": {
         "php": "^8.4",
-        "stats4sd/filament-odk-link": "dev-dev"
+        "stats4sd/filament-odk-link": "dev-dev",
+        "stats4sd/odk-link-filament": "dev-dev"
     },
     "require-dev": {
         "larastan/larastan": "^3.0",
@@ -28,17 +30,28 @@
     "scripts": {
         "test": "@test:core",
         "test:core": "@composer --working-dir=packages/odk-link-core test",
+        "test:filament": "@composer --working-dir=packages/odk-link-filament test",
         "test:reference": "@composer --working-dir=apps/reference test",
         "test:all": [
             "@test:core",
+            "@test:filament",
             "@test:reference"
         ],
         "analyse": "@analyse:core",
         "analyse:core": "@composer --working-dir=packages/odk-link-core analyse",
+        "analyse:filament": "@composer --working-dir=packages/odk-link-filament analyse",
+        "analyse:all": [
+            "@analyse:core",
+            "@analyse:filament"
+        ],
         "format": "@format:core",
         "format:core": "@composer --working-dir=packages/odk-link-core format",
+        "format:filament": "@composer --working-dir=packages/odk-link-filament format",
         "format:reference": "@composer --working-dir=apps/reference exec pint",
-        "install:packages": "@composer --working-dir=packages/odk-link-core install",
+        "install:packages": [
+            "@composer --working-dir=packages/odk-link-core install",
+            "@composer --working-dir=packages/odk-link-filament install"
+        ],
         "install:reference": "@composer --working-dir=apps/reference install",
         "install:all": [
             "@install:packages",

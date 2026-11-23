@@ -1,0 +1,13 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 4
+    paths:
+        - src
+    databaseMigrationsPath:
+        - vendor/stats4sd/filament-odk-link/database/migrations
+    tmpDir: build/phpstan
+    checkOctaneCompatibility: true
+    checkModelProperties: true
+    noUnnecessaryCollectionCallOnly: ['count', 'first']

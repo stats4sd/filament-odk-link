@@ -13,10 +13,12 @@ use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
 use Stats4sd\FilamentOdkLink\Commands\PollForOdkData;
 use Stats4sd\FilamentOdkLink\Contracts\CurrentOwnerResolver;
 use Stats4sd\FilamentOdkLink\Contracts\OperationNotifier;
+use Stats4sd\FilamentOdkLink\Filament\OdkLinkFilamentServiceProvider;
 use Stats4sd\FilamentOdkLink\Filament\Support\FilamentCurrentOwnerResolver;
 use Stats4sd\FilamentOdkLink\Filament\Support\FilamentOperationNotifier;
+use Stats4sd\FilamentOdkLink\Filament\Tests\Models\Team;
+use Stats4sd\FilamentOdkLink\Filament\Tests\Models\User;
 use Stats4sd\FilamentOdkLink\FilamentOdkLinkEventServiceProvider;
-use Stats4sd\FilamentOdkLink\FilamentOdkLinkServiceProvider;
 use Stats4sd\FilamentOdkLink\Listeners\HandleXlsformTemplateAdded;
 use Stats4sd\FilamentOdkLink\OdkLinkCoreServiceProvider;
 use Stats4sd\FilamentOdkLink\Support\CurrentOwner;
@@ -24,8 +26,6 @@ use Stats4sd\FilamentOdkLink\Support\NullCurrentOwnerResolver;
 use Stats4sd\FilamentOdkLink\Support\NullOperationNotifier;
 use Stats4sd\FilamentOdkLink\Support\OperationNotification;
 use Stats4sd\FilamentOdkLink\Support\OperationNotifications;
-use Stats4sd\FilamentOdkLink\Tests\Models\Team;
-use Stats4sd\FilamentOdkLink\Tests\Models\User;
 
 it('provides lazy Filament defaults in workers and respects explicit overrides', function () {
     expect(app(CurrentOwnerResolver::class))->toBeInstanceOf(FilamentCurrentOwnerResolver::class)
@@ -95,9 +95,9 @@ it('ignores a retained tenant when switching to an administrative panel', functi
     expect(app(CurrentOwner::class)->current())->toBeNull();
 });
 
-it('registers package event listeners and console commands once through the combined provider', function () {
+it('registers package event listeners and console commands once when both providers are registered again', function () {
     app()->register(OdkLinkCoreServiceProvider::class);
-    app()->register(FilamentOdkLinkServiceProvider::class);
+    app()->register(OdkLinkFilamentServiceProvider::class);
     $listeners = Event::getRawListeners()[MediaHasBeenAddedEvent::class];
     expect(collect($listeners)->filter(fn ($listener) => $listener === HandleXlsformTemplateAdded::class))->toHaveCount(1);
     $commands = Artisan::all();

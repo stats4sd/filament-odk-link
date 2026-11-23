@@ -2,22 +2,11 @@
 
 namespace Stats4sd\FilamentOdkLink\Tests;
 
-use BladeUI\Heroicons\BladeHeroiconsServiceProvider;
-use BladeUI\Icons\BladeIconsServiceProvider;
-use Filament\Actions\ActionsServiceProvider;
-use Filament\FilamentServiceProvider;
-use Filament\Forms\FormsServiceProvider;
-use Filament\Infolists\InfolistsServiceProvider;
-use Filament\Notifications\NotificationsServiceProvider;
-use Filament\Support\SupportServiceProvider;
-use Filament\Tables\TablesServiceProvider;
-use Filament\Widgets\WidgetsServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Livewire\LivewireServiceProvider;
 use Maatwebsite\Excel\ExcelServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
-use RyanChandler\BladeCaptureDirective\BladeCaptureDirectiveServiceProvider;
-use Stats4sd\FilamentOdkLink\FilamentOdkLinkServiceProvider;
+use Spatie\MediaLibrary\MediaLibraryServiceProvider;
+use Stats4sd\FilamentOdkLink\OdkLinkCoreServiceProvider;
 use Stats4sd\FilamentOdkLink\Tests\Models\Team;
 use Stats4sd\FilamentOdkLink\Tests\Models\User;
 
@@ -35,20 +24,9 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app): array
     {
         return [
-            ActionsServiceProvider::class,
-            BladeCaptureDirectiveServiceProvider::class,
-            BladeHeroiconsServiceProvider::class,
-            BladeIconsServiceProvider::class,
-            FilamentServiceProvider::class,
-            FormsServiceProvider::class,
-            InfolistsServiceProvider::class,
-            LivewireServiceProvider::class,
             ExcelServiceProvider::class,
-            NotificationsServiceProvider::class,
-            SupportServiceProvider::class,
-            TablesServiceProvider::class,
-            WidgetsServiceProvider::class,
-            FilamentOdkLinkServiceProvider::class,
+            MediaLibraryServiceProvider::class,
+            OdkLinkCoreServiceProvider::class,
         ];
     }
 

@@ -25,8 +25,9 @@ Migrations are explicitly ordered and registered by numeric prefix in `getMigrat
 
 ## Architecture
 
-### One Filament plugin
-- There is no team-facing plugin in the package today. Tenant UI lives in host apps; extracting it is roadmap steps 5 and 6 in the root `RESTRUCTURING.md`.
+### No UI in this package
+- This package is headless: no `Filament\`, `Livewire\` or view code, and Filament is not installed in its `vendor/`. `tests/ArchTest.php` and PHPStan (class-not-found) enforce it.
+- The Filament UI (`OdkLinkAdmin` plugin, resources, widgets, form components, views, CSS) lives in [`packages/odk-link-filament`](../odk-link-filament/CLAUDE.md). It shares the `Stats4sd\FilamentOdkLink\` PSR-4 prefix until the namespace rename.
 
 ### Domain model (the core to understand)
 The form hierarchy lives in `src/Models/OdkLink/`:

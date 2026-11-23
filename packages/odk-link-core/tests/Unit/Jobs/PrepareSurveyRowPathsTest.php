@@ -1,22 +1,11 @@
 <?php
 
-use Filament\Panel;
-use Filament\PanelRegistry;
 use Illuminate\Support\Facades\DB;
 use Stats4sd\FilamentOdkLink\Jobs\PrepareSurveyRowPaths;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
 
 // Builds the survey-row paths and repeat-group paths from the row ordering.
 beforeEach(function () {
-    // Each saved survey row fires a hook that touches the Xlsform global scope,
-    // which calls Filament::hasTenancy(). Stub the registry so it resolves.
-    $mockPanel = Mockery::mock(Panel::class);
-    $mockPanel->shouldReceive('hasTenancy')->andReturn(false);
-    $mockPanel->shouldReceive('getTenantModel')->andReturn(null);
-    $mockRegistry = Mockery::mock(PanelRegistry::class);
-    $mockRegistry->shouldReceive('getDefault')->andReturn($mockPanel);
-    app()->instance(PanelRegistry::class, $mockRegistry);
-
     $this->version = addModuleVersion(makeXlsformTemplate(), 'mod');
 
     $rows = [

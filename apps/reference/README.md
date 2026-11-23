@@ -1,8 +1,8 @@
 # ODK Link reference app
 
-A thin Laravel 13 + Filament 5 application that consumes `packages/odk-link-core` by Composer path repository. It is what a client application looks like after installing the package, and it is the manual test surface and UI test host for the monorepo. See the root [RESTRUCTURING.md](../../RESTRUCTURING.md) for where it sits in the roadmap.
+A thin Laravel 13 + Filament 5 application that consumes `packages/odk-link-core` (headless core) and `packages/odk-link-filament` (Filament UI) by Composer path repository. It is what a client application looks like after installing the packages, and it is the manual test surface and UI test host for the monorepo. See the root [RESTRUCTURING.md](../../RESTRUCTURING.md) for where it sits in the roadmap.
 
-It is not published and never will be. The root and reference Composer path repositories assign the core the synthetic local version `dev-dev`, independent of the checked-out branch. This keeps strict validation and dependency resolution consistent across feature branches; it is not a published package version.
+It is not published and never will be. The root and reference Composer path repositories assign both packages the synthetic local version `dev-dev`, independent of the checked-out branch. This keeps strict validation and dependency resolution consistent across feature branches; it is not a published package version.
 
 ## What it owns
 
@@ -10,7 +10,7 @@ It is not published and never will be. The root and reference Composer path repo
 | --- | --- | --- |
 | `Team` model, `teams` and `team_user` tables | `app/Models/Team.php`, `database/migrations/0001_01_01_000003_create_teams_table.php` | The package's form owner (`filament-odk-link.models.form_owner`) and the tenant of the team panel. Implements `FormOwner`, uses `HasXlsforms`. |
 | `User` model | `app/Models/User.php` | Implements `PlatformUser` with `Notifiable`, plus Spatie `HasRoles` and Filament `FilamentUser`/`HasTenants`. Panel access and authorization remain host-owned. |
-| `admin` panel at `/admin` | `app/Providers/Filament/AdminPanelProvider.php` | Loads the package plugin `OdkLinkAdmin` (templates, modules, module versions, datasets, choice lists). |
+| `admin` panel at `/admin` | `app/Providers/Filament/AdminPanelProvider.php` | Loads the `OdkLinkAdmin` plugin from `odk-link-filament` (templates, modules, module versions, datasets, choice lists). |
 | `team` panel at `/team/{team}` | `app/Providers/Filament/TeamPanelProvider.php` | Tenancy on `Team`. The package ships no team plugin yet, so this panel only proves the tenant wiring. |
 | Published package config | `config/filament-odk-link.php` | Edited: both storage disks default to `public` (env `ODK_XLSFORMS_DISK`, `ODK_MEDIA_DISK`). The package default reads a misspelled config key and falls back to `local`, which has no URL. |
 | Published package migrations | `database/migrations/2026_09_08_*` | See "Re-publishing migrations". |
@@ -24,7 +24,7 @@ No Node toolchain for the app itself. Filament serves its own compiled assets, s
 
 `Team` implements `FormOwner` using `HasXlsforms`; `User` implements `PlatformUser` using Laravel `Notifiable`. Published config explicitly names both models, retains the environment overrides and the package model registry, and binds `RoleResolver` to `app/OdkLink/ReferenceRoleResolver.php`. That resolver selects users with this application's `Super Admin` role on the `web` guard, or returns an empty collection before the role exists. Spatie permission is an explicit application dependency; core no longer requires it. The seeded `admin` role and historical `roles.xlsform-admin` config remain host choices and do not authorize operations.
 
-The combined provider supplies the Filament current-owner and notification adapters in HTTP requests and workers. Null current-owner/notifier config means use these integration defaults; an explicit class overrides them. Submission processing defaults to the no-op implementation. `tests/Feature/HostContractsTest.php` demonstrates a constructor-injected test processor invoked after ingestion without introducing a production post-processing feature.
+`OdkLinkFilamentServiceProvider` (from `odk-link-filament`) registers the core provider and supplies the Filament current-owner and notification adapters in HTTP requests and workers. Null current-owner/notifier config means use these integration defaults; an explicit class overrides them. Submission processing defaults to the no-op implementation. `tests/Feature/HostContractsTest.php` demonstrates a constructor-injected test processor invoked after ingestion without introducing a production post-processing feature.
 
 See the [package host setup and migration guide](../../packages/odk-link-core/README.md#host-contracts-and-setup) for all contracts, optional core-only boot, recipient failure behavior and deployment precautions. Drain pending import/deployment/export jobs before deploying the new actor types and restart workers. Selected-owner scopes are not authorization checks; no-owner CLI and administrative queries remain unscoped. Production hosts must supply policies and tenant-selection access controls.
 
@@ -75,7 +75,7 @@ vendor/bin/pest                     # inside apps/reference
 
 Pest with `RefreshDatabase` on SQLite in memory. `phpunit.xml` carries a fixed `APP_KEY` so CI needs no `.env`, and pins `ODK_URL` and the other `ODK_*` keys to empty so a developer's `.env` with a real server never leaks into the suite (a `Team` created under a real `ODK_URL` would call ODK Central). The suite is a smoke layer: the package boots, published migrations create the schema, both panels serve their login pages, the seeded admin can open every package resource index and the template create page, the template infolist builds against a record (which autoloads the schema class whose import was case-mismatched), and tenancy sends users to their team or 404s a teamless user and a foreign team. Template view and edit pages are a `todo`: the infolist reads `$record->rootSection->schema`, so they need a template that has been through the import pipeline, which is step 5 and 6 work.
 
-CI: `.github/workflows/reference-ci.yml`, jobs `reference composer validate`, `reference tests (PHP 8.4)`, `reference pint`. Dependencies are installed from the committed `composer.lock`. Composer does not re-resolve a path package's `require` on `install`, so when the core's `composer.json` changes, run `composer update stats4sd/filament-odk-link` here and commit the lock, or reference CI will test against the old transitive set.
+CI: `.github/workflows/reference-ci.yml`, jobs `reference composer validate`, `reference tests (PHP 8.4)`, `reference pint`. Dependencies are installed from the committed `composer.lock`. Composer does not re-resolve a path package's `require` on `install`, so when the core's `composer.json` changes, run `composer update stats4sd/filament-odk-link stats4sd/odk-link-filament` here and commit the lock. The same applies when `packages/odk-link-filament/composer.json` changes, or reference CI will test against the old transitive set.
 
 ## Re-publishing migrations
 

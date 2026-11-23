@@ -1,4 +1,4 @@
-# Manage ODK forms  in a harmonised way with Laravel Filament 
+# ODK Link core
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/stats4sd/filament-odk-link.svg?style=flat-square)](https://packagist.org/packages/stats4sd/filament-odk-link)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/stats4sd/filament-odk-link/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/stats4sd/filament-odk-link/actions?query=workflow%3Arun-tests+branch%3Amain)
@@ -7,7 +7,9 @@
 
 
 
-A Laravel package and Filament plugin for importing XLSForm templates, configuring owner-specific forms, deploying them to ODK Central and ingesting submissions. Host contracts keep ownership, users and operational notification policy under application control.
+A headless Laravel package for importing XLSForm templates, configuring owner-specific forms, deploying them to ODK Central and ingesting submissions. Host contracts keep ownership, users and operational notification policy under application control.
+
+This package has no UI dependency. The Filament admin UI (the `OdkLinkAdmin` plugin, resources, widgets and views) lives in the companion package [`stats4sd/odk-link-filament`](../odk-link-filament/README.md), which requires this one.
 
 ## Installation
 
@@ -30,12 +32,6 @@ You can publish the config file with:
 
 ```bash
 php artisan vendor:publish --tag="filament-odk-link-config"
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="filament-odk-link-views"
 ```
 
 ## Host contracts and setup
@@ -142,9 +138,9 @@ Recipient selection does not authorize operations. Hosts retain responsibility f
 
 ### Providers and optional overrides
 
-Composer still discovers `FilamentOdkLinkServiceProvider`, the compatibility composition root. It registers `OdkLinkCoreServiceProvider` plus `Filament\OdkLinkFilamentServiceProvider` once. The public `OdkLinkAdmin` plugin and config/migration/view publish tags are unchanged. Worker bindings are available without visiting a panel.
+Composer discovers `OdkLinkCoreServiceProvider`. Installing `stats4sd/odk-link-filament` adds `Filament\OdkLinkFilamentServiceProvider`, which registers the core provider first and then binds the Filament adapters, whatever order discovery uses. Worker bindings are available without visiting a panel.
 
-| Contract | Core-only default | Combined-provider default |
+| Contract | Core-only default | With `odk-link-filament` |
 | --- | --- | --- |
 | `SubmissionProcessor` | `NullSubmissionProcessor` (no post-processing) | Same |
 | `RoleResolver` | `EmptyRoleResolver` (no administrator recipients) | Same; configure a host resolver |
@@ -153,7 +149,7 @@ Composer still discovers `FilamentOdkLinkServiceProvider`, the compatibility com
 
 Explicit implementation class strings in `contracts.*` override these defaults and support constructor injection. Custom owner resolvers implement `current(): (Model&FormOwner)|null`; custom notifiers implement `send(OperationNotification $notification, Collection $recipients): void`. Domain notifications carry an immutable title/body/severity/ID, persistence and database/broadcast flags, and optional action URL. `HtmlString` bodies remain trusted HTML; ordinary strings retain ordinary escaping. Existing success notifications stay broadcast-only; failures retain database plus broadcast delivery and the database refresh event.
 
-For core-only boot, disable Composer discovery of `stats4sd/filament-odk-link` in the host's `extra.laravel.dont-discover` and explicitly register `OdkLinkCoreServiceProvider` instead of the compatibility provider. A host that also wants no UI providers must disable discovery of installed Filament/Livewire packages too. Step 4 proves isolated boot and source independence with those providers absent; Filament remains an installed dependency until the Step 5 package extraction.
+For a core-only host, require only this package. It installs no Filament or Livewire packages.
 
 ### Migration from the previous integration
 
@@ -163,7 +159,7 @@ For core-only boot, disable Composer discovery of `stats4sd/filament-odk-link` i
 4. Drain in-flight import/deployment/export jobs before deploying the changed serialized recipient types, then restart queue workers. Compatibility with old queued payloads is not promised.
 5. Refresh published config and migration source copies while retaining host settings and migration ordering. This refactor changes owner-class validation in migration files, not their schema; already-run migrations do not need to run again. Include these integration changes in the planned coordinated migration release alongside future external-facing renames.
 
-The [reference app](../../apps/reference/README.md) demonstrates a concrete Spatie recipient policy, panels, storage settings and published migrations. Package/config/namespace renames and UI extraction remain later roadmap work.
+The [reference app](../../apps/reference/README.md) demonstrates a concrete Spatie recipient policy, panels, storage settings and published migrations. Package/config/namespace renames remain later roadmap work.
 
 ## Testing
 

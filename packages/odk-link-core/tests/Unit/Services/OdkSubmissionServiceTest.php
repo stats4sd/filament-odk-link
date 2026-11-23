@@ -1,7 +1,5 @@
 <?php
 
-use Filament\Panel;
-use Filament\PanelRegistry;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -18,15 +16,6 @@ use Stats4sd\FilamentOdkLink\Tests\Models\Team;
 beforeEach(function () {
     Cache::flush();
     Queue::fake();
-
-    $mockPanel = Mockery::mock(Panel::class);
-    $mockPanel->shouldReceive('hasTenancy')->andReturn(false);
-    $mockPanel->shouldReceive('getTenantModel')->andReturn(null);
-
-    $mockRegistry = Mockery::mock(PanelRegistry::class);
-    $mockRegistry->shouldReceive('getDefault')->andReturn($mockPanel);
-
-    app()->instance(PanelRegistry::class, $mockRegistry);
 
     $teamId = DB::table('teams')->insertGetId([
         'name' => 'Submission Test Team',
