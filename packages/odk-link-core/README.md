@@ -17,6 +17,8 @@ You can install the package via composer:
 composer require stats4sd/filament-odk-link
 ```
 
+The package reads and writes XLSForm workbooks with [Laravel Excel](https://docs.laravel-excel.com) 4.x (PhpSpreadsheet 5). If your app also requires `maatwebsite/excel` directly, it must allow `^4.0`.
+
 You can publish and run the migrations with:
 
 ```bash

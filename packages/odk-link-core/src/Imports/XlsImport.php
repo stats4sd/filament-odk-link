@@ -13,7 +13,7 @@ class XlsImport implements ToCollection, WithHeadingRow, WithMultipleSheets
 {
     use Importable;
 
-    public function collection(Collection $collection) {}
+    public function collection(Collection $collection): void {}
 
     public function sheets(): array
     {

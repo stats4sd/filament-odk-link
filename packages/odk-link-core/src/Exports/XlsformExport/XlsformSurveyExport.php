@@ -161,7 +161,7 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wit
     /**
      * @throws Exception
      */
-    public function styles(Worksheet $sheet): void
+    public function styles(Worksheet $sheet): ?array
     {
         $languageCount = $this->locales->count();
 
@@ -232,6 +232,7 @@ class XlsformSurveyExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wit
             $sheet->getStyle($row . ':' . $row)->applyFromArray($endRepeatStyle);
         }
 
+        return null;
     }
 
     private function getDynamicStylesRowLists(Worksheet $sheet): Collection
