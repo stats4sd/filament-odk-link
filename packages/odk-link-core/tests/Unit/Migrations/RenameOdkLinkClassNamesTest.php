@@ -18,6 +18,7 @@ it('rewrites pre-rename core class names and leaves host class names alone', fun
     DB::table('datasets')->insert([
         'name' => 'countries',
         'model_type' => 'Stats4sd\\FilamentOdkLink\\Models\\Country',
+        'entity_model' => 'Stats4sd\\FilamentOdkLink\\Models\\Region',
     ]);
 
     renameClassNamesMigration()->up();
@@ -25,6 +26,7 @@ it('rewrites pre-rename core class names and leaves host class names alone', fun
     expect(DB::table('odk_projects')->orderBy('id')->pluck('owner_type')->all())
         ->toBe([Platform::class, Team::class])
         ->and(DB::table('datasets')->value('model_type'))->toBe('Stats4sd\\OdkLink\\Core\\Models\\Country')
+        ->and(DB::table('datasets')->value('entity_model'))->toBe('Stats4sd\\OdkLink\\Core\\Models\\Region')
         ->and(OdkProject::find(1)->owner()->getRelated())->toBeInstanceOf(Platform::class);
 });
 

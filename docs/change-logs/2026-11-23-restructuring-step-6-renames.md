@@ -30,7 +30,7 @@ Every pre-split name is gone from shipping code. The two packages no longer shar
 - Spatie package name `odk-link`. This renames the config file, both publish tags and the install command in one go. Rewrote 50 `config('filament-odk-link.…')` calls and the error messages that quote config keys.
 - `FilamentOdkLinkEventServiceProvider` → `OdkLinkEventServiceProvider`. Deleted the empty `FilamentOdkLink` class and its facade, and dropped the smoke test that resolved the facade.
 - `broadcastAs()` names `FilamentOdkLink.*` → `OdkLink.*`.
-- New migration `035_rename_odk_link_class_names` with tests (up, down, no-op on a fresh database).
+- New migration `035_rename_odk_link_class_names` with tests (up, down, no-op on a fresh database). Covers seven polymorphic type columns plus `datasets.entity_model`, which stores a class name that is later copied into `entities.model_type`.
 - Both arch checks now forbid `Stats4sd\FilamentOdkLink\`. The one allowed occurrence is the migration's literal.
 
 ### Commit 3: Filament package
