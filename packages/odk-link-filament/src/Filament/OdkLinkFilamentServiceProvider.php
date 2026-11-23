@@ -3,7 +3,6 @@
 namespace Stats4sd\FilamentOdkLink\Filament;
 
 use Filament\Support\Assets\Css;
-use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Features\SupportTesting\Testable;
@@ -11,6 +10,7 @@ use Stats4sd\FilamentOdkLink\Contracts\CurrentOwnerResolver;
 use Stats4sd\FilamentOdkLink\Contracts\OperationNotifier;
 use Stats4sd\FilamentOdkLink\Filament\Support\FilamentCurrentOwnerResolver;
 use Stats4sd\FilamentOdkLink\Filament\Support\FilamentOperationNotifier;
+use Stats4sd\FilamentOdkLink\OdkLinkCoreServiceProvider;
 use Stats4sd\FilamentOdkLink\Support\ConfiguredContracts;
 use Stats4sd\FilamentOdkLink\Testing\TestsFilamentOdkLink;
 
@@ -18,6 +18,10 @@ class OdkLinkFilamentServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Registering core here, ahead of the adapter bindings, guarantees the adapters
+        // override core's null defaults regardless of package discovery order.
+        $this->app->register(OdkLinkCoreServiceProvider::class);
+
         foreach ([
             CurrentOwnerResolver::class => ['current_owner_resolver', FilamentCurrentOwnerResolver::class],
             OperationNotifier::class => ['operation_notifier', FilamentOperationNotifier::class],
@@ -37,7 +41,6 @@ class OdkLinkFilamentServiceProvider extends ServiceProvider
 
         FilamentAsset::register([
             Css::make('filament-odk-link-styles', __DIR__ . '/../../resources/dist/filament-odk-link.css'),
-            Js::make('filament-odk-link-scripts', __DIR__ . '/../../resources/dist/filament-odk-link.js'),
         ], 'stats4sd/filament-odk-link');
 
         Testable::mixin(new TestsFilamentOdkLink);
