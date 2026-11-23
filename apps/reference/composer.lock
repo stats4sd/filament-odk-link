@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "666f2f6e5ff22fe004119db1a6d660ab",
+    "content-hash": "c050e52b0d1be4f4e4e18da2405e326b",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -6690,16 +6690,15 @@
             "dist": {
                 "type": "path",
                 "url": "../../packages/odk-link-core",
-                "reference": "d1ecca6eaba4cb37324ab9de13d4ee1b49204ae2"
+                "reference": "2cbc1ef58907bdbc6f3e85dc9905e9011af1eeb2"
             },
             "require": {
-                "filament/filament": "^5.0",
-                "filament/spatie-laravel-media-library-plugin": "^5.0",
                 "illuminate/contracts": "^13.0",
+                "kirschbaum-development/eloquent-power-joins": "^4.0",
                 "maatwebsite/excel": "^4.0",
                 "php": "^8.4",
                 "shiftonelabs/laravel-cascade-deletes": "^2.0",
-                "simplesoftwareio/simple-qrcode": "^4.2",
+                "spatie/laravel-medialibrary": "^11.0",
                 "spatie/laravel-package-tools": "^1.15.0",
                 "staudenmeir/belongs-to-through": "^2.18",
                 "staudenmeir/eloquent-has-many-deep": "^1.22"
@@ -6720,7 +6719,7 @@
             "extra": {
                 "laravel": {
                     "providers": [
-                        "Stats4sd\\FilamentOdkLink\\FilamentOdkLinkServiceProvider"
+                        "Stats4sd\\FilamentOdkLink\\OdkLinkCoreServiceProvider"
                     ],
                     "aliases": {
                         "FilamentOdkLink": "Stats4sd\\FilamentOdkLink\\Facades\\FilamentOdkLink"
@@ -6766,11 +6765,97 @@
                     "role": "Developer"
                 }
             ],
-            "description": "Manage ODK forms  in a harmonised way with Laravel Filament ",
+            "description": "Headless core for ODK Link: models, ODK Central client, jobs, imports/exports and migrations for managing ODK forms in Laravel.",
             "homepage": "https://github.com/stats4sd/filament-odk-link",
             "keywords": [
                 "filament-odk-link",
                 "laravel",
+                "stats4sd"
+            ],
+            "support": {
+                "issues": "https://github.com/stats4sd/filament-odk-link/issues",
+                "source": "https://github.com/stats4sd/filament-odk-link"
+            },
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "stats4sd/odk-link-filament",
+            "version": "dev-dev",
+            "dist": {
+                "type": "path",
+                "url": "../../packages/odk-link-filament",
+                "reference": "a232a2589af1a1adcc70d3d95fffd64c2a83d256"
+            },
+            "require": {
+                "filament/filament": "^5.0",
+                "filament/spatie-laravel-media-library-plugin": "^5.0",
+                "php": "^8.4",
+                "simplesoftwareio/simple-qrcode": "^4.2",
+                "stats4sd/filament-odk-link": "dev-dev"
+            },
+            "require-dev": {
+                "larastan/larastan": "^3.0",
+                "laravel/pint": "^1.0",
+                "nunomaduro/collision": "^8.1",
+                "orchestra/testbench": "^11.0",
+                "pestphp/pest": "^4.0",
+                "pestphp/pest-plugin-arch": "^4.0",
+                "pestphp/pest-plugin-laravel": "^4.0",
+                "phpstan/extension-installer": "^1.1",
+                "phpstan/phpstan-deprecation-rules": "^2.0",
+                "phpstan/phpstan-phpunit": "^2.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Stats4sd\\FilamentOdkLink\\Filament\\OdkLinkFilamentServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Stats4sd\\FilamentOdkLink\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Stats4sd\\FilamentOdkLink\\Filament\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "post-autoload-dump": [
+                    "@php ./vendor/bin/testbench package:discover --ansi"
+                ],
+                "analyse": [
+                    "vendor/bin/phpstan analyse"
+                ],
+                "test": [
+                    "vendor/bin/pest"
+                ],
+                "format": [
+                    "vendor/bin/pint"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Stats4SD",
+                    "email": "support@stats4sd.org",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Filament admin UI for ODK Link: the OdkLinkAdmin plugin, resources, widgets, form components and views on top of the headless core.",
+            "homepage": "https://github.com/stats4sd/filament-odk-link",
+            "keywords": [
+                "filament",
+                "laravel",
+                "odk",
                 "stats4sd"
             ],
             "support": {
@@ -13699,7 +13784,8 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "stats4sd/filament-odk-link": 20
+        "stats4sd/filament-odk-link": 20,
+        "stats4sd/odk-link-filament": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

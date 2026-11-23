@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "stats4sd/odk-link-reference",
     "type": "project",
-    "description": "Reference host application for the ODK Link packages. Consumes packages/odk-link-core by path. Not published.",
+    "description": "Reference host application for the ODK Link packages. Consumes packages/odk-link-core and packages/odk-link-filament by path. Not published.",
     "keywords": [
         "laravel",
         "framework"
@@ -14,7 +14,8 @@
         "laravel/tinker": "^3.0",
         "php": "^8.4",
         "spatie/laravel-permission": "^6.10",
-        "stats4sd/filament-odk-link": "dev-dev"
+        "stats4sd/filament-odk-link": "dev-dev",
+        "stats4sd/odk-link-filament": "dev-dev"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -98,7 +99,8 @@
             "options": {
                 "symlink": true,
                 "versions": {
-                    "stats4sd/filament-odk-link": "dev-dev"
+                    "stats4sd/filament-odk-link": "dev-dev",
+                    "stats4sd/odk-link-filament": "dev-dev"
                 }
             }
         }
