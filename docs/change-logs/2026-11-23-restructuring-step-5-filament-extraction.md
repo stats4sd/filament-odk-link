@@ -36,7 +36,7 @@ Implements [docs/plans/2026-11-23-restructuring-step-5-filament-extraction.md](.
   - The Pest arch expectation now covers the whole `Stats4sd\FilamentOdkLink` namespace instead of a list of sub-namespaces.
 - PHPStan baseline:
   - The 10 UI entries moved to the Filament package.
-  - One existing entry in `GenerateSubmissions`, about the undefined `Xlsform::$odk_project_id` (a pre-existing bug), was reworded. Without Filament installed, PHPStan infers a narrower receiver type for `Xlsform::find()`, so the old message no longer matched. It is still suppressed, not fixed.
+  - One existing entry in `GenerateSubmissions`, about the undefined `Xlsform::$odk_project_id` (a pre-existing bug), now also matches a narrower receiver type. Locally PHPStan infers `Xlsform` for `Xlsform::find($this->argument(...))`, while CI infers `Collection<int, Xlsform>|Xlsform`. The two runs have identical PHPStan, Larastan and Laravel versions. The cause was not traced. It is the same single error, still suppressed, not fixed.
 - README and `CLAUDE.md` describe the core as headless and point to the Filament package.
 
 ### Filament package
