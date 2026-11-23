@@ -1,8 +1,8 @@
 # Restructuring Step 5: extract `packages/odk-link-filament`
 
-**Status:** Not Started
+**Status:** Completed
 
-Accepted 2026-11-23. Implementation not yet started.
+Accepted and implemented 2026-11-23. Change log: [docs/change-logs/2026-11-23-restructuring-step-5-filament-extraction.md](../change-logs/2026-11-23-restructuring-step-5-filament-extraction.md). Deviations from the plan: core also needed `kirschbaum-development/eloquent-power-joins` as a direct dependency, and the Filament package gained a core-registered-first ordering test.
 
 ## Context
 

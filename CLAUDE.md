@@ -10,8 +10,9 @@ Follow the working patterns in @.claude/code-project-working-patterns.md
 
 | Path | What | Guidance |
 | --- | --- | --- |
-| `packages/odk-link-core/` | The Laravel package and Filament plugin (`stats4sd/filament-odk-link`, namespace `Stats4sd\FilamentOdkLink`). Own `composer.json`, `vendor/`, Pest + Testbench suite, PHPStan, Pint. | [packages/odk-link-core/CLAUDE.md](packages/odk-link-core/CLAUDE.md) |
-| `apps/reference/` | Thin Laravel 13 + Filament 5 host app consuming the core by Composer path repo. Owns `Team` and `User`, an `admin` panel with the package plugin, and a tenant `team` panel. Manual test surface and UI test host. | [apps/reference/README.md](apps/reference/README.md) |
+| `packages/odk-link-core/` | Headless Laravel core (`stats4sd/filament-odk-link`, namespace `Stats4sd\FilamentOdkLink`): models, ODK Central client, jobs, migrations, config. No Filament or Livewire installed. Own `composer.json`, `vendor/`, Pest + Testbench suite, PHPStan, Pint. | [packages/odk-link-core/CLAUDE.md](packages/odk-link-core/CLAUDE.md) |
+| `packages/odk-link-filament/` | Filament UI (`stats4sd/odk-link-filament`): `OdkLinkAdmin` plugin, resources, widgets, views, CSS. Requires the core by path and shares its `Stats4sd\FilamentOdkLink\` namespace until the step 7 rename. Own `composer.json`, `vendor/`, Pest + Testbench suite, PHPStan, Pint. | [packages/odk-link-filament/CLAUDE.md](packages/odk-link-filament/CLAUDE.md) |
+| `apps/reference/` | Thin Laravel 13 + Filament 5 host app consuming both packages by Composer path repo. Owns `Team` and `User`, an `admin` panel with the `OdkLinkAdmin` plugin, and a tenant `team` panel. Manual test surface and UI test host. | [apps/reference/README.md](apps/reference/README.md) |
 | `.github/workflows/` | Per-package CI. | [.github/workflows/README.md](.github/workflows/README.md) |
 | `composer.json` (root) | Workspace shell. Delegates `test:*`, `analyse:*`, `format:*`, `install:*` scripts to the package and app directories. Not published. |  |
 
@@ -19,7 +20,7 @@ Follow the working patterns in @.claude/code-project-working-patterns.md
 
 Run from the repo root. Each delegates into the right directory; per-directory `vendor/` is intentional (see RESTRUCTURING.md, Decisions). Script names are in the root `composer.json`.
 
-The core suite must run inside `packages/odk-link-core`, never against the root `vendor/`: its `post-autoload-dump` (`testbench package:discover`) only fires when the package is the Composer root.
+Each package suite must run inside its own directory, never against the root `vendor/`: their `post-autoload-dump` (`testbench package:discover`) only fires when the package is the Composer root.
 
 # Conventions that span directories
 
