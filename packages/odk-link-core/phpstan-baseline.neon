@@ -19,7 +19,7 @@ parameters:
 			path: database/migrations/023_create_m49_regions_tables.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Collection\<(?:int|\(int\|string\)), Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Xlsform\>\|Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Xlsform\:\:\$odk_project_id\.$#'
+			message: '#^Access to an undefined property Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Xlsform\:\:\$odk_project_id\.$#'
 			identifier: property.notFound
 			count: 1
 			path: src/Commands/GenerateSubmissions.php
@@ -89,66 +89,6 @@ parameters:
 			identifier: if.alwaysTrue
 			count: 1
 			path: src/Exports/XlsformExport/XlsformChoicesExport.php
-
-		-
-			message: '#^Class Filament\\Forms\\Components\\Textarea referenced with incorrect case\: Filament\\Forms\\Components\\TextArea\.$#'
-			identifier: class.nameCase
-			count: 1
-			path: src/Filament/OdkAdmin/Resources/ChoiceListResource.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Filament/OdkAdmin/Resources/Datasets/Schemas/DatasetForm.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: src/Filament/OdkAdmin/Resources/Datasets/Schemas/DatasetForm.php
-
-		-
-			message: '#^Called ''Model\:\:make\(\)'' which performs unnecessary work, use ''new Model\(\)''\.$#'
-			identifier: larastan.noModelMake
-			count: 1
-			path: src/Filament/OdkAdmin/Resources/XlsformTemplates/Pages/CreateXlsformTemplate.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
-			count: 1
-			path: src/Filament/OdkAdmin/Resources/XlsformTemplates/Pages/CreateXlsformTemplate.php
-
-		-
-			message: '#^Access to an undefined property Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\XlsformTemplate\:\:\$newXlsfile\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Filament/OdkAdmin/Resources/XlsformTemplates/Pages/ViewXlsformTemplate.php
-
-		-
-			message: '#^Access to an undefined property Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\Interfaces\\IsXlsformTemplate\:\:\$owner_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Filament/OdkAdmin/Resources/XlsformTemplates/Schemas/XlsformTemplateForm.php
-
-		-
-			message: '#^Access to an undefined property Stats4sd\\FilamentOdkLink\\Models\\OdkLink\\XlsformTemplate\:\:\$newXlsfile\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Filament/OdkAdmin/Resources/XlsformTemplates/Tables/XlsformTemplateTable.php
-
-		-
-			message: '#^Property Stats4sd\\FilamentOdkLink\\Filament\\Widgets\\AvailableOdkTemplatesWidget\:\:\$view \(view\-string\) does not accept default value of type string\.$#'
-			identifier: property.defaultValue
-			count: 1
-			path: src/Filament/Widgets/AvailableOdkTemplatesWidget.php
-
-		-
-			message: '#^Property Stats4sd\\FilamentOdkLink\\Filament\\Widgets\\OdkUrlAlertWidget\:\:\$view \(view\-string\) does not accept default value of type string\.$#'
-			identifier: property.defaultValue
-			count: 1
-			path: src/Filament/Widgets/OdkUrlAlertWidget.php
 
 		-
 			message: '#^Cannot call method contains\(\) on string\.$#'

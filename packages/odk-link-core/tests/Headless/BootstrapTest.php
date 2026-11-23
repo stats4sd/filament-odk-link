@@ -7,7 +7,6 @@ use Stats4sd\FilamentOdkLink\Contracts\CurrentOwnerResolver;
 use Stats4sd\FilamentOdkLink\Contracts\OperationNotifier;
 use Stats4sd\FilamentOdkLink\Contracts\RoleResolver;
 use Stats4sd\FilamentOdkLink\Contracts\SubmissionProcessor;
-use Stats4sd\FilamentOdkLink\FilamentOdkLinkServiceProvider;
 use Stats4sd\FilamentOdkLink\OdkLinkCoreServiceProvider;
 use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 use Stats4sd\FilamentOdkLink\Support\EmptyRoleResolver;
@@ -24,7 +23,6 @@ class Organisation extends Team
 
 it('boots core without UI or role providers and resolves disabled integration defaults', function () {
     $providers = array_keys(app()->getLoadedProviders());
-    expect($providers)->not->toContain(FilamentOdkLinkServiceProvider::class);
     foreach ($providers as $provider) {
         expect($provider)->not->toStartWith('Filament\\')->not->toStartWith('Livewire\\')->not->toStartWith('Spatie\\Permission\\');
     }

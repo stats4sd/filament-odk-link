@@ -18,22 +18,8 @@ it('marks every import class as a Laravel Excel import')
     ->classes()
     ->toImplement(Import::class);
 
-it('keeps domain namespaces independent of host and UI dependencies')
-    ->expect([
-        'Stats4sd\FilamentOdkLink\Contracts',
-        'Stats4sd\FilamentOdkLink\Support',
-        'Stats4sd\FilamentOdkLink\Models',
-        'Stats4sd\FilamentOdkLink\Jobs',
-        'Stats4sd\FilamentOdkLink\Services',
-        'Stats4sd\FilamentOdkLink\Concerns',
-        'Stats4sd\FilamentOdkLink\Commands',
-        'Stats4sd\FilamentOdkLink\Exports',
-        'Stats4sd\FilamentOdkLink\Imports',
-        'Stats4sd\FilamentOdkLink\Listeners',
-        'Stats4sd\FilamentOdkLink\Events',
-        'Stats4sd\FilamentOdkLink\Http',
-        'Stats4sd\FilamentOdkLink\OdkLinkCoreServiceProvider',
-    ])
+it('keeps every core namespace independent of host and UI dependencies')
+    ->expect('Stats4sd\FilamentOdkLink')
     ->not->toUse(['App', 'Filament', 'Livewire', 'Spatie\Permission', 'Stats4sd\FilamentTeamManagement', 'HaydenPierce\ClassFinder', 'Stats4sd\FilamentOdkLink\Filament', 'Stats4sd\FilamentOdkLink\Forms', 'Stats4sd\FilamentOdkLink\Testing']);
 
 it('enforces the boundary across every shipping PHP file including executable class strings', function () {
@@ -49,13 +35,8 @@ it('enforces the boundary across every shipping PHP file including executable cl
             }
 
             $relative = substr($file->getPathname(), strlen($root) + 1);
-            $ui = str_starts_with($relative, 'src/Filament/')
-                || str_starts_with($relative, 'src/Forms/')
-                || $relative === 'src/Testing/TestsFilamentOdkLink.php'
-                || $relative === 'src/OdkLinkAdmin.php'
-                || $relative === 'src/FilamentOdkLinkServiceProvider.php';
 
-            foreach (ShippingBoundary::violations(file_get_contents($file->getPathname()), $ui) as $violation) {
+            foreach (ShippingBoundary::violations(file_get_contents($file->getPathname())) as $violation) {
                 $violations[] = "{$relative}: {$violation}";
             }
         }
@@ -74,8 +55,8 @@ it('recognizes aliases fully qualified calls and executable strings while ignori
         '<?php use Stats4sd\\FilamentTeamManagement\\Models\\User;',
         '<?php $class::$method($submission);',
     ] as $source) {
-        expect(ShippingBoundary::violations($source, false))->not->toBeEmpty();
+        expect(ShippingBoundary::violations($source))->not->toBeEmpty();
     }
 
-    expect(ShippingBoundary::violations('<?php // use App\\Models\\Team;' . "\n" . '/** Filament\\Facades\\Filament */', false))->toBe([]);
+    expect(ShippingBoundary::violations('<?php // use App\\Models\\Team;' . "\n" . '/** Filament\\Facades\\Filament */'))->toBe([]);
 });

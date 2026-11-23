@@ -1,7 +1,5 @@
 <?php
 
-use Filament\Panel;
-use Filament\PanelRegistry;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -14,20 +12,10 @@ use Stats4sd\FilamentOdkLink\Tests\Models\Team;
 
 // Build a minimal Xlsform graph via DB-level inserts to skip the complex booted() hooks
 // (XlsformTemplate::created → OdkLinkService calls; Xlsform::created → setup() dispatch).
-// The PanelRegistry mock stops the 'owned' global scope from throwing when Filament is queried.
 
 beforeEach(function () {
     Cache::flush();
     Queue::fake();
-
-    $mockPanel = Mockery::mock(Panel::class);
-    $mockPanel->shouldReceive('hasTenancy')->andReturn(false);
-    $mockPanel->shouldReceive('getTenantModel')->andReturn(null);
-
-    $mockRegistry = Mockery::mock(PanelRegistry::class);
-    $mockRegistry->shouldReceive('getDefault')->andReturn($mockPanel);
-
-    app()->instance(PanelRegistry::class, $mockRegistry);
 
     $teamId = DB::table('teams')->insertGetId([
         'name' => 'Media Test Team',

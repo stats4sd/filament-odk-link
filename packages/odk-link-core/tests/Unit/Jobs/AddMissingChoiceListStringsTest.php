@@ -1,21 +1,8 @@
 <?php
 
-use Filament\Panel;
-use Filament\PanelRegistry;
 use Illuminate\Support\Facades\DB;
 use Stats4sd\FilamentOdkLink\Jobs\AddMissingChoiceListStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
-
-beforeEach(function () {
-    // Model hooks that fire on save/read need Filament panel registry to resolve.
-    // Stub the registry with a mock panel that has no tenancy.
-    $mockPanel = Mockery::mock(Panel::class);
-    $mockPanel->shouldReceive('hasTenancy')->andReturn(false);
-    $mockPanel->shouldReceive('getTenantModel')->andReturn(null);
-    $mockRegistry = Mockery::mock(PanelRegistry::class);
-    $mockRegistry->shouldReceive('getDefault')->andReturn($mockPanel);
-    app()->instance(PanelRegistry::class, $mockRegistry);
-});
 
 it('skips an entry with no matching translated counterpart instead of crashing', function () {
     $template = makeXlsformTemplate();

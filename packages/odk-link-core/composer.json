@@ -1,6 +1,6 @@
 {
     "name": "stats4sd/filament-odk-link",
-    "description": "Manage ODK forms  in a harmonised way with Laravel Filament ",
+    "description": "Headless core for ODK Link: models, ODK Central client, jobs, imports/exports and migrations for managing ODK forms in Laravel.",
     "keywords": [
         "stats4sd",
         "laravel",
@@ -21,12 +21,11 @@
     ],
     "require": {
         "php": "^8.4",
-        "filament/filament": "^5.0",
-        "filament/spatie-laravel-media-library-plugin": "^5.0",
         "illuminate/contracts": "^13.0",
+        "kirschbaum-development/eloquent-power-joins": "^4.0",
         "maatwebsite/excel": "^4.0",
         "shiftonelabs/laravel-cascade-deletes": "^2.0",
-        "simplesoftwareio/simple-qrcode": "^4.2",
+        "spatie/laravel-medialibrary": "^11.0",
         "spatie/laravel-package-tools": "^1.15.0",
         "staudenmeir/belongs-to-through": "^2.18",
         "staudenmeir/eloquent-has-many-deep": "^1.22"
@@ -72,7 +71,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Stats4sd\\FilamentOdkLink\\FilamentOdkLinkServiceProvider"
+                "Stats4sd\\FilamentOdkLink\\OdkLinkCoreServiceProvider"
             ],
             "aliases": {
                 "FilamentOdkLink": "Stats4sd\\FilamentOdkLink\\Facades\\FilamentOdkLink"

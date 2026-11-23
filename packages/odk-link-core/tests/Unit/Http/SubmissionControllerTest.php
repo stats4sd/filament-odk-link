@@ -1,23 +1,10 @@
 <?php
 
-use Filament\Panel;
-use Filament\PanelRegistry;
 use Illuminate\Support\Facades\DB;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 
-// Submission's 'owned' global scope calls Filament::hasTenancy() → PanelRegistry::getDefault(),
-// which throws when no panel is registered. Stub the registry so the scope is a no-op.
 beforeEach(function () {
-    $mockPanel = Mockery::mock(Panel::class);
-    $mockPanel->shouldReceive('hasTenancy')->andReturn(false);
-    $mockPanel->shouldReceive('getTenantModel')->andReturn(null);
-
-    $mockRegistry = Mockery::mock(PanelRegistry::class);
-    $mockRegistry->shouldReceive('getDefault')->andReturn($mockPanel);
-
-    app()->instance(PanelRegistry::class, $mockRegistry);
-
     $teamId = DB::table('teams')->insertGetId([
         'name' => 'Controller Test Team',
         'created_at' => now(),
