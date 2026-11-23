@@ -3,8 +3,8 @@
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\DB;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
-use Stats4sd\FilamentOdkLink\Tests\Models\Team;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceList;
+use Stats4sd\OdkLink\Core\Tests\Models\Team;
 
 // Build the minimum FK chain: template → module → module_version → choice_list.
 // We insert at the DB level to skip the complex booted() hooks on XlsformTemplate

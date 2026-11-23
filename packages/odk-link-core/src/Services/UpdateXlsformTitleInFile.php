@@ -1,12 +1,12 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Services;
+namespace Stats4sd\OdkLink\Core\Services;
 
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
 
 class UpdateXlsformTitleInFile
 {

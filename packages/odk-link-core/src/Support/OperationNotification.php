@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Support;
+namespace Stats4sd\OdkLink\Core\Support;
 
 use Illuminate\Support\HtmlString;
 

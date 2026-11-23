@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink\Interfaces;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -8,16 +8,16 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceList;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Dataset;
+use Stats4sd\OdkLink\Core\Models\OdkLink\LanguageString;
+use Stats4sd\OdkLink\Core\Models\OdkLink\RequiredMedia;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Submission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\SurveyRow;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModule;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplateSection;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 
 interface IsXlsformTemplate

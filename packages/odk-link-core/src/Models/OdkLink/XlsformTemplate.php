@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,15 +17,15 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Excel;
 use PhpOffice\PhpSpreadsheet\Exception;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
-use Stats4sd\FilamentOdkLink\Imports\XlsImport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasUploadedXlsformFile;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Stats4sd\FilamentOdkLink\Services\UpdateXlsformTitleInFile;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Imports\XlsImport;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Abstracts\HasXlsformDrafts;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Interfaces\IsXlsformTemplate;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Traits\HasUploadedXlsformFile;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Services\UpdateXlsformTitleInFile;
+use Stats4sd\OdkLink\Core\Support\ConfiguredModels;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -140,10 +140,10 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
     {
         $this->addMediaCollection('xlsform_file')
             ->singleFile()
-            ->useDisk(config('filament-odk-link.storage.xlsforms'));
+            ->useDisk(config('odk-link.storage.xlsforms'));
 
         $this->addMediaCollection('attached_media')
-            ->useDisk(config('filament-odk-link.storage.xlsforms'));
+            ->useDisk(config('odk-link.storage.xlsforms'));
     }
 
     // ******************* COMPUTED ATTRIBUTES *****************
@@ -394,7 +394,7 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
     // get link to form in ODK Central
     public function getOdkLinkAttribute(): ?string
     {
-        return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . '/draft';
+        return config('odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . '/draft';
     }
 
     /** @return Collection<XlsformTemplateSection> */

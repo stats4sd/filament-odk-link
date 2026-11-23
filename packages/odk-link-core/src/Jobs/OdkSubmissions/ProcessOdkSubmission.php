@@ -1,15 +1,15 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Jobs\OdkSubmissions;
+namespace Stats4sd\OdkLink\Core\Jobs\OdkSubmissions;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
-use Stats4sd\FilamentOdkLink\Contracts\SubmissionProcessor;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredContracts;
+use Stats4sd\OdkLink\Core\Concerns\NotifiesOnJobFailure;
+use Stats4sd\OdkLink\Core\Contracts\SubmissionProcessor;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Submission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformVersion;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Support\ConfiguredContracts;
 use Throwable;
 
 class ProcessOdkSubmission implements ShouldQueue

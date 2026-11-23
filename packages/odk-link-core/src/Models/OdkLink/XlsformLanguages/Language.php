@@ -1,15 +1,15 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
-use Stats4sd\FilamentOdkLink\Models\Country;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Models\Country;
+use Stats4sd\OdkLink\Core\Support\ConfiguredModels;
 
 class Language extends Model
 {

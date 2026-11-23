@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Support\ConfiguredModels;
 
 class Dataset extends Model implements HasMedia
 {

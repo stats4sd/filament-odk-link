@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
-use Stats4sd\FilamentOdkLink\Jobs\PrepareSurveyRowPaths;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
+use Stats4sd\OdkLink\Core\Jobs\PrepareSurveyRowPaths;
+use Stats4sd\OdkLink\Core\Models\OdkLink\SurveyRow;
 
 // Builds the survey-row paths and repeat-group paths from the row ordering.
 beforeEach(function () {

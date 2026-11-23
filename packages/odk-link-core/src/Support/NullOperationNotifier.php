@@ -1,9 +1,9 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Support;
+namespace Stats4sd\OdkLink\Core\Support;
 
 use Illuminate\Support\Collection;
-use Stats4sd\FilamentOdkLink\Contracts\OperationNotifier;
+use Stats4sd\OdkLink\Core\Contracts\OperationNotifier;
 
 class NullOperationNotifier implements OperationNotifier
 {

@@ -1,10 +1,10 @@
 {
-    "name": "stats4sd/filament-odk-link",
+    "name": "stats4sd/odk-link-core",
     "description": "Headless core for ODK Link: models, ODK Central client, jobs, imports/exports and migrations for managing ODK forms in Laravel.",
     "keywords": [
         "stats4sd",
         "laravel",
-        "filament-odk-link"
+        "odk-link"
     ],
     "homepage": "https://github.com/stats4sd/filament-odk-link",
     "support": {
@@ -44,14 +44,14 @@
     },
     "autoload": {
         "psr-4": {
-            "Stats4sd\\FilamentOdkLink\\": "src/",
-            "Stats4sd\\FilamentOdkLink\\Database\\Factories\\": "database/factories/",
-            "Stats4sd\\FilamentOdkLink\\Database\\Seeders\\": "database/seeders/"
+            "Stats4sd\\OdkLink\\Core\\": "src/",
+            "Stats4sd\\OdkLink\\Core\\Database\\Factories\\": "database/factories/",
+            "Stats4sd\\OdkLink\\Core\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Stats4sd\\FilamentOdkLink\\Tests\\": "tests/"
+            "Stats4sd\\OdkLink\\Core\\Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -71,11 +71,8 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Stats4sd\\FilamentOdkLink\\OdkLinkCoreServiceProvider"
-            ],
-            "aliases": {
-                "FilamentOdkLink": "Stats4sd\\FilamentOdkLink\\Facades\\FilamentOdkLink"
-            }
+                "Stats4sd\\OdkLink\\Core\\OdkLinkCoreServiceProvider"
+            ]
         }
     },
     "minimum-stability": "dev",

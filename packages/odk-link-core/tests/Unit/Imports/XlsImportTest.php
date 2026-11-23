@@ -1,8 +1,8 @@
 <?php
 
 use Maatwebsite\Excel\Excel;
-use Stats4sd\FilamentOdkLink\Imports\XlsImport;
-use Stats4sd\FilamentOdkLink\Services\XlsformValidationHelper;
+use Stats4sd\OdkLink\Core\Imports\XlsImport;
+use Stats4sd\OdkLink\Core\Services\XlsformValidationHelper;
 
 it('reads the survey, choices and settings sheets of an XLSForm keyed by heading', function () {
     $sheets = (new XlsImport)->toCollection(__DIR__ . '/../../fixtures/valid-form.xlsx', null, Excel::XLSX);

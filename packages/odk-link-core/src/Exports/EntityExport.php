@@ -1,14 +1,14 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Exports;
+namespace Stats4sd\OdkLink\Core\Exports;
 
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Dataset;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Entity;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplateSection;
 
 class EntityExport implements FromArray, WithHeadings, WithTitle
 {

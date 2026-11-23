@@ -1,12 +1,12 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Support;
+namespace Stats4sd\OdkLink\Core\Support;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use Stats4sd\FilamentOdkLink\Contracts\OperationNotifier;
-use Stats4sd\FilamentOdkLink\Contracts\PlatformUser;
+use Stats4sd\OdkLink\Core\Contracts\OperationNotifier;
+use Stats4sd\OdkLink\Core\Contracts\PlatformUser;
 use Throwable;
 
 class OperationNotifications

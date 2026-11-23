@@ -4,7 +4,7 @@
 
 /** @noinspection PhpStanGlobal */
 
-namespace Stats4sd\FilamentOdkLink\Services;
+namespace Stats4sd\OdkLink\Core\Services;
 
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\Model;
@@ -12,13 +12,13 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
-use Stats4sd\FilamentOdkLink\Exports\ChoiceListModelsExport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredModelRegistry;
-use Stats4sd\FilamentOdkLink\Support\CurrentOwner;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Exports\ChoiceListModelsExport;
+use Stats4sd\OdkLink\Core\Models\OdkLink\RequiredMedia;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Support\ConfiguredModelRegistry;
+use Stats4sd\OdkLink\Core\Support\CurrentOwner;
 
 class HelperService
 {
@@ -101,22 +101,22 @@ class HelperService
         $filePath = 'xlsforms/' . $xlsform->getKey() . '/' . $requiredMedia->name;
 
         // check if the folder exists; if not, create it
-        if (! Storage::disk(config('filament-odk-link.storage.xlsforms'))->exists('xlsforms')) {
-            Storage::disk(config('filament-odk-link.storage.xlsforms'))->makeDirectory('xlsforms');
+        if (! Storage::disk(config('odk-link.storage.xlsforms'))->exists('xlsforms')) {
+            Storage::disk(config('odk-link.storage.xlsforms'))->makeDirectory('xlsforms');
         }
 
-        if (! Storage::disk(config('filament-odk-link.storage.xlsforms'))->exists('xlsforms/' . $xlsform->getKey())) {
-            Storage::disk(config('filament-odk-link.storage.xlsforms'))->makeDirectory('xlsforms/' . $xlsform->getKey());
+        if (! Storage::disk(config('odk-link.storage.xlsforms'))->exists('xlsforms/' . $xlsform->getKey())) {
+            Storage::disk(config('odk-link.storage.xlsforms'))->makeDirectory('xlsforms/' . $xlsform->getKey());
         }
 
         Excel::store(
             new ChoiceListModelsExport($choiceList, $xlsform),
             $filePath,
-            config('filament-odk-link.storage.xlsforms')
+            config('odk-link.storage.xlsforms')
         );
 
         // TODO: Explore if we need select_one_from_external_file support.
 
-        return Storage::disk(config('filament-odk-link.storage.xlsforms'))->path($filePath);
+        return Storage::disk(config('odk-link.storage.xlsforms'))->path($filePath);
     }
 }

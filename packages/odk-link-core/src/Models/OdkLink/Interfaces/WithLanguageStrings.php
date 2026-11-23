@@ -1,9 +1,9 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink\Interfaces;
 
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\Locale;
 
 interface WithLanguageStrings
 {

@@ -1,15 +1,15 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
-use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
+use Stats4sd\OdkLink\Core\Models\OdkLink\LanguageString;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\OdkLink\Core\Services\XlsformTranslationHelper;
 
 /** @property Collection $properties */
 trait HasLanguageStrings

@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink\Interfaces;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
 
 /**
  * @phpstan-require-extends Model

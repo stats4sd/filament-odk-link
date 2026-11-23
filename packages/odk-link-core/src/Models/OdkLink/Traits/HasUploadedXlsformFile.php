@@ -1,5 +1,5 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink\Traits;
 
 trait HasUploadedXlsformFile {}

@@ -1,10 +1,10 @@
 <?php
 
 use Illuminate\Support\Collection;
-use Stats4sd\FilamentOdkLink\Exports\EntityExport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\OdkLink\Core\Exports\EntityExport;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Entity;
+use Stats4sd\OdkLink\Core\Models\OdkLink\EntityValue;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplateSection;
 
 function makeEntityWithValues(array $values): Entity
 {

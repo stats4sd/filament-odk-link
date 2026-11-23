@@ -1,7 +1,7 @@
 <?php
 
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateSurveyImport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformTemplateSurveyImport;
+use Stats4sd\OdkLink\Core\Models\OdkLink\SurveyRow;
 
 // Construct the importer against a real (DB-inserted) module version so the
 // internal getModuleVersionAndNameFromRow() short-circuit returns it directly.

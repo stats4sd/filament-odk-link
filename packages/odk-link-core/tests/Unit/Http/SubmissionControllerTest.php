@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Submission;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
 
 beforeEach(function () {
     $teamId = DB::table('teams')->insertGetId([

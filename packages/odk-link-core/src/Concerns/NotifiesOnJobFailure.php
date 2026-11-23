@@ -1,12 +1,12 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Concerns;
+namespace Stats4sd\OdkLink\Core\Concerns;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Stats4sd\FilamentOdkLink\Contracts\PlatformUser;
-use Stats4sd\FilamentOdkLink\Support\OperationNotification;
-use Stats4sd\FilamentOdkLink\Support\OperationNotifications;
+use Stats4sd\OdkLink\Core\Contracts\PlatformUser;
+use Stats4sd\OdkLink\Core\Support\OperationNotification;
+use Stats4sd\OdkLink\Core\Support\OperationNotifications;
 use Throwable;
 
 trait NotifiesOnJobFailure

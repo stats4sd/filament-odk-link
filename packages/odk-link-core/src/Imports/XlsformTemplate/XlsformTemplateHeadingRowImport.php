@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
+namespace Stats4sd\OdkLink\Core\Imports\XlsformTemplate;
 
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\HeadingRowImport;

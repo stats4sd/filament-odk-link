@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -11,11 +11,11 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
-use Stats4sd\FilamentOdkLink\Models\Country;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\XlsformModuleVersionLocale;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Models\Country;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\XlsformModuleVersionLocale;
+use Stats4sd\OdkLink\Core\Support\ConfiguredModels;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
@@ -39,7 +39,7 @@ class XlsformModuleVersion extends Model implements HasMedia
     {
         $this->addMediaCollection('xlsform_file')
             ->singleFile()
-            ->useDisk(config('filament-odk-link.storage.xlsforms'));
+            ->useDisk(config('odk-link.storage.xlsforms'));
     }
 
     /** @return BelongsTo<XlsformModule, $this> */

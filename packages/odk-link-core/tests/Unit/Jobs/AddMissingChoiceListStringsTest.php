@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
-use Stats4sd\FilamentOdkLink\Jobs\AddMissingChoiceListStrings;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\OdkLink\Core\Jobs\AddMissingChoiceListStrings;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceListEntry;
 
 it('skips an entry with no matching translated counterpart instead of crashing', function () {
     $template = makeXlsformTemplate();

@@ -1,7 +1,7 @@
 <?php
 
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateModuleTypeImport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformTemplateModuleTypeImport;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModule;
 
 it('maps a row to an XlsformModule using the module column for name and label', function () {
     $module = (new XlsformTemplateModuleTypeImport)->model(['module' => 'demographics']);
