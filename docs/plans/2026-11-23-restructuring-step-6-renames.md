@@ -1,8 +1,8 @@
 # Restructuring Step 6: package, namespace and config renames
 
-**Status:** In Progress
+**Status:** Completed
 
-Names confirmed as written on 2026-11-23. Commit 1 (step 5 review fixes, plans, roadmap) done; commits 2–5 remain.
+Names confirmed as written and implemented 2026-11-23. Change log: [docs/change-logs/2026-11-23-restructuring-step-6-renames.md](../change-logs/2026-11-23-restructuring-step-6-renames.md). Deviations: the morph map was dropped in favour of a prefix-rewriting migration; broadcast names and the broken Echo listener were also changed; the root `AGENTS.md` mirror was updated. Details in the change log.
 
 ## Context
 
