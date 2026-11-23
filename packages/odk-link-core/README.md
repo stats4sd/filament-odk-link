@@ -1,9 +1,9 @@
 # ODK Link core
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/stats4sd/filament-odk-link.svg?style=flat-square)](https://packagist.org/packages/stats4sd/filament-odk-link)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/stats4sd/odk-link-core.svg?style=flat-square)](https://packagist.org/packages/stats4sd/odk-link-core)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/stats4sd/filament-odk-link/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/stats4sd/filament-odk-link/actions?query=workflow%3Arun-tests+branch%3Amain)
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/stats4sd/filament-odk-link/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/stats4sd/filament-odk-link/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/stats4sd/filament-odk-link.svg?style=flat-square)](https://packagist.org/packages/stats4sd/filament-odk-link)
+[![Total Downloads](https://img.shields.io/packagist/dt/stats4sd/odk-link-core.svg?style=flat-square)](https://packagist.org/packages/stats4sd/odk-link-core)
 
 
 
@@ -16,7 +16,7 @@ This package has no UI dependency. The Filament admin UI (the `OdkLinkAdmin` plu
 You can install the package via composer:
 
 ```bash
-composer require stats4sd/filament-odk-link
+composer require stats4sd/odk-link-core
 ```
 
 The package reads and writes XLSForm workbooks with [Laravel Excel](https://docs.laravel-excel.com) 4.x (PhpSpreadsheet 5). If your app also requires `maatwebsite/excel` directly, it must allow `^4.0`.
@@ -24,14 +24,14 @@ The package reads and writes XLSForm workbooks with [Laravel Excel](https://docs
 You can publish and run the migrations with:
 
 ```bash
-php artisan vendor:publish --tag="filament-odk-link-migrations"
+php artisan vendor:publish --tag="odk-link-migrations"
 php artisan migrate
 ```
 
 You can publish the config file with:
 
 ```bash
-php artisan vendor:publish --tag="filament-odk-link-config"
+php artisan vendor:publish --tag="odk-link-config"
 ```
 
 ## Host contracts and setup
@@ -44,8 +44,8 @@ A minimal owner uses the existing relationship trait. The host owns the `teams` 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Traits\HasXlsforms;
 
 class Team extends Model implements FormOwner
 {
@@ -62,7 +62,7 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Stats4sd\FilamentOdkLink\Contracts\PlatformUser;
+use Stats4sd\OdkLink\Core\Contracts\PlatformUser;
 
 class User extends Authenticatable implements PlatformUser
 {
@@ -70,14 +70,14 @@ class User extends Authenticatable implements PlatformUser
 }
 ```
 
-Publish configuration with `php artisan vendor:publish --tag=filament-odk-link-config`, then set these entries in `config/filament-odk-link.php`. Preserve the published package registry entries and append any host models that table-name lookup needs. The `ODK_FORM_OWNER_MODEL` and `ODK_USER_MODEL` environment overrides remain supported.
+Publish configuration with `php artisan vendor:publish --tag=odk-link-config`, then set these entries in `config/odk-link.php`. Preserve the published package registry entries and append any host models that table-name lookup needs. The `ODK_FORM_OWNER_MODEL` and `ODK_USER_MODEL` environment overrides remain supported.
 
 ```php
 'models' => [
     'form_owner' => env('ODK_FORM_OWNER_MODEL', App\Models\Team::class),
     'user_model' => env('ODK_USER_MODEL', App\Models\User::class),
     'registry' => [
-        Stats4sd\FilamentOdkLink\Models\Country::class,
+        Stats4sd\OdkLink\Core\Models\Country::class,
         // Keep the other package entries supplied in the published config here.
         App\Models\Team::class,
     ],
@@ -98,8 +98,8 @@ A processor resolves through Laravel's container, including constructor dependen
 namespace App\OdkLink;
 
 use Psr\Log\LoggerInterface;
-use Stats4sd\FilamentOdkLink\Contracts\SubmissionProcessor;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
+use Stats4sd\OdkLink\Core\Contracts\SubmissionProcessor;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Submission;
 
 class ProcessSubmission implements SubmissionProcessor
 {
@@ -120,7 +120,7 @@ namespace App\OdkLink;
 
 use App\Models\User;
 use Illuminate\Support\Collection;
-use Stats4sd\FilamentOdkLink\Contracts\RoleResolver;
+use Stats4sd\OdkLink\Core\Contracts\RoleResolver;
 
 class NotificationRecipients implements RoleResolver
 {

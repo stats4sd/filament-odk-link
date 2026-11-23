@@ -1,14 +1,14 @@
 <?php
 
 use Filament\Schemas\Schema;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\ChoiceListResource;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\DatasetResource;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformModules\XlsformModuleResource;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformModuleVersions\XlsformModuleVersionResource;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateInfoList;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Platform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Filament\OdkAdmin\Resources\ChoiceListResource;
+use Stats4sd\OdkLink\Filament\OdkAdmin\Resources\Datasets\DatasetResource;
+use Stats4sd\OdkLink\Filament\OdkAdmin\Resources\XlsformModules\XlsformModuleResource;
+use Stats4sd\OdkLink\Filament\OdkAdmin\Resources\XlsformModuleVersions\XlsformModuleVersionResource;
+use Stats4sd\OdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\Schemas\XlsformTemplateInfoList;
+use Stats4sd\OdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;

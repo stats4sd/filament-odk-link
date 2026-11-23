@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
+use Stats4sd\OdkLink\Core\Support\ConfiguredModels;
 
 return new class extends Migration
 {

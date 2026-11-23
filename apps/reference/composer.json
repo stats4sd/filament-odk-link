@@ -14,7 +14,7 @@
         "laravel/tinker": "^3.0",
         "php": "^8.4",
         "spatie/laravel-permission": "^6.10",
-        "stats4sd/filament-odk-link": "dev-dev",
+        "stats4sd/odk-link-core": "dev-dev",
         "stats4sd/odk-link-filament": "dev-dev"
     },
     "require-dev": {
@@ -99,7 +99,7 @@
             "options": {
                 "symlink": true,
                 "versions": {
-                    "stats4sd/filament-odk-link": "dev-dev",
+                    "stats4sd/odk-link-core": "dev-dev",
                     "stats4sd/odk-link-filament": "dev-dev"
                 }
             }
