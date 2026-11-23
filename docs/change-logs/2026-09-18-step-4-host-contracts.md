@@ -46,3 +46,15 @@ The local Composer installation fails when `exec` uses a relative `--working-dir
 Runtime tests above are separate from source architecture/static checks. Filament remains installed until Step 5; isolated provider boot does not prove installation or analysis with Filament absent. The reference's existing incomplete-template smoke test remains skipped. Laravel missing-model behavior is asserted for the five changed queued actor jobs; the workbook export's different pre-existing serialization mechanism is not claimed compatible with old queued payloads.
 
 Live dev CI was inspected: PHP 8.4 tests, PHPStan, Pint and reference checks passed; the informational PHP 8.5 matrix entry still fails dependency resolution because PhpSpreadsheet 1.x requires PHP below 8.5. This is pre-existing and was not broadened into Step 4. The implementation PR is opened for review and is not merged by this task.
+
+## Follow-up review fixes (2026-11-23)
+
+Before merging, the PR was reviewed again ([review](../code-reviews/2026-11-23-step-4-pr-154-review.md)). Three fixes landed on the branch:
+
+- `ProcessOdkSubmission` now validates legacy callback settings and resolves the configured processor **before** ingestion. Ingestion creates entity rows on every attempt, so the previous order produced duplicates on retries when a host's config was invalid.
+- `MediaHasBeenAddedEvent` no longer references the uninstalled `Stats4sd\FilamentTeamManagement\Models\User`. Its importer is a validated `Model&PlatformUser`, both architecture rules ban that namespace, `Events` and `Http` join the namespace rule, and two stale baseline entries are gone.
+- A missing `models.registry` key (a published config from before this change) now raises a descriptive error instead of silently matching no tables.
+
+After the fixes, core tests passed (234, 646 assertions), reference tests passed (22, one existing skip), and Pint and `git diff --check` passed. CI-equivalent PHPStan (highest dependencies) reports one error, unrelated to this PR: PhpSpreadsheet 1.x now marks `Spreadsheet` as deprecated, which affects every branch. See the review for the options.
+
+A plain-language summary is in [docs/eli5/2026-11-23-step-4-host-contracts.md](../eli5/2026-11-23-step-4-host-contracts.md).

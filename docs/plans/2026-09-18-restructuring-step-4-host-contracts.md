@@ -14,6 +14,8 @@ Implemented on the user-requested current branch `restructuring-prep-for-ui-spli
 
 ### Progress Log
 
+- 2026-11-23: Follow-up review before merge found and fixed three issues (submission ingestion before config validation, a leftover `FilamentTeamManagement` user type, a silently empty registry for older published configs). Core tests 234 passed; reference 22 passed. See the [follow-up review](../code-reviews/2026-11-23-step-4-pr-154-review.md). CI PHPStan is blocked by an unrelated PhpSpreadsheet 1.x deprecation.
+
 - 2026-09-18: Completed contracts, provider split, domain migration, explicit reference bindings, synchronized eleven published migrations, dependency cleanup and architecture enforcement. Verified actual saved-submission processing, imported translation content, queue recipient behavior and headless boot/config caching. See the linked implementation change log for baseline differences and final evidence.
 
 - 2026-09-18: Inspected the package, reference app, existing tests and restructuring decisions; wrote this implementation plan. Independent plan review completed and its owner-model compatibility finding addressed; document links, code fences and whitespace mechanically checked. No production code changed and no runtime checks run. Planning record: [change log](../change-logs/2026-09-18-step-4-plan.md).
