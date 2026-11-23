@@ -12,6 +12,7 @@
         "issues": "https://github.com/stats4sd/filament-odk-link/issues",
         "source": "https://github.com/stats4sd/filament-odk-link"
     },
+    "type": "library",
     "license": "MIT",
     "authors": [
         {

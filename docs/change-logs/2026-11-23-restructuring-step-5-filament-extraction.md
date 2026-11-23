@@ -81,5 +81,8 @@ Not done locally: a browser check of `/admin`. The reference suite covers the re
 
 ## Follow-ups
 - `XlsformChoicesExport` and `XlsformSurveyExport` query paths have no tests. That gap hid the missing power-joins dependency.
-- `staudenmeir/belongs-to-through` is required by core but unused. The empty `FilamentOdkLink` class and facade remain in core.
+- The empty `FilamentOdkLink` class and facade remain in core.
+- Correction (step 6 review): an earlier version of this list called `staudenmeir/belongs-to-through` unused. It is used by `Country`, `Submission`, `ChoiceListEntry`, `LanguageString` and `XlsformModuleVersionLocale`; do not remove it.
+- Deviation not recorded at the time: five unreferenced views moved instead of being deleted (`forms/components/form-review`, `infolists/components/team-qr-code`, `tables/columns/draft-qr-code`, `tables/columns/team-datasets-required`, `widgets/custom-odk-templates-widget`), as did the unused `ClickableLink` and `DraftTestingQrCode` components. Step 7 deletes them.
+- The Filament `ArchTest` scan of `resources/views` is ineffective: Blade without `<?php` tokenises as inline HTML, so `ShippingBoundary` sees no class names. Fixed in step 7.
 - Step 7 renames, listed in the roadmap.
