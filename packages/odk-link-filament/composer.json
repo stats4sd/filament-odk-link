@@ -28,7 +28,7 @@
             "options": {
                 "symlink": true,
                 "versions": {
-                    "stats4sd/filament-odk-link": "dev-dev"
+                    "stats4sd/odk-link-core": "dev-dev"
                 }
             }
         }
@@ -38,7 +38,7 @@
         "filament/filament": "^5.0",
         "filament/spatie-laravel-media-library-plugin": "^5.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
-        "stats4sd/filament-odk-link": "dev-dev"
+        "stats4sd/odk-link-core": "dev-dev"
     },
     "require-dev": {
         "larastan/larastan": "^3.0",
@@ -54,12 +54,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Stats4sd\\FilamentOdkLink\\": "src/"
+            "Stats4sd\\OdkLink\\Filament\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Stats4sd\\FilamentOdkLink\\Filament\\Tests\\": "tests/"
+            "Stats4sd\\OdkLink\\Filament\\Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -78,7 +78,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Stats4sd\\FilamentOdkLink\\Filament\\OdkLinkFilamentServiceProvider"
+                "Stats4sd\\OdkLink\\Filament\\OdkLinkFilamentServiceProvider"
             ]
         }
     },

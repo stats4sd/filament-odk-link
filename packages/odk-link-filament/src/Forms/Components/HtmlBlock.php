@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Forms\Components;
+namespace Stats4sd\OdkLink\Filament\Forms\Components;
 
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Concerns\HasName;
@@ -9,7 +9,7 @@ class HtmlBlock extends Component
 {
     use HasName;
 
-    protected string $view = 'filament-odk-link::filament.forms.components.html-block';
+    protected string $view = 'odk-link::filament.forms.components.html-block';
 
     protected mixed $content = null;
 
