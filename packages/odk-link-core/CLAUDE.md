@@ -1,35 +1,16 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 # Guidelines
 
-The PHP/Laravel coding guidelines and the project working patterns are included from the root [CLAUDE.md](../../CLAUDE.md) (`.claude/` lives at the monorepo root, not in this package).
+The project working patterns are included from the root [CLAUDE.md](../../CLAUDE.md) (`.claude/` lives at the monorepo root, not in this package).
 
 # Project-Specific:
-
-## What this is
-
-`stats4sd/filament-odk-link` is a **Laravel package + Filament v5 plugin** (not a standalone app). It lets a host Laravel/Filament application manage [ODK](https://getodk.org) XLSForms in a harmonised, multi-tenant way: import form templates, let teams configure their own copies, deploy them to ODK Central, and pull submissions back into the host database.
-
-It is built on `spatie/laravel-package-tools` ([FilamentOdkLinkServiceProvider.php](src/FilamentOdkLinkServiceProvider.php)) and targets PHP 8.4, Laravel 13, Filament 5.
 
 ## Commands
 
 ```bash
-composer test                       # run the full Pest suite
-vendor/bin/pest tests/ArchTest.php  # run a single test file
-vendor/bin/pest --filter="phrase"   # run tests matching a name
-composer test-coverage              # Pest with coverage (outputs to build/)
 composer analyse                    # PHPStan / Larastan (level 4, scans src + database). New errors must be fixed, not added to phpstan-baseline.neon
-composer format                     # Laravel Pint (custom rules in pint.json)
 ```
-
-Tests run via **Pest + Orchestra Testbench** — there is no host app, the package boots itself inside Testbench. [tests/TestCase.php](tests/TestCase.php) registers the Filament service providers manually and points the DB at an in-memory `testing` connection. New test files are auto-bound to `TestCase` by [tests/Pest.php](tests/Pest.php).
-
-## Plans
-
-Approved implementation plans live in [docs/plans/](docs/plans/). When work on a plan begins, store the plan there (one file per plan) and keep its status note current. After completing significant work on the plan, update the "`Status:`" line and `### Progress Log` section at the top of the document.
 
 ## Configuration & host-app contract
 
@@ -45,7 +26,6 @@ Migrations are explicitly ordered and registered by numeric prefix in `getMigrat
 ## Architecture
 
 ### One Filament plugin
-- [OdkLinkAdmin](src/OdkLinkAdmin.php) — platform-admin panel. Discovers resources in `src/Filament/OdkAdmin/Resources` (manage templates, modules, module versions, datasets, choice lists) and widgets in `src/Filament/Widgets`.
 - There is no team-facing plugin in the package today. Tenant UI lives in host apps; extracting it is roadmap steps 5 and 6 in the root `RESTRUCTURING.md`.
 
 ### Domain model (the core to understand)
@@ -54,9 +34,6 @@ The form hierarchy lives in `src/Models/OdkLink/`:
 - **XlsformTemplate** — a master form uploaded by an admin. Composed of **XlsformModule**s, each with versioned **XlsformModuleVersion**s.
 - **Xlsform** — a *team's* deployable instance derived from a template, owned by the form-owner model. This is what gets deployed and collects data.
 - Both `Xlsform` and `XlsformTemplate` extend the abstract [HasXlsformDrafts](src/Models/OdkLink/Abstracts/HasXlsformDrafts.php), which is a `spatie/laravel-medialibrary` `HasMedia` model holding the uploaded `.xlsx` (`xlsform_file` collection) and the ODK Central draft state (`odk_id`, draft token, enketo id, QR-code generation).
-- Supporting models: **Dataset / DatasetVariable / Entity / EntityValue** (ODK Entities), **ChoiceList / ChoiceListEntry** (lookup lists, localisable per owner), **Submission**, **AppUser**, **OdkProject**, **Platform**, and the `XlsformLanguages/` Language/Locale models.
-
-Behaviour is layered via traits (`src/Models/OdkLink/Traits/`) and interfaces (`Interfaces/`): e.g. `HasXlsforms`, `PublishesToOdkCentral`, `HasSubmissions`, `HasOdkCentralAccount`, `IsLookupList`. Relationships lean heavily on `staudenmeir/eloquent-has-many-deep` and `belongs-to-through`.
 
 ### ODK Central client
 [OdkLinkService](src/Services/OdkLinkService.php) is registered as a **singleton** and is the single gateway to the ODK Central REST API. It is composed of trait "sub-services" in `src/Services/OdkLinkServices/` — `OdkProjectService`, `OdkFormService`, `OdkUserService`, `OdkFormMediaService`, `OdkSubmissionService`. Auth tokens are cached (`odk-token`, 20h). Inject `OdkLinkService` rather than calling HTTP directly.
@@ -71,5 +48,3 @@ Uploading an `.xlsx` triggers Spatie's `MediaHasBeenAddedEvent`, wired in [Filam
 ## Conventions
 
 - Models, jobs, and listeners use Eloquent **model events** (`booted()`) heavily for side effects — when changing a model, check its `booted()` method for cascading deploy/import/notification logic before assuming a change is isolated.
-- The `ArchTest` enforces no `dd`/`dump`/`ray` left in `src`.
-- Frontend assets are pre-built into `resources/dist/` and registered via `FilamentAsset`; build config is `package.json` (esbuild/tailwind).
