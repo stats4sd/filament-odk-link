@@ -2,17 +2,17 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
-use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithLanguageStrings;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasLanguageStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\IsLookupList;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
 class ChoiceListEntry extends Model implements WithLanguageStrings
@@ -85,16 +85,16 @@ class ChoiceListEntry extends Model implements WithLanguageStrings
         return $this->morphTo();
     }
 
-    /** @return BelongsTo<Model, $this> */
+    /** @return BelongsTo<Model&FormOwner, $this> */
     public function owner(): BelongsTo
     {
-        return $this->belongsTo(config('filament-odk-link.models.form_owner'), 'owner_id');
+        return $this->belongsTo(app(ConfiguredModels::class)->formOwnerClass(), 'owner_id');
     }
 
-    /** @return BelongsToMany<Model, $this> */
+    /** @return BelongsToMany<Model&FormOwner, $this> */
     public function ownersWhoRemovedFromContext(): BelongsToMany
     {
-        return $this->belongsToMany(config('filament-odk-link.models.form_owner'), 'choice_list_entries_removed_owner', 'choice_list_entry_id', 'owner_id');
+        return $this->belongsToMany(app(ConfiguredModels::class)->formOwnerClass(), 'choice_list_entries_removed_owner', 'choice_list_entry_id', 'owner_id');
     }
 
     public function canBeHiddenFromContext(): bool
@@ -102,12 +102,12 @@ class ChoiceListEntry extends Model implements WithLanguageStrings
         return $this->choiceList->can_be_hidden_from_context;
     }
 
-    public function isRemoved(WithXlsforms $team): bool
+    public function isRemoved(Model & FormOwner $team): bool
     {
         return $team->choiceListEntriesRemovedFromContext->contains($this);
     }
 
-    public function toggleRemoved(WithXlsforms $team): void
+    public function toggleRemoved(Model & FormOwner $team): void
     {
         if ($this->isRemoved($team)) {
             $team->choiceListEntriesRemovedFromContext()->detach($this);

@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 
 return new class extends Migration
 {
@@ -13,7 +14,7 @@ return new class extends Migration
 
             $table->foreignId('model_id')->nullable();
 
-            $ownerModel = config('filament-odk-link.models.form_owner');
+            $ownerModel = app(ConfiguredModels::class)->formOwnerClass();
             $ownerTable = (new $ownerModel)->getTable();
             $table->foreignId('owner_id')->nullable()->constrained($ownerTable);
 

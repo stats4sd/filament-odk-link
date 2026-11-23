@@ -18,10 +18,11 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsPrimaryDataSubject;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
 class Submission extends Model implements HasMedia
@@ -152,13 +153,13 @@ class Submission extends Model implements HasMedia
         return $this->hasManyThrough(EntityValue::class, Entity::class);
     }
 
-    /** @return BelongsToThrough<WithXlsforms, $this> */
+    /** @return BelongsToThrough<Model&FormOwner, $this> */
     public function owner(): BelongsToThrough
     {
         return $this->belongsToThrough(
-            config('filament-odk-link.models.form_owner'),
+            app(ConfiguredModels::class)->formOwnerClass(),
             [Xlsform::class, XlsformVersion::class],
-            foreignKeyLookup: [config('filament-odk-link.models.form_owner') => 'owner_id']
+            foreignKeyLookup: [app(ConfiguredModels::class)->formOwnerClass() => 'owner_id']
         );
     }
 

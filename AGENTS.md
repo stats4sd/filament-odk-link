@@ -2,10 +2,6 @@
 
 Monorepo for the ODK Link packages and their reference host application. See [RESTRUCTURING.md](RESTRUCTURING.md) for the current shape, the target end state and the roadmap; keep its Status line and roadmap checkboxes current when a step lands.
 
-# PHP / Laravel Coding Guidelines
-
-Follow the coding guidelines in @.claude/laravel-php-guidelines.md
-
 # Code Project Working Patterns
 
 Follow the working patterns in @.claude/code-project-working-patterns.md

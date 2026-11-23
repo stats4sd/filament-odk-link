@@ -1,19 +1,83 @@
 <?php
 
+use Stats4sd\FilamentOdkLink\Models\Continent;
+use Stats4sd\FilamentOdkLink\Models\Country;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\AppUser;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Dataset;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\DatasetVariable;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkDataset;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\ParentDatasetPivot;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\TemplateEntityList;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Language;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\XlsformModuleVersionLocale;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
+use Stats4sd\FilamentOdkLink\Models\Region;
+use Stats4sd\FilamentOdkLink\Support\EmptyRoleResolver;
+use Stats4sd\FilamentOdkLink\Support\NullSubmissionProcessor;
+
 // config for Stats4sd/OdkLink
 return [
 
     'models' => [
+        // Explicit Eloquent classes implementing FormOwner and PlatformUser.
+        'form_owner' => env('ODK_FORM_OWNER_MODEL'),
+        'user_model' => env('ODK_USER_MODEL'),
+        'registry' => [
+            Continent::class,
+            Country::class,
+            Region::class,
+            AppUser::class,
+            ChoiceList::class,
+            ChoiceListEntry::class,
+            Dataset::class,
+            DatasetVariable::class,
+            Entity::class,
+            EntityValue::class,
+            LanguageString::class,
+            OdkDataset::class,
+            OdkProject::class,
+            ParentDatasetPivot::class,
+            Platform::class,
+            RequiredMedia::class,
+            Submission::class,
+            SurveyRow::class,
+            TemplateEntityList::class,
+            Xlsform::class,
+            XlsformModule::class,
+            XlsformModuleVersion::class,
+            XlsformTemplate::class,
+            XlsformTemplateSection::class,
+            XlsformVersion::class,
+            Language::class,
+            LanguageStringType::class,
+            Locale::class,
+            XlsformModuleVersionLocale::class,
+        ],
+    ],
 
-        /**
-         * Tells the system which Team model is in use.
-         * By default it is "Stats4sd\FilamentOdkLink\Models\TeamManagement\Team"
-         * User can define custom Team model in .env file config item "ODK_TEAM_MODEL"
-         * This model MUST implement the WithXlsforms trait.
-         * There can ONLY be one model that implements this trait. All Xlsforms must be owned by entities of this model.
-         */
-        'form_owner' => env('ODK_FORM_OWNER_MODEL', 'App\Models\Team'),
-        'user_model' => env('ODK_USER_MODEL', 'App\Models\User'),
+    'contracts' => [
+        'submission_processor' => NullSubmissionProcessor::class,
+        'role_resolver' => EmptyRoleResolver::class,
+        // Null selects the active provider's default: headless null adapters or Filament adapters.
+        'current_owner_resolver' => null,
+        'operation_notifier' => null,
     ],
 
     'odk' => [
@@ -58,31 +122,8 @@ return [
         'media' => config('filesystem.default', 'local'),
     ],
 
-    'roles' => [
-        // the role that a user must have in order to see *all* forms, and not just the ones owned by an entity linked to the user.
-        'xlsform-admin' => env('XLSFORM_ADMIN_ROLE', 'admin'),
-    ],
-
     'owners' => [
         'main_type' => env('MAIN_OWNER_TYPE', 'team'),
     ],
 
-    'submission' => [
-
-        // The class and method used to process the submissions.
-        // The method should be:
-        // - a public static function;
-        // - accept a OdkLink\Models\Submission object as the only required variable.;
-        'process_method' => [
-            'class' => env('SUBMISSION_PROCESS_CLASS'),
-            'method' => env('SUBMISSION_PROCESS_METHOD'),
-        ],
-
-        // The class and method used to process foreign key records in the submissions.
-        'foreign_key_process_method' => [
-            'class' => env('SUBMISSION_FOREIGN_KEY_PROCESS_CLASS'),
-            'method' => env('SUBMISSION_FOREIGN_KEY_PROCESS_METHOD'),
-        ],
-
-    ],
 ];

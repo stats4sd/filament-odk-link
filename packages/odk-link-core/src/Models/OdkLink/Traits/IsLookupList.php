@@ -4,6 +4,7 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 
 trait IsLookupList
 {
@@ -37,6 +38,6 @@ trait IsLookupList
     /** @return BelongsTo<HasXlsforms, $this> */
     public function owner(): BelongsTo
     {
-        return $this->belongsTo(config('filament-odk-link.models.form_owner'), 'owner_id');
+        return $this->belongsTo(app(ConfiguredModels::class)->formOwnerClass(), 'owner_id');
     }
 }

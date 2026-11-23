@@ -125,7 +125,6 @@ class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, To
         $this->notifyJobFailure(
             "Choice list import failed: {$label}",
             $exception,
-            $this->superAdmins(),
         );
     }
 }

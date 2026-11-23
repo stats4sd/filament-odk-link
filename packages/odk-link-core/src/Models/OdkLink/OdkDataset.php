@@ -4,6 +4,8 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 
 class OdkDataset extends Model
 {
@@ -23,9 +25,9 @@ class OdkDataset extends Model
         return $this->belongsTo(OdkProject::class);
     }
 
-    /** @return BelongsTo<Model, $this> */
+    /** @return BelongsTo<Model&FormOwner, $this> */
     public function owner(): BelongsTo
     {
-        return $this->belongsTo(config('filament-odk-link.models.form_owner'), 'owner_id');
+        return $this->belongsTo(app(ConfiguredModels::class)->formOwnerClass(), 'owner_id');
     }
 }

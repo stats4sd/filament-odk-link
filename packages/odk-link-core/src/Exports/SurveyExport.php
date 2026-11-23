@@ -2,11 +2,12 @@
 
 namespace Stats4sd\FilamentOdkLink\Exports;
 
+use Maatwebsite\Excel\Concerns\Export;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 
-class SurveyExport implements WithMultipleSheets
+class SurveyExport implements Export, WithMultipleSheets
 {
     protected $xlsform;
 

@@ -5,9 +5,11 @@ namespace Stats4sd\FilamentOdkLink\Jobs\OdkSubmissions;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
+use Stats4sd\FilamentOdkLink\Contracts\SubmissionProcessor;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredContracts;
 use Throwable;
 
 class ProcessOdkSubmission implements ShouldQueue
@@ -22,18 +24,16 @@ class ProcessOdkSubmission implements ShouldQueue
      */
     public function handle(): void
     {
+        // Ingestion creates entity rows on every attempt, so integration misconfiguration must fail before it runs.
+        app(ConfiguredContracts::class)->validateSubmissionConfiguration();
+
+        $submissionProcessor = app(SubmissionProcessor::class);
+
         $odkLinkService = app()->make(OdkLinkService::class);
 
         $odkLinkService->processSubmission($this->submission, $this->entry, $this->xlsformVersion);
 
-        // if app developer has defined a method of processing submission content, call that method:
-        $class = config('filament-odk-link.submission.process_method.class');
-        $method = config('filament-odk-link.submission.process_method.method');
-
-        if ($class && $method) {
-            $class::$method($this->submission);
-        }
-
+        $submissionProcessor->process($this->submission);
     }
 
     public function failed(?Throwable $exception = null): void
@@ -43,7 +43,6 @@ class ProcessOdkSubmission implements ShouldQueue
         $this->notifyJobFailure(
             "Submission processing failed: {$this->submission->odk_id} ({$formTitle})",
             $exception,
-            $this->superAdmins(),
         );
     }
 }

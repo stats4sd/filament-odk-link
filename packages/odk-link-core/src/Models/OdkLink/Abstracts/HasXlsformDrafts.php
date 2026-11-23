@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
@@ -14,9 +15,11 @@ use JsonException;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\DeployDraftXlsformToOdkCentral;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
@@ -32,22 +35,22 @@ abstract class HasXlsformDrafts extends Model implements HasMedia, WithXlsformDr
 {
     use InteractsWithMedia;
 
-    /** @return BelongsTo<Model, $this> */
+    /** @return BelongsTo<Model&FormOwner, $this>|MorphTo<Model, $this> */
     public function owner(): BelongsTo
     {
-        return $this->belongsTo(config('filament-odk-link.models.form_owner'), 'owner_id');
+        return $this->belongsTo(app(ConfiguredModels::class)->formOwnerClass(), 'owner_id');
     }
 
     /**************** METHODS *************************/
 
     public function deployDraft(bool $withMedia = true): ?PendingDispatch
     {
-        return DeployDraftXlsformToOdkCentral::dispatch($this, $withMedia, auth()->user());
+        return DeployDraftXlsformToOdkCentral::dispatch($this, $withMedia, app(ConfiguredModels::class)->validateUser(auth()->user()));
     }
 
     public function deployDraftSync(bool $withMedia = true): void
     {
-        DeployDraftXlsformToOdkCentral::dispatchSync($this, $withMedia, auth()->user());
+        DeployDraftXlsformToOdkCentral::dispatchSync($this, $withMedia, app(ConfiguredModels::class)->validateUser(auth()->user()));
     }
 
     /**

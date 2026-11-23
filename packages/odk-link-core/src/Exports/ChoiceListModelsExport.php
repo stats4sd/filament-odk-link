@@ -2,14 +2,15 @@
 
 namespace Stats4sd\FilamentOdkLink\Exports;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
@@ -25,7 +26,7 @@ class ChoiceListModelsExport implements FromCollection, WithHeadings, WithStrict
         public WithXlsformDrafts | Xlsform $xlsform
     ) {
 
-        /** @var WithXlsforms $owner */
+        /** @var Model&FormOwner $owner */
         $owner = $xlsform->owner;
 
         $locales = $owner->locales;

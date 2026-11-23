@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 use Stats4sd\FilamentOdkLink\Models\Country;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 
 class Language extends Model
 {
@@ -45,10 +47,10 @@ class Language extends Model
         );
     }
 
-    /** @return BelongsToMany<Model, $this> */
+    /** @return BelongsToMany<Model&FormOwner, $this> */
     public function owners(): BelongsToMany
     {
-        return $this->BelongsToMany(config('filament-odk-link.models.form_owner'), 'language_owner', 'language_id', 'owner_id')
+        return $this->BelongsToMany(app(ConfiguredModels::class)->formOwnerClass(), 'language_owner', 'language_id', 'owner_id')
             ->withPivot(['locale_id']);
     }
 }

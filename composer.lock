@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6149ce96b403d4f969106ec9452294be",
+    "content-hash": "45e3c0103968025bb587360d2b2d8e2b",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -2384,52 +2384,6 @@
                 }
             ],
             "time": "2026-08-24T17:13:02+00:00"
-        },
-        {
-            "name": "haydenpierce/class-finder",
-            "version": "0.5.4",
-            "source": {
-                "type": "git",
-                "url": "https://gitlab.com/hpierce1102/ClassFinder.git",
-                "reference": "a4bd343078ce48c118742152fdd62315a7ac6263"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/hpierce1102%2FClassFinder/repository/archive.zip?sha=a4bd343078ce48c118742152fdd62315a7ac6263",
-                "reference": "a4bd343078ce48c118742152fdd62315a7ac6263",
-                "shasum": ""
-            },
-            "require": {
-                "ext-json": "*",
-                "php": ">=5.3"
-            },
-            "require-dev": {
-                "mikey179/vfsstream": "^1.6",
-                "phpunit/phpunit": "~9.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "HaydenPierce\\ClassFinder\\": "src/",
-                    "HaydenPierce\\ClassFinder\\UnitTest\\": "test/unit"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Hayden Pierce",
-                    "email": "hayden@haydenpierce.com"
-                }
-            ],
-            "description": "A library that can provide of a list of classes in a given namespace",
-            "support": {
-                "issues": "https://gitlab.com/hpierce1102/ClassFinder/-/issues",
-                "source": "https://gitlab.com/hpierce1102/ClassFinder/-/tree/0.5.4"
-            },
-            "time": "2026-05-30T22:14:30+00:00"
         },
         {
             "name": "kirschbaum-development/eloquent-power-joins",
@@ -6129,90 +6083,6 @@
             "time": "2026-08-26T09:13:25+00:00"
         },
         {
-            "name": "spatie/laravel-permission",
-            "version": "6.25.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/spatie/laravel-permission.git",
-                "reference": "d7d4cb0d58616722f1afc90e0484e4825155b9b3"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/spatie/laravel-permission/zipball/d7d4cb0d58616722f1afc90e0484e4825155b9b3",
-                "reference": "d7d4cb0d58616722f1afc90e0484e4825155b9b3",
-                "shasum": ""
-            },
-            "require": {
-                "illuminate/auth": "^8.12|^9.0|^10.0|^11.0|^12.0|^13.0",
-                "illuminate/container": "^8.12|^9.0|^10.0|^11.0|^12.0|^13.0",
-                "illuminate/contracts": "^8.12|^9.0|^10.0|^11.0|^12.0|^13.0",
-                "illuminate/database": "^8.12|^9.0|^10.0|^11.0|^12.0|^13.0",
-                "php": "^8.0"
-            },
-            "require-dev": {
-                "laravel/passport": "^11.0|^12.0|^13.0",
-                "laravel/pint": "^1.0",
-                "orchestra/testbench": "^6.23|^7.0|^8.0|^9.0|^10.0|^11.0",
-                "pestphp/pest": "^2.0|^3.0|^4.0",
-                "pestphp/pest-plugin-laravel": "^2.0|^3.0|^4.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Spatie\\Permission\\PermissionServiceProvider"
-                    ]
-                },
-                "branch-alias": {
-                    "dev-main": "6.x-dev",
-                    "dev-master": "6.x-dev"
-                }
-            },
-            "autoload": {
-                "files": [
-                    "src/helpers.php"
-                ],
-                "psr-4": {
-                    "Spatie\\Permission\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Freek Van der Herten",
-                    "email": "freek@spatie.be",
-                    "homepage": "https://spatie.be",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Permission handling for Laravel 8.0 and up",
-            "homepage": "https://github.com/spatie/laravel-permission",
-            "keywords": [
-                "acl",
-                "laravel",
-                "permission",
-                "permissions",
-                "rbac",
-                "roles",
-                "security",
-                "spatie"
-            ],
-            "support": {
-                "issues": "https://github.com/spatie/laravel-permission/issues",
-                "source": "https://github.com/spatie/laravel-permission/tree/6.25.0"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/spatie",
-                    "type": "github"
-                }
-            ],
-            "time": "2026-03-17T22:46:46+00:00"
-        },
-        {
             "name": "spatie/shiki-php",
             "version": "2.4.0",
             "source": {
@@ -6340,23 +6210,21 @@
         },
         {
             "name": "stats4sd/filament-odk-link",
-            "version": "dev-restructure",
+            "version": "dev-dev",
             "dist": {
                 "type": "path",
                 "url": "packages/odk-link-core",
-                "reference": "be78f1162842941facbb1248389bec5ccd2bb33f"
+                "reference": "8f3920fe646c7f0e455d8deb61a583d99ac58874"
             },
             "require": {
                 "filament/filament": "^5.0",
                 "filament/spatie-laravel-media-library-plugin": "^5.0",
-                "haydenpierce/class-finder": "^0.5.3",
                 "illuminate/contracts": "^13.0",
                 "maatwebsite/excel": "^3.1",
                 "php": "^8.4",
                 "shiftonelabs/laravel-cascade-deletes": "^2.0",
                 "simplesoftwareio/simple-qrcode": "^4.2",
                 "spatie/laravel-package-tools": "^1.15.0",
-                "spatie/laravel-permission": "^6.10",
                 "staudenmeir/belongs-to-through": "^2.18",
                 "staudenmeir/eloquent-has-many-deep": "^1.22"
             },
@@ -6376,8 +6244,7 @@
             "extra": {
                 "laravel": {
                     "providers": [
-                        "Stats4sd\\FilamentOdkLink\\FilamentOdkLinkServiceProvider",
-                        "Stats4sd\\FilamentOdkLink\\FilamentOdkLinkEventServiceProvider"
+                        "Stats4sd\\FilamentOdkLink\\FilamentOdkLinkServiceProvider"
                     ],
                     "aliases": {
                         "FilamentOdkLink": "Stats4sd\\FilamentOdkLink\\Facades\\FilamentOdkLink"

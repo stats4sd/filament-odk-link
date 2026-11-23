@@ -38,7 +38,7 @@ class XlsformChoicesExport implements FromQuery, ShouldAutoSize, ShouldQueue, Wi
         $this->propertyHeadings = $this->getHeadingsFromPropertyList($this->getHeadingsFromProperties());
     }
 
-    public function query()
+    public function query(): Builder
     {
         return ChoiceListEntry::query()
             ->selectRaw(

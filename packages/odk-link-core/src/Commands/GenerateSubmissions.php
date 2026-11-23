@@ -7,6 +7,7 @@ use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Concerns\Import;
 use Maatwebsite\Excel\Facades\Excel;
 use SimpleXMLElement;
 use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformWorkbookExport;
@@ -48,7 +49,7 @@ class GenerateSubmissions extends Command
             $filePath = 'temp/' . $xlsform->getKey() . '/' . $xlsform->title . '.xlsx';
             Storage::disk('local')->makeDirectory('temp/' . $xlsform->getKey());
             Excel::store(new XlsformWorkbookExport($xlsform), $filePath, 'local');
-            $data = Excel::toArray(new XlsformWorkbookExport($xlsform), $filePath);
+            $data = Excel::toArray(new class implements Import {}, $filePath, 'local');
 
             // Get the survey rows
             $rows = $data[0];
@@ -83,9 +84,6 @@ class GenerateSubmissions extends Command
                 }
 
                 $row = array_combine($headings, $row);
-                if ($row === false) {
-                    continue;
-                }
 
                 if (! isset($row['type']) || ! isset($row['name'])) {
                     continue;

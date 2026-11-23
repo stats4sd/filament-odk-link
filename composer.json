@@ -8,13 +8,16 @@
             "type": "path",
             "url": "packages/*",
             "options": {
-                "symlink": true
+                "symlink": true,
+                "versions": {
+                    "stats4sd/filament-odk-link": "dev-dev"
+                }
             }
         }
     ],
     "require": {
         "php": "^8.4",
-        "stats4sd/filament-odk-link": "@dev"
+        "stats4sd/filament-odk-link": "dev-dev"
     },
     "require-dev": {
         "larastan/larastan": "^3.0",

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 
 class ChoiceList extends Model
 {
@@ -29,7 +29,7 @@ class ChoiceList extends Model
 
     // get entries for a specific owner
     /** @return Collection<ChoiceListEntry> */
-    public function getOwnedEntries(WithXlsforms $owner): Collection
+    public function getOwnedEntries(Model & FormOwner $owner): Collection
     {
 
         return $this->choiceListEntries()

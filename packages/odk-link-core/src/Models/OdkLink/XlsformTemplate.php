@@ -5,6 +5,7 @@ namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -16,14 +17,15 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Excel;
 use PhpOffice\PhpSpreadsheet\Exception;
+use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
 use Stats4sd\FilamentOdkLink\Imports\XlsImport;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsXlsformTemplate;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsforms;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasUploadedXlsformFile;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Stats4sd\FilamentOdkLink\Services\UpdateXlsformTitleInFile;
+use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -75,7 +77,7 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
             // If the template is available, add a version of it to all teams where `shouldReceiveAllXlsformTemplates` is true
             if ($xlsformTemplate->available) {
 
-                $ownerType = config('filament-odk-link.models.form_owner');
+                $ownerType = app(ConfiguredModels::class)->formOwnerClass();
 
                 // if the template belongs to 1 team, give it to that team.
                 if ($xlsformTemplate->owner instanceof $ownerType) {
@@ -87,8 +89,8 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
                 } else {
 
                     $ownerType::all()
-                        ->filter(fn (WithXlsforms $owner) => $owner->should_receive_all_xlsform_templates)
-                        ->each(function (WithXlsforms $owner) use ($xlsformTemplate) {
+                        ->filter(fn (Model & FormOwner $owner) => $owner->should_receive_all_xlsform_templates)
+                        ->each(function (Model & FormOwner $owner) use ($xlsformTemplate) {
                             $xlsformTemplate->deployTo($owner);
                         });
                 }
@@ -96,7 +98,7 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
         });
     }
 
-    public function deployTo(WithXlsforms $owner)
+    public function deployTo(Model & FormOwner $owner)
     {
         $xlsform = $owner->xlsforms()->whereHas('xlsformTemplate', function ($query) {
             $query->where('xlsform_templates.id', $this->id);
@@ -191,6 +193,7 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
             ->where('is_active', true);
     }
 
+    /** @return MorphTo<Model, $this> */
     public function owner(): MorphTo
     {
         return $this->morphTo();
@@ -301,12 +304,16 @@ class XlsformTemplate extends HasXlsformDrafts implements IsXlsformTemplate
             });
     }
 
-    /** @return Attribute<Collection<XlsformModuleVersion>, never> */
+    /** @return Attribute<covariant Collection<int, covariant XlsformModuleVersion|null>, never> */
     protected function xlsformDefaultModuleVersions(): Attribute
     {
-        return new Attribute(
-            get: fn () => $this->xlsformModules->map(fn (XlsformModule $xlsformModule) => $xlsformModule->defaultXlsformVersion)
-        );
+        return Attribute::get(fn () => $this->collectDefaultModuleVersions());
+    }
+
+    /** @return Collection<int, covariant XlsformModuleVersion|null> */
+    private function collectDefaultModuleVersions(): Collection
+    {
+        return $this->xlsformModules->toBase()->map(fn (XlsformModule $module): ?XlsformModuleVersion => $module->defaultXlsformVersion);
     }
 
     /** @return HasManyDeep<SurveyRow, $this> */
