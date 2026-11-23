@@ -2,7 +2,7 @@
 
 **Status**: In Progress
 
-Steps 1–5 (automated part) and 7 are done locally. Core: 243 tests pass, PHPStan and Pint are clean. Reference app tests pass. One extra pre-existing bug was found and fixed: `XlsImport` threw on XLSForms with no `entities` sheet. Still to do: commit, push, confirm CI (step 6), and the manual admin-panel check (step 5). See [change log](../change-logs/2026-11-23-laravel-excel-4-upgrade.md); mark Completed once CI is green.
+All automated steps are done (PR #172). CI is green via manual dispatch: core-ci phpstan, pint, validate and tests on PHP 8.4 and 8.5; reference-ci validate, tests and pint. One extra pre-existing bug was found and fixed: `XlsImport` threw on XLSForms with no `entities` sheet. Remaining: the manual admin-panel check in step 5. See [change log](../change-logs/2026-11-23-laravel-excel-4-upgrade.md).
 
 **Branch**: `laravel-excel-update`, off `restructuring-prep-for-ui-split`. PR targets `restructuring-prep-for-ui-split` so PR #154 goes green once merged.
 

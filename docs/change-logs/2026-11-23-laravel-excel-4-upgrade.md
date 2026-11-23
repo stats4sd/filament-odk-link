@@ -35,7 +35,8 @@ Implements [docs/plans/2026-11-23-laravel-excel-4-upgrade.md](../plans/2026-11-2
 
 - Core: Pest 243 passed; PHPStan no errors; Pint clean; `composer validate --strict` OK.
 - Reference app: Pest 22 passed, 1 skipped; Pint clean.
-- Not yet done: push and confirm CI, and the manual admin-panel check (template upload, XLSform download, translations export, submissions export).
+- CI (PR #172, manually dispatched because the workflows only trigger on PRs into `dev`): core-ci phpstan, pint, validate, tests (PHP 8.4) and tests (PHP 8.5) all passed; reference-ci validate, tests and pint passed.
+- Not yet done: the manual admin-panel check (template upload, XLSform download, translations export, submissions export).
 
 ## Docs
 
