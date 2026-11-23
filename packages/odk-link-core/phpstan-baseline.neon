@@ -43,12 +43,6 @@ parameters:
 			path: src/Commands/GenerateSubmissions.php
 
 		-
-			message: '#^Strict comparison using \=\=\= between array and false will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: src/Commands/GenerateSubmissions.php
-
-		-
 			message: '#^Undefined variable\: \$result$#'
 			identifier: variable.undefined
 			count: 2
@@ -93,12 +87,6 @@ parameters:
 		-
 			message: '#^If condition is always true\.$#'
 			identifier: if.alwaysTrue
-			count: 1
-			path: src/Exports/XlsformExport/XlsformChoicesExport.php
-
-		-
-			message: '#^Method Stats4sd\\FilamentOdkLink\\Exports\\XlsformExport\\XlsformChoicesExport\:\:query\(\) has invalid return type Laravel\\Scout\\Builder\.$#'
-			identifier: class.notFound
 			count: 1
 			path: src/Exports/XlsformExport/XlsformChoicesExport.php
 

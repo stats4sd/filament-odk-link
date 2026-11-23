@@ -9,7 +9,7 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 class XlsformTemplateValidator implements ToCollection, WithHeadingRow, WithMultipleSheets
 {
-    public function collection(Collection $collection)
+    public function collection(Collection $collection): void
     {
         //
     }

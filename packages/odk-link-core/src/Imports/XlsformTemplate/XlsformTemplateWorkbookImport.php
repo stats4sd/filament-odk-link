@@ -4,6 +4,7 @@ namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\Import;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -17,7 +18,7 @@ use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
 
-class XlsformTemplateWorkbookImport implements ShouldQueue, WithChunkReading, WithEvents, WithMultipleSheets
+class XlsformTemplateWorkbookImport implements Import, ShouldQueue, WithChunkReading, WithEvents, WithMultipleSheets
 {
     use Importable;
     use RegistersEventListeners;

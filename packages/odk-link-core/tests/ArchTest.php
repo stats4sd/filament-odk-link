@@ -1,10 +1,22 @@
 <?php
 
+use Maatwebsite\Excel\Concerns\Export;
+use Maatwebsite\Excel\Concerns\Import;
 use Stats4sd\FilamentOdkLink\Tests\Architecture\ShippingBoundary;
 
 it('will not use debugging functions')
     ->expect(['dd', 'dump', 'ray'])
     ->each->not->toBeUsed();
+
+it('marks every export class as a Laravel Excel export')
+    ->expect('Stats4sd\FilamentOdkLink\Exports')
+    ->classes()
+    ->toImplement(Export::class);
+
+it('marks every import class as a Laravel Excel import')
+    ->expect('Stats4sd\FilamentOdkLink\Imports')
+    ->classes()
+    ->toImplement(Import::class);
 
 it('keeps domain namespaces independent of host and UI dependencies')
     ->expect([

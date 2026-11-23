@@ -106,7 +106,7 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithBackgroun
     /**
      * @throws Exception
      */
-    public function styles(Worksheet $sheet): void
+    public function styles(Worksheet $sheet): ?array
     {
         // Define header style
         $h1 = [
@@ -169,6 +169,8 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithBackgroun
                 ->getProtection()
                 ->setLocked(Protection::PROTECTION_UNPROTECTED);
         }
+
+        return null;
     }
 
     public function columnWidths(): array
