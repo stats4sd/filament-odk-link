@@ -22,7 +22,13 @@ class UpdateXlsformFile implements ShouldQueue
 
     private bool $fileTakenBySibling = false;
 
-    public function __construct(public Xlsform $xlsform, public string $filePath, public ?Authenticatable $user = null) {}
+    // A plain property with a default (not a promoted one) so jobs serialised before it existed still unserialise.
+    public bool $holdClaim = false;
+
+    public function __construct(public Xlsform $xlsform, public string $filePath, public ?Authenticatable $user = null, bool $holdClaim = false)
+    {
+        $this->holdClaim = $holdClaim;
+    }
 
     /**
      * Execute the job.
@@ -46,8 +52,8 @@ class UpdateXlsformFile implements ShouldQueue
             Log::error('Trying to save file for Xlsform ' . $this->xlsform->id . ' that is too big at path ' . $this->filePath);
             $this->fail($exception);
         } finally {
-            if (! $this->fileTakenBySibling) {
-                $this->xlsform->updateQuietly(['processing' => false]);
+            if (! $this->fileTakenBySibling && ! $this->holdClaim) {
+                $this->xlsform->releaseClaim();
             }
         }
     }
@@ -66,7 +72,7 @@ class UpdateXlsformFile implements ShouldQueue
             return;
         }
 
-        $this->xlsform->updateQuietly(['processing' => false]);
+        $this->xlsform->releaseClaim(needsUpdate: true);
 
         $this->notifyJobFailure(
             "Form file update failed: {$this->xlsform->title}",

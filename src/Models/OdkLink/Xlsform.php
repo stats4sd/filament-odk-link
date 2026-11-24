@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -11,7 +12,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Filament\Notifications\Notification;
 use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +34,7 @@ use Stats4sd\FilamentOdkLink\Services\HelperService;
 use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
+use Throwable;
 
 class Xlsform extends HasXlsformDrafts implements HasMedia
 {
@@ -46,7 +47,19 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         'odk_draft_updated_at' => 'timestamp',
         'odk_published_at' => 'timestamp',
         'has_locales' => 'boolean',
+        'draft_snapshot_at' => 'datetime',
+        'draft_claimed_at' => 'datetime',
     ];
+
+    public const CLAIM_TTL_MINUTES = 15;
+
+    public const DRAFT_STATE_UPDATING = 'updating';
+
+    public const DRAFT_STATE_MISSING = 'missing';
+
+    public const DRAFT_STATE_EXPIRED = 'expired';
+
+    public const DRAFT_STATE_CURRENT = 'current';
 
     protected $guarded = [];
 
@@ -440,8 +453,10 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      * @throws FileIsTooBig
      * @throws FileDoesNotExist
      */
-    public function generateXlsfile(): PendingDispatch
+    public function generateXlsfile(?Authenticatable $user = null): PendingDispatch
     {
+        $user ??= auth()->user();
+
         // Ensure entity lists are populated before generating the XLS.
         // This is a no-op for templates without an entities sheet, and a self-healing
         // sync for templates created before entity list syncing was introduced.
@@ -451,36 +466,161 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         $this->updateQuietly(['processing' => true]);
 
         $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
-        $user = auth()->user();
 
+        // Only deployDraft() calls this, and it chains the deploy job after the file job:
+        // the claim must stay held until that deploy job has finished.
         return Excel::queue(new XlsformWorkbookExport($this, $user), $filePath, config('filament-odk-link.storage.xlsforms'))->chain(
             [
-                new UpdateXlsformFile($this, $filePath, $user),
+                new UpdateXlsformFile($this, $filePath, $user, holdClaim: true),
             ]
         );
 
     }
 
     /**
+     * Atomically take the right to build and deploy this form. Only one caller can win; a claim that nobody
+     * released (killed worker, lost job) can be taken again after CLAIM_TTL_MINUTES.
+     */
+    public function claimForDeployment(): bool
+    {
+        $claimedAt = now();
+        $expiredBefore = now()->subMinutes(self::CLAIM_TTL_MINUTES);
+
+        $claimedRows = static::withoutGlobalScopes()
+            ->whereKey($this->getKey())
+            ->where(function (Builder $query) use ($expiredBefore): void {
+                $query->where('processing', false)
+                    ->orWhereNull('draft_claimed_at')
+                    ->orWhere('draft_claimed_at', '<', $expiredBefore);
+            })
+            ->update([
+                'processing' => true,
+                'draft_claimed_at' => $claimedAt,
+            ]);
+
+        if ($claimedRows === 0) {
+            return false;
+        }
+
+        $this->forceFill([
+            'processing' => true,
+            'draft_claimed_at' => $claimedAt,
+        ])->syncOriginalAttributes(['processing', 'draft_claimed_at']);
+
+        return true;
+    }
+
+    public function releaseClaim(bool $needsUpdate = false): void
+    {
+        $values = [
+            'processing' => false,
+            'draft_claimed_at' => null,
+        ];
+
+        if ($needsUpdate) {
+            $values['draft_needs_update'] = true;
+        }
+
+        $this->writeWithoutEvents($values);
+    }
+
+    public function hasActiveClaim(): bool
+    {
+        if (! $this->processing) {
+            return false;
+        }
+
+        if (! $this->draft_claimed_at) {
+            return false;
+        }
+
+        return $this->draft_claimed_at->gt(now()->subMinutes(self::CLAIM_TTL_MINUTES));
+    }
+
+    public function draftIsOutdated(): bool
+    {
+        if ($this->draft_needs_update) {
+            return true;
+        }
+
+        if (! $this->has_draft) {
+            return true;
+        }
+
+        return $this->processing && ! $this->hasActiveClaim();
+    }
+
+    public function draftState(): string
+    {
+        if ($this->hasActiveClaim()) {
+            return self::DRAFT_STATE_UPDATING;
+        }
+
+        if (! $this->has_draft) {
+            return self::DRAFT_STATE_MISSING;
+        }
+
+        if ($this->draftIsOutdated()) {
+            return self::DRAFT_STATE_EXPIRED;
+        }
+
+        return self::DRAFT_STATE_CURRENT;
+    }
+
+    /**
+     * @param  array<string, mixed>  $values
+     */
+    private function writeWithoutEvents(array $values): void
+    {
+        static::withoutGlobalScopes()
+            ->whereKey($this->getKey())
+            ->update($values);
+
+        $this->forceFill($values)->syncOriginalAttributes(array_keys($values));
+    }
+
+    /**
      * @throws FileDoesNotExist
      * @throws FileIsTooBig
      */
-    public function deployDraft(bool $withMedia = true, bool $published = false): ?PendingDispatch
-    {
+    public function deployDraft(
+        bool $withMedia = true,
+        bool $published = false,
+        bool $alreadyClaimed = false,
+        bool $holdClaim = false,
+        ?Authenticatable $user = null,
+    ): ?PendingDispatch {
         // if the form is already mid-processing, do not requeue.
-        if ($this->processing) {
-            return null;
+        if (! $alreadyClaimed) {
+            if (! $this->claimForDeployment()) {
+                return null;
+            }
         }
 
-        // if this is immediately after publishing, skip regenerating the xlsfile
+        $user ??= auth()->user();
+
+        // if this is immediately after publishing, skip regenerating the xlsfile.
+        // The draft is the same file as before: leave the flag and the snapshot alone.
         if ($published) {
-            return DeployDraftXlsformToOdkCentral::dispatch($this, $withMedia, auth()->user());
+            return DeployDraftXlsformToOdkCentral::dispatch($this, $withMedia, $user, null, $holdClaim);
         }
 
-        return $this->generateXlsfile()
-            ->chain([
-                new DeployDraftXlsformToOdkCentral($this, $withMedia, auth()->user()),
-            ]);
+        // Everything saved before this moment goes into the draft. The flag is cleared here, so a change saved
+        // while the chain runs keeps it set and the form shows as outdated afterwards.
+        $snapshotAt = now();
+
+        $this->writeWithoutEvents(['draft_needs_update' => false]);
+
+        try {
+            return $this->generateXlsfile($user)
+                ->chain([
+                    new DeployDraftXlsformToOdkCentral($this, $withMedia, $user, $snapshotAt, $holdClaim),
+                ]);
+        } catch (Throwable $exception) {
+            $this->releaseClaim(needsUpdate: true);
+
+            throw $exception;
+        }
     }
 
     /**
@@ -491,25 +631,19 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
      */
     public function publishForm(): ?PendingDispatch
     {
-        if ($this->processing) {
+        if (! $this->claimForDeployment()) {
             return null;
         }
 
+        $user = auth()->user();
+
+        // the claim stays held through the draft deploy, the publish and the final draft re-deploy.
         if ($this->draft_needs_update) {
-            $user = auth()->user();
-            $deployment = $this->deployDraft();
+            $deployment = $this->deployDraft(alreadyClaimed: true, holdClaim: true, user: $user);
 
             if (! $deployment) {
-                Log::warning("Publishing skipped for xlsform {$this->id}: the draft deployment could not be queued because the form is already processing.");
-
-                if ($user) {
-                    Notification::make()
-                        ->title('Form "' . $this->title . '" could not be published')
-                        ->body('The form is currently being processed. Please wait for the current process to finish and try again.')
-                        ->danger()
-                        ->sendToDatabase($user, isEventDispatched: true)
-                        ->broadcast($user);
-                }
+                Log::warning("Publishing skipped for xlsform {$this->id}: the draft deployment could not be queued.");
+                $this->releaseClaim();
 
                 return null;
             }
@@ -520,7 +654,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
         }
 
         // if no draft update is needed, just publish the form:
-        return PublishXlsformOnOdkCentral::dispatch($this, auth()->user());
+        return PublishXlsformOnOdkCentral::dispatch($this, $user);
 
     }
 

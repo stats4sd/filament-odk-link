@@ -7,6 +7,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\HtmlString;
 use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
@@ -29,7 +30,21 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
     /** @var array<int, int> */
     public array $backoff = [15, 60];
 
-    public function __construct(public Xlsform | XlsformTemplate $xlsform, public bool $withMedia, public ?Authenticatable $user) {}
+    // Plain properties with defaults (not promoted ones) so jobs serialised before they existed still unserialise.
+    public ?Carbon $snapshotAt = null;
+
+    public bool $holdClaim = false;
+
+    public function __construct(
+        public Xlsform | XlsformTemplate $xlsform,
+        public bool $withMedia,
+        public ?Authenticatable $user,
+        ?Carbon $snapshotAt = null,
+        bool $holdClaim = false,
+    ) {
+        $this->snapshotAt = $snapshotAt;
+        $this->holdClaim = $holdClaim;
+    }
 
     /**
      * Execute the job.
@@ -83,7 +98,12 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
 
         if ($this->xlsform instanceof Xlsform) {
             $this->xlsform->live_needs_update = ! $this->xlsform->live_needs_update;
-            $this->xlsform->draft_needs_update = false;
+
+            // draft_needs_update is cleared when the snapshot is taken (Xlsform::deployDraft), not here:
+            // a change saved while this chain ran must keep the flag set.
+            if ($this->snapshotAt) {
+                $this->xlsform->draft_snapshot_at = $this->snapshotAt;
+            }
         }
 
         $this->xlsform->save();
@@ -99,6 +119,12 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
                 'active' => true,
             ]
         );
+
+        if ($this->xlsform instanceof Xlsform) {
+            if (! $this->holdClaim) {
+                $this->xlsform->releaseClaim();
+            }
+        }
 
         Log::info('Draft xlsform deployed to ODK Central', [
             ...$this->logContext(),
@@ -146,9 +172,15 @@ class DeployDraftXlsformToOdkCentral implements ShouldQueue
             'exception' => $exception,
         ]);
 
-        $this->xlsform->updateQuietly(['processing' => false]);
+        if ($this->xlsform instanceof Xlsform) {
+            $this->xlsform->releaseClaim(needsUpdate: true);
+        }
 
-        $message = $exception?->getMessage() ?? 'No error message was returned. Please check the application logs for details.';
+        if (! $this->xlsform instanceof Xlsform) {
+            $this->xlsform->updateQuietly(['processing' => false]);
+        }
+
+        $message =$exception?->getMessage() ?? 'No error message was returned. Please check the application logs for details.';
 
         $recipients = $this->user
             ? collect([$this->user])
