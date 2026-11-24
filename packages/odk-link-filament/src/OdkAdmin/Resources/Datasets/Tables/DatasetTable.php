@@ -27,9 +27,6 @@ class DatasetTable
             ->filters([
                 //
             ])
-            ->recordUrl(
-                fn ($record) => route('filament.admin.resources.datasets.view', ['record' => $record])
-            )
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
