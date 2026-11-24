@@ -14,7 +14,7 @@ composer analyse                    # PHPStan / Larastan (level 4, scans src + d
 
 ## Configuration & host-app contract
 
-All behaviour is driven by [config/filament-odk-link.php](config/filament-odk-link.php) (env-backed). The package does **not** ship the form-owner or user models — the host app supplies them:
+All behaviour is driven by [config/odk-link.php](config/odk-link.php) (env-backed). The package does **not** ship the form-owner or user models — the host app supplies them:
 
 - `ODK_FORM_OWNER_MODEL` (no package default) — the tenant/owner model. It **must** implement `FormOwner`, normally using the `HasXlsforms` trait ([src/Models/OdkLink/Traits/HasXlsforms.php](src/Models/OdkLink/Traits/HasXlsforms.php)). Only **one** model may own forms; every Xlsform belongs to one.
 - `ODK_USER_MODEL` (no package default) — an Eloquent model implementing `PlatformUser`, normally using Laravel `Notifiable`.
@@ -25,8 +25,9 @@ Migrations are explicitly ordered and registered by numeric prefix in `getMigrat
 
 ## Architecture
 
-### One Filament plugin
-- There is no team-facing plugin in the package today. Tenant UI lives in host apps; extracting it is roadmap steps 5 and 6 in the root `RESTRUCTURING.md`.
+### No UI in this package
+- This package is headless: no `Filament\`, `Livewire\` or view code, and Filament is not installed in its `vendor/`. `tests/ArchTest.php` and PHPStan (class-not-found) enforce it.
+- The Filament UI (`OdkLinkAdmin` plugin, resources, widgets, form components, views, CSS) lives in [`packages/odk-link-filament`](../odk-link-filament/CLAUDE.md). It uses its own namespace, `Stats4sd\OdkLink\Filament\`.
 
 ### Domain model (the core to understand)
 The form hierarchy lives in `src/Models/OdkLink/`:
@@ -39,7 +40,7 @@ The form hierarchy lives in `src/Models/OdkLink/`:
 [OdkLinkService](src/Services/OdkLinkService.php) is registered as a **singleton** and is the single gateway to the ODK Central REST API. It is composed of trait "sub-services" in `src/Services/OdkLinkServices/` — `OdkProjectService`, `OdkFormService`, `OdkUserService`, `OdkFormMediaService`, `OdkSubmissionService`. Auth tokens are cached (`odk-token`, 20h). Inject `OdkLinkService` rather than calling HTTP directly.
 
 ### Event-driven import pipeline
-Uploading an `.xlsx` triggers Spatie's `MediaHasBeenAddedEvent`, wired in [FilamentOdkLinkEventServiceProvider](src/FilamentOdkLinkEventServiceProvider.php) to [HandleXlsformTemplateAdded](src/Listeners/HandleXlsformTemplateAdded.php). The listener parses the workbook (via `maatwebsite/excel` importers in `src/Imports/XlsformTemplate/`) and dispatches a **chain of queued jobs** (`src/Jobs/`, e.g. `FinishXlsformTemplateImport`, `PrepareSurveyRowPaths`, `ImportAllLanguageStrings`, `FinishChoiceListEntryImport`) that populate survey rows, choice lists, language strings, and locales.
+Uploading an `.xlsx` triggers Spatie's `MediaHasBeenAddedEvent`, wired in [OdkLinkEventServiceProvider](src/OdkLinkEventServiceProvider.php) to [HandleXlsformTemplateAdded](src/Listeners/HandleXlsformTemplateAdded.php). The listener parses the workbook (via `maatwebsite/excel` importers in `src/Imports/XlsformTemplate/`) and dispatches a **chain of queued jobs** (`src/Jobs/`, e.g. `FinishXlsformTemplateImport`, `PrepareSurveyRowPaths`, `ImportAllLanguageStrings`, `FinishChoiceListEntryImport`) that populate survey rows, choice lists, language strings, and locales.
 
 ### Deployment & submissions flow
 - **Deploy:** `Xlsform`/`XlsformTemplate` model events (`booted()`) and the `src/Jobs/XlsformDeployment/` jobs push drafts/published forms to ODK Central (`DeployDraftXlsformToOdkCentral`, `PublishXlsformOnOdkCentral`, `UpdateXlsformFile`) and fire `XlsformDraftWasDeployed` / `XlsformWasPublished` events. Model `saved` hooks track `draft_needs_update` / `live_needs_update` flags.

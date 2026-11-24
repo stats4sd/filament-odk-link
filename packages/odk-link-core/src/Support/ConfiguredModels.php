@@ -1,12 +1,12 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Support;
+namespace Stats4sd\OdkLink\Core\Support;
 
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 use ReflectionClass;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
-use Stats4sd\FilamentOdkLink\Contracts\PlatformUser;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Contracts\PlatformUser;
 
 class ConfiguredModels
 {
@@ -31,7 +31,7 @@ class ConfiguredModels
         $class = $this->formOwnerClass();
 
         if (! $owner instanceof $class) {
-            throw new InvalidArgumentException("filament-odk-link.models.form_owner requires an instance of {$class}; received " . get_debug_type($owner));
+            throw new InvalidArgumentException("odk-link.models.form_owner requires an instance of {$class}; received " . get_debug_type($owner));
         }
 
         return $owner;
@@ -46,7 +46,7 @@ class ConfiguredModels
         $class = $this->userClass();
 
         if (! $user instanceof $class) {
-            throw new InvalidArgumentException("filament-odk-link.models.user_model requires an instance of {$class}; received " . get_debug_type($user));
+            throw new InvalidArgumentException("odk-link.models.user_model requires an instance of {$class}; received " . get_debug_type($user));
         }
 
         return $user;
@@ -60,7 +60,7 @@ class ConfiguredModels
      */
     private function modelClass(string $name, string $contract): string
     {
-        $key = "filament-odk-link.models.{$name}";
+        $key = "odk-link.models.{$name}";
         $class = config($key);
 
         if (! is_string($class) || ! class_exists($class) || ! is_subclass_of($class, Model::class) || ! is_a($class, $contract, true)) {

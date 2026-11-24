@@ -1,17 +1,24 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Tests\Architecture;
+namespace Stats4sd\OdkLink\Core\Tests\Architecture;
 
 class ShippingBoundary
 {
     /** @return list<string> */
-    public static function violations(string $source, bool $ui): array
+    public static function violations(string $source): array
     {
-        $forbidden = ['App\\', 'Tests\\', 'Stats4sd\\FilamentOdkLink\\Tests\\', 'Stats4sd\\FilamentTeamManagement\\', 'HaydenPierce\\ClassFinder', 'Spatie\\Permission\\'];
-
-        if (! $ui) {
-            $forbidden = [...$forbidden, 'Filament\\', 'Livewire\\', 'Stats4sd\\FilamentOdkLink\\Filament\\', 'Stats4sd\\FilamentOdkLink\\Forms\\', 'Stats4sd\\FilamentOdkLink\\Testing\\'];
-        }
+        $forbidden = [
+            'App\\',
+            'Tests\\',
+            'Stats4sd\\OdkLink\\Core\\Tests\\',
+            'Stats4sd\\FilamentTeamManagement\\',
+            'HaydenPierce\\ClassFinder',
+            'Spatie\\Permission\\',
+            'Filament\\',
+            'Livewire\\',
+            'Stats4sd\\OdkLink\\Filament\\',
+            'Stats4sd\\FilamentOdkLink\\',
+        ];
 
         $violations = [];
         $executable = '';

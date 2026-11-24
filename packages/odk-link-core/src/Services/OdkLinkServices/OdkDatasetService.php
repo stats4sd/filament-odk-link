@@ -1,11 +1,11 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
+namespace Stats4sd\OdkLink\Core\Services\OdkLinkServices;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
+use Stats4sd\OdkLink\Core\Models\OdkLink\OdkProject;
 
 /**
  * Wraps ODK Central's Entity Management API (Entity Lists / Datasets and their Entities).

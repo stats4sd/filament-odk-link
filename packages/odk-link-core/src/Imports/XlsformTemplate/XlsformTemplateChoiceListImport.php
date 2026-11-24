@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
+namespace Stats4sd\OdkLink\Core\Imports\XlsformTemplate;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Str;
@@ -13,11 +13,11 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithUpserts;
-use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Concerns\NotifiesOnJobFailure;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceList;
+use Stats4sd\OdkLink\Core\Models\OdkLink\RequiredMedia;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
 use Throwable;
 
 class XlsformTemplateChoiceListImport implements ShouldQueue, SkipsEmptyRows, ToModel, WithChunkReading, WithEvents, WithHeadingRow, WithMultipleSheets, WithUpserts

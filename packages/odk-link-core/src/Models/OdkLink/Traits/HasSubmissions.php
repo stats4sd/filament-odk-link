@@ -1,10 +1,10 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Submission;
 
 /** @phpstan-require-extends Model */
 trait HasSubmissions

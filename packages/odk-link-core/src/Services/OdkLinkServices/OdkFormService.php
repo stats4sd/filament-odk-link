@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
+namespace Stats4sd\OdkLink\Core\Services\OdkLinkServices;
 
 use Carbon\Carbon;
 use Exception;
@@ -13,13 +13,13 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Excel;
-use Stats4sd\FilamentOdkLink\Exceptions\OdkCentralRequestException;
-use Stats4sd\FilamentOdkLink\Exceptions\XlsformValidationException;
-use Stats4sd\FilamentOdkLink\Imports\XlsImport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
+use Stats4sd\OdkLink\Core\Exceptions\OdkCentralRequestException;
+use Stats4sd\OdkLink\Core\Exceptions\XlsformValidationException;
+use Stats4sd\OdkLink\Core\Imports\XlsImport;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Abstracts\HasXlsformDrafts;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformVersion;
 
 trait OdkFormService
 {

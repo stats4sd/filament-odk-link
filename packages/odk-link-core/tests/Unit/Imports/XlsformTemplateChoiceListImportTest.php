@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Database\QueryException;
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateChoiceListImport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformTemplateChoiceListImport;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceList;
 
 beforeEach(function () {
     $this->template = makeXlsformTemplate();

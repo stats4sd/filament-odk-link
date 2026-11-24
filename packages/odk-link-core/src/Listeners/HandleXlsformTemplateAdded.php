@@ -1,23 +1,23 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Listeners;
+namespace Stats4sd\OdkLink\Core\Listeners;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformModuleImport;
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateChoiceListImport;
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateWorkbookImport;
-use Stats4sd\FilamentOdkLink\Jobs\FinishChoiceListEntryImport;
-use Stats4sd\FilamentOdkLink\Jobs\FinishSurveyRowImport;
-use Stats4sd\FilamentOdkLink\Jobs\FinishXlsformTemplateImport;
-use Stats4sd\FilamentOdkLink\Jobs\ImportAllLanguageStrings;
-use Stats4sd\FilamentOdkLink\Jobs\LinkModuleVersionToLocales;
-use Stats4sd\FilamentOdkLink\Jobs\PrepareSurveyRowPaths;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformModuleImport;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformTemplateChoiceListImport;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformTemplateWorkbookImport;
+use Stats4sd\OdkLink\Core\Jobs\FinishChoiceListEntryImport;
+use Stats4sd\OdkLink\Core\Jobs\FinishSurveyRowImport;
+use Stats4sd\OdkLink\Core\Jobs\FinishXlsformTemplateImport;
+use Stats4sd\OdkLink\Core\Jobs\ImportAllLanguageStrings;
+use Stats4sd\OdkLink\Core\Jobs\LinkModuleVersionToLocales;
+use Stats4sd\OdkLink\Core\Jobs\PrepareSurveyRowPaths;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModule;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Services\XlsformTranslationHelper;
 
 class HandleXlsformTemplateAdded
 {

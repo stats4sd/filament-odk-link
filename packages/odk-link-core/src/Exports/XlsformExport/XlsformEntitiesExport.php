@@ -1,12 +1,12 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Exports\XlsformExport;
+namespace Stats4sd\OdkLink\Core\Exports\XlsformExport;
 
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
 
 class XlsformEntitiesExport implements FromCollection, WithHeadings, WithTitle
 {

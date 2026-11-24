@@ -1,9 +1,7 @@
 <?php
 
-use Stats4sd\FilamentOdkLink\Facades\FilamentOdkLink as FilamentOdkLinkFacade;
-use Stats4sd\FilamentOdkLink\FilamentOdkLink;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Services\XlsformTranslationHelper;
 
 it('resolves the OdkLinkService as a singleton', function () {
     $a = app(OdkLinkService::class);
@@ -17,10 +15,6 @@ it('resolves the XlsformTranslationHelper as a singleton', function () {
     expect(app(XlsformTranslationHelper::class))
         ->toBeInstanceOf(XlsformTranslationHelper::class)
         ->toBe(app(XlsformTranslationHelper::class));
-});
-
-it('resolves the FilamentOdkLink facade', function () {
-    expect(FilamentOdkLinkFacade::getFacadeRoot())->toBeInstanceOf(FilamentOdkLink::class);
 });
 
 it('auto-registers every console command in src/Commands', function (string $signature) {

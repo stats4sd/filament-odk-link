@@ -1,11 +1,11 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Services;
+namespace Stats4sd\OdkLink\Core\Services;
 
 use Illuminate\Support\Collection;
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateHeadingRowImport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Language;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformTemplateHeadingRowImport;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\Language;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\LanguageStringType;
 
 class XlsformTranslationHelper
 {

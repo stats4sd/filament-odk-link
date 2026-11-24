@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -26,10 +26,10 @@ class XlsformVersion extends Model implements HasMedia
     {
         $this->addMediaCollection('xlsform_file')
             ->singleFile()
-            ->useDisk(config('filament-odk-link.storage.xlsforms'));
+            ->useDisk(config('odk-link.storage.xlsforms'));
 
         $this->addMediaCollection('attached_media')
-            ->useDisk(config('filament-odk-link.storage.xlsforms'));
+            ->useDisk(config('odk-link.storage.xlsforms'));
     }
 
     // **************** COMPUTED ATTRIBUTES ***********************

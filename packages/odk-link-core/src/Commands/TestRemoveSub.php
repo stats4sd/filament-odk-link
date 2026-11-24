@@ -1,11 +1,11 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Commands;
+namespace Stats4sd\OdkLink\Core\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Submission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
 
 class TestRemoveSub extends Command
 {
@@ -40,9 +40,9 @@ class TestRemoveSub extends Command
         $option = $this->choice('Do you want to completely clear the submissions, entities and entity_values tables, or only remove submissions from a specific xlsform?', ['All', 'Specific'], 'All');
 
         if ($option === 'Specific') {
-            $teamName = $this->choice('Which team does the form belong to?', config('filament-odk-link.models.form_owner')::all()->pluck('name', 'id')->toArray());
+            $teamName = $this->choice('Which team does the form belong to?', config('odk-link.models.form_owner')::all()->pluck('name', 'id')->toArray());
 
-            $team = config('filament-odk-link.models.form_owner')::firstWhere('name', $teamName);
+            $team = config('odk-link.models.form_owner')::firstWhere('name', $teamName);
 
             $xlsformTitle = $this->choice('Which xlsform does the form belong to?', $team->xlsforms->pluck('title', 'id')->toArray());
 

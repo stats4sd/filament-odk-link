@@ -1,17 +1,17 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Jobs;
+namespace Stats4sd\OdkLink\Core\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Stats4sd\FilamentOdkLink\Concerns\ResetsProcessingOnFailure;
-use Stats4sd\FilamentOdkLink\Events\XlsformModuleVersionWasImported;
-use Stats4sd\FilamentOdkLink\Events\XlsformTemplateWasImported;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Support\NotificationRecipients;
-use Stats4sd\FilamentOdkLink\Support\OperationNotification;
-use Stats4sd\FilamentOdkLink\Support\OperationNotifications;
+use Stats4sd\OdkLink\Core\Concerns\ResetsProcessingOnFailure;
+use Stats4sd\OdkLink\Core\Events\XlsformModuleVersionWasImported;
+use Stats4sd\OdkLink\Core\Events\XlsformTemplateWasImported;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Support\NotificationRecipients;
+use Stats4sd\OdkLink\Core\Support\OperationNotification;
+use Stats4sd\OdkLink\Core\Support\OperationNotifications;
 
 class FinishXlsformTemplateImport implements ShouldQueue
 {

@@ -1,7 +1,7 @@
 <?php
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformSurveyExport;
+use Stats4sd\OdkLink\Core\Exports\XlsformExport\XlsformSurveyExport;
 
 // The constructor queries json_keys(), which SQLite lacks, so styles() is exercised
 // on an instance built without it.

@@ -7,8 +7,6 @@
       "Bash(vendor/bin/pest * --no-coverage)",
       "Bash(grep -rn '*' src/)",
       "Bash(grep -rn 'protected static ?string $navigation' src/Filament/)",
-      "Bash(grep -n 'protected $table' /Users/dave/Projects/PhpPackages/filament-odk-link/src/Models/Country.php /Users/dave/Projects/PhpPackages/filament-odk-link/src/Models/Continent.php)",
-      "Bash(php -r 'require '\\\\''vendor/autoload.php'\\\\''; $c = HaydenPierce\\\\ClassFinder\\\\ClassFinder::getClassesInNamespace\\('\\\\''Stats4sd\\\\FilamentOdkLink\\\\Models'\\\\''\\); var_dump\\(count\\($c\\), array_slice\\($c, 0, 5\\)\\);')",
       "Bash(vendor/bin/pest tests/Unit/Services/OdkProjectServiceTest.php --no-coverage --filter=\"createProjectAppUser\")",
       "Bash(grep -A 20 'protected $casts' src/Models/OdkLink/Xlsform.php)",
       "Bash(vendor/bin/pest tests/Unit tests/Smoke)",

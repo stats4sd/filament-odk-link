@@ -1,0 +1,6 @@
+# Read by Larastan's application resolver. Registering the package's own provider
+# makes the odk-link:: view namespace exist during analysis regardless of whether
+# Testbench's discovery manifest includes the root package (it does not on a clean
+# install), so view-string checks are deterministic. Tests use their own TestCase.
+providers:
+  - Stats4sd\OdkLink\Filament\OdkLinkFilamentServiceProvider

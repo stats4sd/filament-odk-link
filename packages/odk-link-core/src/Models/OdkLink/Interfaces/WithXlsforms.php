@@ -1,8 +1,8 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink\Interfaces;
 
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
 
 /** @deprecated Implement FormOwner instead. */
 interface WithXlsforms extends FormOwner {}

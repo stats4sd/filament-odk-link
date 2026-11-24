@@ -1,27 +1,12 @@
 <?php
 
-use Filament\Panel;
-use Filament\PanelRegistry;
 use Illuminate\Support\Facades\DB;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Tests\Models\Team;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Tests\Models\Team;
 
-// Xlsform's global scope calls Filament::hasTenancy(), which throws
-// NoDefaultPanelSetException with no panel registered in this package's
-// isolated Testbench environment - mock the registry so it returns false,
-// matching the same pattern used in tests/Unit/Models/HasXlsformsTest.php.
 beforeEach(function () {
-    $mockPanel = Mockery::mock(Panel::class);
-    $mockPanel->shouldReceive('hasTenancy')->andReturn(false);
-    $mockPanel->shouldReceive('getTenantModel')->andReturn(null);
-
-    $mockRegistry = Mockery::mock(PanelRegistry::class);
-    $mockRegistry->shouldReceive('getDefault')->andReturn($mockPanel);
-
-    app()->instance(PanelRegistry::class, $mockRegistry);
-
     $this->team = Team::factory()->create();
 });
 

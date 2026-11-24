@@ -1,0 +1,50 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Class Filament\\Forms\\Components\\Textarea referenced with incorrect case\: Filament\\Forms\\Components\\TextArea\.$#'
+			identifier: class.nameCase
+			count: 1
+			path: src/OdkAdmin/Resources/ChoiceListResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/OdkAdmin/Resources/Datasets/Schemas/DatasetForm.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/OdkAdmin/Resources/Datasets/Schemas/DatasetForm.php
+
+		-
+			message: '#^Called ''Model\:\:make\(\)'' which performs unnecessary work, use ''new Model\(\)''\.$#'
+			identifier: larastan.noModelMake
+			count: 1
+			path: src/OdkAdmin/Resources/XlsformTemplates/Pages/CreateXlsformTemplate.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: src/OdkAdmin/Resources/XlsformTemplates/Pages/CreateXlsformTemplate.php
+
+		-
+			message: '#^Access to an undefined property Stats4sd\\OdkLink\\Core\\Models\\OdkLink\\XlsformTemplate\:\:\$newXlsfile\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/OdkAdmin/Resources/XlsformTemplates/Pages/ViewXlsformTemplate.php
+
+		-
+			message: '#^Access to an undefined property Stats4sd\\OdkLink\\Core\\Models\\OdkLink\\Interfaces\\IsXlsformTemplate\:\:\$owner_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/OdkAdmin/Resources/XlsformTemplates/Schemas/XlsformTemplateForm.php
+
+		-
+			message: '#^Access to an undefined property Stats4sd\\OdkLink\\Core\\Models\\OdkLink\\XlsformTemplate\:\:\$newXlsfile\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/OdkAdmin/Resources/XlsformTemplates/Tables/XlsformTemplateTable.php
+

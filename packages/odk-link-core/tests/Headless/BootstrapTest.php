@@ -3,18 +3,17 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Schema;
-use Stats4sd\FilamentOdkLink\Contracts\CurrentOwnerResolver;
-use Stats4sd\FilamentOdkLink\Contracts\OperationNotifier;
-use Stats4sd\FilamentOdkLink\Contracts\RoleResolver;
-use Stats4sd\FilamentOdkLink\Contracts\SubmissionProcessor;
-use Stats4sd\FilamentOdkLink\FilamentOdkLinkServiceProvider;
-use Stats4sd\FilamentOdkLink\OdkLinkCoreServiceProvider;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
-use Stats4sd\FilamentOdkLink\Support\EmptyRoleResolver;
-use Stats4sd\FilamentOdkLink\Support\NullCurrentOwnerResolver;
-use Stats4sd\FilamentOdkLink\Support\NullOperationNotifier;
-use Stats4sd\FilamentOdkLink\Support\NullSubmissionProcessor;
-use Stats4sd\FilamentOdkLink\Tests\Models\Team;
+use Stats4sd\OdkLink\Core\Contracts\CurrentOwnerResolver;
+use Stats4sd\OdkLink\Core\Contracts\OperationNotifier;
+use Stats4sd\OdkLink\Core\Contracts\RoleResolver;
+use Stats4sd\OdkLink\Core\Contracts\SubmissionProcessor;
+use Stats4sd\OdkLink\Core\OdkLinkCoreServiceProvider;
+use Stats4sd\OdkLink\Core\Support\ConfiguredModels;
+use Stats4sd\OdkLink\Core\Support\EmptyRoleResolver;
+use Stats4sd\OdkLink\Core\Support\NullCurrentOwnerResolver;
+use Stats4sd\OdkLink\Core\Support\NullOperationNotifier;
+use Stats4sd\OdkLink\Core\Support\NullSubmissionProcessor;
+use Stats4sd\OdkLink\Core\Tests\Models\Team;
 use Symfony\Component\Process\Process;
 
 class Organisation extends Team
@@ -24,7 +23,6 @@ class Organisation extends Team
 
 it('boots core without UI or role providers and resolves disabled integration defaults', function () {
     $providers = array_keys(app()->getLoadedProviders());
-    expect($providers)->not->toContain(FilamentOdkLinkServiceProvider::class);
     foreach ($providers as $provider) {
         expect($provider)->not->toStartWith('Filament\\')->not->toStartWith('Livewire\\')->not->toStartWith('Spatie\\Permission\\');
     }
@@ -37,8 +35,8 @@ it('boots core without UI or role providers and resolves disabled integration de
 });
 
 it('defers required model validation until the configured class is used', function () {
-    config()->set('filament-odk-link.models.form_owner', null);
-    config()->set('filament-odk-link.models.user_model', null);
+    config()->set('odk-link.models.form_owner', null);
+    config()->set('odk-link.models.user_model', null);
     expect(app(CurrentOwnerResolver::class)->current())->toBeNull()
         ->and(app(OperationNotifier::class))->toBeInstanceOf(NullOperationNotifier::class);
     expect(fn () => app(ConfiguredModels::class)->formOwnerClass())->toThrow(InvalidArgumentException::class, 'models.form_owner');
@@ -46,7 +44,7 @@ it('defers required model validation until the configured class is used', functi
 });
 
 it('creates foreign keys against an alternate configured owner table', function () {
-    config()->set('filament-odk-link.models.form_owner', Organisation::class);
+    config()->set('odk-link.models.form_owner', Organisation::class);
     Schema::create('organisations', function (Blueprint $table) {
         $table->id();
     });
@@ -70,8 +68,8 @@ it('caches package configuration in a disposable core host before models are con
         $process = new Process([PHP_BINARY, $directory . '/artisan', 'config:cache'], $directory, ['APP_CONFIG_CACHE' => $directory . '/bootstrap/cache/config.php']);
         $process->mustRun();
         $cached = require $directory . '/bootstrap/cache/config.php';
-        expect($cached['filament-odk-link']['models']['form_owner'])->toBeNull()
-            ->and($cached['filament-odk-link']['contracts']['submission_processor'])->toBe(NullSubmissionProcessor::class);
+        expect($cached['odk-link']['models']['form_owner'])->toBeNull()
+            ->and($cached['odk-link']['contracts']['submission_processor'])->toBe(NullSubmissionProcessor::class);
         $process->mustRun();
     } finally {
         (new Filesystem)->deleteDirectory($directory);

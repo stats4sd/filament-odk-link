@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Contracts;
+namespace Stats4sd\OdkLink\Core\Contracts;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 

@@ -1,11 +1,11 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Services;
+namespace Stats4sd\OdkLink\Core\Services;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateValidator;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformTemplateValidator;
 
 /**
  * This helper class aims to centralise business logic to validate the uploaded xlsform template excel file before sending it to test on ODK central.

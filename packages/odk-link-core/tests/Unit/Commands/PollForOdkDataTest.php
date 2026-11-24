@@ -1,24 +1,10 @@
 <?php
 
-use Filament\Panel;
-use Filament\PanelRegistry;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
-use Stats4sd\FilamentOdkLink\Jobs\PullSubmissionsFromXlsform;
+use Stats4sd\OdkLink\Core\Jobs\PullSubmissionsFromXlsform;
 
-// Xlsform's 'owned' global scope calls Filament::hasTenancy() → PanelRegistry::getDefault()
-// which throws NoDefaultPanelSetException when no Filament panel is configured.
-// Mock the registry so hasTenancy() returns false and the scope is a no-op.
 beforeEach(function () {
-    $mockPanel = Mockery::mock(Panel::class);
-    $mockPanel->shouldReceive('hasTenancy')->andReturn(false);
-    $mockPanel->shouldReceive('getTenantModel')->andReturn(null);
-
-    $mockRegistry = Mockery::mock(PanelRegistry::class);
-    $mockRegistry->shouldReceive('getDefault')->andReturn($mockPanel);
-
-    app()->instance(PanelRegistry::class, $mockRegistry);
-
     Queue::fake();
 
     $teamId = DB::table('teams')->insertGetId([

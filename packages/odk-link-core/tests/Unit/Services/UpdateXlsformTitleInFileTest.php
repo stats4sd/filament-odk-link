@@ -2,8 +2,8 @@
 
 use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Services\UpdateXlsformTitleInFile;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Services\UpdateXlsformTitleInFile;
 
 beforeEach(function () {
     $this->filePath = tempnam(sys_get_temp_dir(), 'xlsform') . '.xlsx';

@@ -1,30 +1,15 @@
 <?php
 
-use Filament\Panel;
-use Filament\PanelRegistry;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\DB;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
-use Stats4sd\FilamentOdkLink\Tests\Models\Team;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceList;
+use Stats4sd\OdkLink\Core\Tests\Models\Team;
 
 // Build the minimum FK chain: template → module → module_version → choice_list.
 // We insert at the DB level to skip the complex booted() hooks on XlsformTemplate
 // (which call OdkLinkService on created/saved).
-//
-// All model global scopes that call Filament::hasTenancy() (ChoiceListEntry, Xlsform)
-// throw NoDefaultPanelSetException when no panel is configured. Mock the PanelRegistry
-// so hasTenancy() returns false and getCurrentOwner() returns null throughout.
 beforeEach(function () {
-    $mockPanel = Mockery::mock(Panel::class);
-    $mockPanel->shouldReceive('hasTenancy')->andReturn(false);
-    $mockPanel->shouldReceive('getTenantModel')->andReturn(null);
-
-    $mockRegistry = Mockery::mock(PanelRegistry::class);
-    $mockRegistry->shouldReceive('getDefault')->andReturn($mockPanel);
-
-    app()->instance(PanelRegistry::class, $mockRegistry);
-
     $this->team = Team::factory()->create();
 
     $templateId = DB::table('xlsform_templates')->insertGetId([

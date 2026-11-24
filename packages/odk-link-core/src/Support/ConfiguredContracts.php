@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Support;
+namespace Stats4sd\OdkLink\Core\Support;
 
 use Illuminate\Contracts\Container\Container;
 use InvalidArgumentException;
@@ -11,8 +11,8 @@ class ConfiguredContracts
     public function validateSubmissionConfiguration(): void
     {
         foreach (['process_method', 'foreign_key_process_method'] as $legacy) {
-            if (collect(config("filament-odk-link.submission.{$legacy}"))->filter()->isNotEmpty()) {
-                throw new InvalidArgumentException("Remove filament-odk-link.submission.{$legacy} and migrate the callback to contracts.submission_processor (SubmissionProcessor).");
+            if (collect(config("odk-link.submission.{$legacy}"))->filter()->isNotEmpty()) {
+                throw new InvalidArgumentException("Remove odk-link.submission.{$legacy} and migrate the callback to contracts.submission_processor (SubmissionProcessor).");
             }
         }
     }
@@ -30,7 +30,7 @@ class ConfiguredContracts
             $this->validateSubmissionConfiguration();
         }
 
-        $key = "filament-odk-link.contracts.{$name}";
+        $key = "odk-link.contracts.{$name}";
         $class = config($key) ?? $default;
 
         if (! is_string($class) || ! class_exists($class) || ! is_a($class, $contract, true) || ! (new ReflectionClass($class))->isInstantiable()) {

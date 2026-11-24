@@ -1,7 +1,7 @@
 <?php
 
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\GetsModuleNamesPerRow;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\GetsModuleNamesPerRow;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModuleVersion;
 
 // A bare host for the trait under test.
 function moduleResolver(): object

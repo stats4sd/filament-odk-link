@@ -1,10 +1,10 @@
 {
-    "name": "stats4sd/filament-odk-link",
-    "description": "Manage ODK forms  in a harmonised way with Laravel Filament ",
+    "name": "stats4sd/odk-link-core",
+    "description": "Headless core for ODK Link: models, ODK Central client, jobs, imports/exports and migrations for managing ODK forms in Laravel.",
     "keywords": [
         "stats4sd",
         "laravel",
-        "filament-odk-link"
+        "odk-link"
     ],
     "homepage": "https://github.com/stats4sd/filament-odk-link",
     "support": {
@@ -21,12 +21,11 @@
     ],
     "require": {
         "php": "^8.4",
-        "filament/filament": "^5.0",
-        "filament/spatie-laravel-media-library-plugin": "^5.0",
         "illuminate/contracts": "^13.0",
+        "kirschbaum-development/eloquent-power-joins": "^4.0",
         "maatwebsite/excel": "^4.0",
         "shiftonelabs/laravel-cascade-deletes": "^2.0",
-        "simplesoftwareio/simple-qrcode": "^4.2",
+        "spatie/laravel-medialibrary": "^11.0",
         "spatie/laravel-package-tools": "^1.15.0",
         "staudenmeir/belongs-to-through": "^2.18",
         "staudenmeir/eloquent-has-many-deep": "^1.22"
@@ -45,14 +44,14 @@
     },
     "autoload": {
         "psr-4": {
-            "Stats4sd\\FilamentOdkLink\\": "src/",
-            "Stats4sd\\FilamentOdkLink\\Database\\Factories\\": "database/factories/",
-            "Stats4sd\\FilamentOdkLink\\Database\\Seeders\\": "database/seeders/"
+            "Stats4sd\\OdkLink\\Core\\": "src/",
+            "Stats4sd\\OdkLink\\Core\\Database\\Factories\\": "database/factories/",
+            "Stats4sd\\OdkLink\\Core\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Stats4sd\\FilamentOdkLink\\Tests\\": "tests/"
+            "Stats4sd\\OdkLink\\Core\\Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -72,11 +71,8 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Stats4sd\\FilamentOdkLink\\FilamentOdkLinkServiceProvider"
-            ],
-            "aliases": {
-                "FilamentOdkLink": "Stats4sd\\FilamentOdkLink\\Facades\\FilamentOdkLink"
-            }
+                "Stats4sd\\OdkLink\\Core\\OdkLinkCoreServiceProvider"
+            ]
         }
     },
     "minimum-stability": "dev",
