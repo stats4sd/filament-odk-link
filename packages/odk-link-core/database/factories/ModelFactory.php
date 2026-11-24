@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Database\Factories;
+namespace Stats4sd\OdkLink\Core\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 

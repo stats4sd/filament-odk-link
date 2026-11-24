@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink;
+namespace Stats4sd\OdkLink\Filament;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
@@ -21,12 +21,12 @@ class OdkLinkAdmin implements Plugin
     {
         $panel
             ->discoverResources(
-                in: __DIR__ . '/Filament/OdkAdmin/Resources',
-                for: 'Stats4sd\\FilamentOdkLink\\Filament\\OdkAdmin\\Resources'
+                in: __DIR__ . '/OdkAdmin/Resources',
+                for: 'Stats4sd\\OdkLink\\Filament\\OdkAdmin\\Resources'
             )
             ->discoverWidgets(
-                in: __DIR__ . '/Filament/Widgets',
-                for: 'Stats4sd\\FilamentOdkLink\\Filament\\Widgets'
+                in: __DIR__ . '/Widgets',
+                for: 'Stats4sd\\OdkLink\\Filament\\Widgets'
             );
     }
 

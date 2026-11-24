@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Jobs;
+namespace Stats4sd\OdkLink\Core\Jobs;
 
 use Carbon\Carbon;
 use Exception;
@@ -10,9 +10,9 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
-use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Concerns\NotifiesOnJobFailure;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
 use Throwable;
 
 /**
@@ -43,7 +43,7 @@ class PullSubmissionsFromXlsformQuietly implements ShouldQueue
         $odkLinkService = app()->make(OdkLinkService::class);
 
         $token = $odkLinkService->authenticate();
-        $oDataServiceUrl = config('filament-odk-link.odk.base_endpoint') . "/projects/{$this->xlsform->owner->odkProject->id}/forms/{$this->xlsform->odk_id}.svc";
+        $oDataServiceUrl = config('odk-link.odk.base_endpoint') . "/projects/{$this->xlsform->owner->odkProject->id}/forms/{$this->xlsform->odk_id}.svc";
 
         $results = Http::withToken($token)
             ->get($oDataServiceUrl . '/Submissions?$expand=*')

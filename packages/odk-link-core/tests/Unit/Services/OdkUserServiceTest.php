@@ -2,10 +2,10 @@
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithOdkCentralAccount;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Stats4sd\FilamentOdkLink\Tests\Models\Team;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Interfaces\WithOdkCentralAccount;
+use Stats4sd\OdkLink\Core\Models\OdkLink\OdkProject;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Tests\Models\Team;
 
 beforeEach(function () {
     Cache::flush();

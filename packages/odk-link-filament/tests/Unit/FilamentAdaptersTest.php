@@ -10,29 +10,29 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\HtmlString;
 use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
-use Stats4sd\FilamentOdkLink\Commands\PollForOdkData;
-use Stats4sd\FilamentOdkLink\Contracts\CurrentOwnerResolver;
-use Stats4sd\FilamentOdkLink\Contracts\OperationNotifier;
-use Stats4sd\FilamentOdkLink\Filament\OdkLinkFilamentServiceProvider;
-use Stats4sd\FilamentOdkLink\Filament\Support\FilamentCurrentOwnerResolver;
-use Stats4sd\FilamentOdkLink\Filament\Support\FilamentOperationNotifier;
-use Stats4sd\FilamentOdkLink\Filament\Tests\Models\Team;
-use Stats4sd\FilamentOdkLink\Filament\Tests\Models\User;
-use Stats4sd\FilamentOdkLink\FilamentOdkLinkEventServiceProvider;
-use Stats4sd\FilamentOdkLink\Listeners\HandleXlsformTemplateAdded;
-use Stats4sd\FilamentOdkLink\OdkLinkCoreServiceProvider;
-use Stats4sd\FilamentOdkLink\Support\CurrentOwner;
-use Stats4sd\FilamentOdkLink\Support\NullCurrentOwnerResolver;
-use Stats4sd\FilamentOdkLink\Support\NullOperationNotifier;
-use Stats4sd\FilamentOdkLink\Support\OperationNotification;
-use Stats4sd\FilamentOdkLink\Support\OperationNotifications;
+use Stats4sd\OdkLink\Core\Commands\PollForOdkData;
+use Stats4sd\OdkLink\Core\Contracts\CurrentOwnerResolver;
+use Stats4sd\OdkLink\Core\Contracts\OperationNotifier;
+use Stats4sd\OdkLink\Core\Listeners\HandleXlsformTemplateAdded;
+use Stats4sd\OdkLink\Core\OdkLinkCoreServiceProvider;
+use Stats4sd\OdkLink\Core\OdkLinkEventServiceProvider;
+use Stats4sd\OdkLink\Core\Support\CurrentOwner;
+use Stats4sd\OdkLink\Core\Support\NullCurrentOwnerResolver;
+use Stats4sd\OdkLink\Core\Support\NullOperationNotifier;
+use Stats4sd\OdkLink\Core\Support\OperationNotification;
+use Stats4sd\OdkLink\Core\Support\OperationNotifications;
+use Stats4sd\OdkLink\Filament\OdkLinkFilamentServiceProvider;
+use Stats4sd\OdkLink\Filament\Support\FilamentCurrentOwnerResolver;
+use Stats4sd\OdkLink\Filament\Support\FilamentOperationNotifier;
+use Stats4sd\OdkLink\Filament\Tests\Models\Team;
+use Stats4sd\OdkLink\Filament\Tests\Models\User;
 
 it('provides lazy Filament defaults in workers and respects explicit overrides', function () {
     expect(app(CurrentOwnerResolver::class))->toBeInstanceOf(FilamentCurrentOwnerResolver::class)
         ->and(app(CurrentOwner::class)->current())->toBeNull()
         ->and(app(OperationNotifier::class))->toBeInstanceOf(FilamentOperationNotifier::class);
-    config()->set('filament-odk-link.contracts.current_owner_resolver', NullCurrentOwnerResolver::class);
-    config()->set('filament-odk-link.contracts.operation_notifier', NullOperationNotifier::class);
+    config()->set('odk-link.contracts.current_owner_resolver', NullCurrentOwnerResolver::class);
+    config()->set('odk-link.contracts.operation_notifier', NullOperationNotifier::class);
     expect(app(CurrentOwnerResolver::class))->toBeInstanceOf(NullCurrentOwnerResolver::class)
         ->and(app(OperationNotifier::class))->toBeInstanceOf(NullOperationNotifier::class);
 });
@@ -102,7 +102,7 @@ it('registers package event listeners and console commands once when both provid
     expect(collect($listeners)->filter(fn ($listener) => $listener === HandleXlsformTemplateAdded::class))->toHaveCount(1);
     $commands = Artisan::all();
     expect(collect($commands)->filter(fn ($command) => $command instanceof PollForOdkData))->toHaveCount(1)
-        ->and($commands)->toHaveKey('filament-odk-link:install')
+        ->and($commands)->toHaveKey('odk-link:install')
         ->and(app()->getProviders(OdkLinkCoreServiceProvider::class))->toHaveCount(1)
-        ->and(app()->getProviders(FilamentOdkLinkEventServiceProvider::class))->toHaveCount(1);
+        ->and(app()->getProviders(OdkLinkEventServiceProvider::class))->toHaveCount(1);
 });

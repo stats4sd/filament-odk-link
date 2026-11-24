@@ -3,12 +3,12 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Stats4sd\FilamentOdkLink\Contracts\SubmissionProcessor;
-use Stats4sd\FilamentOdkLink\Jobs\OdkSubmissions\ProcessOdkSubmission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
-use Stats4sd\FilamentOdkLink\Tests\Models\Team;
+use Stats4sd\OdkLink\Core\Contracts\SubmissionProcessor;
+use Stats4sd\OdkLink\Core\Jobs\OdkSubmissions\ProcessOdkSubmission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Entity;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Submission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformVersion;
+use Stats4sd\OdkLink\Core\Tests\Models\Team;
 
 uses(RefreshDatabase::class);
 
@@ -72,7 +72,7 @@ it('invokes an injected processor after real submission entities and values are 
     ]);
     $evidence = new PersistedSubmissionEvidence($submissionId, $owner->id);
     app()->instance(PersistedSubmissionEvidence::class, $evidence);
-    config()->set('filament-odk-link.contracts.submission_processor', PersistedSubmissionProcessor::class);
+    config()->set('odk-link.contracts.submission_processor', PersistedSubmissionProcessor::class);
 
     (new ProcessOdkSubmission(Submission::findOrFail($submissionId), $entry, XlsformVersion::findOrFail($versionId)))->handle();
 

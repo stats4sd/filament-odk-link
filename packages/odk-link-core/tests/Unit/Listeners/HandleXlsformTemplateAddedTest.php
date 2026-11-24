@@ -4,18 +4,18 @@ use Illuminate\Support\Facades\Bus;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Stats4sd\FilamentOdkLink\Jobs\AddMissingChoiceListStrings;
-use Stats4sd\FilamentOdkLink\Jobs\FinishChoiceListEntryImport;
-use Stats4sd\FilamentOdkLink\Jobs\FinishLanguageStringImport;
-use Stats4sd\FilamentOdkLink\Jobs\FinishSurveyRowImport;
-use Stats4sd\FilamentOdkLink\Jobs\FinishXlsformTemplateImport;
-use Stats4sd\FilamentOdkLink\Jobs\ImportAllLanguageStrings;
-use Stats4sd\FilamentOdkLink\Jobs\LinkModuleVersionToLocales;
-use Stats4sd\FilamentOdkLink\Jobs\PrepareSurveyRowPaths;
-use Stats4sd\FilamentOdkLink\Listeners\HandleXlsformTemplateAdded;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
-use Stats4sd\FilamentOdkLink\Tests\Models\Team;
+use Stats4sd\OdkLink\Core\Jobs\AddMissingChoiceListStrings;
+use Stats4sd\OdkLink\Core\Jobs\FinishChoiceListEntryImport;
+use Stats4sd\OdkLink\Core\Jobs\FinishLanguageStringImport;
+use Stats4sd\OdkLink\Core\Jobs\FinishSurveyRowImport;
+use Stats4sd\OdkLink\Core\Jobs\FinishXlsformTemplateImport;
+use Stats4sd\OdkLink\Core\Jobs\ImportAllLanguageStrings;
+use Stats4sd\OdkLink\Core\Jobs\LinkModuleVersionToLocales;
+use Stats4sd\OdkLink\Core\Jobs\PrepareSurveyRowPaths;
+use Stats4sd\OdkLink\Core\Listeners\HandleXlsformTemplateAdded;
+use Stats4sd\OdkLink\Core\Models\OdkLink\LanguageString;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModule;
+use Stats4sd\OdkLink\Core\Tests\Models\Team;
 
 $fixture = fn () => __DIR__ . '/../../fixtures/valid-form.xlsx';
 
@@ -65,7 +65,7 @@ it('queues the import-completion chain in order for a template', function () use
             $chainedProp->setAccessible(true);
             foreach ((array) $chainedProp->getValue($command) as $serialized) {
                 $job = unserialize($serialized);
-                if (str_starts_with($job::class, 'Stats4sd\\FilamentOdkLink\\Jobs\\')) {
+                if (str_starts_with($job::class, 'Stats4sd\\OdkLink\\Core\\Jobs\\')) {
                     $packageJobs[] = $job::class;
                 }
             }

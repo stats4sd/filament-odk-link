@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
+namespace Stats4sd\OdkLink\Core\Services\OdkLinkServices;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
@@ -8,12 +8,12 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
-use Stats4sd\FilamentOdkLink\Exports\ChoiceListAsMediaAttachmentExport;
-use Stats4sd\FilamentOdkLink\Exports\DatasetAsMediaAttachmentExport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\RequiredMedia;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Exports\ChoiceListAsMediaAttachmentExport;
+use Stats4sd\OdkLink\Core\Exports\DatasetAsMediaAttachmentExport;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Abstracts\HasXlsformDrafts;
+use Stats4sd\OdkLink\Core\Models\OdkLink\RequiredMedia;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
 
 trait OdkFormMediaService
 {
@@ -73,7 +73,7 @@ trait OdkFormMediaService
 
                 $filePath = $this->prepareCsvFile($xlsform, $requiredMediaItem);
 
-                $this->uploadSingleMediaFile($xlsform, Storage::disk(config('filament-odk-link.storage.media'))->path($filePath));
+                $this->uploadSingleMediaFile($xlsform, Storage::disk(config('odk-link.storage.media'))->path($filePath));
             }
         }
 
@@ -204,7 +204,7 @@ trait OdkFormMediaService
     public function prepareCsvFile(HasXlsformDrafts $xlsform, RequiredMedia $requiredMediaItem): string
     {
         // create folder structure if not exists
-        // Storage::disk(config('filament-odk-link.storage.media'))->makeDirectory('xlsforms');
+        // Storage::disk(config('odk-link.storage.media'))->makeDirectory('xlsforms');
 
         $filePath = 'xlsforms/' . $xlsform->id . '/' . $requiredMediaItem->name;
 
@@ -218,7 +218,7 @@ trait OdkFormMediaService
             Excel::store(
                 export: new DatasetAsMediaAttachmentExport($xlsform, $requiredMediaItem->dataset),
                 filePath: $filePath,
-                diskName: config('filament-odk-link.storage.media')
+                diskName: config('odk-link.storage.media')
             );
         } else {
 
@@ -229,7 +229,7 @@ trait OdkFormMediaService
             Excel::store(
                 export: new ChoiceListAsMediaAttachmentExport($xlsform, $requiredMediaItem->choiceList),
                 filePath: $filePath,
-                diskName: config('filament-odk-link.storage.media')
+                diskName: config('odk-link.storage.media')
             );
         }
 

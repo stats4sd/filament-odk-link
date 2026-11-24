@@ -1,13 +1,13 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Events;
+namespace Stats4sd\OdkLink\Core\Events;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Queue\SerializesModels;
 use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent as SpatieMediaHasBeenAddedEvent;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Stats4sd\FilamentOdkLink\Contracts\PlatformUser;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
+use Stats4sd\OdkLink\Core\Contracts\PlatformUser;
+use Stats4sd\OdkLink\Core\Support\ConfiguredModels;
 
 class MediaHasBeenAddedEvent extends SpatieMediaHasBeenAddedEvent
 {

@@ -1,18 +1,18 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithLanguageStrings;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasLanguageStrings;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\IsLookupList;
-use Stats4sd\FilamentOdkLink\Services\HelperService;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Interfaces\WithLanguageStrings;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Traits\HasLanguageStrings;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Traits\IsLookupList;
+use Stats4sd\OdkLink\Core\Services\HelperService;
+use Stats4sd\OdkLink\Core\Support\ConfiguredModels;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
 class ChoiceListEntry extends Model implements WithLanguageStrings

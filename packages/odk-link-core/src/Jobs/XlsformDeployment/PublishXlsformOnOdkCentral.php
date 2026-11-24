@@ -1,18 +1,18 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment;
+namespace Stats4sd\OdkLink\Core\Jobs\XlsformDeployment;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\HtmlString;
-use Stats4sd\FilamentOdkLink\Contracts\PlatformUser;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Stats4sd\FilamentOdkLink\Support\OperationNotification;
-use Stats4sd\FilamentOdkLink\Support\OperationNotifications;
+use Stats4sd\OdkLink\Core\Contracts\PlatformUser;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Support\OperationNotification;
+use Stats4sd\OdkLink\Core\Support\OperationNotifications;
 use Throwable;
 
 class PublishXlsformOnOdkCentral implements ShouldQueue

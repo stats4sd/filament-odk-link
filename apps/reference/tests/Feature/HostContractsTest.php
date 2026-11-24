@@ -8,22 +8,22 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Spatie\Permission\Models\Role;
-use Stats4sd\FilamentOdkLink\Contracts\CurrentOwnerResolver;
-use Stats4sd\FilamentOdkLink\Contracts\OperationNotifier;
-use Stats4sd\FilamentOdkLink\Contracts\RoleResolver;
-use Stats4sd\FilamentOdkLink\Contracts\SubmissionProcessor;
-use Stats4sd\FilamentOdkLink\Events\XlsformModuleVersionWasImported;
-use Stats4sd\FilamentOdkLink\Filament\Support\FilamentCurrentOwnerResolver;
-use Stats4sd\FilamentOdkLink\Filament\Support\FilamentOperationNotifier;
-use Stats4sd\FilamentOdkLink\Jobs\FinishXlsformTemplateImport;
-use Stats4sd\FilamentOdkLink\Jobs\OdkSubmissions\ProcessOdkSubmission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
-use Stats4sd\FilamentOdkLink\Support\CurrentOwner;
-use Stats4sd\FilamentOdkLink\Support\OperationNotification;
+use Stats4sd\OdkLink\Core\Contracts\CurrentOwnerResolver;
+use Stats4sd\OdkLink\Core\Contracts\OperationNotifier;
+use Stats4sd\OdkLink\Core\Contracts\RoleResolver;
+use Stats4sd\OdkLink\Core\Contracts\SubmissionProcessor;
+use Stats4sd\OdkLink\Core\Events\XlsformModuleVersionWasImported;
+use Stats4sd\OdkLink\Core\Jobs\FinishXlsformTemplateImport;
+use Stats4sd\OdkLink\Core\Jobs\OdkSubmissions\ProcessOdkSubmission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Submission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformVersion;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Support\ConfiguredModels;
+use Stats4sd\OdkLink\Core\Support\CurrentOwner;
+use Stats4sd\OdkLink\Core\Support\OperationNotification;
+use Stats4sd\OdkLink\Filament\Support\FilamentCurrentOwnerResolver;
+use Stats4sd\OdkLink\Filament\Support\FilamentOperationNotifier;
 
 class ReferenceSubmissionRecorder
 {
@@ -76,7 +76,7 @@ it('finishes an imported module and routes its notification through the hosts ad
 it('resolves a container injected processor after the core has processed the submission', function () {
     $recorder = new ReferenceSubmissionRecorder;
     app()->instance(ReferenceSubmissionRecorder::class, $recorder);
-    config()->set('filament-odk-link.contracts.submission_processor', ReferenceTestProcessor::class);
+    config()->set('odk-link.contracts.submission_processor', ReferenceTestProcessor::class);
     $service = Mockery::mock(OdkLinkService::class);
     $service->shouldReceive('processSubmission')->once()->andReturnUsing(function (Submission $submission) {
         $submission->content = ['ingested' => true];

@@ -1,0 +1,10 @@
+# Read by Larastan's application resolver. Registering the package's own provider
+# makes the core's commands and bindings exist during analysis regardless of whether
+# Testbench's discovery manifest includes the root package. On a fresh checkout the
+# first Larastan boot creates Testbench's vendor symlink and rebuilds the manifest
+# outside the testbench CLI, which drops the root package. Without the provider,
+# Larastan cannot read command signatures, so $this->argument() is mixed and
+# inferred types differ between CI and a long-lived local vendor/.
+# Tests use their own TestCase.
+providers:
+  - Stats4sd\OdkLink\Core\OdkLinkCoreServiceProvider

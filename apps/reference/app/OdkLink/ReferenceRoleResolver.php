@@ -5,7 +5,7 @@ namespace App\OdkLink;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Role;
-use Stats4sd\FilamentOdkLink\Contracts\RoleResolver;
+use Stats4sd\OdkLink\Core\Contracts\RoleResolver;
 
 class ReferenceRoleResolver implements RoleResolver
 {

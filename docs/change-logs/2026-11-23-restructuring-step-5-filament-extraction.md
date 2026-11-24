@@ -36,7 +36,7 @@ Implements [docs/plans/2026-11-23-restructuring-step-5-filament-extraction.md](.
   - The Pest arch expectation now covers the whole `Stats4sd\FilamentOdkLink` namespace instead of a list of sub-namespaces.
 - PHPStan baseline:
   - The 10 UI entries moved to the Filament package.
-  - One existing entry in `GenerateSubmissions`, about the undefined `Xlsform::$odk_project_id` (a pre-existing bug), now also matches a narrower receiver type. Locally PHPStan infers `Xlsform` for `Xlsform::find($this->argument(...))`, while CI infers `Collection<int, Xlsform>|Xlsform`. The two runs have identical PHPStan, Larastan and Laravel versions. The cause was not traced. It is the same single error, still suppressed, not fixed.
+  - One existing entry in `GenerateSubmissions`, about the undefined `Xlsform::$odk_project_id` (a pre-existing bug), now also matches a narrower receiver type. Locally PHPStan infers `Xlsform` for `Xlsform::find($this->argument(...))`, while CI infers `Collection<int, Xlsform>|Xlsform`. The two runs have identical PHPStan, Larastan and Laravel versions. The cause was not traced at the time. It is the same single error, still suppressed, not fixed. Traced in step 6: CI booted Larastan without the core's service provider, so the command signature was unknown and `$this->argument()` was `mixed`. A committed `packages/odk-link-core/testbench.yaml` fixes it and the entry is back to the single form; see the step 6 change log.
 - README and `CLAUDE.md` describe the core as headless and point to the Filament package.
 
 ### Filament package
@@ -81,5 +81,8 @@ Not done locally: a browser check of `/admin`. The reference suite covers the re
 
 ## Follow-ups
 - `XlsformChoicesExport` and `XlsformSurveyExport` query paths have no tests. That gap hid the missing power-joins dependency.
-- `staudenmeir/belongs-to-through` is required by core but unused. The empty `FilamentOdkLink` class and facade remain in core.
+- The empty `FilamentOdkLink` class and facade remain in core.
+- Correction (step 6 review): an earlier version of this list called `staudenmeir/belongs-to-through` unused. It is used by `Country`, `Submission`, `ChoiceListEntry`, `LanguageString` and `XlsformModuleVersionLocale`; do not remove it.
+- Deviation not recorded at the time: five unreferenced views moved instead of being deleted (`forms/components/form-review`, `infolists/components/team-qr-code`, `tables/columns/draft-qr-code`, `tables/columns/team-datasets-required`, `widgets/custom-odk-templates-widget`), as did the unused `ClickableLink` and `DraftTestingQrCode` components. Step 7 deletes them.
+- The Filament `ArchTest` scan of `resources/views` is ineffective: Blade without `<?php` tokenises as inline HTML, so `ShippingBoundary` sees no class names. Fixed in step 7.
 - Step 7 renames, listed in the roadmap.

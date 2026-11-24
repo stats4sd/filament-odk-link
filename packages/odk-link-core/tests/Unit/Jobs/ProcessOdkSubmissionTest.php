@@ -1,10 +1,10 @@
 <?php
 
-use Stats4sd\FilamentOdkLink\Contracts\SubmissionProcessor;
-use Stats4sd\FilamentOdkLink\Jobs\OdkSubmissions\ProcessOdkSubmission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Contracts\SubmissionProcessor;
+use Stats4sd\OdkLink\Core\Jobs\OdkSubmissions\ProcessOdkSubmission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Submission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformVersion;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
 
 class SubmissionProcessingRecorder
 {
@@ -38,7 +38,7 @@ it('ingests successfully with the default null processor', function () {
 it('resolves an injected processor after ingestion and passes the processed submission', function () {
     $recorder = new SubmissionProcessingRecorder;
     app()->instance(SubmissionProcessingRecorder::class, $recorder);
-    config()->set('filament-odk-link.contracts.submission_processor', InjectedSubmissionProcessor::class);
+    config()->set('odk-link.contracts.submission_processor', InjectedSubmissionProcessor::class);
     $this->service->shouldReceive('processSubmission')->once()->andReturnUsing(function (Submission $submission) {
         $submission->content = ['processed' => true];
     });
@@ -64,15 +64,15 @@ it('does not invoke host post processing if core ingestion fails', function () {
 
 it('rejects an invalid configured processor before ingesting the submission', function () {
     $this->service->shouldNotReceive('processSubmission');
-    config()->set('filament-odk-link.contracts.submission_processor', stdClass::class);
+    config()->set('odk-link.contracts.submission_processor', stdClass::class);
 
-    expect(fn () => (new ProcessOdkSubmission($this->submission, $this->entry, $this->version))->handle())->toThrow(InvalidArgumentException::class, 'filament-odk-link.contracts.submission_processor');
+    expect(fn () => (new ProcessOdkSubmission($this->submission, $this->entry, $this->version))->handle())->toThrow(InvalidArgumentException::class, 'odk-link.contracts.submission_processor');
 });
 
 it('rejects populated legacy callbacks before ingesting instead of silently skipping host logic', function (string $legacy, array $value) {
     $this->service->shouldNotReceive('processSubmission');
-    config()->set("filament-odk-link.submission.{$legacy}", $value);
-    expect(fn () => (new ProcessOdkSubmission($this->submission, $this->entry, $this->version))->handle())->toThrow(InvalidArgumentException::class, "filament-odk-link.submission.{$legacy}");
+    config()->set("odk-link.submission.{$legacy}", $value);
+    expect(fn () => (new ProcessOdkSubmission($this->submission, $this->entry, $this->version))->handle())->toThrow(InvalidArgumentException::class, "odk-link.submission.{$legacy}");
 })->with([
     ['process_method', ['class' => 'LegacyProcessor', 'method' => 'run']],
     ['process_method', ['class' => 'LegacyProcessor', 'method' => null]],

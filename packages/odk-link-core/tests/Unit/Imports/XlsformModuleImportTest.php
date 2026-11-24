@@ -1,7 +1,7 @@
 <?php
 
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformModuleImport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformModuleImport;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModule;
 
 it('creates a generic "Unspecified Module" for rows with no module, preserving order', function () {
     $template = makeXlsformTemplate('My Form');

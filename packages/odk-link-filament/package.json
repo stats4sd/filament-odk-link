@@ -2,8 +2,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev:styles": "npx @tailwindcss/cli -i resources/css/index.css -o resources/dist/filament-odk-link.css --watch",
-        "build:styles": "npx @tailwindcss/cli -i resources/css/index.css -o resources/dist/filament-odk-link.css --minify",
+        "dev:styles": "npx @tailwindcss/cli -i resources/css/index.css -o resources/dist/odk-link.css --watch",
+        "build:styles": "npx @tailwindcss/cli -i resources/css/index.css -o resources/dist/odk-link.css --minify",
         "dev": "npm-run-all --parallel dev:*",
         "build": "npm-run-all build:*"
     },

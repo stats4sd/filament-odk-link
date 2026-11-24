@@ -2,9 +2,9 @@
 
 use App\Models\Team;
 use Illuminate\Support\Facades\Schema;
-use Stats4sd\FilamentOdkLink\Filament\OdkLinkFilamentServiceProvider;
-use Stats4sd\FilamentOdkLink\OdkLinkCoreServiceProvider;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\OdkLinkCoreServiceProvider;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
+use Stats4sd\OdkLink\Filament\OdkLinkFilamentServiceProvider;
 
 it('registers the core and Filament package service providers once each', function () {
     expect(app()->getProviders(OdkLinkCoreServiceProvider::class))->toHaveCount(1);
@@ -19,6 +19,6 @@ it('creates the package, permission and host tables from the published migration
 });
 
 it('resolves the form owner to the host Team model', function () {
-    expect(config('filament-odk-link.models.form_owner'))->toBe(Team::class);
-    expect(config('filament-odk-link.odk.url'))->toBeEmpty();
+    expect(config('odk-link.models.form_owner'))->toBe(Team::class);
+    expect(config('odk-link.odk.url'))->toBeEmpty();
 });

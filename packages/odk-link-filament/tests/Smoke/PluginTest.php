@@ -1,14 +1,14 @@
 <?php
 
 use Filament\Panel;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\ChoiceListResource;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\Datasets\DatasetResource;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformModules\XlsformModuleResource;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformModuleVersions\XlsformModuleVersionResource;
-use Stats4sd\FilamentOdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
-use Stats4sd\FilamentOdkLink\Filament\Widgets\AvailableOdkTemplatesWidget;
-use Stats4sd\FilamentOdkLink\Filament\Widgets\OdkUrlAlertWidget;
-use Stats4sd\FilamentOdkLink\OdkLinkAdmin;
+use Stats4sd\OdkLink\Filament\OdkAdmin\Resources\ChoiceListResource;
+use Stats4sd\OdkLink\Filament\OdkAdmin\Resources\Datasets\DatasetResource;
+use Stats4sd\OdkLink\Filament\OdkAdmin\Resources\XlsformModules\XlsformModuleResource;
+use Stats4sd\OdkLink\Filament\OdkAdmin\Resources\XlsformModuleVersions\XlsformModuleVersionResource;
+use Stats4sd\OdkLink\Filament\OdkAdmin\Resources\XlsformTemplates\XlsformTemplateResource;
+use Stats4sd\OdkLink\Filament\OdkLinkAdmin;
+use Stats4sd\OdkLink\Filament\Widgets\AvailableOdkTemplatesWidget;
+use Stats4sd\OdkLink\Filament\Widgets\OdkUrlAlertWidget;
 
 it('discovers the admin resources and widgets into the panel it is registered on', function () {
     $panel = Panel::make()->id('admin')->plugin(OdkLinkAdmin::make());

@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Services\OdkLinkServices;
+namespace Stats4sd\OdkLink\Core\Services\OdkLinkServices;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
@@ -10,16 +10,16 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
-use Stats4sd\FilamentOdkLink\Exports\SurveyExport;
-use Stats4sd\FilamentOdkLink\Jobs\OdkSubmissions\ProcessOdkSubmission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Entity;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\EntityValue;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplateSection;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformVersion;
+use Stats4sd\OdkLink\Core\Exports\SurveyExport;
+use Stats4sd\OdkLink\Core\Jobs\OdkSubmissions\ProcessOdkSubmission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceList;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Entity;
+use Stats4sd\OdkLink\Core\Models\OdkLink\EntityValue;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Submission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\SurveyRow;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplateSection;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformVersion;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 trait OdkSubmissionService
@@ -49,11 +49,11 @@ trait OdkSubmissionService
                     ->throw();
 
                 // store the attachment locally
-                Storage::disk(config('filament-odk-link.storage.media'))
+                Storage::disk(config('odk-link.storage.media'))
                     ->put($mediaItem['name'], $result->body());
 
                 // link it to the submission via Media Library
-                $submission->addMediaFromDisk($mediaItem['name'], config('filament-odk-link.storage.media'))
+                $submission->addMediaFromDisk($mediaItem['name'], config('odk-link.storage.media'))
                     ->toMediaLibrary();
             }
         }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,19 +18,19 @@ use Maatwebsite\Excel\Facades\Excel;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
-use Stats4sd\FilamentOdkLink\Events\XlsformDraftWasDeployed;
-use Stats4sd\FilamentOdkLink\Events\XlsformWasPublished;
-use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformWorkbookExport;
-use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\DeployDraftXlsformToOdkCentral;
-use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\PublishXlsformOnOdkCentral;
-use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\UpdateXlsformFile;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
-use Stats4sd\FilamentOdkLink\Services\HelperService;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
-use Stats4sd\FilamentOdkLink\Support\OperationNotification;
-use Stats4sd\FilamentOdkLink\Support\OperationNotifications;
+use Stats4sd\OdkLink\Core\Events\XlsformDraftWasDeployed;
+use Stats4sd\OdkLink\Core\Events\XlsformWasPublished;
+use Stats4sd\OdkLink\Core\Exports\XlsformExport\XlsformWorkbookExport;
+use Stats4sd\OdkLink\Core\Jobs\XlsformDeployment\DeployDraftXlsformToOdkCentral;
+use Stats4sd\OdkLink\Core\Jobs\XlsformDeployment\PublishXlsformOnOdkCentral;
+use Stats4sd\OdkLink\Core\Jobs\XlsformDeployment\UpdateXlsformFile;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Abstracts\HasXlsformDrafts;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\OdkLink\Core\Services\HelperService;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Support\ConfiguredModels;
+use Stats4sd\OdkLink\Core\Support\OperationNotification;
+use Stats4sd\OdkLink\Core\Support\OperationNotifications;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
@@ -102,10 +102,10 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     {
         $this->addMediaCollection('xlsform_file')
             ->singleFile()
-            ->useDisk(config('filament-odk-link.storage.xlsforms'));
+            ->useDisk(config('odk-link.storage.xlsforms'));
 
         $this->addMediaCollection('attached_media')
-            ->useDisk(config('filament-odk-link.storage.xlsforms'));
+            ->useDisk(config('odk-link.storage.xlsforms'));
     }
 
     // ****************** COMPUTED ATTRIBUTES ************************
@@ -247,7 +247,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
     {
         $appends = ! $this->is_active ? '/draft' : '';
 
-        return config('filament-odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
+        return config('odk-link.odk.url') . '/#/projects/' . $this->owner->odkProject->id . '/forms/' . $this->odk_id . $appends;
     }
 
     // make sure the xlsform is using the latest template
@@ -402,7 +402,7 @@ class Xlsform extends HasXlsformDrafts implements HasMedia
 
         $filePath = 'temp/' . $this->getKey() . '/' . $this->title . '.xlsx';
 
-        return Excel::queue(new XlsformWorkbookExport($this, $user), $filePath, config('filament-odk-link.storage.xlsforms'))->chain(
+        return Excel::queue(new XlsformWorkbookExport($this, $user), $filePath, config('odk-link.storage.xlsforms'))->chain(
             [
                 new UpdateXlsformFile($this, $filePath, $user),
             ]

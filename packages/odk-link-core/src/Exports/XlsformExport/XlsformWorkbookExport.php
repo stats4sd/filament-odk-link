@@ -1,14 +1,14 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Exports\XlsformExport;
+namespace Stats4sd\OdkLink\Core\Exports\XlsformExport;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Maatwebsite\Excel\Concerns\Export;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
-use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
-use Stats4sd\FilamentOdkLink\Contracts\PlatformUser;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Concerns\NotifiesOnJobFailure;
+use Stats4sd\OdkLink\Core\Contracts\PlatformUser;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
 use Throwable;
 
 class XlsformWorkbookExport implements Export, ShouldQueue, WithMultipleSheets

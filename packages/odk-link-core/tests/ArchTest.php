@@ -2,25 +2,25 @@
 
 use Maatwebsite\Excel\Concerns\Export;
 use Maatwebsite\Excel\Concerns\Import;
-use Stats4sd\FilamentOdkLink\Tests\Architecture\ShippingBoundary;
+use Stats4sd\OdkLink\Core\Tests\Architecture\ShippingBoundary;
 
 it('will not use debugging functions')
     ->expect(['dd', 'dump', 'ray'])
     ->each->not->toBeUsed();
 
 it('marks every export class as a Laravel Excel export')
-    ->expect('Stats4sd\FilamentOdkLink\Exports')
+    ->expect('Stats4sd\OdkLink\Core\Exports')
     ->classes()
     ->toImplement(Export::class);
 
 it('marks every import class as a Laravel Excel import')
-    ->expect('Stats4sd\FilamentOdkLink\Imports')
+    ->expect('Stats4sd\OdkLink\Core\Imports')
     ->classes()
     ->toImplement(Import::class);
 
 it('keeps every core namespace independent of host and UI dependencies')
-    ->expect('Stats4sd\FilamentOdkLink')
-    ->not->toUse(['App', 'Filament', 'Livewire', 'Spatie\Permission', 'Stats4sd\FilamentTeamManagement', 'HaydenPierce\ClassFinder', 'Stats4sd\FilamentOdkLink\Filament', 'Stats4sd\FilamentOdkLink\Forms', 'Stats4sd\FilamentOdkLink\Testing']);
+    ->expect('Stats4sd\OdkLink\Core')
+    ->not->toUse(['App', 'Filament', 'Livewire', 'Spatie\Permission', 'Stats4sd\FilamentTeamManagement', 'HaydenPierce\ClassFinder', 'Stats4sd\OdkLink\Filament', 'Stats4sd\FilamentOdkLink']);
 
 it('enforces the boundary across every shipping PHP file including executable class strings', function () {
     $root = dirname(__DIR__);
@@ -42,6 +42,11 @@ it('enforces the boundary across every shipping PHP file including executable cl
         }
     }
 
+    // The step 6 class-name migration must name the pre-rename prefix to rewrite it.
+    $violations = array_values(array_diff($violations, [
+        'database/migrations/035_rename_odk_link_class_names.php: Stats4sd\\FilamentOdkLink\\',
+    ]));
+
     expect($violations)->toBe([]);
 });
 
@@ -50,7 +55,7 @@ it('recognizes aliases fully qualified calls and executable strings while ignori
         '<?php use Filament\\Facades\\Filament as Panel;',
         '<?php \\Livewire\\Livewire::test();',
         '<?php return ["model" => \'App\\\\Models\\\\Team\'];',
-        '<?php return \'Stats4sd\\\\FilamentOdkLink\\\\Tests\\\\Models\\\\Team\';',
+        '<?php return \'Stats4sd\\\\OdkLink\\\\Core\\\\Tests\\\\Models\\\\Team\';',
         '<?php return \'Super Admin\';',
         '<?php use Stats4sd\\FilamentTeamManagement\\Models\\User;',
         '<?php $class::$method($submission);',

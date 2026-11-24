@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -37,7 +37,7 @@ class OdkProject extends Model
     protected function odkUrl(): Attribute
     {
         return new Attribute(
-            get: fn (): string => config('filament-odk-link.odk.url') . '/#/projects/' . $this->id,
+            get: fn (): string => config('odk-link.odk.url') . '/#/projects/' . $this->id,
         );
     }
 }

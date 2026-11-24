@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Filament\Tests;
+namespace Stats4sd\OdkLink\Filament\Tests;
 
 use BladeUI\Heroicons\BladeHeroiconsServiceProvider;
 use BladeUI\Icons\BladeIconsServiceProvider;
@@ -18,9 +18,9 @@ use Maatwebsite\Excel\ExcelServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use RyanChandler\BladeCaptureDirective\BladeCaptureDirectiveServiceProvider;
 use Spatie\MediaLibrary\MediaLibraryServiceProvider;
-use Stats4sd\FilamentOdkLink\Filament\OdkLinkFilamentServiceProvider;
-use Stats4sd\FilamentOdkLink\Filament\Tests\Models\Team;
-use Stats4sd\FilamentOdkLink\Filament\Tests\Models\User;
+use Stats4sd\OdkLink\Filament\OdkLinkFilamentServiceProvider;
+use Stats4sd\OdkLink\Filament\Tests\Models\Team;
+use Stats4sd\OdkLink\Filament\Tests\Models\User;
 
 class TestCase extends Orchestra
 {
@@ -55,14 +55,14 @@ class TestCase extends Orchestra
     {
         // The core registers its migrations for publishing only, so load them from the installed package.
         $this->loadMigrationsFrom(__DIR__ . '/Database/migrations');
-        $this->loadMigrationsFrom(dirname(__DIR__) . '/vendor/stats4sd/filament-odk-link/database/migrations');
+        $this->loadMigrationsFrom(dirname(__DIR__) . '/vendor/stats4sd/odk-link-core/database/migrations');
     }
 
     public function getEnvironmentSetUp($app): void
     {
         config()->set('database.default', 'testing');
-        config()->set('filament-odk-link.models.form_owner', Team::class);
-        config()->set('filament-odk-link.models.user_model', User::class);
-        config()->set('filament-odk-link.odk.url', '');
+        config()->set('odk-link.models.form_owner', Team::class);
+        config()->set('odk-link.models.user_model', User::class);
+        config()->set('odk-link.odk.url', '');
     }
 }

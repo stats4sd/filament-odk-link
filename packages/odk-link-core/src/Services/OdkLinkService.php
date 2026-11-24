@@ -1,17 +1,17 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Services;
+namespace Stats4sd\OdkLink\Core\Services;
 
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkDatasetService;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkFormMediaService;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkFormService;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkProjectService;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkSubmissionService;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkServices\OdkUserService;
+use Stats4sd\OdkLink\Core\Services\OdkLinkServices\OdkDatasetService;
+use Stats4sd\OdkLink\Core\Services\OdkLinkServices\OdkFormMediaService;
+use Stats4sd\OdkLink\Core\Services\OdkLinkServices\OdkFormService;
+use Stats4sd\OdkLink\Core\Services\OdkLinkServices\OdkProjectService;
+use Stats4sd\OdkLink\Core\Services\OdkLinkServices\OdkSubmissionService;
+use Stats4sd\OdkLink\Core\Services\OdkLinkServices\OdkUserService;
 
 /**
  * All ODK Aggregation services should be able to handle ODK forms, so this interface should always be used.
@@ -45,12 +45,12 @@ class OdkLinkService
 
             Log::info('Creating a new ODK Central session', [
                 'endpoint' => $this->endpoint,
-                'username' => config('filament-odk-link.odk.username'),
+                'username' => config('odk-link.odk.username'),
             ]);
 
             $response = Http::post("{$this->endpoint}/sessions", [
-                'email' => config('filament-odk-link.odk.username'),
-                'password' => config('filament-odk-link.odk.password'),
+                'email' => config('odk-link.odk.username'),
+                'password' => config('odk-link.odk.password'),
             ])
                 ->throw()
                 ->json();

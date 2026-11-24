@@ -1,8 +1,8 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Filament\Tests;
+namespace Stats4sd\OdkLink\Filament\Tests;
 
-use Stats4sd\FilamentOdkLink\OdkLinkCoreServiceProvider;
+use Stats4sd\OdkLink\Core\OdkLinkCoreServiceProvider;
 
 class CoreRegisteredFirstTestCase extends TestCase
 {

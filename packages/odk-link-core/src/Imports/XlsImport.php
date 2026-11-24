@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Imports;
+namespace Stats4sd\OdkLink\Core\Imports;
 
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Importable;

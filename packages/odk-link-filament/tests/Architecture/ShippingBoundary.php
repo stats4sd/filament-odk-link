@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Filament\Tests\Architecture;
+namespace Stats4sd\OdkLink\Filament\Tests\Architecture;
 
 class ShippingBoundary
 {
@@ -10,11 +10,12 @@ class ShippingBoundary
         $forbidden = [
             'App\\',
             'Tests\\',
-            'Stats4sd\\FilamentOdkLink\\Tests\\',
+            'Stats4sd\\OdkLink\\Core\\Tests\\',
             'Stats4sd\\FilamentTeamManagement\\',
             'HaydenPierce\\ClassFinder',
-            'Stats4sd\\FilamentOdkLink\\Filament\\Tests\\',
+            'Stats4sd\\OdkLink\\Filament\\Tests\\',
             'Spatie\\Permission\\',
+            'Stats4sd\\FilamentOdkLink\\',
         ];
 
         $violations = [];

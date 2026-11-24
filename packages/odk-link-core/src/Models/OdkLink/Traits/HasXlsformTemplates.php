@@ -1,14 +1,14 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Traits;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink\Traits;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\OdkProject;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Models\OdkLink\OdkProject;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
 
 trait HasXlsformTemplates
 {
@@ -16,7 +16,7 @@ trait HasXlsformTemplates
     protected static function bootHasXlsformTemplates(): void
     {
         // check if we are in local-only (no-ODK link) mode
-        if (config('filament-odk-link.odk.url') === null || config('filament-odk-link.odk.url') == '') {
+        if (config('odk-link.odk.url') === null || config('odk-link.odk.url') == '') {
             return;
         }
 
@@ -26,7 +26,7 @@ trait HasXlsformTemplates
         static::created(static function (self $owner) use ($odkLinkService) {
 
             // check if we are in local-only (no-ODK link) mode
-            if (! config('filament-odk-link.odk.url')) {
+            if (! config('odk-link.odk.url')) {
                 return;
             }
 

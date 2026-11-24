@@ -1,11 +1,11 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformTemplates;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsformTemplates;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Interfaces\WithXlsformTemplates;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Traits\HasXlsformTemplates;
 
 class Platform extends Model implements WithXlsformTemplates
 {

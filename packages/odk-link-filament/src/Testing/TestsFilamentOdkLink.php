@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Testing;
+namespace Stats4sd\OdkLink\Filament\Testing;
 
 use Livewire\Features\SupportTesting\Testable;
 

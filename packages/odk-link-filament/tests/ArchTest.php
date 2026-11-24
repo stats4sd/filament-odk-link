@@ -1,6 +1,6 @@
 <?php
 
-use Stats4sd\FilamentOdkLink\Filament\Tests\Architecture\ShippingBoundary;
+use Stats4sd\OdkLink\Filament\Tests\Architecture\ShippingBoundary;
 
 it('will not use debugging functions')
     ->expect(['dd', 'dump', 'ray'])

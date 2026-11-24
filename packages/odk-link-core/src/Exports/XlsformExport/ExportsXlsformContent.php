@@ -1,13 +1,13 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Exports\XlsformExport;
+namespace Stats4sd\OdkLink\Core\Exports\XlsformExport;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\OdkLink\Core\Models\OdkLink\SurveyRow;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\Locale;
 
 trait ExportsXlsformContent
 {

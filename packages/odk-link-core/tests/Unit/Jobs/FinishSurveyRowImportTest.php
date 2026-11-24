@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
-use Stats4sd\FilamentOdkLink\Jobs\FinishSurveyRowImport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
+use Stats4sd\OdkLink\Core\Jobs\FinishSurveyRowImport;
+use Stats4sd\OdkLink\Core\Models\OdkLink\SurveyRow;
 
 it('marks every survey row of the model as no longer updated_during_import', function () {
     $version = addModuleVersion(makeXlsformTemplate(), 'mod');

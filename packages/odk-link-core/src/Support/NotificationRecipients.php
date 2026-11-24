@@ -1,12 +1,12 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Support;
+namespace Stats4sd\OdkLink\Core\Support;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
-use Stats4sd\FilamentOdkLink\Contracts\PlatformUser;
-use Stats4sd\FilamentOdkLink\Contracts\RoleResolver;
+use Stats4sd\OdkLink\Core\Contracts\PlatformUser;
+use Stats4sd\OdkLink\Core\Contracts\RoleResolver;
 
 class NotificationRecipients
 {
@@ -32,7 +32,7 @@ class NotificationRecipients
     {
         return $recipients->map(function ($recipient) {
             if ($recipient === null) {
-                throw new InvalidArgumentException('filament-odk-link.models.user_model notification recipients cannot contain null.');
+                throw new InvalidArgumentException('odk-link.models.user_model notification recipients cannot contain null.');
             }
 
             return $this->models->validateUser($recipient);

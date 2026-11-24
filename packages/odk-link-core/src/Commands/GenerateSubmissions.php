@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Commands;
+namespace Stats4sd\OdkLink\Core\Commands;
 
 use DateInterval;
 use DateTime;
@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Concerns\Import;
 use Maatwebsite\Excel\Facades\Excel;
 use SimpleXMLElement;
-use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformWorkbookExport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Exports\XlsformExport\XlsformWorkbookExport;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
 
 class GenerateSubmissions extends Command
 {
