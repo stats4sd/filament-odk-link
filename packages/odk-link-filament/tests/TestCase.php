@@ -60,6 +60,8 @@ class TestCase extends Orchestra
 
     public function getEnvironmentSetUp($app): void
     {
+        // A fresh vendor/ has no testbench skeleton .env, so pin a key for anything that encrypts (Livewire, sessions).
+        config()->set('app.key', 'base64:' . base64_encode(str_repeat('a', 32)));
         config()->set('database.default', 'testing');
         config()->set('odk-link.models.form_owner', Team::class);
         config()->set('odk-link.models.user_model', User::class);
