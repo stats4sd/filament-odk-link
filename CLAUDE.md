@@ -24,5 +24,5 @@ Each package suite must run inside its own directory, never against the root `ve
 
 # Conventions that span directories
 
-- Root `.gitignore` patterns are mostly unanchored (`vendor`, `node_modules`, `build`) and apply to every nested directory. `phpunit.xml` is anchored to `packages/*/` so the reference app can commit its own. `testbench.yaml` is not ignored: `packages/odk-link-filament/testbench.yaml` is committed because Larastan needs it to resolve the `odk-link::` view namespace on a clean install.
+- Root `.gitignore` patterns are mostly unanchored (`vendor`, `node_modules`, `build`) and apply to every nested directory. `phpunit.xml` is anchored to `packages/*/` so the reference app can commit its own. `testbench.yaml` is not ignored: each package commits one registering its own service provider, because on a fresh checkout Larastan otherwise boots without it and infers different types than a long-lived local `vendor/` (views, command signatures). Local PHPStan cannot catch this class of failure; check it in a fresh clone.
 - The reference app holds published copies of the package config and migrations. When the core adds a migration, re-publish in the app (`php artisan vendor:publish --tag=odk-link-migrations`) and commit the new file. See the app README for the ordering caveat.
