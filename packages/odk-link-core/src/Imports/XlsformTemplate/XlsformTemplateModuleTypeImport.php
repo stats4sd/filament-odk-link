@@ -1,13 +1,13 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
+namespace Stats4sd\OdkLink\Core\Imports\XlsformTemplate;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithUpserts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModule;
 
 class XlsformTemplateModuleTypeImport implements ShouldQueue, SkipsEmptyRows, ToModel, WithChunkReading, WithUpserts
 {

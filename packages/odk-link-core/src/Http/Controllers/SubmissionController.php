@@ -1,10 +1,10 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Http\Controllers;
+namespace Stats4sd\OdkLink\Core\Http\Controllers;
 
 use Illuminate\Support\Facades\Session;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Submission;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
 
 class SubmissionController
 {

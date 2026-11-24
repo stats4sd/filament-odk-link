@@ -1,13 +1,13 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Pivot;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\OdkLink\Core\Models\OdkLink\LanguageString;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModuleVersion;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
 class XlsformModuleVersionLocale extends Pivot

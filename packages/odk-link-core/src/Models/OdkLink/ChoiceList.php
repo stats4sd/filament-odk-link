@@ -1,12 +1,12 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
 
 class ChoiceList extends Model
 {

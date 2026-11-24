@@ -17,7 +17,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Stats4sd\FilamentOdkLink\OdkLinkAdmin;
+use Stats4sd\OdkLink\Filament\OdkLinkAdmin;
 
 /**
  * Platform-admin panel. Loads the package's admin plugin (templates, modules, datasets, choice lists).

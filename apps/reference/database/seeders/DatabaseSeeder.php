@@ -6,7 +6,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Platform;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
         // Both role names are hard-coded or defaulted in the package: `Super Admin` receives
         // import notifications, `admin` (config roles.xlsform-admin) sees every form.
         $superAdmin = Role::findOrCreate('Super Admin', 'web');
-        $admin = Role::findOrCreate(config('filament-odk-link.roles.xlsform-admin'), 'web');
+        $admin = Role::findOrCreate(config('odk-link.roles.xlsform-admin'), 'web');
 
         $user = User::query()->firstOrCreate(
             ['email' => 'admin@example.com'],

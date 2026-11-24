@@ -4,8 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Must run before the published filament-odk-link migrations: 002_create_xlsforms_table
-// adds a foreign key to the form owner table resolved from config('filament-odk-link.models.form_owner').
+// Must run before the published odk-link migrations: 002_create_xlsforms_table
+// adds a foreign key to the form owner table resolved from config('odk-link.models.form_owner').
 return new class extends Migration
 {
     public function up(): void

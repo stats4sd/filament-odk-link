@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Events;
+namespace Stats4sd\OdkLink\Core\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -33,6 +33,6 @@ class XlsformTemplateWasImported implements ShouldBroadcast
 
     public function broadcastAs(): string
     {
-        return 'FilamentOdkLink.XlsformTemplateWasImported';
+        return 'OdkLink.XlsformTemplateWasImported';
     }
 }

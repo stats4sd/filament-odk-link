@@ -1,12 +1,12 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Tests\Models;
+namespace Stats4sd\OdkLink\Core\Tests\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
-use Stats4sd\FilamentOdkLink\Tests\Database\Factories\TeamFactory;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Traits\HasXlsforms;
+use Stats4sd\OdkLink\Core\Tests\Database\Factories\TeamFactory;
 
 class Team extends Model implements FormOwner
 {

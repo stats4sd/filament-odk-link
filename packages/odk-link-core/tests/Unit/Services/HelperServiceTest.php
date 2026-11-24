@@ -1,7 +1,7 @@
 <?php
 
-use Stats4sd\FilamentOdkLink\Models\Country;
-use Stats4sd\FilamentOdkLink\Services\HelperService;
+use Stats4sd\OdkLink\Core\Models\Country;
+use Stats4sd\OdkLink\Core\Services\HelperService;
 
 // ─── getOdkVariablesToIgnore ──────────────────────────────────────────────────
 
@@ -55,7 +55,7 @@ it('importCsvFileToCollection strips trailing blank lines', function () {
 
 // ─── getModelByTablename ──────────────────────────────────────────────────────
 
-// getModelByTablename scans Stats4sd\FilamentOdkLink\Models (top-level only — ClassFinder
+// getModelByTablename scans Stats4sd\OdkLink\Core\Models (top-level only — ClassFinder
 // does not recurse into OdkLink subnamespace). Country is a top-level model.
 it('getModelByTablename resolves the countries table to the Country model', function () {
     $model = HelperService::getModelByTablename('countries');

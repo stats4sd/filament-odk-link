@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
-use Stats4sd\FilamentOdkLink\Jobs\PullSubmissionsFromXlsform;
+use Stats4sd\OdkLink\Core\Jobs\PullSubmissionsFromXlsform;
 
 beforeEach(function () {
     Queue::fake();

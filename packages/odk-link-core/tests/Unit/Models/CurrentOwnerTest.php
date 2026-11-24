@@ -2,14 +2,14 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Stats4sd\FilamentOdkLink\Contracts\CurrentOwnerResolver;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasXlsforms;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Services\HelperService;
-use Stats4sd\FilamentOdkLink\Tests\Models\Team;
+use Stats4sd\OdkLink\Core\Contracts\CurrentOwnerResolver;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Submission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Traits\HasXlsforms;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Services\HelperService;
+use Stats4sd\OdkLink\Core\Tests\Models\Team;
 
 class SwitchingOwnerResolver implements CurrentOwnerResolver
 {

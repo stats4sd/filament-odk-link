@@ -1,11 +1,11 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Exports;
+namespace Stats4sd\OdkLink\Core\Exports;
 
 use Maatwebsite\Excel\Concerns\Export;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Submission;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Submission;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
 
 class SurveyExport implements Export, WithMultipleSheets
 {

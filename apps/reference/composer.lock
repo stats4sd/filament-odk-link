@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c050e52b0d1be4f4e4e18da2405e326b",
+    "content-hash": "9dae89a4acf99c1d45176a1b98142970",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -6595,12 +6595,12 @@
             "time": "2026-06-22T07:55:44+00:00"
         },
         {
-            "name": "stats4sd/filament-odk-link",
+            "name": "stats4sd/odk-link-core",
             "version": "dev-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/odk-link-core",
-                "reference": "2cbc1ef58907bdbc6f3e85dc9905e9011af1eeb2"
+                "reference": "8b5fa0c1d8177645aec63958b32aba792c92cdfe"
             },
             "require": {
                 "illuminate/contracts": "^13.0",
@@ -6629,23 +6629,20 @@
             "extra": {
                 "laravel": {
                     "providers": [
-                        "Stats4sd\\FilamentOdkLink\\OdkLinkCoreServiceProvider"
-                    ],
-                    "aliases": {
-                        "FilamentOdkLink": "Stats4sd\\FilamentOdkLink\\Facades\\FilamentOdkLink"
-                    }
+                        "Stats4sd\\OdkLink\\Core\\OdkLinkCoreServiceProvider"
+                    ]
                 }
             },
             "autoload": {
                 "psr-4": {
-                    "Stats4sd\\FilamentOdkLink\\": "src/",
-                    "Stats4sd\\FilamentOdkLink\\Database\\Factories\\": "database/factories/",
-                    "Stats4sd\\FilamentOdkLink\\Database\\Seeders\\": "database/seeders/"
+                    "Stats4sd\\OdkLink\\Core\\": "src/",
+                    "Stats4sd\\OdkLink\\Core\\Database\\Factories\\": "database/factories/",
+                    "Stats4sd\\OdkLink\\Core\\Database\\Seeders\\": "database/seeders/"
                 }
             },
             "autoload-dev": {
                 "psr-4": {
-                    "Stats4sd\\FilamentOdkLink\\Tests\\": "tests/"
+                    "Stats4sd\\OdkLink\\Core\\Tests\\": "tests/"
                 }
             },
             "scripts": {
@@ -6678,8 +6675,8 @@
             "description": "Headless core for ODK Link: models, ODK Central client, jobs, imports/exports and migrations for managing ODK forms in Laravel.",
             "homepage": "https://github.com/stats4sd/filament-odk-link",
             "keywords": [
-                "filament-odk-link",
                 "laravel",
+                "odk-link",
                 "stats4sd"
             ],
             "support": {
@@ -6697,14 +6694,14 @@
             "dist": {
                 "type": "path",
                 "url": "../../packages/odk-link-filament",
-                "reference": "a232a2589af1a1adcc70d3d95fffd64c2a83d256"
+                "reference": "264c619177557bc7e7ea7760e0d66d11ca8e1e35"
             },
             "require": {
                 "filament/filament": "^5.0",
                 "filament/spatie-laravel-media-library-plugin": "^5.0",
                 "php": "^8.4",
                 "simplesoftwareio/simple-qrcode": "^4.2",
-                "stats4sd/filament-odk-link": "dev-dev"
+                "stats4sd/odk-link-core": "dev-dev"
             },
             "require-dev": {
                 "larastan/larastan": "^3.0",
@@ -6722,18 +6719,18 @@
             "extra": {
                 "laravel": {
                     "providers": [
-                        "Stats4sd\\FilamentOdkLink\\Filament\\OdkLinkFilamentServiceProvider"
+                        "Stats4sd\\OdkLink\\Filament\\OdkLinkFilamentServiceProvider"
                     ]
                 }
             },
             "autoload": {
                 "psr-4": {
-                    "Stats4sd\\FilamentOdkLink\\": "src/"
+                    "Stats4sd\\OdkLink\\Filament\\": "src/"
                 }
             },
             "autoload-dev": {
                 "psr-4": {
-                    "Stats4sd\\FilamentOdkLink\\Filament\\Tests\\": "tests/"
+                    "Stats4sd\\OdkLink\\Filament\\Tests\\": "tests/"
                 }
             },
             "scripts": {
@@ -13597,7 +13594,7 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "stats4sd/filament-odk-link": 20,
+        "stats4sd/odk-link-core": 20,
         "stats4sd/odk-link-filament": 20
     },
     "prefer-stable": true,

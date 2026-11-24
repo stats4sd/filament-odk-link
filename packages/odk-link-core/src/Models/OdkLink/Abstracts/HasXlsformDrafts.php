@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink\Abstracts;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -15,11 +15,11 @@ use JsonException;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
-use Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment\DeployDraftXlsformToOdkCentral;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Jobs\XlsformDeployment\DeployDraftXlsformToOdkCentral;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Interfaces\WithXlsformDrafts;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Support\ConfiguredModels;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
@@ -100,7 +100,7 @@ abstract class HasXlsformDrafts extends Model implements HasMedia, WithXlsformDr
 
                 $settings = [
                     'general' => [
-                        'server_url' => config('filament-odk-link.odk.base_endpoint') . "/test/$this->odk_draft_token/projects/{$this->owner->odkProject->id}/forms/$this->odk_id/draft",
+                        'server_url' => config('odk-link.odk.base_endpoint') . "/test/$this->odk_draft_token/projects/{$this->owner->odkProject->id}/forms/$this->odk_id/draft",
                         'form_update_mode' => 'match_exactly',
                     ],
                     'project' => ['name' => '(DRAFT) ' . $this->title, 'icon' => '📝'],
@@ -143,7 +143,7 @@ abstract class HasXlsformDrafts extends Model implements HasMedia, WithXlsformDr
                     $this->refresh();
                 }
 
-                return config('filament-odk-link.odk.url') . '/-/' . $this->enketo_draft_id;
+                return config('odk-link.odk.url') . '/-/' . $this->enketo_draft_id;
 
             },
         );

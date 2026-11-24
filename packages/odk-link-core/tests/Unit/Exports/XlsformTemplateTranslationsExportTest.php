@@ -4,7 +4,7 @@ use Maatwebsite\Excel\Excel as ExcelWriterType;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use Stats4sd\FilamentOdkLink\Exports\XlsformTemplateTranslationsExport;
+use Stats4sd\OdkLink\Core\Exports\XlsformTemplateTranslationsExport;
 
 function renderTranslationsSheet(XlsformTemplateTranslationsExport $export): Worksheet
 {

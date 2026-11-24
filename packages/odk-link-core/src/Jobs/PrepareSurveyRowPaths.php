@@ -1,14 +1,14 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Jobs;
+namespace Stats4sd\OdkLink\Core\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Collection;
-use Stats4sd\FilamentOdkLink\Concerns\ResetsProcessingOnFailure;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Concerns\ResetsProcessingOnFailure;
+use Stats4sd\OdkLink\Core\Models\OdkLink\SurveyRow;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
 
 class PrepareSurveyRowPaths implements ShouldQueue
 {

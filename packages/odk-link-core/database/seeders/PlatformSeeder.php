@@ -1,9 +1,9 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Database\Seeders;
+namespace Stats4sd\OdkLink\Core\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Platform;
 
 class PlatformSeeder extends Seeder
 {
@@ -15,12 +15,12 @@ class PlatformSeeder extends Seeder
     {
 
         // check config item existence, and check empty config item
-        if (config('filament-odk-link.odk.url') === null || config('filament-odk-link.odk.url') === '') {
+        if (config('odk-link.odk.url') === null || config('odk-link.odk.url') === '') {
             return;
         }
 
         // if there is no pre-set platform project ID, create the platform entry with the usual ODK Central project creation.
-        if (! config('filament-odk-link.odk.platform_project_id')) {
+        if (! config('odk-link.odk.platform_project_id')) {
             $platform = Platform::create();
 
             // add the platform's odk-project ID to the env file
@@ -36,7 +36,7 @@ class PlatformSeeder extends Seeder
         $platform = Platform::forceCreateQuietly();
 
         $platform->odkProject()->forceCreateQuietly([
-            'id' => config('filament-odk-link.odk.platform_project_id'),
+            'id' => config('odk-link.odk.platform_project_id'),
             'name' => config('app.name', 'Laravel Platform') . ' Platform',
         ]);
     }

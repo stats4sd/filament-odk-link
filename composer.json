@@ -10,7 +10,7 @@
             "options": {
                 "symlink": true,
                 "versions": {
-                    "stats4sd/filament-odk-link": "dev-dev",
+                    "stats4sd/odk-link-core": "dev-dev",
                     "stats4sd/odk-link-filament": "dev-dev"
                 }
             }
@@ -18,7 +18,7 @@
     ],
     "require": {
         "php": "^8.4",
-        "stats4sd/filament-odk-link": "dev-dev",
+        "stats4sd/odk-link-core": "dev-dev",
         "stats4sd/odk-link-filament": "dev-dev"
     },
     "require-dev": {

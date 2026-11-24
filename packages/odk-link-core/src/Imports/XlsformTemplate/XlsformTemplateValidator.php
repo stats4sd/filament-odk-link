@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
+namespace Stats4sd\OdkLink\Core\Imports\XlsformTemplate;
 
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;

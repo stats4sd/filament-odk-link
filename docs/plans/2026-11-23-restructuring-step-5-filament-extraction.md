@@ -138,7 +138,7 @@ The tree will not be green at this commit. That is acceptable inside the PR; CI 
 - Deferred renames.
 - Stub conversion and the translation layer (step 6).
 - The empty `FilamentOdkLink` facade/class in core.
-- The unused `staudenmeir/belongs-to-through` dependency.
+- ~~The unused `staudenmeir/belongs-to-through` dependency.~~ Correction (step 6): it is used. Five core models use `Znck\Eloquent\Traits\BelongsToThrough`.
 - Merging `TestCase` and `HeadlessTestCase`.
 - Package issues listed in the reference app README.
 

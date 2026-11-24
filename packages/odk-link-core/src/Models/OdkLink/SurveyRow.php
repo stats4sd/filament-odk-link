@@ -1,14 +1,14 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 use ShiftOneLabs\LaravelCascadeDeletes\CascadesDeletes;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\WithLanguageStrings;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Traits\HasLanguageStrings;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Interfaces\WithLanguageStrings;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Traits\HasLanguageStrings;
 
 class SurveyRow extends Model implements WithLanguageStrings
 {

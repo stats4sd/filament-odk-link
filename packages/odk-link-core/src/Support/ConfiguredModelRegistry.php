@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Support;
+namespace Stats4sd\OdkLink\Core\Support;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -26,7 +26,7 @@ class ConfiguredModelRegistry
     /** @return Collection<string, Model> */
     private function models(): Collection
     {
-        $key = 'filament-odk-link.models.registry';
+        $key = 'odk-link.models.registry';
         $classes = config($key);
 
         // A published config from before the registry existed replaces the whole `models` array, so the key can be

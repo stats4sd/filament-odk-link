@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8e4f01c9339deb83663c1b439577332b",
+    "content-hash": "4706646fb90d15df4feb74b4aaeb9114",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -6395,12 +6395,12 @@
             "published-time": "2026-06-22T07:55:53+00:00"
         },
         {
-            "name": "stats4sd/filament-odk-link",
+            "name": "stats4sd/odk-link-core",
             "version": "dev-dev",
             "dist": {
                 "type": "path",
                 "url": "../odk-link-core",
-                "reference": "6542e24c79292e8f2312c76fd236f38204e5c6a4"
+                "reference": "ec92494ac736f4493191b456a3a7b027620009bc"
             },
             "require": {
                 "illuminate/contracts": "^13.0",
@@ -6429,23 +6429,20 @@
             "extra": {
                 "laravel": {
                     "providers": [
-                        "Stats4sd\\FilamentOdkLink\\OdkLinkCoreServiceProvider"
-                    ],
-                    "aliases": {
-                        "FilamentOdkLink": "Stats4sd\\FilamentOdkLink\\Facades\\FilamentOdkLink"
-                    }
+                        "Stats4sd\\OdkLink\\Core\\OdkLinkCoreServiceProvider"
+                    ]
                 }
             },
             "autoload": {
                 "psr-4": {
-                    "Stats4sd\\FilamentOdkLink\\": "src/",
-                    "Stats4sd\\FilamentOdkLink\\Database\\Factories\\": "database/factories/",
-                    "Stats4sd\\FilamentOdkLink\\Database\\Seeders\\": "database/seeders/"
+                    "Stats4sd\\OdkLink\\Core\\": "src/",
+                    "Stats4sd\\OdkLink\\Core\\Database\\Factories\\": "database/factories/",
+                    "Stats4sd\\OdkLink\\Core\\Database\\Seeders\\": "database/seeders/"
                 }
             },
             "autoload-dev": {
                 "psr-4": {
-                    "Stats4sd\\FilamentOdkLink\\Tests\\": "tests/"
+                    "Stats4sd\\OdkLink\\Core\\Tests\\": "tests/"
                 }
             },
             "scripts": {
@@ -6478,8 +6475,8 @@
             "description": "Headless core for ODK Link: models, ODK Central client, jobs, imports/exports and migrations for managing ODK forms in Laravel.",
             "homepage": "https://github.com/stats4sd/filament-odk-link",
             "keywords": [
-                "filament-odk-link",
                 "laravel",
+                "odk-link",
                 "stats4sd"
             ],
             "support": {
@@ -14218,7 +14215,7 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "stats4sd/filament-odk-link": 20
+        "stats4sd/odk-link-core": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

@@ -1,9 +1,9 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Commands;
+namespace Stats4sd\OdkLink\Core\Commands;
 
 use Illuminate\Console\Command;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
 
 class UpdateXlsformDrafts extends Command
 {

@@ -2,14 +2,14 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Tests\Headless\HeadlessTestCase;
-use Stats4sd\FilamentOdkLink\Tests\TestCase;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceList;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\LanguageStringType;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Tests\Headless\HeadlessTestCase;
+use Stats4sd\OdkLink\Core\Tests\TestCase;
 
 uses(TestCase::class)->in('Unit', 'Smoke', 'Architecture', 'ArchTest.php', 'ExampleTest.php');
 uses(HeadlessTestCase::class)->in('Headless');

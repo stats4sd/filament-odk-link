@@ -1,11 +1,11 @@
 <?php
 
-use Stats4sd\FilamentOdkLink\Contracts\CurrentOwnerResolver;
-use Stats4sd\FilamentOdkLink\Contracts\OperationNotifier;
-use Stats4sd\FilamentOdkLink\Filament\Support\FilamentCurrentOwnerResolver;
-use Stats4sd\FilamentOdkLink\Filament\Support\FilamentOperationNotifier;
-use Stats4sd\FilamentOdkLink\Filament\Tests\CoreRegisteredFirstTestCase;
-use Stats4sd\FilamentOdkLink\OdkLinkCoreServiceProvider;
+use Stats4sd\OdkLink\Core\Contracts\CurrentOwnerResolver;
+use Stats4sd\OdkLink\Core\Contracts\OperationNotifier;
+use Stats4sd\OdkLink\Core\OdkLinkCoreServiceProvider;
+use Stats4sd\OdkLink\Filament\Support\FilamentCurrentOwnerResolver;
+use Stats4sd\OdkLink\Filament\Support\FilamentOperationNotifier;
+use Stats4sd\OdkLink\Filament\Tests\CoreRegisteredFirstTestCase;
 
 uses(CoreRegisteredFirstTestCase::class);
 

@@ -1,5 +1,6 @@
 # Keep development files out of dist archives.
 /.editorconfig          export-ignore
+/CLAUDE.md              export-ignore
 /.gitattributes         export-ignore
 /.prettierrc            export-ignore
 /package.json           export-ignore
@@ -9,3 +10,4 @@
 /phpunit.xml.dist       export-ignore
 /pint.json              export-ignore
 /tests                  export-ignore
+/testbench.yaml         export-ignore

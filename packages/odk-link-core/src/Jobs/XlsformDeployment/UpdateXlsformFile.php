@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Jobs\XlsformDeployment;
+namespace Stats4sd\OdkLink\Core\Jobs\XlsformDeployment;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
@@ -8,9 +8,9 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
-use Stats4sd\FilamentOdkLink\Concerns\NotifiesOnJobFailure;
-use Stats4sd\FilamentOdkLink\Contracts\PlatformUser;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Concerns\NotifiesOnJobFailure;
+use Stats4sd\OdkLink\Core\Contracts\PlatformUser;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
 use Throwable;
 
 class UpdateXlsformFile implements ShouldQueue
@@ -26,7 +26,7 @@ class UpdateXlsformFile implements ShouldQueue
     public function handle(): void
     {
         try {
-            $this->xlsform->addMediaFromDisk($this->filePath, config('filament-odk-link.storage.xlsforms'))->toMediaCollection('xlsform_file');
+            $this->xlsform->addMediaFromDisk($this->filePath, config('odk-link.storage.xlsforms'))->toMediaCollection('xlsform_file');
         } catch (FileDoesNotExist $exception) {
             Log::error('Trying to save file for Xlsform ' . $this->xlsform->id . ' that does not exist at path ' . $this->filePath);
             $this->fail($exception);

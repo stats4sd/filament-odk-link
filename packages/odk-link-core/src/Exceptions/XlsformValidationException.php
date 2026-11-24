@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Exceptions;
+namespace Stats4sd\OdkLink\Core\Exceptions;
 
 use Exception;
 

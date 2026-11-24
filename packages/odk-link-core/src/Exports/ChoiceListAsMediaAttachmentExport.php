@@ -1,15 +1,15 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Exports;
+namespace Stats4sd\OdkLink\Core\Exports;
 
 use Illuminate\Database\Eloquent\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
-use Stats4sd\FilamentOdkLink\Exports\XlsformExport\ExportsXlsformContent;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Abstracts\HasXlsformDrafts;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceList;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
+use Stats4sd\OdkLink\Core\Exports\XlsformExport\ExportsXlsformContent;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Abstracts\HasXlsformDrafts;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceList;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\Locale;
 
 class ChoiceListAsMediaAttachmentExport implements FromCollection, WithHeadings
 {

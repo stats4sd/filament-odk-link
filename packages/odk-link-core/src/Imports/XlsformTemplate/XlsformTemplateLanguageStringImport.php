@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
+namespace Stats4sd\OdkLink\Core\Imports\XlsformTemplate;
 
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Importable;
@@ -14,14 +14,14 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Events\AfterImport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\SurveyRow;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Language;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\LanguageStringType;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
+use Stats4sd\OdkLink\Core\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\OdkLink\Core\Models\OdkLink\LanguageString;
+use Stats4sd\OdkLink\Core\Models\OdkLink\SurveyRow;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\Language;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages\LanguageStringType;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Services\XlsformTranslationHelper;
 
 class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, WithBatchInserts, WithChunkReading, WithEvents, WithHeadingRow, WithMultipleSheets, WithUpserts
 {

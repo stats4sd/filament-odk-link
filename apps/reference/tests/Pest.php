@@ -4,7 +4,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Platform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Platform;
 use Tests\TestCase;
 
 pest()->extend(TestCase::class)
@@ -20,7 +20,7 @@ function seededAdmin(): User
     $user = User::factory()->create();
     $user->syncRoles([
         Role::findOrCreate('Super Admin', 'web'),
-        Role::findOrCreate(config('filament-odk-link.roles.xlsform-admin'), 'web'),
+        Role::findOrCreate(config('odk-link.roles.xlsform-admin'), 'web'),
     ]);
 
     $team = Team::factory()->create();

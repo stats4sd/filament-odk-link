@@ -1,10 +1,10 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Forms\Components;
+namespace Stats4sd\OdkLink\Filament\Forms\Components;
 
 use Filament\Forms\Components\Field;
 
 class ClickableLink extends Field
 {
-    protected string $view = 'filament-odk-link::filament.forms.components.clickable-link';
+    protected string $view = 'odk-link::filament.forms.components.clickable-link';
 }

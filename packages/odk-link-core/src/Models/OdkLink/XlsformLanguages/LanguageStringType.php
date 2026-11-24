@@ -1,10 +1,10 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink\XlsformLanguages;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\LanguageString;
+use Stats4sd\OdkLink\Core\Models\OdkLink\LanguageString;
 
 class LanguageStringType extends Model
 {

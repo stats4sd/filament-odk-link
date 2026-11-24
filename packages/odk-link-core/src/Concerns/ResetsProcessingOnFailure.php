@@ -1,8 +1,8 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Concerns;
+namespace Stats4sd\OdkLink\Core\Concerns;
 
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
 use Throwable;
 
 /**

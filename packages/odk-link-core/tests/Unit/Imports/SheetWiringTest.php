@@ -1,11 +1,11 @@
 <?php
 
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateChoicesImport;
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateHeadingRowImport;
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateSurveyImport;
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateValidator;
-use Stats4sd\FilamentOdkLink\Imports\XlsformTemplate\XlsformTemplateWorkbookImport;
-use Stats4sd\FilamentOdkLink\Imports\XlsImport;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformTemplateChoicesImport;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformTemplateHeadingRowImport;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformTemplateSurveyImport;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformTemplateValidator;
+use Stats4sd\OdkLink\Core\Imports\XlsformTemplate\XlsformTemplateWorkbookImport;
+use Stats4sd\OdkLink\Core\Imports\XlsImport;
 
 it('the generic XlsImport reads survey, choices and settings sheets', function () {
     expect(array_keys((new XlsImport)->sheets()))->toContain('survey', 'choices', 'settings', 'entities');

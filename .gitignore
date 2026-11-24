@@ -7,6 +7,5 @@ coverage
 node_modules
 packages/*/phpunit.xml
 phpstan.neon
-testbench.yaml
 vendor
 .phpunit.cache

@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Str;
-use Stats4sd\FilamentOdkLink\Exports\XlsformExport\XlsformSettingsExport;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Exports\XlsformExport\XlsformSettingsExport;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
 
 // XlsformSettingsExport builds the single-row `settings` sheet of the exported
 // XLSForm workbook. It reads only the Xlsform's title / odk_id, so an unsaved

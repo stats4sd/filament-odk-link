@@ -1,11 +1,11 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Imports\XlsformTemplate;
+namespace Stats4sd\OdkLink\Core\Imports\XlsformTemplate;
 
 use Illuminate\Support\Collection;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModule;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModule;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
 
 trait GetsModuleNamesPerRow
 {

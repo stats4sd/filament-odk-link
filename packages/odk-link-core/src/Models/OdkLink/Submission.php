@@ -1,6 +1,6 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
+namespace Stats4sd\OdkLink\Core\Models\OdkLink;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -18,11 +18,11 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Stats4sd\FilamentOdkLink\Contracts\FormOwner;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Interfaces\IsPrimaryDataSubject;
-use Stats4sd\FilamentOdkLink\Services\HelperService;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredModels;
+use Stats4sd\OdkLink\Core\Contracts\FormOwner;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Interfaces\IsPrimaryDataSubject;
+use Stats4sd\OdkLink\Core\Services\HelperService;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Support\ConfiguredModels;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
 class Submission extends Model implements HasMedia
@@ -167,7 +167,7 @@ class Submission extends Model implements HasMedia
     public function odkCentralViewPageUrl(): Attribute
     {
         return new Attribute(
-            get: fn () => config('filament-odk-link.odk.url') . "/#/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}"
+            get: fn () => config('odk-link.odk.url') . "/#/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}"
         );
 
     }
@@ -177,7 +177,7 @@ class Submission extends Model implements HasMedia
     {
 
         return new Attribute(
-            get: fn () => config('filament-odk-link.odk.base_endpoint') . "/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}/edit",
+            get: fn () => config('odk-link.odk.base_endpoint') . "/projects/{$this->owner->odkProject->id}/forms/{$this->xlsform->odk_id}/submissions/{$this->odk_id}/edit",
         );
     }
 
@@ -195,9 +195,9 @@ class Submission extends Model implements HasMedia
         // TODO: handle 409 response
         // TODO: handle 404 response
 
-        $enketoUrl = config('filament-odk-link.odk.url') . '/-/edit/' . $this->xlsform->enketo_id . '?instance_id=' . $this->odk_latest_version_id . '&return_url=' . route('submission.update', ['submission' => $this]);
+        $enketoUrl = config('odk-link.odk.url') . '/-/edit/' . $this->xlsform->enketo_id . '?instance_id=' . $this->odk_latest_version_id . '&return_url=' . route('submission.update', ['submission' => $this]);
 
-        $url = config('filament-odk-link.odk.url') . '/#/login?next=' . urlencode($enketoUrl);
+        $url = config('odk-link.odk.url') . '/#/login?next=' . urlencode($enketoUrl);
 
         // Manually return the editing url
         return redirect($enketoUrl);

@@ -1,10 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\Xlsform;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformModuleVersion;
-use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformTemplate;
-use Stats4sd\FilamentOdkLink\Tests\Models\Team;
+use Stats4sd\OdkLink\Core\Models\OdkLink\Xlsform;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformModuleVersion;
+use Stats4sd\OdkLink\Core\Models\OdkLink\XlsformTemplate;
+use Stats4sd\OdkLink\Core\Tests\Models\Team;
 
 beforeEach(function () {
     $this->team = Team::factory()->create();

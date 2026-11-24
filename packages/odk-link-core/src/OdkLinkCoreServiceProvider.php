@@ -1,26 +1,26 @@
 <?php
 
-namespace Stats4sd\FilamentOdkLink;
+namespace Stats4sd\OdkLink\Core;
 
 use Illuminate\Support\Facades\File;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Stats4sd\FilamentOdkLink\Contracts\CurrentOwnerResolver;
-use Stats4sd\FilamentOdkLink\Contracts\OperationNotifier;
-use Stats4sd\FilamentOdkLink\Contracts\RoleResolver;
-use Stats4sd\FilamentOdkLink\Contracts\SubmissionProcessor;
-use Stats4sd\FilamentOdkLink\Services\OdkLinkService;
-use Stats4sd\FilamentOdkLink\Services\XlsformTranslationHelper;
-use Stats4sd\FilamentOdkLink\Support\ConfiguredContracts;
-use Stats4sd\FilamentOdkLink\Support\EmptyRoleResolver;
-use Stats4sd\FilamentOdkLink\Support\NullCurrentOwnerResolver;
-use Stats4sd\FilamentOdkLink\Support\NullOperationNotifier;
-use Stats4sd\FilamentOdkLink\Support\NullSubmissionProcessor;
+use Stats4sd\OdkLink\Core\Contracts\CurrentOwnerResolver;
+use Stats4sd\OdkLink\Core\Contracts\OperationNotifier;
+use Stats4sd\OdkLink\Core\Contracts\RoleResolver;
+use Stats4sd\OdkLink\Core\Contracts\SubmissionProcessor;
+use Stats4sd\OdkLink\Core\Services\OdkLinkService;
+use Stats4sd\OdkLink\Core\Services\XlsformTranslationHelper;
+use Stats4sd\OdkLink\Core\Support\ConfiguredContracts;
+use Stats4sd\OdkLink\Core\Support\EmptyRoleResolver;
+use Stats4sd\OdkLink\Core\Support\NullCurrentOwnerResolver;
+use Stats4sd\OdkLink\Core\Support\NullOperationNotifier;
+use Stats4sd\OdkLink\Core\Support\NullSubmissionProcessor;
 
 class OdkLinkCoreServiceProvider extends PackageServiceProvider
 {
-    public static string $name = 'filament-odk-link';
+    public static string $name = 'odk-link';
 
     public function configurePackage(Package $package): void
     {
@@ -56,14 +56,14 @@ class OdkLinkCoreServiceProvider extends PackageServiceProvider
 
         // Setup the main service class as a singleton.
         $this->app->singleton(OdkLinkService::class, function ($app) {
-            return new OdkLinkService(config('filament-odk-link.odk.base_endpoint'));
+            return new OdkLinkService(config('odk-link.odk.base_endpoint'));
         });
 
         $this->app->singleton(XlsformTranslationHelper::class, function ($app) {
             return new XlsformTranslationHelper;
         });
 
-        $this->app->register(FilamentOdkLinkEventServiceProvider::class);
+        $this->app->register(OdkLinkEventServiceProvider::class);
     }
 
     /**
@@ -75,7 +75,7 @@ class OdkLinkCoreServiceProvider extends PackageServiceProvider
         $files = File::files(__DIR__ . '/Commands');
 
         return collect($files)->map(fn ($file) => $file->getFilenameWithoutExtension())
-            ->map(fn ($filename) => "Stats4sd\\FilamentOdkLink\\Commands\\{$filename}")
+            ->map(fn ($filename) => "Stats4sd\\OdkLink\\Core\\Commands\\{$filename}")
             ->toArray();
     }
 
@@ -119,6 +119,7 @@ class OdkLinkCoreServiceProvider extends PackageServiceProvider
             '032_create_selected_xlsform_module_versions_table',
             '033_create_dataset_parents_table',
             '034_create_templates_entity_lists_table',
+            '035_rename_odk_link_class_names',
         ];
     }
 }
