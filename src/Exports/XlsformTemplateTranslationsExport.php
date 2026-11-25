@@ -90,6 +90,7 @@ class XlsformTemplateTranslationsExport implements FromCollection, WithHeadings,
     private function buildCollection(): Collection
     {
         $surveyRows = $this->template->surveyRowsForTranslation($this->owner)
+            ->reject(fn (SurveyRow $entry) => $entry->isGroupEnd())
             ->sortBy('row_number')
             ->map(fn(SurveyRow $entry) => $this->processEntry($entry));
 
