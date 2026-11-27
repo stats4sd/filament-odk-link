@@ -52,7 +52,6 @@ Output of that update: part 4 of the review rewritten with real results, *(infer
 
 **Housekeeping that affects accuracy**
 
-- **The part B work must be committed and pushed before changing environment.** As of 2026-11-27 it exists only as uncommitted files on local branch `package-review-and-redesign` (the review, ledger, target design, plan, this file, the scenario test, and edits to `RESTRUCTURING.md` and the step 7 plan). A new environment that clones the repo will not have it. I have not committed because I was not asked to.
 - **Fresh `vendor/` installs per package.** The root `CLAUDE.md` warns that a long-lived `vendor/` hides failures (missing `APP_KEY`, different Larastan inference). Permission to run `composer install` in a clean clone or worktree avoids false passes. Composer 2.11 is present (checked).
 - **PHP extensions.** PHP 8.4 is the default and `php8.5` is also installed (checked). Loaded: `pdo_mysql`, `pdo_sqlite`, `zip`, `gd`, `intl`, `mbstring`, `bcmath`, `pcntl` (checked). Not loaded: `imagick`, and no coverage driver (`pcov` or `xdebug`), so `composer test-coverage` cannot run. Coverage would be useful for showing which import and ingestion paths the suites never reach.
 - **Local branches up to date.** Local `dev` and `staging-hotfix-20261026` were behind `origin` at the start, and the working tree was switched to the hotfix branch mid-session. A note of which branch is safe for me to switch on, or permission to use git worktrees, avoids disturbing your checkout. There is one worktree today, the main checkout (checked).
