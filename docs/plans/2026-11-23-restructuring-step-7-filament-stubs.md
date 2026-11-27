@@ -8,9 +8,9 @@ Depends on step 6 (renames, done). Namespaces, view names and config keys below 
 
 ## Pending outside this step (found 2026-11-24)
 
-Do both before starting. Neither is a hard technical blocker, but starting first means rebasing this step over the port.
+Do both before starting. Step 6b is a hard prerequisite: this step freezes the UI into host code, so the UI must be in its redesigned shape first.
 
-- **Forward-port of `staging-hotfix-20261026`.** 15 commits (PRs #162–#169) on the pre-restructure layout were never merged into `dev`, and PR #170 still targets that branch. It is almost all core, but it changes one UI file that this step turns into a stub: the "Replace XLSForm" action in `XlsformTemplateTable` (`->modalContent(...)` becomes `->schema(XlsformTemplateForm::getCreateFields())`, which fixes #124). Its `035_add_settings_columns_to_xlsform_templates_table` migration collides with `035_rename_odk_link_class_names` on `dev` and needs renumbering. If this step starts before the port lands anyway, the rebase needs: the one-line `XlsformTemplateTable` change in its new stub location, any new UI strings keyed, and the reference app's published migrations and stub copies regenerated.
+- **Step 6b, package review and redesign** ([plan](2026-11-27-package-review-and-redesign.md)). Replaces the earlier "forward-port `staging-hotfix-20261026`" item: on 2026-11-27 it was decided not to port that branch but to redesign the affected code and carry the hotfix behaviour through a [requirements ledger](2026-11-27-hotfix-requirements-ledger.md). Step 6b changes UI files this step turns into stubs (the template upload and replace actions, the choice list resource) and decides whether team-panel stubs are in scope, so regenerate this plan's inventory (file counts, views, strings) after it lands. The #124 fix for the "Replace XLSForm" action in `XlsformTemplateTable` arrives through step 6b, not through a port.
 - **Laravel Excel 4 manual admin-panel check** ([plan](2026-11-23-laravel-excel-4-upgrade.md), step 5). The import and export UI is frozen into host code by this step, so check it before the stubs are published.
 
 ## Context
