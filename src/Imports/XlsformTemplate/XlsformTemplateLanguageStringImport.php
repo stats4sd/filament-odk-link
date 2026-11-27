@@ -90,7 +90,8 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
         return ['locale_id', 'linked_entry_id', 'linked_entry_type', 'language_string_type_id'];
     }
 
-    public function model(array $row): ?LanguageString
+    /** @return array<int, LanguageString>|null */
+    public function model(array $row): ?array
     {
         $row = collect($row);
 
@@ -128,9 +129,13 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
                 });
         }
 
-        $item = $items->first();
+        // a list name can appear in several modules of the template, and every one of those lists needs the default string.
+        // Entries owned by a team are never touched by the template import.
+        $items = $class === ChoiceListEntry::class
+            ? $items->filter(fn(ChoiceListEntry $item) => $item->owner_id === null)
+            : $items->take(1);
 
-        if (!$item) {
+        if ($items->isEmpty()) {
             return null;
         }
 
@@ -148,14 +153,17 @@ class XlsformTemplateLanguageStringImport implements SkipsEmptyRows, ToModel, Wi
             'is_default' => true,
         ]);
 
-        return new LanguageString([
-            'linked_entry_id' => $item->id,
-            'linked_entry_type' => $this->class,
-            'locale_id' => $locale->id,
-            'language_string_type_id' => $this->languageStringType->id,
-            'text' => $row[$this->heading],
-            'updated_during_import' => true,
-        ]);
+        return $items
+            ->map(fn($item) => new LanguageString([
+                'linked_entry_id' => $item->id,
+                'linked_entry_type' => $this->class,
+                'locale_id' => $locale->id,
+                'language_string_type_id' => $this->languageStringType->id,
+                'text' => $row[$this->heading],
+                'updated_during_import' => true,
+            ]))
+            ->values()
+            ->all();
 
     }
 

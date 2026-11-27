@@ -5,6 +5,7 @@ use Filament\PanelRegistry;
 use Illuminate\Support\Facades\DB;
 use Stats4sd\FilamentOdkLink\Jobs\AddMissingChoiceListStrings;
 use Stats4sd\FilamentOdkLink\Models\OdkLink\ChoiceListEntry;
+use Stats4sd\FilamentOdkLink\Models\OdkLink\XlsformLanguages\Locale;
 
 beforeEach(function () {
     // Model hooks that fire on save/read need Filament panel registry to resolve.
@@ -160,4 +161,160 @@ it('does not copy a label from a team entry owned by a different team', function
     (new AddMissingChoiceListStrings($template))->handle();
 
     expect($targetTeamOneBean->refresh()->languageStrings)->toHaveCount(0);
+});
+
+function makeTeamLocale(string $isoAlpha2 = 'es'): Locale
+{
+    $languageId = DB::table('languages')->insertGetId([
+        'iso_alpha2' => $isoAlpha2,
+        'name' => $isoAlpha2,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $localeId = DB::table('locales')->insertGetId([
+        'language_id' => $languageId,
+        'is_default' => false,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return Locale::find($localeId);
+}
+
+function addString(ChoiceListEntry $entry, Locale $locale, string $text, int $typeId): void
+{
+    DB::table('language_strings')->insert([
+        'locale_id' => $locale->id,
+        'language_string_type_id' => $typeId,
+        'linked_entry_id' => $entry->id,
+        'linked_entry_type' => ChoiceListEntry::class,
+        'text' => $text,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+}
+
+function stringsOf(ChoiceListEntry $entry): array
+{
+    return $entry->refresh()->languageStrings
+        ->mapWithKeys(fn ($languageString) => [$languageString->locale_id => $languageString->text])
+        ->all();
+}
+
+it('gives default strings to a global entry that only kept its team strings, without touching the team strings', function () {
+    $template = makeXlsformTemplate();
+    $donorList = addChoiceList(addModuleVersion($template, 'donor'), 'yes_no');
+    $brokenList = addChoiceList(addModuleVersion($template, 'broken'), 'yes_no');
+
+    $donorYes = addChoiceListEntry($donorList, 'yes');
+    $brokenYes = addChoiceListEntry($brokenList, 'yes');
+
+    $defaultLocale = makeLocale('en');
+    $teamLocale = makeTeamLocale('es');
+    $labelType = makeLanguageStringType('label');
+
+    addString($donorYes, $defaultLocale, 'Yes', $labelType->id);
+    addString($donorYes, $teamLocale, 'Si (donor team text)', $labelType->id);
+    addString($brokenYes, $teamLocale, 'Si (own team text)', $labelType->id);
+
+    (new AddMissingChoiceListStrings($template))->handle();
+
+    expect(stringsOf($brokenYes))->toBe([
+        $teamLocale->id => 'Si (own team text)',
+        $defaultLocale->id => 'Yes',
+    ]);
+});
+
+it('takes the default strings from a list that has them even when another same-named list only has team strings', function () {
+    $template = makeXlsformTemplate();
+    $teamOnlyList = addChoiceList(addModuleVersion($template, 'first'), 'yes_no');
+    $brokenList = addChoiceList(addModuleVersion($template, 'second'), 'yes_no');
+    $donorList = addChoiceList(addModuleVersion($template, 'third'), 'yes_no');
+
+    $teamOnlyYes = addChoiceListEntry($teamOnlyList, 'yes');
+    $brokenYes = addChoiceListEntry($brokenList, 'yes');
+    $donorYes = addChoiceListEntry($donorList, 'yes');
+
+    $defaultLocale = makeLocale('en');
+    $teamLocale = makeTeamLocale('es');
+    $labelType = makeLanguageStringType('label');
+
+    addString($teamOnlyYes, $teamLocale, 'Si 1', $labelType->id);
+    addString($brokenYes, $teamLocale, 'Si 2', $labelType->id);
+    addString($donorYes, $defaultLocale, 'Yes', $labelType->id);
+
+    (new AddMissingChoiceListStrings($template))->handle();
+
+    expect(stringsOf($brokenYes)[$defaultLocale->id] ?? null)->toBe('Yes')
+        ->and(stringsOf($teamOnlyYes)[$defaultLocale->id] ?? null)->toBe('Yes');
+});
+
+it('leaves entries owned by a team alone when they only hold team strings', function () {
+    $template = makeXlsformTemplate();
+    $donorList = addChoiceList(addModuleVersion($template, 'donor'), 'crop_list');
+    $targetList = addChoiceList(addModuleVersion($template, 'target'), 'crop_list');
+
+    $teamId = DB::table('teams')->insertGetId(['name' => 'Team', 'created_at' => now(), 'updated_at' => now()]);
+
+    $donorBean = addChoiceListEntry($donorList, '41', ['owner_id' => $teamId]);
+    $targetBean = addChoiceListEntry($targetList, '41', ['owner_id' => $teamId]);
+
+    $defaultLocale = makeLocale('en');
+    $teamLocale = makeTeamLocale('es');
+    $labelType = makeLanguageStringType('label');
+
+    addString($donorBean, $defaultLocale, 'Bean', $labelType->id);
+    addString($targetBean, $teamLocale, 'Frijol', $labelType->id);
+
+    (new AddMissingChoiceListStrings($template))->handle();
+
+    expect(stringsOf($targetBean))->toBe([$teamLocale->id => 'Frijol']);
+});
+
+it('does not repair lists of versions that are not default versions', function () {
+    $template = makeXlsformTemplate();
+    $donorList = addChoiceList(addModuleVersion($template, 'donor'), 'yes_no');
+
+    $cloneVersion = addModuleVersion($template, 'clone');
+    DB::table('xlsform_module_versions')->where('id', $cloneVersion->id)->update(['is_default' => false]);
+    $cloneList = addChoiceList($cloneVersion, 'yes_no');
+
+    $donorYes = addChoiceListEntry($donorList, 'yes');
+    $cloneYes = addChoiceListEntry($cloneList, 'yes');
+
+    $defaultLocale = makeLocale('en');
+    $teamLocale = makeTeamLocale('es');
+    $labelType = makeLanguageStringType('label');
+
+    addString($donorYes, $defaultLocale, 'Yes', $labelType->id);
+    addString($cloneYes, $teamLocale, 'Si', $labelType->id);
+
+    (new AddMissingChoiceListStrings($template))->handle();
+
+    expect(stringsOf($cloneYes))->toBe([$teamLocale->id => 'Si']);
+});
+
+it('changes nothing when it runs a second time', function () {
+    $template = makeXlsformTemplate();
+    $donorList = addChoiceList(addModuleVersion($template, 'donor'), 'yes_no');
+    $brokenList = addChoiceList(addModuleVersion($template, 'broken'), 'yes_no');
+
+    $donorYes = addChoiceListEntry($donorList, 'yes');
+    $brokenYes = addChoiceListEntry($brokenList, 'yes');
+
+    $defaultLocale = makeLocale('en');
+    $teamLocale = makeTeamLocale('es');
+    $labelType = makeLanguageStringType('label');
+
+    addString($donorYes, $defaultLocale, 'Yes', $labelType->id);
+    addString($brokenYes, $teamLocale, 'Si', $labelType->id);
+
+    (new AddMissingChoiceListStrings($template))->handle();
+
+    $afterFirstRun = DB::table('language_strings')->count();
+
+    (new AddMissingChoiceListStrings($template))->handle();
+
+    expect(DB::table('language_strings')->count())->toBe($afterFirstRun);
 });

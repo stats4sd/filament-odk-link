@@ -2,6 +2,7 @@
 
 namespace Stats4sd\FilamentOdkLink\Models\OdkLink;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,6 +31,8 @@ class SurveyRow extends Model implements WithLanguageStrings
         });
     }
 
+    public const GROUP_END_TYPES = ['end group', 'end repeat'];
+
     protected array $cascadeDeletes = ['languageStrings'];
 
     protected $casts = [
@@ -39,6 +42,24 @@ class SurveyRow extends Model implements WithLanguageStrings
     ];
 
     protected $guarded = [];
+
+    public static function normaliseType(?string $type): string
+    {
+        return str_replace('_', ' ', Str::lower(trim((string) $type)));
+    }
+
+    public function isGroupEnd(): bool
+    {
+        return in_array(self::normaliseType($this->type), self::GROUP_END_TYPES, true);
+    }
+
+    /** @param Builder<SurveyRow> $query */
+    public function scopeGroupEnds(Builder $query): void
+    {
+        $typeList = collect(self::GROUP_END_TYPES)->map(fn (string $type) => "'{$type}'")->implode(', ');
+
+        $query->whereRaw("REPLACE(LOWER(TRIM(survey_rows.type)), '_', ' ') IN ({$typeList})");
+    }
 
     /** @return BelongsTo<XlsformModuleVersion, $this> */
     public function xlsformModuleVersion(): BelongsTo
